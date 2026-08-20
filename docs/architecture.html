@@ -1,0 +1,571 @@
+<title>FeelGood Architecture</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap">
+
+<style>
+  :root {
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+
+    --paper:  #F1F4EF;
+    --surface:#FBFCFA;
+    --zone:   #E8EDE7;
+    --ink:    #17201A;
+    --text:   #36423B;
+    --muted:  #6C7A72;
+    --rule:   #D2DBD4;
+    --accent: #1F5D4C;
+    --accent-soft: #E1ECE6;
+    --amber:  #856012;
+    --amber-soft: #F0E8D4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:  #121611;
+      --surface:#1A201B;
+      --zone:   #1D241E;
+      --ink:    #E7EDE7;
+      --text:   #C3CDC5;
+      --muted:  #94A29A;
+      --rule:   #2D362F;
+      --accent: #74C6A8;
+      --accent-soft: #1A2C26;
+      --amber:  #D8AE63;
+      --amber-soft: #2B2517;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:  #121611;
+    --surface:#1A201B;
+    --zone:   #1D241E;
+    --ink:    #E7EDE7;
+    --text:   #C3CDC5;
+    --muted:  #94A29A;
+    --rule:   #2D362F;
+    --accent: #74C6A8;
+    --accent-soft: #1A2C26;
+    --amber:  #D8AE63;
+    --amber-soft: #2B2517;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 24px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  .prose { max-width: 66ch; }
+
+  header.masthead {
+    display: flex; flex-direction: column; gap: 14px;
+    padding: 72px 0 28px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 44px;
+  }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 600; font-size: clamp(34px, 5vw, 50px);
+    line-height: 1.08; letter-spacing: -0.015em; color: var(--ink);
+    margin: 0; text-wrap: balance;
+  }
+  .standfirst { font-size: 17.5px; color: var(--muted); margin: 0; max-width: 62ch; }
+
+  section { margin: 0 0 12px; }
+  h2 {
+    font-family: var(--serif); font-weight: 600; font-size: 27px; line-height: 1.2;
+    color: var(--ink); margin: 60px 0 6px; text-wrap: balance;
+  }
+  h2 .num {
+    font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--accent);
+    letter-spacing: .1em; display: block; margin-bottom: 8px;
+  }
+  h3 {
+    font-family: var(--sans); font-weight: 600; font-size: 15px; color: var(--ink);
+    margin: 32px 0 4px; letter-spacing: -0.005em;
+  }
+  p { margin: 14px 0; }
+  strong { color: var(--ink); font-weight: 600; }
+  code {
+    font-family: var(--mono); font-size: 0.87em;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 1px 5px; border-radius: 3px;
+  }
+  a { color: var(--accent); }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  figure {
+    margin: 30px 0 8px; padding: 0;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+  }
+  .scroller { overflow-x: auto; padding: 22px 20px 6px; }
+  figure svg { display: block; width: 100%; min-width: 640px; height: auto; color: var(--ink); }
+  figcaption {
+    font-size: 13.5px; color: var(--muted); line-height: 1.55;
+    padding: 12px 20px 18px; border-top: 1px solid var(--rule);
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  /* diagram primitives */
+  .d-box  { fill: var(--surface); stroke: var(--rule); stroke-width: 1.5; }
+  .d-box-a{ fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+  .d-box-e{ fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  .d-zone { fill: var(--zone); stroke: none; }
+  .d-zone-a{ fill: var(--accent-soft); stroke: none; }
+  .d-chip { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 1.2; stroke-dasharray: 4 3; }
+  .d-t    { fill: var(--ink);   font: 500 13px var(--sans); }
+  .d-ta   { fill: var(--accent);font: 600 13px var(--sans); }
+  .d-ts   { fill: var(--muted); font: 400 10.5px var(--mono); }
+  .d-lab  { fill: var(--muted); font: 400 10.5px var(--mono); }
+  .d-amb  { fill: var(--amber); font: 400 10.5px var(--mono); }
+  .d-hd   { fill: var(--muted); font: 500 10.5px var(--mono); letter-spacing: .12em; }
+  .d-line { stroke: currentColor; stroke-width: 1.5; fill: none; }
+  .d-dash { stroke: currentColor; stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+  .d-bnd  { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 5; }
+  .d-fld  { fill: var(--text); font: 400 11px var(--mono); }
+
+  .legend {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 10px 26px; margin: 34px 0 0; padding: 20px 22px;
+    border: 1px solid var(--rule); border-radius: 4px; background: var(--surface);
+  }
+  .legend div { display: flex; align-items: center; gap: 11px; font-size: 13px; color: var(--muted); }
+  .legend svg { flex: none; }
+
+  table { border-collapse: collapse; width: 100%; margin: 20px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td:first-child { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; padding-right: 24px; }
+
+  .note {
+    border-left: 2px solid var(--amber); background: var(--amber-soft);
+    padding: 14px 18px; margin: 26px 0; font-size: 14.5px; color: var(--text);
+    border-radius: 0 3px 3px 0;
+  }
+  .note b { color: var(--ink); }
+  footer { margin-top: 72px; padding-top: 22px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <span class="eyebrow">FeelGood · Shipaton 2026 · v0.1</span>
+  <h1>Architecture &amp; data model</h1>
+  <p class="standfirst">How a two-tap check-in becomes today's menu — and where the boundaries fall: what runs on the phone, what crosses the network, what holds a secret, and what the paywall actually cuts through.</p>
+</header>
+
+<div class="prose">
+<p>Five diagrams. The first is the whole system; the rest zoom into the three decisions that were hard to get right — the data model, the promise that the screen never blocks, and the two boundaries (a secret, and a paywall) that constrain everything around them.</p>
+</div>
+
+<div class="legend" aria-label="Diagram conventions">
+  <div><svg width="34" height="16" aria-hidden="true"><rect x="1" y="1" width="32" height="14" rx="2" class="d-box"/></svg> our code</div>
+  <div><svg width="34" height="16" aria-hidden="true"><rect x="1" y="1" width="32" height="14" rx="2" class="d-box-e"/></svg> third-party service</div>
+  <div><svg width="34" height="16" aria-hidden="true"><rect x="1" y="1" width="32" height="14" rx="2" class="d-box-a"/></svg> the planning engine</div>
+  <div><svg width="34" height="16" aria-hidden="true"><line x1="1" y1="8" x2="33" y2="8" class="d-line"/></svg> required path</div>
+  <div><svg width="34" height="16" aria-hidden="true"><line x1="1" y1="8" x2="33" y2="8" class="d-dash"/></svg> may fail, silently</div>
+  <div><svg width="34" height="16" aria-hidden="true"><line x1="1" y1="8" x2="33" y2="8" class="d-bnd"/></svg> boundary</div>
+</div>
+
+<section>
+<h2><span class="num">01</span>The system</h2>
+<div class="prose">
+<p>Everything that decides anything runs on the phone. <code>PlanEngine</code> is a pure function of profile, check-in, and history — no network, no I/O, no framework. That single choice is what lets the menu appear instantly, work on a plane, and be exhaustively unit-tested.</p>
+<p>Three things sit across the network, and each is there for a different reason: YouTube because that is where Simone's classes live, RevenueCat because purchases must be verified somewhere we control, and a Cloudflare Worker because an API key inside an iOS binary is a published API key.</p>
+</div>
+
+<figure>
+<div class="scroller">
+<svg viewBox="0 0 900 560" role="img" aria-label="System diagram: the iOS app holds Views, the PlanEngine and local storage on-device; across a network boundary sit the YouTube player, RevenueCat, a Cloudflare Worker holding the API key, and the Anthropic API.">
+  <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+
+  <rect x="56" y="44" width="788" height="224" rx="4" fill="none" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="74" y="70" class="d-hd">FEELGOOD · IOS · SWIFTUI</text>
+
+  <rect x="84" y="92" width="180" height="64" rx="3" class="d-box"/>
+  <text x="174" y="118" class="d-t" text-anchor="middle">Views</text>
+  <text x="174" y="137" class="d-ts" text-anchor="middle">today · check-in · player</text>
+
+  <rect x="360" y="92" width="180" height="64" rx="3" class="d-box-a"/>
+  <text x="450" y="118" class="d-ta" text-anchor="middle">PlanEngine</text>
+  <text x="450" y="137" class="d-ts" text-anchor="middle">filter → score → select</text>
+
+  <rect x="636" y="92" width="180" height="64" rx="3" class="d-box"/>
+  <text x="726" y="118" class="d-t" text-anchor="middle">SwiftData</text>
+  <text x="726" y="137" class="d-ts" text-anchor="middle">profile · history · catalog</text>
+
+  <line x1="268" y1="124" x2="356" y2="124" class="d-line" marker-start="url(#a1)" marker-end="url(#a1)"/>
+  <text x="312" y="115" class="d-lab" text-anchor="middle">state / menu</text>
+  <line x1="632" y1="124" x2="544" y2="124" class="d-line" marker-end="url(#a1)"/>
+  <text x="588" y="115" class="d-lab" text-anchor="middle">reads</text>
+
+  <line x1="40" y1="302" x2="860" y2="302" class="d-bnd"/>
+  <text x="860" y="294" class="d-lab" text-anchor="end">on device</text>
+  <text x="860" y="318" class="d-lab" text-anchor="end">over the network</text>
+
+  <line x1="174" y1="160" x2="174" y2="336" class="d-line" marker-end="url(#a1)"/>
+  <text x="184" y="252" class="d-lab">embedded player</text>
+  <text x="184" y="266" class="d-lab">ads intact · no caching</text>
+
+  <polyline points="220,160 220,214 430,214 430,336" class="d-line" marker-end="url(#a1)"/>
+  <text x="326" y="206" class="d-lab" text-anchor="middle">entitlement</text>
+
+  <polyline points="450,160 450,250 706,250 706,336" class="d-dash" marker-end="url(#a1)"/>
+  <text x="580" y="242" class="d-lab" text-anchor="middle">POST /copy</text>
+
+  <rect x="84" y="340" width="180" height="64" rx="3" class="d-box-e"/>
+  <text x="174" y="366" class="d-t" text-anchor="middle">YouTube</text>
+  <text x="174" y="385" class="d-ts" text-anchor="middle">Simone's classes</text>
+
+  <rect x="330" y="340" width="200" height="64" rx="3" class="d-box-e"/>
+  <text x="430" y="366" class="d-t" text-anchor="middle">RevenueCat</text>
+  <text x="430" y="385" class="d-ts" text-anchor="middle">purchases · entitlements</text>
+
+  <rect x="596" y="340" width="220" height="64" rx="3" class="d-box"/>
+  <text x="706" y="366" class="d-t" text-anchor="middle">Copy proxy</text>
+  <text x="706" y="385" class="d-ts" text-anchor="middle">Cloudflare Worker · ours</text>
+
+  <line x1="592" y1="372" x2="536" y2="372" class="d-line" marker-end="url(#a1)"/>
+  <text x="564" y="362" class="d-lab" text-anchor="middle">verify pro</text>
+
+  <line x1="706" y1="408" x2="706" y2="466" class="d-line" marker-end="url(#a1)"/>
+  <text x="716" y="442" class="d-lab">messages.create</text>
+
+  <rect x="596" y="470" width="220" height="60" rx="3" class="d-box-e"/>
+  <text x="706" y="496" class="d-t" text-anchor="middle">Anthropic API</text>
+  <text x="706" y="515" class="d-ts" text-anchor="middle">claude-opus-5</text>
+
+  <text x="580" y="494" class="d-amb" text-anchor="end">the only place the</text>
+  <text x="580" y="508" class="d-amb" text-anchor="end">API key exists</text>
+</svg>
+</div>
+<figcaption><b>The app is the product; the network is optional.</b> Cut every arrow below the boundary and FeelGood still generates a menu, plays an authored session, and logs it. Only the video, the purchase, and the tone of one sentence live out there.</figcaption>
+</figure>
+</section>
+
+<section>
+<h2><span class="num">02</span>The data model</h2>
+<div class="prose">
+<p>Eight SwiftData entities, split down one line: <strong>things about her</strong> (profile, check-ins, plans, logs — all local, never transmitted) and <strong>the catalog</strong> (sessions, shipped as versioned JSON and seeded on first launch). The catalog is read-only to the app, which is what makes replacing it a data drop rather than a migration.</p>
+<p><code>Profile</code> is a singleton — there are no accounts, so there is exactly one. <code>Affinity</code> is the quiet one: it accumulates from how sessions actually felt and feeds back into scoring, so the engine gets better without ever asking her a question about it.</p>
+<p><code>ExerciseTerm</code> is the movement glossary — public-domain instructions for the moves an authored session names. It is reachable <em>only</em> from a step inside a session she is already doing, never as a browsable list, which is why it hangs off <code>Session</code> rather than sitting beside it.</p>
+</div>
+
+<figure>
+<div class="scroller">
+<svg viewBox="0 0 900 590" role="img" aria-label="Entity relationship diagram: Profile has many CheckIns and SessionRecords; a CheckIn produces one PlanDay; a PlanDay has many PlanItems; each PlanItem refers to one Session; Sessions are logged as SessionRecords which update Affinity; ExerciseTerm explains the steps inside a Session; ContentVersion seeds the catalog.">
+  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+
+  <rect x="40" y="60" width="240" height="168" rx="3" class="d-box"/>
+  <text x="56" y="84" class="d-t">Profile</text>
+  <text x="264" y="84" class="d-ts" text-anchor="end">singleton</text>
+  <line x1="40" y1="94" x2="280" y2="94" stroke="var(--rule)" stroke-width="1"/>
+  <text x="56" y="114" class="d-fld">availableActivities</text>
+  <text x="56" y="132" class="d-fld">equipment</text>
+  <text x="56" y="150" class="d-fld">cadenceTarget</text>
+  <text x="56" y="168" class="d-fld">realisticMinutes</text>
+  <text x="56" y="186" class="d-fld">intent</text>
+  <text x="56" y="204" class="d-fld">workArounds</text>
+  <text x="56" y="220" class="d-ts">↳ gates impact &amp; grip</text>
+
+  <rect x="330" y="60" width="240" height="140" rx="3" class="d-box"/>
+  <text x="346" y="84" class="d-t">CheckIn</text>
+  <line x1="330" y1="94" x2="570" y2="94" stroke="var(--rule)" stroke-width="1"/>
+  <text x="346" y="114" class="d-fld">date</text>
+  <text x="346" y="132" class="d-fld">energy</text>
+  <text x="346" y="150" class="d-fld">timeAvailable</text>
+  <text x="346" y="168" class="d-fld">body?</text>
+  <text x="346" y="190" class="d-ts">two taps, ten seconds</text>
+
+  <rect x="620" y="60" width="240" height="116" rx="3" class="d-box"/>
+  <text x="636" y="84" class="d-t">PlanDay</text>
+  <line x1="620" y1="94" x2="860" y2="94" stroke="var(--rule)" stroke-width="1"/>
+  <text x="636" y="114" class="d-fld">date</text>
+  <text x="636" y="132" class="d-fld">generatedAt</text>
+  <text x="636" y="150" class="d-fld">copySource</text>
+  <text x="636" y="168" class="d-ts">llm | template</text>
+
+  <rect x="620" y="220" width="240" height="140" rx="3" class="d-box"/>
+  <text x="636" y="244" class="d-t">PlanItem</text>
+  <line x1="620" y1="254" x2="860" y2="254" stroke="var(--rule)" stroke-width="1"/>
+  <text x="636" y="274" class="d-fld">course</text>
+  <text x="636" y="292" class="d-fld">sessionID</text>
+  <text x="636" y="310" class="d-fld">reasonCode</text>
+  <text x="636" y="328" class="d-fld">state</text>
+  <text x="636" y="350" class="d-ts">offered | done | swapped</text>
+
+  <rect x="330" y="230" width="240" height="170" rx="3" class="d-box-a"/>
+  <text x="346" y="254" class="d-ta">Session</text>
+  <text x="554" y="254" class="d-ts" text-anchor="end">catalog</text>
+  <line x1="330" y1="264" x2="570" y2="264" stroke="var(--accent)" stroke-width="1" opacity=".4"/>
+  <text x="346" y="284" class="d-fld">activity</text>
+  <text x="346" y="302" class="d-fld">qualities[]</text>
+  <text x="346" y="320" class="d-fld">durationMin</text>
+  <text x="346" y="338" class="d-fld">equipment[]</text>
+  <text x="346" y="356" class="d-fld">contraindications[]</text>
+  <text x="346" y="374" class="d-fld">source</text>
+  <text x="346" y="392" class="d-ts">.youtube(id) | .authored(steps)</text>
+
+  <rect x="330" y="430" width="240" height="130" rx="3" class="d-box-a"/>
+  <text x="346" y="454" class="d-ta">ExerciseTerm</text>
+  <text x="554" y="454" class="d-ts" text-anchor="end">glossary</text>
+  <line x1="330" y1="464" x2="570" y2="464" stroke="var(--accent)" stroke-width="1" opacity=".4"/>
+  <text x="346" y="484" class="d-fld">name · aka[]</text>
+  <text x="346" y="502" class="d-fld">instructions[]</text>
+  <text x="346" y="520" class="d-fld">muscles[]</text>
+  <text x="346" y="542" class="d-ts">public domain · text only</text>
+
+  <rect x="620" y="400" width="240" height="88" rx="3" class="d-box"/>
+  <text x="636" y="424" class="d-t">ContentVersion</text>
+  <line x1="620" y1="434" x2="860" y2="434" stroke="var(--rule)" stroke-width="1"/>
+  <text x="636" y="454" class="d-fld">version</text>
+  <text x="636" y="472" class="d-fld">seededAt</text>
+
+  <rect x="40" y="258" width="240" height="150" rx="3" class="d-box"/>
+  <text x="56" y="282" class="d-t">SessionRecord</text>
+  <line x1="40" y1="292" x2="280" y2="292" stroke="var(--rule)" stroke-width="1"/>
+  <text x="56" y="312" class="d-fld">sessionID</text>
+  <text x="56" y="330" class="d-fld">startedAt (UTC)</text>
+  <text x="56" y="348" class="d-fld">completedAt (UTC)</text>
+  <text x="56" y="366" class="d-fld">feeling</text>
+  <text x="56" y="388" class="d-ts">the only "score" we keep</text>
+
+  <rect x="40" y="440" width="240" height="108" rx="3" class="d-box"/>
+  <text x="56" y="464" class="d-t">Affinity</text>
+  <line x1="40" y1="474" x2="280" y2="474" stroke="var(--rule)" stroke-width="1"/>
+  <text x="56" y="494" class="d-fld">key (session|activity)</text>
+  <text x="56" y="512" class="d-fld">weight</text>
+  <text x="56" y="530" class="d-fld">updatedAt</text>
+
+  <line x1="284" y1="120" x2="326" y2="120" class="d-line" marker-end="url(#a2)"/>
+  <text x="305" y="111" class="d-lab" text-anchor="middle">1→*</text>
+
+  <line x1="574" y1="112" x2="616" y2="112" class="d-line" marker-end="url(#a2)"/>
+  <text x="595" y="103" class="d-lab" text-anchor="middle">1→1</text>
+
+  <line x1="740" y1="180" x2="740" y2="216" class="d-line" marker-end="url(#a2)"/>
+  <text x="750" y="202" class="d-lab">1→*</text>
+
+  <line x1="616" y1="290" x2="574" y2="290" class="d-line" marker-end="url(#a2)"/>
+  <text x="595" y="281" class="d-lab" text-anchor="middle">*→1</text>
+
+  <line x1="326" y1="330" x2="284" y2="330" class="d-line" marker-end="url(#a2)"/>
+  <text x="305" y="321" class="d-lab" text-anchor="middle">1→*</text>
+
+  <line x1="160" y1="412" x2="160" y2="436" class="d-line" marker-end="url(#a2)"/>
+  <text x="170" y="429" class="d-lab">updates</text>
+
+  <line x1="450" y1="426" x2="450" y2="404" class="d-line" marker-end="url(#a2)"/>
+  <text x="460" y="420" class="d-lab">explains steps</text>
+
+  <line x1="616" y1="470" x2="574" y2="470" class="d-line" marker-end="url(#a2)"/>
+  <text x="595" y="461" class="d-lab" text-anchor="middle">seeds</text>
+
+  <polyline points="700,396 700,380 574,380" class="d-line" marker-end="url(#a2)"/>
+  <text x="640" y="372" class="d-lab" text-anchor="middle">seeds</text>
+
+  <line x1="160" y1="232" x2="160" y2="254" class="d-line" marker-end="url(#a2)"/>
+  <text x="170" y="248" class="d-lab">1→*</text>
+</svg>
+</div>
+<figcaption><b>Nothing here is a streak.</b> There is no counter, no chain, no consecutive-day field — the schema has no way to represent "you broke it," which is the point. <code>PlanItem.state</code> records that something was swapped, but a swap is a signal, not a failure.</figcaption>
+</figure>
+</section>
+
+<section>
+<h2><span class="num">03</span>Why the screen never waits</h2>
+<div class="prose">
+<p>The engine is synchronous and local, so the menu is on screen before the network has been touched. The written line arrives afterward, or it doesn't. Both are fine, and only one of them is visible.</p>
+</div>
+
+<figure>
+<div class="scroller">
+<svg viewBox="0 0 920 330" role="img" aria-label="Sequence: two taps run the PlanEngine synchronously and the menu renders with template copy; a background request to the copy proxy either returns within two seconds and swaps the line in, or fails and nothing changes.">
+  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+
+  <text x="20" y="60" class="d-hd">ON SCREEN</text>
+  <text x="20" y="196" class="d-hd">IN BACKGROUND</text>
+
+  <rect x="140" y="80" width="150" height="52" rx="3" class="d-box"/>
+  <text x="215" y="111" class="d-t" text-anchor="middle">Two taps</text>
+
+  <rect x="330" y="80" width="170" height="52" rx="3" class="d-box-a"/>
+  <text x="415" y="111" class="d-ta" text-anchor="middle">PlanEngine</text>
+  <text x="415" y="152" class="d-lab" text-anchor="middle">sync · offline</text>
+
+  <rect x="540" y="80" width="190" height="52" rx="3" class="d-box"/>
+  <text x="635" y="111" class="d-t" text-anchor="middle">Menu on screen</text>
+  <text x="635" y="152" class="d-lab" text-anchor="middle">template copy</text>
+
+  <rect x="770" y="80" width="140" height="52" rx="3" class="d-box-e"/>
+  <text x="840" y="111" class="d-t" text-anchor="middle">Line swaps in</text>
+  <text x="840" y="152" class="d-lab" text-anchor="middle">≤ 2 s later</text>
+
+  <line x1="294" y1="106" x2="326" y2="106" class="d-line" marker-end="url(#a3)"/>
+  <line x1="504" y1="106" x2="536" y2="106" class="d-line" marker-end="url(#a3)"/>
+  <line x1="734" y1="106" x2="766" y2="106" class="d-dash" marker-end="url(#a3)"/>
+
+  <line x1="635" y1="136" x2="635" y2="206" class="d-dash" marker-end="url(#a3)"/>
+  <text x="645" y="176" class="d-lab">fire and forget</text>
+
+  <rect x="540" y="210" width="250" height="48" rx="3" class="d-box-e"/>
+  <text x="665" y="232" class="d-t" text-anchor="middle">Worker → Anthropic</text>
+  <text x="665" y="248" class="d-ts" text-anchor="middle">picks · reason codes · coarse state</text>
+
+  <polyline points="794,234 866,234 866,136" class="d-dash" marker-end="url(#a3)"/>
+  <text x="876" y="192" class="d-lab">success</text>
+
+  <text x="140" y="292" class="d-amb">timeout · offline · 429 · malformed → nothing happens.</text>
+  <text x="140" y="308" class="d-amb">The template line stays. She never learns there was a network call.</text>
+</svg>
+</div>
+<figcaption><b>This is the cut-list insurance policy.</b> If week four runs out of hours, the copy layer gets deleted and the product loses a little warmth and none of its function — which is exactly why it is safe to build last.</figcaption>
+</figure>
+</section>
+
+<section>
+<h2><span class="num">04</span>The first boundary: a secret</h2>
+<div class="prose">
+<p>An <code>.ipa</code> is a zip file. A key inside it — in source, in a plist, in the keychain, obfuscated, it makes no difference — is a published key. So the key lives in a Worker and the app never holds it.</p>
+<p>Once that hop exists it earns its keep twice over: the Worker asks RevenueCat whether this install is actually <code>pro</code> <em>before</em> spending a token, so free installs cannot reach the model at all. Cost scales with subscribers, not downloads.</p>
+</div>
+
+<figure>
+<div class="scroller">
+<svg viewBox="0 0 900 300" role="img" aria-label="The app posts to a Cloudflare Worker, which validates the payload, checks the pro entitlement, applies a rate limit, then calls the Anthropic API using a key held only as a Worker secret. A failed entitlement check returns 403 with no tokens spent.">
+  <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+
+  <rect x="40" y="92" width="140" height="48" rx="3" class="d-box"/>
+  <text x="110" y="121" class="d-t" text-anchor="middle">iOS app</text>
+
+  <rect x="210" y="50" width="470" height="180" rx="4" fill="none" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="226" y="76" class="d-hd">CLOUDFLARE WORKER</text>
+
+  <rect x="232" y="92" width="124" height="48" rx="3" class="d-box"/>
+  <text x="294" y="121" class="d-t" text-anchor="middle">validate</text>
+
+  <rect x="376" y="92" width="124" height="48" rx="3" class="d-box"/>
+  <text x="438" y="121" class="d-t" text-anchor="middle">has pro?</text>
+
+  <rect x="520" y="92" width="124" height="48" rx="3" class="d-box"/>
+  <text x="582" y="121" class="d-t" text-anchor="middle">rate limit</text>
+
+  <line x1="184" y1="116" x2="228" y2="116" class="d-line" marker-end="url(#a4)"/>
+  <line x1="360" y1="116" x2="372" y2="116" class="d-line" marker-end="url(#a4)"/>
+  <line x1="504" y1="116" x2="516" y2="116" class="d-line" marker-end="url(#a4)"/>
+  <line x1="648" y1="116" x2="736" y2="116" class="d-line" marker-end="url(#a4)"/>
+
+  <rect x="232" y="164" width="240" height="40" rx="3" class="d-chip"/>
+  <text x="352" y="189" class="d-amb" text-anchor="middle">ANTHROPIC_API_KEY</text>
+  <text x="232" y="222" class="d-amb">Worker secret · separate dev and prod · never in the binary</text>
+
+  <rect x="740" y="92" width="140" height="48" rx="3" class="d-box-e"/>
+  <text x="810" y="121" class="d-t" text-anchor="middle">Anthropic</text>
+
+  <polyline points="450,144 450,152 510,152 510,256" class="d-line" marker-end="url(#a4)"/>
+  <text x="520" y="252" class="d-lab">no → 403. Zero tokens spent.</text>
+  <text x="520" y="268" class="d-lab">Free installs never reach the model.</text>
+</svg>
+</div>
+<figcaption><b>Server-side entitlement checking is the load-bearing part.</b> A client that says "trust me, I'm a subscriber" is a client that will be told to say that. The Worker asks RevenueCat directly.</figcaption>
+</figure>
+</section>
+
+<section>
+<h2><span class="num">05</span>The second boundary: the paywall</h2>
+<div class="prose">
+<p>YouTube's developer policies are unambiguous: you cannot charge a fee for content that YouTube offers free. Simone's classes therefore can never sit behind the Pro wall — not one of them.</p>
+<p>That reads like a constraint on the business model and is actually a description of it. The paywall doesn't run between free content and paid content; it runs between <em>content</em> and <em>the decision about which content</em>. YouTube has her entire library and no opinion about which class matters this morning. The opinion is the product.</p>
+</div>
+
+<figure>
+<div class="scroller">
+<svg viewBox="0 0 900 300" role="img" aria-label="The paywall boundary sits between the free content layer — the YouTube catalog, authored micro-sessions, a static menu and logging — and the Pro layer, which contains the daily check-in, history and coverage balancing, coaching voice, and Look Back.">
+  <defs><marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+
+  <rect x="40" y="56" width="380" height="200" rx="4" class="d-zone"/>
+  <rect x="470" y="56" width="390" height="200" rx="4" class="d-zone-a"/>
+
+  <text x="56" y="80" class="d-hd">ALWAYS FREE</text>
+  <text x="486" y="80" class="d-hd">PRO</text>
+
+  <rect x="60" y="96" width="160" height="56" rx="3" class="d-box"/>
+  <text x="140" y="120" class="d-t" text-anchor="middle">Video catalog</text>
+  <text x="140" y="138" class="d-ts" text-anchor="middle">YouTube · embedded</text>
+
+  <rect x="240" y="96" width="160" height="56" rx="3" class="d-box"/>
+  <text x="320" y="120" class="d-t" text-anchor="middle">Micro-sessions</text>
+  <text x="320" y="138" class="d-ts" text-anchor="middle">authored · offline</text>
+
+  <rect x="60" y="172" width="340" height="52" rx="3" class="d-box"/>
+  <text x="230" y="197" class="d-t" text-anchor="middle">Library · static daily menu · logging</text>
+
+  <rect x="486" y="96" width="170" height="56" rx="3" class="d-box-a"/>
+  <text x="571" y="120" class="d-ta" text-anchor="middle">Today's check-in</text>
+  <text x="571" y="138" class="d-ts" text-anchor="middle">the plan adapts</text>
+
+  <rect x="676" y="96" width="170" height="56" rx="3" class="d-box-a"/>
+  <text x="761" y="120" class="d-ta" text-anchor="middle">History + coverage</text>
+  <text x="761" y="138" class="d-ts" text-anchor="middle">recovery · qualities</text>
+
+  <rect x="486" y="172" width="170" height="56" rx="3" class="d-box-a"/>
+  <text x="571" y="196" class="d-ta" text-anchor="middle">Coaching voice</text>
+  <text x="571" y="214" class="d-ts" text-anchor="middle">written for today</text>
+
+  <rect x="676" y="172" width="170" height="56" rx="3" class="d-box-a"/>
+  <text x="761" y="196" class="d-ta" text-anchor="middle">Look Back</text>
+  <text x="761" y="214" class="d-ts" text-anchor="middle">reflection · specials</text>
+
+  <line x1="445" y1="40" x2="445" y2="272" class="d-bnd"/>
+  <text x="445" y="32" class="d-lab" text-anchor="middle">paywall</text>
+
+  <line x1="404" y1="124" x2="482" y2="124" class="d-line" marker-end="url(#a5)"/>
+  <text x="443" y="146" class="d-lab" text-anchor="middle">feeds</text>
+
+  <text x="40" y="288" class="d-amb">YouTube policy: content offered free on YouTube cannot be placed behind a fee.</text>
+</svg>
+</div>
+<figcaption><b>The same catalog serves both sides.</b> A free user can watch every class Simone has ever posted. A subscriber is buying the thing that decides, out of a hundred options and a week with no slack in it, which one is right for this particular Tuesday.</figcaption>
+</figure>
+</section>
+
+<section>
+<h2><span class="num">06</span>Module map</h2>
+<div class="prose">
+<p>Every external dependency sits behind a protocol with a fake implementation, so the whole app runs in tests and SwiftUI previews with no network and no store account.</p>
+</div>
+
+<table>
+  <thead><tr><th>Module</th><th>Holds</th><th>Depends on</th></tr></thead>
+  <tbody>
+    <tr><td>Engine/</td><td><code>PlanEngine</code>, scoring, reason codes. Pure Swift.</td><td>nothing</td></tr>
+    <tr><td>Models/</td><td>The eight SwiftData entities in diagram 02.</td><td>SwiftData</td></tr>
+    <tr><td>Content/</td><td>Bundled catalog JSON, movement glossary, seeding, version migration.</td><td>Models</td></tr>
+    <tr><td>Services/</td><td><code>ContentStore</code> · <code>CopyService</code> · <code>PurchaseService</code> · <code>NotificationService</code> · <code>LogService</code></td><td>protocols only</td></tr>
+    <tr><td>Features/</td><td>Onboarding · Today · CheckIn · Player · Complete · LookBack · Library · Paywall · Settings</td><td>Engine, Services</td></tr>
+    <tr><td>DesignSystem/</td><td>Tokens, components, motion.</td><td>nothing</td></tr>
+    <tr><td>worker/</td><td>The copy proxy. Separate deploy, separate repo path.</td><td>Anthropic, RevenueCat</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+<b>Two things are deliberately absent.</b> There is no analytics SDK collecting health data and no backend holding user records — the profile, the check-ins, and the logs never leave the phone. The Worker sees session IDs, reason codes, and three coarse words about energy and time. It never sees a name, a note, or a person.
+</div>
+</section>
+
+<footer>
+FeelGood · architecture v0.1 · 20 August 2026 · companion to <code>docs/PRD.md</code>
+</footer>
+
+</div>
