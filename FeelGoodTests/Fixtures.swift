@@ -48,7 +48,9 @@ enum Fixture {
     static func profile(
         activities: Set<Activity> = [.pilates, .walking, .strength, .stretching, .breathwork, .dance, .carries],
         equipment: Set<Equipment> = [.none, .mat, .weights, .outdoor],
+        places: Set<Place> = [.home, .outdoors, .gym],
         cadence: Cadence = .mostDays,
+        moments: MovementMoments = .aCouple,
         realisticMinutes: Int = 30,
         bestTimeOfDay: TimeOfDay = .varies,
         intent: Intent = .strengthen,
@@ -57,7 +59,9 @@ enum Fixture {
         PlanProfile(
             availableActivities: activities,
             equipment: equipment,
+            places: places,
             cadence: cadence,
+            moments: moments,
             realisticMinutes: realisticMinutes,
             bestTimeOfDay: bestTimeOfDay,
             intent: intent,
@@ -97,6 +101,7 @@ enum Fixture {
         intensity: Int,
         course: Course,
         equipment: [Equipment] = [.none],
+        places: [Place] = [.home],
         energyFit: [Energy] = Energy.allCases,
         intents: [Intent] = [.strengthen],
         contraindications: [WorkAround] = [],
@@ -112,6 +117,7 @@ enum Fixture {
             intensity: intensity,
             energyFit: energyFit,
             equipment: equipment,
+            places: places,
             bodyFocus: [.full],
             contraindications: contraindications,
             intents: intents,
@@ -143,13 +149,13 @@ enum Fixture {
                 energyFit: [.steady, .strong]),
         session(id: "m-strength-30", activity: .strength, qualities: [.strength, .grip],
                 durationMin: 30, intensity: 4, course: .main, equipment: [.weights],
-                energyFit: [.strong]),
+                places: [.home, .gym], energyFit: [.strong]),
         session(id: "m-video-20", activity: .pilates, qualities: [.strength],
                 durationMin: 20, intensity: 3, course: .main, equipment: [.mat],
                 energyFit: [.steady, .strong], video: true),
         session(id: "m-walk-20", activity: .walking, qualities: [.endurance],
                 durationMin: 20, intensity: 2, course: .main, equipment: [.outdoor],
-                intents: [.energize, .calm]),
+                places: [.outdoors], intents: [.energize, .calm]),
 
         // Sides.
         session(id: "s-carry", activity: .carries, qualities: [.grip],
@@ -164,7 +170,7 @@ enum Fixture {
         // Special — needs a pool, and is planned ahead rather than picked today.
         session(id: "sp-swim", activity: .swimming, qualities: [.endurance],
                 durationMin: 45, intensity: 3, course: .special, equipment: [.pool],
-                energyFit: [.steady, .strong], intents: [.energize]),
+                places: [.pool], energyFit: [.steady, .strong], intents: [.energize]),
     ]
 
     static var engine: PlanEngine { PlanEngine(catalog: catalog) }

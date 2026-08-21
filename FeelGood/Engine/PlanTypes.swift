@@ -27,6 +27,27 @@ nonisolated enum Cadence: String, Codable, CaseIterable, Sendable {
     }
 }
 
+/// How many times a day you'd like intentional movement. Shapes the menu, not
+/// the workload — the same twenty minutes arranged differently. Never a target,
+/// never counted back.
+nonisolated enum MovementMoments: String, Codable, CaseIterable, Sendable {
+    /// One proper session. A hero Main and very little else.
+    case once
+    /// A main thing and something small.
+    case aCouple
+    /// Several small things attached to what's already happening.
+    case sprinkled
+
+    /// How many Sides belong on the menu.
+    var sideCount: Int {
+        switch self {
+        case .once: 0
+        case .aCouple: 1
+        case .sprinkled: 2
+        }
+    }
+}
+
 nonisolated enum TimeOfDay: String, Codable, CaseIterable, Sendable {
     case morning, midday, evening, varies
 }
@@ -35,7 +56,11 @@ nonisolated enum TimeOfDay: String, Codable, CaseIterable, Sendable {
 nonisolated struct PlanProfile: Hashable, Sendable {
     var availableActivities: Set<Activity>
     var equipment: Set<Equipment>
+    /// Where you can realistically be. Always includes `home`: there is always
+    /// the floor you're standing on.
+    var places: Set<Place>
     var cadence: Cadence
+    var moments: MovementMoments
     /// What's realistic on a normal day: 10 / 20 / 30 / 45.
     var realisticMinutes: Int
     var bestTimeOfDay: TimeOfDay
@@ -45,7 +70,9 @@ nonisolated struct PlanProfile: Hashable, Sendable {
     init(
         availableActivities: Set<Activity>,
         equipment: Set<Equipment> = [.none],
+        places: Set<Place> = [.home],
         cadence: Cadence = .mostDays,
+        moments: MovementMoments = .aCouple,
         realisticMinutes: Int = 20,
         bestTimeOfDay: TimeOfDay = .varies,
         intent: Intent = .energize,
@@ -53,7 +80,9 @@ nonisolated struct PlanProfile: Hashable, Sendable {
     ) {
         self.availableActivities = availableActivities
         self.equipment = equipment.union([.none])
+        self.places = places.union([.home])
         self.cadence = cadence
+        self.moments = moments
         self.realisticMinutes = realisticMinutes
         self.bestTimeOfDay = bestTimeOfDay
         self.intent = intent
@@ -77,6 +106,25 @@ nonisolated enum TimeBudget: String, Codable, CaseIterable, Sendable {
     }
 }
 
+/// Where you're willing to be today. Optional, and defaults to whatever the
+/// profile already says — but on a hard day it carries more signal than
+/// anything else on the sheet.
+nonisolated enum PlaceIntent: String, Codable, CaseIterable, Sendable {
+    case stayingIn
+    case happyToGoOut
+    case atTheGym
+
+    /// Narrows the profile's places. `home` survives all three, because it
+    /// means "the floor you're standing on" rather than "your house".
+    var places: Set<Place> {
+        switch self {
+        case .stayingIn: [.home]
+        case .happyToGoOut: [.home, .outdoors, .studio, .pool]
+        case .atTheGym: [.home, .gym]
+        }
+    }
+}
+
 nonisolated enum BodyState: String, Codable, CaseIterable, Sendable {
     case sore, stiff, stressed, cramping, good
 }
@@ -85,11 +133,14 @@ nonisolated enum BodyState: String, Codable, CaseIterable, Sendable {
 nonisolated struct PlanCheckIn: Hashable, Sendable {
     var energy: Energy
     var time: TimeBudget
+    /// `nil` falls back to everything the profile allows.
+    var place: PlaceIntent?
     var body: BodyState?
 
-    init(energy: Energy, time: TimeBudget, body: BodyState? = nil) {
+    init(energy: Energy, time: TimeBudget, place: PlaceIntent? = nil, body: BodyState? = nil) {
         self.energy = energy
         self.time = time
+        self.place = place
         self.body = body
     }
 }
