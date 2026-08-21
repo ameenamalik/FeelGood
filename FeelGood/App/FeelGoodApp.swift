@@ -43,21 +43,39 @@ struct FeelGoodApp: App {
     }
 }
 
-/// Placeholder root. Onboarding and the Today menu land in week 2; this exists
-/// so the target builds and runs while the engine and content go in.
+/// Root routing. Onboarding lands in week 2; until then the menu is built from
+/// a stand-in profile so the real engine and the real catalog drive the screen.
 struct RootView: View {
     var body: some View {
-        ZStack {
-            FGColor.cream.ignoresSafeArea()
-            VStack(spacing: FGSpace.s) {
-                Text("FeelGood")
-                    .font(FGFont.display)
-                    .foregroundStyle(FGColor.ink)
-                Text("Here's today.")
-                    .font(FGFont.reason)
-                    .foregroundStyle(FGColor.inkMuted)
-            }
+        if let store = try? ContentStore.bundled() {
+            TodayView(model: TodayModel(store: store, profile: .standIn, now: Date()))
+        } else {
+            // The catalog is bundled, so this is a build problem, not a user
+            // one — but it still must not be a blank screen.
+            ContentUnavailableView(
+                "Content didn't load",
+                systemImage: "leaf",
+                description: Text("Reinstalling the app should fix it.")
+            )
         }
+    }
+}
+
+extension PlanProfile {
+    /// Stands in for onboarding: a mat, some weights, and the outdoors.
+    static var standIn: PlanProfile {
+        PlanProfile(
+            availableActivities: [
+                .pilates, .yoga, .stretching, .walking, .strength,
+                .breathwork, .qigong, .dance, .carries
+            ],
+            equipment: [.none, .mat, .weights, .outdoor],
+            cadence: .mostDays,
+            realisticMinutes: 30,
+            bestTimeOfDay: .morning,
+            intent: .strengthen,
+            workArounds: []
+        )
     }
 }
 
