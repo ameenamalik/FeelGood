@@ -58,6 +58,15 @@ nonisolated enum FGColor {
     /// The soft middle of the cloud gradient.
     static let lavender = Color(light: 0xB9C9F2, dark: 0xB9C9F2)
 
+    /// Type sitting *on* one of the accents above.
+    ///
+    /// Not `ink`. The accents are the same colour in both appearances, but
+    /// `ink` flips to near-white in the dark — so `ink` on `lime` silently
+    /// becomes white-on-lime at night, which is the one thing the rule at the
+    /// top of this file forbids. This one does not flip, because the surface
+    /// underneath it doesn't either.
+    static let inkOnAccent = Color(light: 0x14171A, dark: 0x14171A)
+
     // MARK: Accents darkened enough to carry text or an icon on a light page
 
     /// 5.7:1 on white.
@@ -73,6 +82,67 @@ nonisolated enum FGColor {
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
+
+    /// The wash's colours — see `FGBrandWash`, which blooms them out from the
+    /// bottom of the screen. Warm at the core, cool at the edge.
+    ///
+    /// Unlike the accents, these *do* change with the appearance, and they have
+    /// to. A wash is a background, so `ink` is drawn over it; if the wash
+    /// stayed pastel at night, `ink` would have flipped to near-white and the
+    /// result would be white-on-pink. Light pastels, dark jewel tones, `ink`
+    /// legible on both.
+    ///
+    /// A bare `Gradient` rather than a `RadialGradient` because the radius has
+    /// to come from the frame it is drawn into, not from a constant here.
+    /// Rose at the core, a warm near-neutral in the middle, sky at the edge.
+    /// The middle stop is what keeps this out of purple: interpolating pink
+    /// straight to blue runs through lavender, so the ramp is routed around it.
+    ///
+    /// The light values are pale on purpose. `inkMuted` captions sit on this
+    /// wash, and at full saturation they measured 4.3:1 — under the 4.5:1 floor
+    /// before the grain was even counted. These clear it with the grain's
+    /// darkest trough included.
+    static let washGradient = Gradient(colors: [
+        Color(light: 0xFBDDE5, dark: 0x3D2530),
+        Color(light: 0xF9EAE2, dark: 0x2B2A31),
+        Color(light: 0xCFE8F7, dark: 0x11293A),
+    ])
+}
+
+/// A selectable answer's colour: the fill, and the only text colour that
+/// survives on it. Pairing them here means a call site cannot put white type on
+/// a pastel by accident — the rule from the top of this file, made structural.
+nonisolated struct FGAccent: Equatable {
+    let fill: Color
+    let text: Color
+
+    static let ink      = FGAccent(fill: FGColor.ink,      text: FGColor.bg)
+    static let sky      = FGAccent(fill: FGColor.sky,      text: FGColor.inkOnAccent)
+    static let lime     = FGAccent(fill: FGColor.lime,     text: FGColor.inkOnAccent)
+    static let lavender = FGAccent(fill: FGColor.lavender, text: FGColor.inkOnAccent)
+    static let pink     = FGAccent(fill: FGColor.pink,     text: FGColor.inkOnAccent)
+}
+
+// MARK: The check-in's four questions, one colour each
+
+// Four colours rather than one so the sheet reads as four short moments
+// instead of one long form. The colour is never the only thing distinguishing
+// a selected answer — see `FGChoice`, which also thickens the border.
+
+nonisolated extension Energy {
+    var checkInAccent: FGAccent { .sky }
+}
+
+nonisolated extension TimeBudget {
+    var checkInAccent: FGAccent { .lime }
+}
+
+nonisolated extension PlaceIntent {
+    var checkInAccent: FGAccent { .lavender }
+}
+
+nonisolated extension BodyState {
+    var checkInAccent: FGAccent { .pink }
 }
 
 nonisolated extension Course {
@@ -88,9 +158,11 @@ nonisolated extension Course {
         }
     }
 
-    /// Ink on every accent; the page colour on the ink-filled one.
+    /// Ink on every accent; the page colour on the ink-filled one. `.special`
+    /// is the exception that keeps `bg`, because its fill flips with the
+    /// appearance and so must its text.
     var accentText: Color {
-        self == .special ? FGColor.bg : FGColor.ink
+        self == .special ? FGColor.bg : FGColor.inkOnAccent
     }
 }
 

@@ -5,6 +5,10 @@
 //  Two taps, ten seconds. The third is optional and stays optional — the app
 //  never blocks on input, and there is no way to answer this wrongly.
 //
+//  It should also feel like being asked, not like filling in a form: each
+//  question carries its own colour, each answer its own small picture, and the
+//  four groups arrive one after the other rather than all at once.
+//
 
 import SwiftUI
 
@@ -16,7 +20,9 @@ struct CheckInSheet: View {
     @State private var time: TimeBudget?
     @State private var place: PlaceIntent?
     @State private var body_: BodyState?
-    @Environment(\.dismiss) private var dismiss
+    @State private var hasAppeared = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     init(current: PlanCheckIn?, onDone: @escaping (PlanCheckIn) -> Void) {
         self.current = current
@@ -33,78 +39,143 @@ struct CheckInSheet: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
-                    Text("How's today?")
-                        .font(FGFont.title)
-                        .foregroundStyle(FGColor.ink)
+                    title
 
-                    question("What have you got in the tank?") {
+                    question("What have you got in the tank?", accent: .sky, index: 0) {
                         ForEach(Energy.allCases, id: \.self) { option in
-                            FGChoice(title: option.checkInLabel, isSelected: energy == option) {
-                                withAnimation(FGMotion.gentle) { energy = option }
+                            FGChoice(
+                                title: option.checkInLabel,
+                                emoji: option.checkInEmoji,
+                                accent: option.checkInAccent,
+                                isSelected: energy == option
+                            ) {
+                                energy = option
                             }
                         }
                     }
 
-                    question("How much time, really?") {
+                    question("How much time, really?", accent: .lime, index: 1) {
                         ForEach(TimeBudget.allCases, id: \.self) { option in
-                            FGChoice(title: option.checkInLabel, isSelected: time == option) {
-                                withAnimation(FGMotion.gentle) { time = option }
+                            FGChoice(
+                                title: option.checkInLabel,
+                                emoji: option.checkInEmoji,
+                                detail: option.checkInDetail,
+                                accent: option.checkInAccent,
+                                isSelected: time == option
+                            ) {
+                                time = option
                             }
                         }
                     }
 
-                    question("Where are you today? (optional)") {
+                    question("Where are you today? (optional)", accent: .lavender, index: 2) {
                         ForEach(PlaceIntent.allCases, id: \.self) { option in
-                            FGChoice(title: option.checkInLabel, isSelected: place == option) {
-                                withAnimation(FGMotion.gentle) {
-                                    place = place == option ? nil : option
-                                }
+                            FGChoice(
+                                title: option.checkInLabel,
+                                emoji: option.checkInEmoji,
+                                accent: option.checkInAccent,
+                                isSelected: place == option
+                            ) {
+                                place = place == option ? nil : option
                             }
                         }
                     }
 
-                    question("Anything going on in your body? (optional)") {
+                    question("Anything going on in your body? (optional)", accent: .pink, index: 3) {
                         ForEach(BodyState.allCases, id: \.self) { option in
-                            FGChoice(title: option.checkInLabel, isSelected: body_ == option) {
-                                withAnimation(FGMotion.gentle) {
-                                    body_ = body_ == option ? nil : option
-                                }
+                            FGChoice(
+                                title: option.checkInLabel,
+                                emoji: option.checkInEmoji,
+                                accent: option.checkInAccent,
+                                isSelected: body_ == option
+                            ) {
+                                body_ = body_ == option ? nil : option
                             }
                         }
                     }
 
-                    FGPrimaryButton(title: "Show me today") {
-                        onDone(PlanCheckIn(
-                            energy: energy ?? .steady,
-                            time: time ?? .some,
-                            place: place,
-                            body: body_
-                        ))
-                    }
+                    FGPrimaryButton(title: "Show me today") { finish() }
 
-                    FGQuietButton("Skip — just show me something") {
-                        onDone(PlanCheckIn(energy: energy ?? .steady, time: time ?? .some, place: place, body: body_))
-                    }
-                    .frame(maxWidth: .infinity)
+                    FGQuietButton("Skip — just show me something") { finish() }
+                        .frame(maxWidth: .infinity)
                 }
                 .padding(FGSpace.page)
             }
         }
+        .fgAnimation(FGMotion.gentle, value: selection)
+        .sensoryFeedback(.selection, trigger: selection)
+        .onAppear { hasAppeared = true }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
     }
 
-    private func question<Options: View>(_ title: String, @ViewBuilder options: () -> Options) -> some View {
+    // MARK: Pieces
+
+    private var title: some View {
+        Text("How's today?")
+            .font(FGFont.title)
+            .foregroundStyle(FGColor.ink)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    private func question<Options: View>(
+        _ title: String,
+        accent: FGAccent,
+        index: Int,
+        @ViewBuilder options: () -> Options
+    ) -> some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
-            Text(title)
-                .font(FGFont.body.weight(.medium))
-                .foregroundStyle(FGColor.ink)
-            // Wraps rather than truncating when the type is large.
-            FlowRow(spacing: FGSpace.s) { options() }
+            HStack(spacing: FGSpace.s) {
+                // Ties the question to the colour its answers fill with.
+                Capsule()
+                    .fill(accent.fill)
+                    .frame(width: 4, height: 18)
+                    .accessibilityHidden(true)
+
+                Text(title)
+                    .font(FGFont.body.weight(.medium))
+                    .foregroundStyle(FGColor.ink)
+            }
+
+            // Wraps rather than truncating when the type is large, and drops
+            // to a single column once the type is large enough that three
+            // would break words apart.
+            FlowRow(spacing: FGSpace.s, maxPerRow: typeSize.isAccessibilitySize ? 1 : 3) { options() }
         }
+        .opacity(hasAppeared ? 1 : 0)
+        .offset(y: hasAppeared ? 0 : 12)
+        .animation(
+            reduceMotion ? .none : FGMotion.settle.delay(FGMotion.stagger(index)),
+            value: hasAppeared
+        )
+    }
+
+    // MARK: Answers
+
+    /// Every answer as it actually stands, including the unanswered ones. The
+    /// defaults in `answers` would swallow the first tap on "Steady" — nothing
+    /// would appear to change — so animation and haptics key off this instead.
+    private var selection: [String?] {
+        [energy?.rawValue, time?.rawValue, place?.rawValue, body_?.rawValue]
+    }
+
+    /// What gets handed back: the unanswered questions fall back to the middle,
+    /// because skipping is always allowed to produce a menu.
+    private var answers: PlanCheckIn {
+        PlanCheckIn(energy: energy ?? .steady, time: time ?? .some, place: place, body: body_)
+    }
+
+    private func finish() {
+        onDone(answers)
     }
 }
 
-#Preview {
+#Preview("Empty") {
     CheckInSheet(current: nil) { _ in }
+}
+
+#Preview("Answered") {
+    CheckInSheet(
+        current: PlanCheckIn(energy: .low, time: .aLittle, place: .stayingIn, body: .stiff)
+    ) { _ in }
 }
