@@ -12,6 +12,9 @@ struct TodayView: View {
     @State var model: TodayModel
     @State private var isCheckingIn = false
     @State private var selected: MenuItem?
+    #if DEBUG
+    @State private var isDebugging = false
+    #endif
 
     var body: some View {
         ZStack {
@@ -38,6 +41,11 @@ struct TodayView: View {
         .sheet(item: $selected) { item in
             SessionDetailView(item: item, model: model)
         }
+        #if DEBUG
+        .sheet(isPresented: $isDebugging) {
+            DebugMenu(content: model.store) { model.reload() }
+        }
+        #endif
     }
 
     private var header: some View {
@@ -47,6 +55,10 @@ struct TodayView: View {
                 .foregroundStyle(FGColor.inkMuted)
                 .textCase(.uppercase)
                 .tracking(1.2)
+                #if DEBUG
+                // Long-press the date to fabricate history. Debug builds only.
+                .onLongPressGesture(minimumDuration: 0.7) { isDebugging = true }
+                #endif
 
             Text(model.menu.headline)
                 .font(FGFont.display)

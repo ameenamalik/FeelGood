@@ -224,6 +224,13 @@ final class SessionRecord {
         }
     }
 
+    /// Mirrors `HistoryEntry.wasCompleted`, so callers don't have to build a
+    /// history entry just to ask whether this happened.
+    var wasCompleted: Bool {
+        if case .completed = outcome { return true }
+        return false
+    }
+
     var outcome: HistoryOutcome {
         switch outcomeRaw {
         case "completed": .completed(feel: feelRaw.flatMap(Feel.init(rawValue:)))

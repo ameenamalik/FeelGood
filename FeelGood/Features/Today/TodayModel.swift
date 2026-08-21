@@ -11,7 +11,7 @@ import Observation
 
 @Observable
 final class TodayModel {
-    private let store: any ContentProviding
+    let store: any ContentProviding
     private let engine: PlanEngine
     private let log: any SessionLogging
     private let calendar: Calendar
@@ -62,6 +62,15 @@ final class TodayModel {
             context: PlanContext(now: now, calendar: calendar),
             affinity: log.affinity()
         )
+    }
+
+    /// Rebuilds against whatever the store now holds. Used when history
+    /// changes underneath the screen rather than because of it.
+    func reload(now: Date = Date()) {
+        history = log.history(before: now)
+        swappedAway = []
+        menu = engine.makeMenu(input(now: now))
+        refreshCompletedToday(now: now)
     }
 
     /// The check-in regenerates the menu in place.
