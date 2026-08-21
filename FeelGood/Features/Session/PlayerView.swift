@@ -10,8 +10,12 @@ import SwiftUI
 
 struct PlayerView: View {
     let session: Session
-    /// Called on finishing or leaving. Logging and affinity land in week 3.
-    let onFinish: () -> Void
+    /// Called on finishing or leaving. `feel` is nil when the session was left
+    /// early or the question was skipped — both are fine, and both still count
+    /// as having shown up.
+    let onFinish: (Feel?) -> Void
+    /// When Start was tapped, so the record reflects real elapsed time.
+    let startedAt: Date
 
     @Environment(\.dismiss) private var dismiss
     @State private var index = 0
@@ -47,7 +51,7 @@ struct PlayerView: View {
     private func running(_ step: Step) -> some View {
         VStack(spacing: FGSpace.l) {
             HStack {
-                FGQuietButton("Leave", systemImage: "xmark") { onFinish() }
+                FGQuietButton("Leave", systemImage: "xmark") { onFinish(nil) }
                 Spacer()
                 Text("\(index + 1) of \(steps.count)")
                     .font(FGFont.label)
@@ -99,8 +103,7 @@ struct PlayerView: View {
             HStack(spacing: FGSpace.m) {
                 ForEach(Feel.allCases, id: \.self) { feel in
                     Button {
-                        // Week 3 wires this to affinity and the session log.
-                        onFinish()
+                        onFinish(feel)
                     } label: {
                         VStack(spacing: FGSpace.xs) {
                             Image(systemName: symbol(for: feel))
@@ -118,6 +121,7 @@ struct PlayerView: View {
                     .buttonStyle(.plain)
                 }
             }
+            FGQuietButton("Skip") { onFinish(nil) }
             Spacer()
         }
         .padding(FGSpace.page)

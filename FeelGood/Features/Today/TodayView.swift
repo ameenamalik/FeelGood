@@ -64,14 +64,16 @@ struct TodayView: View {
                     if item.course == .main {
                         MenuItemCard(
                             item: item,
-                            canSwap: model.canSwap(item),
+                            isDone: model.isCompleted(item),
+                            canSwap: model.canSwap(item) && !model.isCompleted(item),
                             onOpen: { selected = item },
                             onSwap: { withAnimation(FGMotion.swap) { model.swap(item) } }
                         )
                     } else {
                         MenuItemRow(
                             item: item,
-                            canSwap: model.canSwap(item),
+                            isDone: model.isCompleted(item),
+                            canSwap: model.canSwap(item) && !model.isCompleted(item),
                             onOpen: { selected = item },
                             onSwap: { withAnimation(FGMotion.swap) { model.swap(item) } }
                         )
@@ -121,6 +123,7 @@ struct CourseTag: View {
 
 private struct MenuItemCard: View {
     let item: MenuItem
+    let isDone: Bool
     let canSwap: Bool
     let onOpen: () -> Void
     let onSwap: () -> Void
@@ -128,7 +131,10 @@ private struct MenuItemCard: View {
     var body: some View {
         FGCard(isHighlighted: item.course == .main) {
             VStack(alignment: .leading, spacing: FGSpace.s) {
-                CourseTag(course: item.course)
+                HStack(spacing: FGSpace.s) {
+                    CourseTag(course: item.course)
+                    if isDone { DoneMark() }
+                }
 
                 Text(item.session.title)
                     .font(FGFont.itemTitle)
@@ -159,9 +165,24 @@ private struct MenuItemCard: View {
     }
 }
 
+/// Marks something already done today. Not a score, not a count, and nothing
+/// accrues from it — it's here so a finished item stops asking to be started.
+private struct DoneMark: View {
+    var body: some View {
+        HStack(spacing: FGSpace.xs) {
+            Image(systemName: "checkmark")
+            Text("Done")
+        }
+        .font(FGFont.label)
+        .foregroundStyle(FGColor.limeDeep)
+        .accessibilityLabel("Done today")
+    }
+}
+
 /// Everything that isn't the Main. Same information, one glance.
 private struct MenuItemRow: View {
     let item: MenuItem
+    let isDone: Bool
     let canSwap: Bool
     let onOpen: () -> Void
     let onSwap: () -> Void
@@ -175,6 +196,7 @@ private struct MenuItemRow: View {
                         Text(item.session.durationLabel)
                             .font(FGFont.label)
                             .foregroundStyle(FGColor.inkMuted)
+                        if isDone { DoneMark() }
                     }
                     Text(item.session.title)
                         .font(FGFont.body.weight(.medium))
@@ -213,6 +235,7 @@ private struct MenuItemRow: View {
             profile: PlanProfile(
                 availableActivities: Set(Activity.allCases),
                 equipment: [.none, .mat, .weights, .outdoor],
+                places: Set(Place.allCases),
                 intent: .strengthen
             ),
             now: Date()
