@@ -12,7 +12,7 @@
 import Foundation
 
 /// Scoring weights, extracted so they can be tuned and asserted on in tests.
-struct PlanWeights: Hashable, Sendable {
+nonisolated struct PlanWeights: Hashable, Sendable {
     var energyMatch: Double = 3.0
     var energyMismatch: Double = -1.5
     /// Applied per intensity point above `restfulIntensity` on a low-energy day.
@@ -33,7 +33,7 @@ struct PlanWeights: Hashable, Sendable {
     var restfulIntensity: Int = 2
 }
 
-struct PlanEngine: Sendable {
+nonisolated struct PlanEngine: Sendable {
 
     /// Days of history the engine reads.
     static let historyWindowDays = 14
@@ -376,7 +376,7 @@ struct PlanEngine: Sendable {
 // MARK: - History stats
 
 /// Everything the engine needs to know about the last two weeks, computed once.
-struct HistoryStats: Sendable {
+nonisolated struct HistoryStats: Sendable {
     let completedThisWeek: Int
     let daysSinceLastCompleted: Int?
     let recentActivityCounts: [Activity: Int]
@@ -449,7 +449,7 @@ struct HistoryStats: Sendable {
     }
 }
 
-private extension Double {
+nonisolated private extension Double {
     func clamped(to range: ClosedRange<Double>) -> Double {
         min(max(self, range.lowerBound), range.upperBound)
     }
