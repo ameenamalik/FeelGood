@@ -30,7 +30,13 @@ enum FeelGoodSchema {
 final class UserProfile {
     var activitiesRaw: [String]
     var equipmentRaw: [String]
+    // Attributes added after the first build carry defaults so lightweight
+    // migration can fill them in for stores that predate them. A new mandatory
+    // attribute with no default fails migration outright, and the store then
+    // cannot be opened at all.
+    var placesRaw: [String] = [Place.home.rawValue]
     var cadenceRaw: String
+    var momentsRaw: String = MovementMoments.aCouple.rawValue
     var realisticMinutes: Int
     var bestTimeOfDayRaw: String
     var intentRaw: String
@@ -43,7 +49,9 @@ final class UserProfile {
     init(
         activities: Set<Activity>,
         equipment: Set<Equipment>,
+        places: Set<Place>,
         cadence: Cadence,
+        moments: MovementMoments,
         realisticMinutes: Int,
         bestTimeOfDay: TimeOfDay,
         intent: Intent,
@@ -53,7 +61,9 @@ final class UserProfile {
     ) {
         activitiesRaw = activities.map(\.rawValue).sorted()
         equipmentRaw = equipment.map(\.rawValue).sorted()
+        placesRaw = places.map(\.rawValue).sorted()
         cadenceRaw = cadence.rawValue
+        momentsRaw = moments.rawValue
         self.realisticMinutes = realisticMinutes
         bestTimeOfDayRaw = bestTimeOfDay.rawValue
         intentRaw = intent.rawValue
@@ -69,7 +79,9 @@ final class UserProfile {
         PlanProfile(
             availableActivities: Set(activitiesRaw.compactMap(Activity.init(rawValue:))),
             equipment: Set(equipmentRaw.compactMap(Equipment.init(rawValue:))),
+            places: Set(placesRaw.compactMap(Place.init(rawValue:))),
             cadence: Cadence(rawValue: cadenceRaw) ?? .mostDays,
+            moments: MovementMoments(rawValue: momentsRaw) ?? .aCouple,
             realisticMinutes: realisticMinutes,
             bestTimeOfDay: TimeOfDay(rawValue: bestTimeOfDayRaw) ?? .varies,
             intent: Intent(rawValue: intentRaw) ?? .energize,
@@ -87,6 +99,7 @@ final class CheckInRecord {
     var dayStart: Date
     var energyRaw: String
     var timeRaw: String
+    var placeRaw: String?
     var bodyRaw: String?
 
     init(checkIn: PlanCheckIn, takenAt: Date, dayStart: Date) {
@@ -94,13 +107,19 @@ final class CheckInRecord {
         self.dayStart = dayStart
         energyRaw = checkIn.energy.rawValue
         timeRaw = checkIn.time.rawValue
+        placeRaw = checkIn.place?.rawValue
         bodyRaw = checkIn.body?.rawValue
     }
 
     var planCheckIn: PlanCheckIn? {
         guard let energy = Energy(rawValue: energyRaw),
               let time = TimeBudget(rawValue: timeRaw) else { return nil }
-        return PlanCheckIn(energy: energy, time: time, body: bodyRaw.flatMap(BodyState.init(rawValue:)))
+        return PlanCheckIn(
+            energy: energy,
+            time: time,
+            place: placeRaw.flatMap(PlaceIntent.init(rawValue:)),
+            body: bodyRaw.flatMap(BodyState.init(rawValue:))
+        )
     }
 }
 

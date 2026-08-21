@@ -14,6 +14,7 @@ struct CheckInSheet: View {
 
     @State private var energy: Energy?
     @State private var time: TimeBudget?
+    @State private var place: PlaceIntent?
     @State private var body_: BodyState?
     @Environment(\.dismiss) private var dismiss
 
@@ -22,6 +23,7 @@ struct CheckInSheet: View {
         self.onDone = onDone
         _energy = State(initialValue: current?.energy)
         _time = State(initialValue: current?.time)
+        _place = State(initialValue: current?.place)
         _body_ = State(initialValue: current?.body)
     }
 
@@ -51,6 +53,16 @@ struct CheckInSheet: View {
                         }
                     }
 
+                    question("Where are you today? (optional)") {
+                        ForEach(PlaceIntent.allCases, id: \.self) { option in
+                            FGChoice(title: option.checkInLabel, isSelected: place == option) {
+                                withAnimation(FGMotion.gentle) {
+                                    place = place == option ? nil : option
+                                }
+                            }
+                        }
+                    }
+
                     question("Anything going on in your body? (optional)") {
                         ForEach(BodyState.allCases, id: \.self) { option in
                             FGChoice(title: option.checkInLabel, isSelected: body_ == option) {
@@ -65,12 +77,13 @@ struct CheckInSheet: View {
                         onDone(PlanCheckIn(
                             energy: energy ?? .steady,
                             time: time ?? .some,
+                            place: place,
                             body: body_
                         ))
                     }
 
                     FGQuietButton("Skip — just show me something") {
-                        onDone(PlanCheckIn(energy: energy ?? .steady, time: time ?? .some, body: body_))
+                        onDone(PlanCheckIn(energy: energy ?? .steady, time: time ?? .some, place: place, body: body_))
                     }
                     .frame(maxWidth: .infinity)
                 }

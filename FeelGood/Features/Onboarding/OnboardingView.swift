@@ -85,10 +85,32 @@ struct OnboardingView: View {
                         }
                     }
                 }
+                answerGroup("Where") {
+                    ForEach(Place.allCases, id: \.self) { place in
+                        FGChoice(title: place.label, isSelected: model.places.contains(place)) {
+                            toggle(place, in: \.places)
+                        }
+                    }
+                }
             }
 
         case .cadence:
-            choiceGrid(Cadence.allCases, label: \.label, selection: $model.cadence)
+            VStack(alignment: .leading, spacing: FGSpace.l) {
+                answerGroup("Across the week") {
+                    ForEach(Cadence.allCases, id: \.self) { option in
+                        FGChoice(title: option.label, isSelected: model.cadence == option) {
+                            withAnimation(FGMotion.gentle) { model.cadence = option }
+                        }
+                    }
+                }
+                answerGroup("Within a day") {
+                    ForEach(MovementMoments.allCases, id: \.self) { option in
+                        FGChoice(title: option.label, isSelected: model.moments == option) {
+                            withAnimation(FGMotion.gentle) { model.moments = option }
+                        }
+                    }
+                }
+            }
 
         case .time:
             choiceGrid([10, 20, 30, 45], label: { $0 == 45 ? "45+ min" : "\($0) min" }, selection: $model.realisticMinutes)
