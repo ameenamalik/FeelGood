@@ -232,6 +232,11 @@ private struct MenuItemRow: View {
                         .foregroundStyle(FGColor.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                // Take the whole width, so the swap control is pinned to the
+                // card's trailing edge. Without this the text column shrinks to
+                // its longest line and the button hugs it, which leaves the
+                // arrows sitting at a different x on every row.
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 if canSwap {
                     Button(action: onSwap) {
