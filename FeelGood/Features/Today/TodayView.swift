@@ -146,7 +146,8 @@ private struct MenuItemCard: View {
     let onSwap: () -> Void
 
     var body: some View {
-        FGCard(isHighlighted: item.course == .main) {
+        // A finished main stops being the highlighted thing to do.
+        FGCard(isHighlighted: item.course == .main && !isDone) {
             VStack(alignment: .leading, spacing: FGSpace.s) {
                 HStack(spacing: FGSpace.s) {
                     CourseTag(course: item.course)
@@ -155,7 +156,10 @@ private struct MenuItemCard: View {
 
                 Text(item.session.title)
                     .font(FGFont.itemTitle)
-                    .foregroundStyle(FGColor.ink)
+                    .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
+                    // Struck through in lime, not grey: this is "ticked off",
+                    // not "cancelled" or "unavailable".
+                    .strikethrough(isDone, color: FGColor.limeDeep)
                     .fixedSize(horizontal: false, vertical: true)
 
                 // Principle 4: say why. Every single time.
@@ -177,7 +181,10 @@ private struct MenuItemCard: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: onOpen)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(item.course.label). \(item.session.title). \(item.session.chips.joined(separator: ", ")). \(item.reasonText)")
+        .accessibilityLabel(
+            "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : "")"
+            + "\(item.session.chips.joined(separator: ", ")). \(item.reasonText)"
+        )
         .accessibilityAddTraits(.isButton)
     }
 }
@@ -187,12 +194,12 @@ private struct MenuItemCard: View {
 private struct DoneMark: View {
     var body: some View {
         HStack(spacing: FGSpace.xs) {
-            Image(systemName: "checkmark")
+            Image(systemName: "checkmark.circle.fill")
             Text("Done")
         }
         .font(FGFont.label)
         .foregroundStyle(FGColor.limeDeep)
-        .accessibilityLabel("Done today")
+        .accessibilityHidden(true)
     }
 }
 
@@ -217,7 +224,8 @@ private struct MenuItemRow: View {
                     }
                     Text(item.session.title)
                         .font(FGFont.body.weight(.medium))
-                        .foregroundStyle(FGColor.ink)
+                        .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
+                        .strikethrough(isDone, color: FGColor.limeDeep)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(item.reasonText)
                         .font(FGFont.caption)
@@ -240,7 +248,10 @@ private struct MenuItemRow: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: onOpen)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(item.course.label). \(item.session.title). \(item.session.durationLabel). \(item.reasonText)")
+        .accessibilityLabel(
+            "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : "")"
+            + "\(item.session.durationLabel). \(item.reasonText)"
+        )
         .accessibilityAddTraits(.isButton)
     }
 }
