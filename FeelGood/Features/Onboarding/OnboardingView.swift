@@ -9,12 +9,19 @@ import SwiftUI
 
 struct OnboardingView: View {
     @State private var model = OnboardingModel()
+    @Environment(\.dynamicTypeSize) private var typeSize
     /// Handed the finished profile; persistence and routing happen upstream.
     let onFinish: (OnboardingModel) -> Void
 
     var body: some View {
         ZStack {
             FGColor.bg.ignoresSafeArea()
+
+            // The app's first impression, since there is no account screen to
+            // make one on. Low enough to sit behind the footer, not the
+            // question.
+            FGBrandWash(reach: 0.5)
+                .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: FGSpace.l) {
                 progressBar
@@ -123,7 +130,7 @@ struct OnboardingView: View {
 
         case .workArounds:
             VStack(alignment: .leading, spacing: FGSpace.s) {
-                FlowRow(spacing: FGSpace.s) {
+                FlowRow(spacing: FGSpace.s, maxPerRow: typeSize.isAccessibilitySize ? 1 : 3) {
                     ForEach(WorkAround.allCases, id: \.self) { workAround in
                         FGChoice(title: workAround.label, isSelected: model.workArounds.contains(workAround)) {
                             toggle(workAround, in: \.workArounds)
@@ -144,7 +151,7 @@ struct OnboardingView: View {
                 .foregroundStyle(FGColor.inkMuted)
                 .textCase(.uppercase)
                 .tracking(1.1)
-            FlowRow(spacing: FGSpace.s) { content() }
+            FlowRow(spacing: FGSpace.s, maxPerRow: typeSize.isAccessibilitySize ? 1 : 3) { content() }
         }
     }
 

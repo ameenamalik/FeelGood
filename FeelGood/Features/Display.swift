@@ -72,12 +72,30 @@ extension Session {
     }
 }
 
+// MARK: The check-in
+
+// Every emoji below is checked against one rule: no red anywhere. That rules
+// out the obvious picks — 🪫 for low energy (Apple renders it red, and it is
+// precisely the "you're behind" signal this app refuses to send), ⏰, and any
+// house glyph, whose roofs are red-brown. Nothing medical, either: no bandages
+// and no pills next to a question about someone's body.
+
 extension Energy {
     var checkInLabel: String {
         switch self {
-        case .low: "Running on empty"
+        case .low: "Empty"
         case .steady: "Steady"
         case .strong: "Strong"
+        }
+    }
+
+    /// Weather, not a battery meter — a cloudy morning is a kind of day, not a
+    /// depleted version of a sunny one.
+    var checkInEmoji: String {
+        switch self {
+        case .low: "☁️"
+        case .steady: "🌤️"
+        case .strong: "☀️"
         }
     }
 }
@@ -93,9 +111,37 @@ extension TimeBudget {
 
     var checkInDetail: String {
         switch self {
-        case .aLittle: "10 minutes or so"
-        case .some: "20 to 30"
-        case .plenty: "45 or more"
+        case .aLittle: "10 min"
+        case .some: "20–30"
+        case .plenty: "45+"
+        }
+    }
+
+    var checkInEmoji: String {
+        switch self {
+        case .aLittle: "⏳"
+        case .some: "🕰️"
+        case .plenty: "🪁"
+        }
+    }
+}
+
+extension PlaceIntent {
+    var checkInLabel: String {
+        switch self {
+        case .stayingIn: "Staying in"
+        case .happyToGoOut: "Going out"
+        case .atTheGym: "The gym"
+        }
+    }
+
+    /// An arm rather than a weightlifter: the base glyph renders as a man, and
+    /// this app does not assume who is reading it.
+    var checkInEmoji: String {
+        switch self {
+        case .stayingIn: "🛋️"
+        case .happyToGoOut: "🌳"
+        case .atTheGym: "💪"
         }
     }
 }
@@ -108,6 +154,16 @@ extension BodyState {
         case .stressed: "Stressed"
         case .cramping: "Cramping"
         case .good: "Good"
+        }
+    }
+
+    var checkInEmoji: String {
+        switch self {
+        case .sore: "😔"
+        case .stiff: "🪵"
+        case .stressed: "🌀"
+        case .cramping: "🌊"
+        case .good: "🌼"
         }
     }
 }

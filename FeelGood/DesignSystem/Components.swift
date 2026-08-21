@@ -89,34 +89,76 @@ struct FGQuietButton: View {
             }
             .font(FGFont.caption.weight(.medium))
             .foregroundStyle(FGColor.inkMuted)
-            .frame(minHeight: FGSize.minTouchTarget, alignment: .leading)
+            // Short labels like "Skip" are only a few points wide. The height
+            // was already 44; the width was not, and `FGSize.minTouchTarget`
+            // says never smaller than this anywhere.
+            .frame(minWidth: FGSize.minTouchTarget, minHeight: FGSize.minTouchTarget, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
 }
 
 /// A selectable answer in the check-in. Two taps, ten seconds.
+///
+/// The emoji, detail, and accent are all optional, so onboarding — which shares
+/// this component — keeps the plain title-only tile it has always had.
 struct FGChoice: View {
     let title: String
+    var emoji: String? = nil
+    var detail: String? = nil
+    var accent: FGAccent = .ink
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(FGFont.body)
-                .foregroundStyle(isSelected ? FGColor.bg : FGColor.ink)
-                .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget + 8)
-                .background(
-                    RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
-                        .fill(isSelected ? FGColor.ink : FGColor.surface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
-                        .strokeBorder(isSelected ? Color.clear : FGColor.line, lineWidth: 1)
-                )
+            VStack(spacing: FGSpace.xs) {
+                if let emoji {
+                    // A text style, so it grows with Dynamic Type instead of
+                    // stranding a fixed-size glyph next to huge type. Hidden
+                    // from VoiceOver, which would otherwise read "cloud".
+                    Text(emoji)
+                        .font(.title)
+                        .accessibilityHidden(true)
+                }
+
+                Text(title)
+                    .font(FGFont.body)
+                    .multilineTextAlignment(.center)
+
+                if let detail {
+                    Text(detail)
+                        .font(FGFont.label)
+                        .multilineTextAlignment(.center)
+                        .opacity(0.7)
+                }
+            }
+            .foregroundStyle(isSelected ? accent.text : FGColor.ink)
+            .padding(.vertical, emoji == nil ? 0 : FGSpace.s)
+            .padding(.horizontal, FGSpace.xs)
+            // Fill the height `FlowRow` offers, so a two-line label doesn't
+            // leave its neighbours in the row looking clipped short. Only the
+            // emoji tiles do this; onboarding's plain rows keep hugging.
+            .frame(
+                maxWidth: .infinity,
+                minHeight: FGSize.minTouchTarget + 8,
+                maxHeight: emoji == nil ? nil : .infinity
+            )
+            .background(
+                RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
+                    .fill(isSelected ? accent.fill : FGColor.surface)
+            )
+            .overlay(
+                // Selection is never signalled by colour alone: the border
+                // doubles in weight and darkens, which survives both a
+                // greyscale screenshot and a colour-blind reader.
+                RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
+                    .strokeBorder(isSelected ? FGColor.ink : FGColor.line, lineWidth: isSelected ? 2 : 1)
+            )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel([title, detail].compactMap(\.self).joined(separator: ", "))
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }

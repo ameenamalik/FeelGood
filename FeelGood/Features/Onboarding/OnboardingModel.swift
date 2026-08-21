@@ -170,16 +170,6 @@ extension MovementMoments {
     }
 }
 
-extension PlaceIntent {
-    var checkInLabel: String {
-        switch self {
-        case .stayingIn: "Staying in"
-        case .happyToGoOut: "Happy to go out"
-        case .atTheGym: "At the gym"
-        }
-    }
-}
-
 extension Intent {
     var label: String {
         switch self {

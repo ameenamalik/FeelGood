@@ -125,6 +125,9 @@ struct PlayerView: View {
             Spacer()
         }
         .padding(FGSpace.page)
+        // Full bleed here: this is the only screen empty enough to carry it,
+        // and the only one where decoration is the point.
+        .background(FGBrandWash().ignoresSafeArea())
     }
 
     private var timeString: String {

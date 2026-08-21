@@ -20,6 +20,11 @@ struct TodayView: View {
         ZStack {
             FGColor.bg.ignoresSafeArea()
 
+            // Rises through the space below the menu. The cards keep a plain
+            // page behind them and still read as cards.
+            FGBrandWash(reach: 0.62)
+                .ignoresSafeArea()
+
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     header
