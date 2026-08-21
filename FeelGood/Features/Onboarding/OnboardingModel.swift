@@ -1,0 +1,170 @@
+//
+//  OnboardingModel.swift
+//  FeelGood
+//
+//  Six cards, ninety seconds, framed around what's available to you rather than
+//  around goals-as-metrics. No account, no email, no paywall — the first menu
+//  appears before anything is asked for. See PRD §7.1.
+//
+
+import Foundation
+import Observation
+
+@Observable
+final class OnboardingModel {
+
+    enum Card: Int, CaseIterable {
+        case access, cadence, time, timeOfDay, intent, workArounds
+
+        var title: String {
+            switch self {
+            case .access: "What do you have access to?"
+            case .cadence: "How often do you want to move?"
+            case .time: "On a normal day, how much time is realistic?"
+            case .timeOfDay: "When do you have the most in you?"
+            case .intent: "What are you moving toward?"
+            case .workArounds: "Anything to work around?"
+            }
+        }
+
+        var detail: String? {
+            switch self {
+            case .access: "Pick everything that's genuinely available. This shapes everything else."
+            case .cadence: "Used to keep things balanced — never to grade you."
+            case .time: nil
+            case .timeOfDay: nil
+            case .intent: "Pick one."
+            case .workArounds: "We'll quietly leave these out. Nothing here is a diagnosis."
+            }
+        }
+
+        /// Only the first card must be answered — everything else has a sane
+        /// default, because a menu is better than an interrogation.
+        var isRequired: Bool { self == .access }
+    }
+
+    private(set) var card: Card = .access
+
+    var activities: Set<Activity> = []
+    var equipment: Set<Equipment> = [.none]
+    var cadence: Cadence = .mostDays
+    var realisticMinutes: Int = 20
+    var timeOfDay: TimeOfDay = .varies
+    var intent: Intent = .energize
+    var workArounds: Set<WorkAround> = []
+
+    var isFirstCard: Bool { card == .access }
+    var isLastCard: Bool { card == .workArounds }
+
+    var canAdvance: Bool {
+        card.isRequired ? !activities.isEmpty : true
+    }
+
+    var progress: Double {
+        Double(card.rawValue + 1) / Double(Card.allCases.count)
+    }
+
+    func advance() {
+        guard let next = Card(rawValue: card.rawValue + 1) else { return }
+        card = next
+    }
+
+    func goBack() {
+        guard let previous = Card(rawValue: card.rawValue - 1) else { return }
+        card = previous
+    }
+
+    /// Equipment is implied by some choices — picking swimming without ticking
+    /// "pool" shouldn't produce an empty menu.
+    private var impliedEquipment: Set<Equipment> {
+        var implied: Set<Equipment> = [.none]
+        for activity in activities {
+            switch activity {
+            case .swimming: implied.insert(.pool)
+            case .biking: implied.insert(.bike)
+            case .skating: implied.insert(.skates)
+            case .jumpRope: implied.insert(.rope)
+            case .walking, .agility, .racquet, .climbing: implied.insert(.outdoor)
+            case .pilates, .yoga, .stretching: implied.insert(.mat)
+            default: break
+            }
+        }
+        return implied
+    }
+
+    func makeProfile() -> PlanProfile {
+        PlanProfile(
+            availableActivities: activities,
+            equipment: equipment.union(impliedEquipment),
+            cadence: cadence,
+            realisticMinutes: realisticMinutes,
+            bestTimeOfDay: timeOfDay,
+            intent: intent,
+            workArounds: workArounds
+        )
+    }
+
+    func makeRecord(now: Date) -> UserProfile {
+        UserProfile(
+            activities: activities,
+            equipment: equipment.union(impliedEquipment),
+            cadence: cadence,
+            realisticMinutes: realisticMinutes,
+            bestTimeOfDay: timeOfDay,
+            intent: intent,
+            workArounds: workArounds,
+            now: now
+        )
+    }
+}
+
+// MARK: - Answer labels
+
+extension Cadence {
+    var label: String {
+        switch self {
+        case .everyDay: "Every day"
+        case .mostDays: "Most days"
+        case .fewTimesAWeek: "A few times a week"
+        case .whenICan: "When I can"
+        }
+    }
+}
+
+extension TimeOfDay {
+    var label: String {
+        switch self {
+        case .morning: "Morning"
+        case .midday: "Midday"
+        case .evening: "Evening"
+        case .varies: "It varies"
+        }
+    }
+}
+
+extension Intent {
+    var label: String {
+        switch self {
+        case .energize: "Energy"
+        case .strengthen: "Strength"
+        case .calm: "Calm"
+        case .mobilize: "Mobility"
+        case .joy: "Just showing up"
+        }
+    }
+}
+
+extension WorkAround {
+    /// Plain words, no clinical register. These filter; they never diagnose.
+    var label: String {
+        switch self {
+        case .lowBack: "Lower back"
+        case .knees: "Knees"
+        case .wrists: "Wrists"
+        case .pregnancy: "Pregnant"
+        case .postpartum: "Postpartum"
+        case .pelvicFloor: "Pelvic floor"
+        case .fatigue: "Low energy or fatigue"
+        }
+    }
+}
