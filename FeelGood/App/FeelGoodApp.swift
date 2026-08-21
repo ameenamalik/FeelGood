@@ -22,10 +22,31 @@ struct FeelGoodApp: App {
         .modelContainer(container)
     }
 
+    /// On a fresh install `Library/Application Support` does not exist yet.
+    /// CoreData will get there eventually, but only after stat-ing every parent
+    /// directory and logging several hundred lines of diagnostics first.
+    /// Creating it up front keeps first launch quiet and the store path honest.
+    private static func prepareStoreDirectory() {
+        do {
+            try FileManager.default.url(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )
+        } catch {
+            // Not fatal: the container below still tries, and falls back to
+            // memory if the store genuinely cannot be opened.
+            Logger(subsystem: "com.ameenamalik.FeelGood", category: "storage")
+                .error("Could not prepare Application Support: \(error, privacy: .public)")
+        }
+    }
+
     /// A store that cannot be opened must not be a crash on launch. Falling
     /// back to memory means she still gets a menu today; the failure is logged
     /// and the next launch tries the real store again.
     private static func makeContainer() -> ModelContainer {
+        prepareStoreDirectory()
         let schema = Schema(FeelGoodSchema.models)
         do {
             return try ModelContainer(
