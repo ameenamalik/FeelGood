@@ -183,15 +183,16 @@ struct OnboardingView: View {
 
     private var footer: some View {
         VStack(spacing: FGSpace.s) {
-            FGPrimaryButton(title: model.isLastCard ? "Show me today" : "Next") {
+            FGPrimaryButton(
+                title: model.isLastCard ? "Show me today" : "Next",
+                isEnabled: model.canAdvance
+            ) {
                 if model.isLastCard {
                     onFinish(model)
                 } else {
                     model.advance()
                 }
             }
-            .opacity(model.canAdvance ? 1 : 0.4)
-            .disabled(!model.canAdvance)
 
             if !model.isFirstCard {
                 FGQuietButton("Back", systemImage: "chevron.left") { model.goBack() }

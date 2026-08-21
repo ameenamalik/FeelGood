@@ -23,7 +23,10 @@ struct FGCard<Content: View>: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .strokeBorder(isHighlighted ? FGColor.lime : FGColor.line, lineWidth: isHighlighted ? 2 : 1)
+                    .strokeBorder(
+                        isHighlighted ? FGColor.limeDeep : FGColor.lineStrong,
+                        lineWidth: isHighlighted ? 2 : 1
+                    )
             )
     }
 }
@@ -52,20 +55,27 @@ struct FGChip: View {
 /// The one action on a screen.
 struct FGPrimaryButton: View {
     let title: String
+    var isEnabled = true
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Text(title)
                 .font(FGFont.body.weight(.medium))
-                .foregroundStyle(FGColor.bg)
+                .foregroundStyle(isEnabled ? FGColor.bg : FGColor.inkMuted)
                 .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
-                .background(
-                    RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
-                        .fill(FGColor.ink)
-                )
         }
         .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        // The fill sits *outside* the button on purpose. `.disabled` makes the
+        // plain button style render its whole label at about half opacity, so a
+        // fill drawn inside it lets the page through — over the brand wash that
+        // came out muddy brown. Out here the fill stays opaque and only the
+        // label dims, which is what a disabled control should do anyway.
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
+                .fill(isEnabled ? FGColor.ink : FGColor.line)
+        )
     }
 }
 
@@ -154,7 +164,7 @@ struct FGChoice: View {
                 // doubles in weight and darkens, which survives both a
                 // greyscale screenshot and a colour-blind reader.
                 RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
-                    .strokeBorder(isSelected ? FGColor.ink : FGColor.line, lineWidth: isSelected ? 2 : 1)
+                    .strokeBorder(isSelected ? FGColor.ink : FGColor.lineStrong, lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(.plain)

@@ -37,8 +37,18 @@ nonisolated enum FGColor {
     static let bg = Color(light: 0xF7F8FA, dark: 0x101316)
     /// Cards and sheets.
     static let surface = Color(light: 0xFFFFFF, dark: 0x181C20)
-    /// Hairlines. Carries the 3:1 boundary that the accents cannot.
+    /// Decorative hairlines — chip outlines, the progress track. Nothing is
+    /// identified by these alone, so they stay quiet at ~1.2:1.
     static let line = Color(light: 0xE4E7EB, dark: 0x262B31)
+
+    /// The boundary of anything you can tap.
+    ///
+    /// A white tile on the page is 1.06:1, so the border *is* the control's
+    /// edge — WCAG 1.4.11 wants 3:1 for that. These are the lightest greys that
+    /// clear it against both the card fill and the page, so the outline is as
+    /// quiet as it is allowed to be: 3.20:1 and 3.01:1 in light, 3.01:1 and
+    /// 3.28:1 in dark.
+    static let lineStrong = Color(light: 0x8D9095, dark: 0x63676D)
 
     // MARK: Type
 
