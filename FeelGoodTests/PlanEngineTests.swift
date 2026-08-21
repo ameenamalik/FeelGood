@@ -1,0 +1,456 @@
+//
+//  PlanEngineTests.swift
+//  FeelGoodTests
+//
+//  The engine is the product. These tests cover the promises it makes —
+//  and the unhappy paths in PRD §11, which are where a demo actually breaks.
+//
+
+import Testing
+import Foundation
+@testable import FeelGood
+
+@Suite("PlanEngine")
+struct PlanEngineTests {
+
+    // MARK: - The floor of the product
+
+    @Test("There is always something to offer, even with nothing available")
+    func alwaysOffersAnAppetizer() {
+        // Worst case: no activities selected, no equipment, no time, no energy.
+        let input = PlanInput(
+            profile: Fixture.profile(activities: [], equipment: []),
+            checkIn: PlanCheckIn(energy: .low, time: .aLittle),
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(menu.appetizer?.session.id == "a-breath")
+        #expect(menu.main == nil)
+        #expect(!menu.items.isEmpty)
+    }
+
+    @Test("A skipped check-in still produces a menu")
+    func skippedCheckInStillProducesAMenu() {
+        let input = PlanInput(profile: Fixture.profile(), checkIn: nil, context: Fixture.context())
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(menu.appetizer != nil)
+        #expect(menu.main != nil)
+        #expect(!menu.headline.isEmpty)
+    }
+
+    @Test("Every item carries a plain-language reason")
+    func everyItemSaysWhy() {
+        let input = PlanInput(profile: Fixture.profile(), context: Fixture.context())
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(!menu.items.isEmpty)
+        for item in menu.items {
+            #expect(!item.reasonText.isEmpty)
+        }
+    }
+
+    @Test("No two items give the same reason")
+    func reasonsDoNotRepeat() {
+        // Three cards reading "toward the strength you're building" is not
+        // saying why — it's wallpaper.
+        for intent in Intent.allCases {
+            let input = PlanInput(
+                profile: Fixture.profile(intent: intent),
+                checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+                context: Fixture.context()
+            )
+            let texts = Fixture.engine.makeMenu(input).items.map(\.reasonText)
+            #expect(Set(texts).count == texts.count, "repeated reason for \(intent): \(texts)")
+        }
+    }
+
+    // MARK: - Hard filters
+
+    @Test("Never recommends more time than the check-in said was available")
+    func respectsTimeBudget() {
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .aLittle),
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        for item in menu.items where item.course != .special {
+            #expect(item.session.durationMin <= TimeBudget.aLittle.maxMinutes)
+        }
+    }
+
+    @Test("Never recommends equipment that isn't available")
+    func respectsEquipment() {
+        let input = PlanInput(
+            profile: Fixture.profile(equipment: [.none, .mat]),
+            checkIn: PlanCheckIn(energy: .strong, time: .plenty),
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(!menu.items.contains { $0.session.id == "m-strength-30" })
+        for item in menu.items {
+            #expect(Set(item.session.equipment).subtracting([.none]).isSubset(of: [.mat]))
+        }
+    }
+
+    @Test("Nothing bouncy reaches someone who flagged their pelvic floor")
+    func workAroundsHardFilterImpact() {
+        let input = PlanInput(
+            profile: Fixture.profile(
+                activities: [.jumpRope, .breathwork, .pilates],
+                equipment: [.none, .mat, .rope],
+                workArounds: [.pelvicFloor]
+            ),
+            checkIn: PlanCheckIn(energy: .strong, time: .plenty),
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(!menu.items.contains { $0.session.id == "a-jump" })
+        #expect(menu.appetizer != nil)
+    }
+
+    @Test("Work-arounds still filter the guaranteed fallback path")
+    func fallbackAppetizerRespectsSafety() {
+        let engine = PlanEngine(catalog: [
+            Fixture.session(id: "a-only", activity: .breathwork, qualities: [.downRegulation],
+                            durationMin: 2, intensity: 1, course: .appetizer,
+                            contraindications: [.pregnancy])
+        ])
+        let input = PlanInput(
+            profile: Fixture.profile(activities: [], equipment: [], workArounds: [.pregnancy]),
+            checkIn: PlanCheckIn(energy: .low, time: .aLittle),
+            context: Fixture.context()
+        )
+
+        // Nothing safe exists, so nothing is offered — we never fall back to
+        // something contraindicated just to fill the menu.
+        #expect(engine.makeMenu(input).appetizer == nil)
+    }
+
+    @Test("Offline silently drops video sessions", arguments: [
+        (true, false), (false, true), (true, true)
+    ])
+    func offlineFiltersVideo(isOffline: Bool, dataSaver: Bool) {
+        let profile = Fixture.profile(activities: [.pilates, .breathwork], equipment: [.none, .mat])
+        let checkIn = PlanCheckIn(energy: .steady, time: .plenty)
+
+        let offline = PlanInput(
+            profile: profile, checkIn: checkIn,
+            context: Fixture.context(isOffline: isOffline, dataSaver: dataSaver)
+        )
+        #expect(Fixture.engine.makeMenu(offline).items.allSatisfy { !$0.session.source.isVideo })
+
+        // ...and it is only the connectivity that ruled it out.
+        let online = PlanInput(profile: profile, checkIn: checkIn, context: Fixture.context())
+        let video = Fixture.catalog.first { $0.id == "m-video-20" }!
+        #expect(Fixture.engine.isEligible(video, input: online, checkIn: checkIn))
+    }
+
+    // MARK: - Scoring behaviour
+
+    @Test("A low-energy day gets something gentle")
+    func lowEnergyPrefersRestfulWork() {
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .low, time: .plenty),
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(menu.main != nil)
+        #expect(menu.main!.session.intensity <= 2)
+        #expect(menu.reasonCodes.contains(.lowEnergy))
+    }
+
+    @Test("Two hard days running do not become three")
+    func recoveryBalanceAfterTwoHardDays() {
+        let history = [
+            Fixture.completed("m-strength-30", activity: .strength, intensity: 5, daysAgo: 1),
+            Fixture.completed("m-strength-30", activity: .strength, intensity: 5, daysAgo: 2),
+        ]
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .strong, time: .plenty),
+            history: history,
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(menu.main != nil)
+        #expect(menu.main!.session.intensity <= 2)
+        #expect(menu.reasonCodes.contains(.recoveryBalance))
+        #expect(menu.headline == "You've shown up a few days running — today's a lighter one on purpose.")
+    }
+
+    @Test("The same activity three days running gets a break")
+    func varietyBreaksMonotony() {
+        let history = [
+            Fixture.completed("m-pilates-30", activity: .pilates, intensity: 3, daysAgo: 1),
+            Fixture.completed("m-pilates-30", activity: .pilates, intensity: 3, daysAgo: 2),
+        ]
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            history: history,
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(menu.main?.session.activity != .pilates)
+        #expect(menu.reasonCodes.contains(.varietyBreak))
+    }
+
+    @Test("Coming back after a gap gets a short, easy menu and a warm line")
+    func returningAfterAGap() {
+        let history = [Fixture.completed("m-pilates-30", activity: .pilates, intensity: 3, daysAgo: 9)]
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            history: history,
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(menu.headline == "Good to see you. Let's start small.")
+        #expect(menu.reasonCodes.contains(.returningAfterGap))
+        #expect(menu.main == nil || menu.main!.session.durationMin <= 15)
+        // Nothing anywhere mentions the gap itself.
+        #expect(!menu.headline.lowercased().contains("days"))
+        for item in menu.items {
+            #expect(!item.reasonText.lowercased().contains("haven't been"))
+        }
+    }
+
+    @Test("A brand-new user is not behind on any movement quality")
+    func qualityCoverageNeedsRealHistory() {
+        let thin = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            history: [Fixture.completed("m-pilates-30", activity: .pilates, intensity: 3, daysAgo: 2)],
+            context: Fixture.context()
+        )
+        #expect(!Fixture.engine.makeMenu(thin).reasonCodes.contains(.qualityGap))
+
+        // With two weeks of one-note history, the absence starts to mean something.
+        let oneNote = (1...5).map {
+            Fixture.completed("m-pilates-30", activity: .pilates,
+                              qualities: [.strength], intensity: 3, daysAgo: $0 + 2)
+        }
+        let rich = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            history: oneNote,
+            context: Fixture.context()
+        )
+        #expect(Fixture.engine.makeMenu(rich).reasonCodes.contains(.qualityGap))
+    }
+
+    @Test("Loving a session makes it more likely; finding it too much makes it less")
+    func affinityShiftsPicks() {
+        let profile = Fixture.profile(intent: .energize)
+        let checkIn = PlanCheckIn(energy: .steady, time: .plenty)
+        let base = PlanInput(profile: profile, checkIn: checkIn, context: Fixture.context())
+        let baseMain = Fixture.engine.makeMenu(base).main?.session.id
+
+        let loved = PlanInput(
+            profile: profile, checkIn: checkIn, context: Fixture.context(),
+            affinity: ["m-pilates-10": 1.0]
+        )
+        #expect(Fixture.engine.makeMenu(loved).main?.session.id == "m-pilates-10")
+
+        let disliked = PlanInput(
+            profile: profile, checkIn: checkIn, context: Fixture.context(),
+            affinity: [baseMain ?? "": -1.0]
+        )
+        #expect(Fixture.engine.makeMenu(disliked).main?.session.id != baseMain)
+    }
+
+    @Test("Skipping a session is not held against you")
+    func skippingCarriesNoPenalty() {
+        let profile = Fixture.profile()
+        let checkIn = PlanCheckIn(energy: .steady, time: .plenty)
+        let clean = PlanInput(profile: profile, checkIn: checkIn, context: Fixture.context())
+        let skipped = PlanInput(
+            profile: profile, checkIn: checkIn,
+            history: [HistoryEntry(sessionID: "m-pilates-10", activity: .pilates,
+                                   qualities: [.strength], intensity: 2, course: .main,
+                                   date: Fixture.daysAgo(1), outcome: .skipped)],
+            context: Fixture.context()
+        )
+        #expect(Fixture.engine.makeMenu(clean).main?.session.id == Fixture.engine.makeMenu(skipped).main?.session.id)
+    }
+
+    @Test("A sore body gets mobility and recovery, not intensity")
+    func bodyStateShapesThePicks() {
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .strong, time: .plenty, body: .sore),
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+        #expect(menu.main != nil)
+        #expect(menu.main!.session.intensity <= 3)
+    }
+
+    // MARK: - Shape of the menu
+
+    @Test("The menu never grows past one screen")
+    func menuStaysShort() {
+        let input = PlanInput(
+            profile: Fixture.profile(
+                activities: Set(Activity.allCases),
+                equipment: Set(Equipment.allCases)
+            ),
+            checkIn: PlanCheckIn(energy: .strong, time: .plenty),
+            context: Fixture.context(specials: [ScheduledSpecial(sessionID: "sp-swim", date: Fixture.now)])
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(menu.items.count <= PlanEngine.maxMenuItems)
+        #expect(menu.items.count >= 3)
+        #expect(Set(menu.items.map(\.id)).count == menu.items.count)
+    }
+
+    @Test("A special is surfaced ahead of the day it happens, ignoring today's time")
+    func specialsAreSurfacedAhead() {
+        let profile = Fixture.profile(
+            activities: [.swimming, .breathwork, .pilates],
+            equipment: [.none, .mat, .pool]
+        )
+        let input = PlanInput(
+            profile: profile,
+            checkIn: PlanCheckIn(energy: .low, time: .aLittle),
+            context: Fixture.context(specials: [
+                ScheduledSpecial(sessionID: "sp-swim", date: Fixture.utc.date(byAdding: .day, value: 2, to: Fixture.now)!)
+            ])
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(menu.special?.session.id == "sp-swim")
+        #expect(menu.special!.session.durationMin > TimeBudget.aLittle.maxMinutes)
+    }
+
+    @Test("A special further out than a few days stays off today's menu")
+    func distantSpecialsAreNotSurfaced() {
+        let input = PlanInput(
+            profile: Fixture.profile(activities: [.swimming, .breathwork], equipment: [.none, .pool]),
+            checkIn: PlanCheckIn(energy: .steady, time: .some),
+            context: Fixture.context(specials: [
+                ScheduledSpecial(sessionID: "sp-swim", date: Fixture.utc.date(byAdding: .day, value: 9, to: Fixture.now)!)
+            ])
+        )
+        #expect(Fixture.engine.makeMenu(input).special == nil)
+    }
+
+    // MARK: - Swapping
+
+    @Test("Not today returns a different session in the same course")
+    func swapReturnsTheNextBest() {
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            context: Fixture.context()
+        )
+        let engine = Fixture.engine
+        let menu = engine.makeMenu(input)
+        let main = try! #require(menu.main)
+
+        let swapped = engine.alternative(for: main, onMenu: menu, input: input)
+        #expect(swapped != nil)
+        #expect(swapped!.session.id != main.session.id)
+        #expect(swapped!.course == .main)
+        #expect(!menu.items.map(\.id).contains(swapped!.id))
+    }
+
+    @Test("Swapping repeatedly runs out gracefully rather than repeating itself")
+    func swapExhaustsWithoutRepeating() {
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            context: Fixture.context()
+        )
+        let engine = Fixture.engine
+        let menu = engine.makeMenu(input)
+        var current = try! #require(menu.main)
+        var seen: Set<String> = [current.session.id]
+
+        while let next = engine.alternative(for: current, onMenu: menu, input: input, alreadySeen: seen) {
+            #expect(!seen.contains(next.session.id))
+            seen.insert(next.session.id)
+            current = next
+            if seen.count > Fixture.catalog.count { Issue.record("swap looped"); break }
+        }
+        #expect(seen.count >= 2)
+    }
+
+    // MARK: - Determinism and time
+
+    @Test("The same inputs always produce the same menu")
+    func isDeterministic() {
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .some),
+            history: [Fixture.completed("m-walk-20", activity: .walking, intensity: 2, daysAgo: 1)],
+            context: Fixture.context()
+        )
+        #expect(Fixture.engine.makeMenu(input) == Fixture.engine.makeMenu(input))
+    }
+
+    @Test("The day boundary follows the user's calendar, not UTC")
+    func dayStartUsesTheUsersCalendar() {
+        var newYork = Calendar(identifier: .gregorian)
+        newYork.timeZone = TimeZone(identifier: "America/New_York")!
+
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .some),
+            context: Fixture.context(calendar: newYork)
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(menu.dayStart == newYork.startOfDay(for: Fixture.now))
+        #expect(menu.dayStart != Fixture.utc.startOfDay(for: Fixture.now))
+    }
+
+    @Test("History from the future or beyond the window is ignored")
+    func historyWindowIsBounded() {
+        let profile = Fixture.profile()
+        let checkIn = PlanCheckIn(energy: .steady, time: .plenty)
+        let clean = PlanInput(profile: profile, checkIn: checkIn, context: Fixture.context())
+        let noise = PlanInput(
+            profile: profile, checkIn: checkIn,
+            history: [
+                Fixture.completed("m-pilates-30", activity: .pilates, intensity: 5, daysAgo: 40),
+                Fixture.completed("m-pilates-30", activity: .pilates, intensity: 5, daysAgo: -3),
+            ],
+            context: Fixture.context()
+        )
+        #expect(Fixture.engine.makeMenu(clean) == Fixture.engine.makeMenu(noise))
+    }
+
+    @Test("Every combination of energy and time still produces a safe menu")
+    func neverFailsAcrossTheCheckInMatrix() {
+        for energy in Energy.allCases {
+            for time in TimeBudget.allCases {
+                for body in BodyState.allCases.map(Optional.some) + [nil] {
+                    let input = PlanInput(
+                        profile: Fixture.profile(),
+                        checkIn: PlanCheckIn(energy: energy, time: time, body: body),
+                        context: Fixture.context()
+                    )
+                    let menu = Fixture.engine.makeMenu(input)
+                    #expect(menu.appetizer != nil, "no appetizer for \(energy)/\(time)")
+                    #expect(menu.items.count <= PlanEngine.maxMenuItems)
+                    for item in menu.items where item.course != .special {
+                        #expect(item.session.durationMin <= time.maxMinutes)
+                    }
+                }
+            }
+        }
+    }
+}
