@@ -107,6 +107,22 @@ struct CatalogTests {
         #expect((3...PlanEngine.maxMenuItems).contains(menu.items.count))
     }
 
+    @Test("The real catalog never repeats a reason across a menu")
+    func realCatalogGivesDistinctReasons() throws {
+        let engine = PlanEngine(catalog: try store().sessions)
+        for energy in Energy.allCases {
+            for time in TimeBudget.allCases {
+                let input = PlanInput(
+                    profile: Fixture.profile(),
+                    checkIn: PlanCheckIn(energy: energy, time: time),
+                    context: Fixture.context()
+                )
+                let texts = engine.makeMenu(input).items.map(\.reasonText)
+                #expect(Set(texts).count == texts.count, "\(energy)/\(time): \(texts)")
+            }
+        }
+    }
+
     @Test("The real catalog holds up for someone with nothing but a floor")
     func realCatalogServesTheHardestCase() throws {
         let engine = PlanEngine(catalog: try store().sessions)

@@ -104,19 +104,54 @@ nonisolated struct PlanEngine: Sendable {
             trimmedSides.removeLast()
         }
 
-        let all = [special, main, appetizer, trimmedDessert].compactMap { $0 } + trimmedSides
-        let reasons = Set(all.flatMap(\.reasons))
+        // Give every line on the menu something different to say.
+        let spoken = distinctReasons(
+            ordered: [special, main] + trimmedSides + [appetizer, trimmedDessert],
+            intent: input.profile.intent
+        )
+        let reasons = Set(spoken.values.flatMap(\.reasons))
+        func said(_ item: MenuItem?) -> MenuItem? { item.flatMap { spoken[$0.id] } }
 
         return Menu(
             dayStart: input.context.calendar.startOfDay(for: input.context.now),
-            appetizer: appetizer,
-            main: main,
-            sides: trimmedSides,
-            dessert: trimmedDessert,
-            special: special,
+            appetizer: said(appetizer),
+            main: said(main),
+            sides: trimmedSides.compactMap { said($0) },
+            dessert: said(trimmedDessert),
+            special: said(special),
             headline: MenuCopy.headline(reasons: reasons, checkIn: checkIn),
             assumedCheckIn: checkIn
         )
+    }
+
+    /// Rewrites any reason that has already been used further up the menu,
+    /// walking down this item's remaining reasons before falling back to
+    /// something specific to the session itself. Menu order decides who keeps
+    /// the good line, so the Main is served first.
+    private func distinctReasons(ordered items: [MenuItem?], intent: Intent) -> [String: MenuItem] {
+        var used: Set<String> = []
+        var result: [String: MenuItem] = [:]
+
+        for item in items.compactMap({ $0 }) {
+            var codes = item.reasons
+            var text = item.reasonText
+
+            while used.contains(text) && !codes.isEmpty {
+                codes = Array(codes.dropFirst())
+                text = MenuCopy.reason(for: item.session, codes: codes, gapQuality: nil, intent: intent)
+            }
+            if used.contains(text) { text = MenuCopy.fallbackLine(for: item.session) }
+            if used.contains(text), !item.session.subtitle.isEmpty { text = item.session.subtitle }
+
+            used.insert(text)
+            result[item.id] = MenuItem(
+                session: item.session,
+                course: item.course,
+                reasons: item.reasons,
+                reasonText: text
+            )
+        }
+        return result
     }
 
     /// "Not today" — returns the next-best candidate for the same course.

@@ -51,6 +51,21 @@ struct PlanEngineTests {
         }
     }
 
+    @Test("No two items give the same reason")
+    func reasonsDoNotRepeat() {
+        // Three cards reading "toward the strength you're building" is not
+        // saying why — it's wallpaper.
+        for intent in Intent.allCases {
+            let input = PlanInput(
+                profile: Fixture.profile(intent: intent),
+                checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+                context: Fixture.context()
+            )
+            let texts = Fixture.engine.makeMenu(input).items.map(\.reasonText)
+            #expect(Set(texts).count == texts.count, "repeated reason for \(intent): \(texts)")
+        }
+    }
+
     // MARK: - Hard filters
 
     @Test("Never recommends more time than she said she has")

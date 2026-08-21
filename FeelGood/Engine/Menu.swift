@@ -141,6 +141,18 @@ nonisolated enum MenuCopy {
         }
     }
 
+    /// Used when a reason has already been spoken on this menu. Repeating one
+    /// line down the whole screen turns "say why" into noise.
+    static func fallbackLine(for session: Session) -> String {
+        switch session.course {
+        case .appetizer: "\(session.durationMin) minutes, and that counts."
+        case .main: "Today's main thing, in \(session.durationMin) minutes."
+        case .side: "\(session.durationMin) minutes, alongside something you're already doing."
+        case .dessert: "\(session.durationMin) minutes, purely because you want to."
+        case .special: "Worth putting in the diary."
+        }
+    }
+
     private static func defaultLine(for session: Session) -> String {
         switch session.course {
         case .appetizer: "Two minutes, and that counts."
