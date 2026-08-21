@@ -19,7 +19,7 @@ final class TodayModel {
     private(set) var checkIn: PlanCheckIn?
     private(set) var history: [HistoryEntry]
     private(set) var menu: Menu
-    /// Sessions she has said "not today" to, so a swap never circles back.
+    /// Sessions already turned down today, so a swap never circles back.
     private(set) var swappedAway: Set<String> = []
 
     init(
@@ -62,7 +62,7 @@ final class TodayModel {
         menu = engine.makeMenu(input(now: now))
     }
 
-    /// "Not today". A swap is engagement, not rejection — she is choosing,
+    /// "Not today". A swap is engagement, not rejection — it is a choice being made,
     /// which is the whole point of the screen.
     func swap(_ item: MenuItem, now: Date = Date()) {
         guard let replacement = engine.alternative(

@@ -68,7 +68,7 @@ struct PlanEngineTests {
 
     // MARK: - Hard filters
 
-    @Test("Never recommends more time than she said she has")
+    @Test("Never recommends more time than the check-in said was available")
     func respectsTimeBudget() {
         let input = PlanInput(
             profile: Fixture.profile(),
@@ -82,7 +82,7 @@ struct PlanEngineTests {
         }
     }
 
-    @Test("Never recommends equipment she doesn't have")
+    @Test("Never recommends equipment that isn't available")
     func respectsEquipment() {
         let input = PlanInput(
             profile: Fixture.profile(equipment: [.none, .mat]),
@@ -270,7 +270,7 @@ struct PlanEngineTests {
         #expect(Fixture.engine.makeMenu(disliked).main?.session.id != baseMain)
     }
 
-    @Test("Skipping a session is not held against her")
+    @Test("Skipping a session is not held against you")
     func skippingCarriesNoPenalty() {
         let profile = Fixture.profile()
         let checkIn = PlanCheckIn(energy: .steady, time: .plenty)

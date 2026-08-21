@@ -10,7 +10,7 @@ import SwiftUI
 
 struct PlayerView: View {
     let session: Session
-    /// Called when she finishes or leaves. Logging and affinity land in week 3.
+    /// Called on finishing or leaving. Logging and affinity land in week 3.
     let onFinish: () -> Void
 
     @Environment(\.dismiss) private var dismiss

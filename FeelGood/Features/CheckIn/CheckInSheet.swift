@@ -92,59 +92,6 @@ struct CheckInSheet: View {
     }
 }
 
-/// Simple wrapping row, so choices reflow at large type sizes instead of
-/// squeezing below the minimum touch target.
-struct FlowRow: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.replacingUnspecifiedDimensions().width
-        let rows = arrange(subviews: subviews, width: width)
-        let height = rows.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(0, rows.count - 1))
-        return CGSize(width: width, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var y = bounds.minY
-        for row in arrange(subviews: subviews, width: bounds.width) {
-            var x = bounds.minX
-            for index in row.indices {
-                let size = subviews[index].sizeThatFits(.unspecified)
-                subviews[index].place(
-                    at: CGPoint(x: x, y: y),
-                    proposal: ProposedViewSize(width: row.itemWidth, height: size.height)
-                )
-                x += row.itemWidth + spacing
-            }
-            y += row.height + spacing
-        }
-    }
-
-    private struct Row {
-        var indices: [Int]
-        var height: CGFloat
-        var itemWidth: CGFloat
-    }
-
-    /// Choices share the row evenly, up to three across.
-    private func arrange(subviews: Subviews, width: CGFloat) -> [Row] {
-        guard !subviews.isEmpty else { return [] }
-        let perRow = width < 340 ? 2 : min(3, subviews.count)
-        var rows: [Row] = []
-        var index = 0
-        while index < subviews.count {
-            let indices = Array(index..<min(index + perRow, subviews.count))
-            let itemWidth = (width - spacing * CGFloat(perRow - 1)) / CGFloat(perRow)
-            let height = indices
-                .map { subviews[$0].sizeThatFits(ProposedViewSize(width: itemWidth, height: nil)).height }
-                .max() ?? 0
-            rows.append(Row(indices: indices, height: height, itemWidth: itemWidth))
-            index += perRow
-        }
-        return rows
-    }
-}
-
 #Preview {
     CheckInSheet(current: nil) { _ in }
 }

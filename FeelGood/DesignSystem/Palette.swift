@@ -16,8 +16,13 @@
 
 import SwiftUI
 
-extension Color {
+nonisolated extension Color {
     /// Resolves per appearance so every token works in both modes.
+    ///
+    /// This must stay `nonisolated`. The project defaults to MainActor
+    /// isolation, but SwiftUI resolves colours on a background rendering
+    /// thread — a main-actor-isolated provider closure trips the executor
+    /// assert and traps the process the first time a colour is drawn.
     init(light: UInt32, dark: UInt32) {
         self.init(uiColor: UIColor { traits in
             UIColor(hex: traits.userInterfaceStyle == .dark ? dark : light)
@@ -25,7 +30,7 @@ extension Color {
     }
 }
 
-enum FGColor {
+nonisolated enum FGColor {
     // MARK: Surfaces
 
     /// The page. Soft grey, so white cards lift off it.
@@ -70,7 +75,7 @@ enum FGColor {
     )
 }
 
-extension Course {
+nonisolated extension Course {
     /// Each course gets one accent, as a small tag. The tag is never the only
     /// way a course is identified — its name is written next to it.
     var accent: Color {
@@ -89,7 +94,7 @@ extension Course {
     }
 }
 
-private extension UIColor {
+nonisolated private extension UIColor {
     convenience init(hex: UInt32) {
         self.init(
             red: CGFloat((hex >> 16) & 0xFF) / 255,

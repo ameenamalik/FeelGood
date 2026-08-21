@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum FGSpace {
+nonisolated enum FGSpace {
     static let xs: CGFloat = 4
     static let s: CGFloat = 8
     static let m: CGFloat = 16
@@ -18,13 +18,13 @@ enum FGSpace {
     static let page: CGFloat = 24
 }
 
-enum FGRadius {
+nonisolated enum FGRadius {
     static let card: CGFloat = 20
     static let chip: CGFloat = 10
     static let button: CGFloat = 16
 }
 
-enum FGSize {
+nonisolated enum FGSize {
     /// Never smaller than this, anywhere.
     static let minTouchTarget: CGFloat = 44
 }

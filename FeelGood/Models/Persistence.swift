@@ -107,7 +107,7 @@ final class CheckInRecord {
 // MARK: - The day's menu
 
 /// A generated menu, stored so the day is stable: reopening the app shows the
-/// same menu rather than quietly regenerating a different one under her.
+/// same menu rather than quietly regenerating a different one underneath you.
 @Model
 final class PlanDay {
     @Attribute(.unique) var dayStart: Date
@@ -143,8 +143,8 @@ final class PlanItem {
     var reasonCodesRaw: [String]
     var reasonText: String
     var order: Int
-    /// How many times she said "not today" to this slot. Feeds affinity; it is
-    /// never shown to her and never treated as a failure.
+    /// How many times this slot was turned down. Feeds affinity; it is never
+    /// shown on screen and never treated as a failure.
     var swapCount: Int
     var day: PlanDay?
 
@@ -173,7 +173,7 @@ final class SessionRecord {
     var outcomeRaw: String
     var feelRaw: String?
     // Denormalised so history survives a session being dropped from a later
-    // catalog — the engine can still balance against what she actually did.
+    // catalog — the engine can still balance against what was actually done.
     var activityRaw: String
     var qualitiesRaw: [String]
     var intensity: Int

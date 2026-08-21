@@ -155,7 +155,7 @@ nonisolated struct PlanEngine: Sendable {
     }
 
     /// "Not today" — returns the next-best candidate for the same course.
-    /// A swap is a success signal, not a rejection: she's engaging with the
+    /// A swap is a success signal, not a rejection: it means engaging with the
     /// decision instead of closing the app.
     func alternative(for item: MenuItem, onMenu menu: Menu, input: PlanInput, alreadySeen: Set<String> = []) -> MenuItem? {
         let checkIn = resolvedCheckIn(input)
@@ -175,7 +175,7 @@ nonisolated struct PlanEngine: Sendable {
 
     // MARK: - Check-in inference
 
-    /// She skipped the check-in, so we infer one and show a menu anyway.
+    /// The check-in was skipped, so we infer one and show a menu anyway.
     /// The app never blocks on input (PRD §7.2).
     func resolvedCheckIn(_ input: PlanInput) -> PlanCheckIn {
         if let checkIn = input.checkIn { return checkIn }
@@ -211,15 +211,15 @@ nonisolated struct PlanEngine: Sendable {
         // Work-arounds. For this audience — many postpartum — pelvic floor,
         // joints and pregnancy are not edge cases.
         guard Set(session.contraindications).isDisjoint(with: input.profile.workArounds) else { return false }
-        // Never recommend what she doesn't have.
+        // Never recommend equipment that isn't available.
         guard Set(session.equipment).subtracting([.none]).isSubset(of: input.profile.equipment) else { return false }
         // Specials are planned ahead, so today's time budget doesn't apply.
         if session.course != .special {
             guard session.durationMin <= checkIn.time.maxMinutes else { return false }
         }
         guard input.profile.availableActivities.contains(session.activity) else { return false }
-        // Offline or data saver: video is silently unavailable, and she never
-        // finds out because the authored catalog covers the day.
+        // Offline or data saver: video is silently unavailable, and it never
+        // shows, because the authored catalog covers the day.
         if session.source.isVideo && !input.context.videoAllowed { return false }
         return true
     }
@@ -258,7 +258,7 @@ nonisolated struct PlanEngine: Sendable {
             if restful { reasons.append(.lowEnergy) }
         }
 
-        // Time fit — use the time she has without overrunning it.
+        // Time fit — use the time available without overrunning it.
         let target = min(checkIn.time.maxMinutes, max(input.profile.realisticMinutes, 10))
         if session.course == .main {
             let closeness = 1.0 - min(1.0, abs(Double(session.durationMin - target)) / Double(target))
@@ -302,7 +302,7 @@ nonisolated struct PlanEngine: Sendable {
             }
         }
 
-        // Cadence nudge — below her own stated cadence means gentler entry
+        // Cadence nudge — below the stated cadence means gentler entry
         // points, never a penalty on anything.
         if stats.completedThisWeek < input.profile.cadence.weeklyTarget {
             score += weights.cadenceNudge * (1.0 - Double(session.intensity) / 5.0)

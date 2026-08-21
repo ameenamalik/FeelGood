@@ -43,7 +43,7 @@ nonisolated struct Menu: Hashable, Sendable {
     let special: MenuItem?
     /// Deterministic template copy. Upgraded in place by the copy layer.
     let headline: String
-    /// What the engine assumed when she skipped the check-in.
+    /// What the engine assumed when the check-in was skipped.
     let assumedCheckIn: PlanCheckIn
 
     /// Menu order, top to bottom.

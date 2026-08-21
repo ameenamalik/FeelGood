@@ -11,12 +11,12 @@ import Foundation
 
 // MARK: - Profile
 
-/// How often she *wants* to move. Used for gentle balancing, never for grading.
+/// How often you *want* to move. Used for gentle balancing, never for grading.
 nonisolated enum Cadence: String, Codable, CaseIterable, Sendable {
     case everyDay, mostDays, fewTimesAWeek, whenICan
 
-    /// Sessions per week she's aiming at. Used only to soften suggestions when
-    /// she's below it — there is no penalty branch anywhere in the engine.
+    /// Sessions per week being aimed at. Used only to soften suggestions when
+    /// the count is below it — there is no penalty branch anywhere in the engine.
     var weeklyTarget: Int {
         switch self {
         case .everyDay: 7
@@ -63,11 +63,11 @@ nonisolated struct PlanProfile: Hashable, Sendable {
 
 // MARK: - Check-in
 
-/// How much time she actually has today.
+/// How much time is actually available today.
 nonisolated enum TimeBudget: String, Codable, CaseIterable, Sendable {
     case aLittle, some, plenty
 
-    /// Hard ceiling on session length. Never recommend 30 when she said 10.
+    /// Hard ceiling on session length. Never recommend 30 when the answer was 10.
     var maxMinutes: Int {
         switch self {
         case .aLittle: 10
@@ -132,7 +132,7 @@ nonisolated struct ScheduledSpecial: Hashable, Sendable {
     var date: Date
 }
 
-/// Everything about right now that isn't her.
+/// Everything about right now that isn't the person.
 nonisolated struct PlanContext: Hashable, Sendable {
     var now: Date
     /// Offline, or on cellular with data saver — video Mains are filtered out
@@ -162,7 +162,7 @@ nonisolated struct PlanContext: Hashable, Sendable {
 /// The complete input to `PlanEngine.makeMenu`.
 nonisolated struct PlanInput: Hashable, Sendable {
     var profile: PlanProfile
-    /// `nil` when she skipped it — the app never blocks on input, so the
+    /// `nil` when it was skipped — the app never blocks on input, so the
     /// engine infers a check-in from history and time of day instead.
     var checkIn: PlanCheckIn?
     var history: [HistoryEntry]
