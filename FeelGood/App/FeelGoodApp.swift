@@ -10,14 +10,18 @@ import os
 @main
 struct FeelGoodApp: App {
     private let container: ModelContainer
+    /// Loaded once at launch and handed down; the catalog never changes while
+    /// the app is running.
+    private let content: ContentStore?
 
     init() {
         container = Self.makeContainer()
+        content = try? ContentStore.bundled()
     }
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            RootView(content: content)
         }
         .modelContainer(container)
     }
@@ -43,7 +47,7 @@ struct FeelGoodApp: App {
     }
 
     /// A store that cannot be opened must not be a crash on launch. Falling
-    /// back to memory means she still gets a menu today; the failure is logged
+    /// back to memory means there is still a menu today; the failure is logged
     /// and the next launch tries the real store again.
     private static func makeContainer() -> ModelContainer {
         prepareStoreDirectory()
@@ -64,42 +68,61 @@ struct FeelGoodApp: App {
     }
 }
 
-/// Root routing. Onboarding lands in week 2; until then the menu is built from
-/// a stand-in profile so the real engine and the real catalog drive the screen.
+/// Routing. No profile yet means onboarding; otherwise, today's menu.
 struct RootView: View {
+    let content: ContentStore?
+
+    @Environment(\.modelContext) private var context
+    @Query private var profiles: [UserProfile]
+    @Query(sort: \SessionRecord.startedAt, order: .reverse) private var records: [SessionRecord]
+
     var body: some View {
-        if let store = try? ContentStore.bundled() {
-            TodayView(model: TodayModel(store: store, profile: .standIn, now: Date()))
-        } else {
-            // The catalog is bundled, so this is a build problem, not a user
-            // one — but it still must not be a blank screen.
-            ContentUnavailableView(
-                "Content didn't load",
-                systemImage: "leaf",
-                description: Text("Reinstalling the app should fix it.")
-            )
+        Group {
+            if let content {
+                if let profile = profiles.first {
+                    TodayScreen(
+                        content: content,
+                        profile: profile.planProfile,
+                        history: records.map(\.historyEntry)
+                    )
+                    .id(profile.updatedAt)
+                } else {
+                    OnboardingView { onboarding in
+                        context.insert(onboarding.makeRecord(now: Date()))
+                        try? context.save()
+                    }
+                }
+            } else {
+                // The catalog ships in the bundle, so this is a build problem
+                // rather than a user one — but it still must not be blank.
+                ContentUnavailableView(
+                    "Content didn't load",
+                    systemImage: "leaf",
+                    description: Text("Reinstalling the app should fix it.")
+                )
+            }
         }
     }
 }
 
-extension PlanProfile {
-    /// Stands in for onboarding: a mat, some weights, and the outdoors.
-    static var standIn: PlanProfile {
-        PlanProfile(
-            availableActivities: [
-                .pilates, .yoga, .stretching, .walking, .strength,
-                .breathwork, .qigong, .dance, .carries
-            ],
-            equipment: [.none, .mat, .weights, .outdoor],
-            cadence: .mostDays,
-            realisticMinutes: 30,
-            bestTimeOfDay: .morning,
-            intent: .strengthen,
-            workArounds: []
-        )
+/// Owns the day's model so a swap or a check-in survives a re-render.
+private struct TodayScreen: View {
+    @State private var model: TodayModel
+
+    init(content: ContentStore, profile: PlanProfile, history: [HistoryEntry]) {
+        _model = State(initialValue: TodayModel(
+            store: content,
+            profile: profile,
+            history: history,
+            now: Date()
+        ))
+    }
+
+    var body: some View {
+        TodayView(model: model)
     }
 }
 
-#Preview {
-    RootView()
+#Preview("Onboarding") {
+    OnboardingView { _ in }
 }

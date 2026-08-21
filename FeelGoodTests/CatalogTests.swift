@@ -53,7 +53,7 @@ struct CatalogTests {
 
     @Test("Gym taxonomy never reaches the glossary text")
     func glossaryAvoidsShameVocabulary() throws {
-        // "Expert" next to a move she was about to try is a shame vector, and
+        // "Expert" next to a move someone is about to try is a shame vector, and
         // gym register is the voice we are deliberately not writing in.
         let banned = ["beginner", "intermediate", "expert", "advanced", "calorie", "burn fat", "toned"]
         for term in try store().glossary {

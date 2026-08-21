@@ -2,8 +2,8 @@
 //  Display.swift
 //  FeelGood
 //
-//  How the vocabulary is spoken to her. The taxonomy stays behind the glass —
-//  she sees a menu, never a data model.
+//  How the vocabulary is spoken out loud. The taxonomy stays behind the glass —
+//  you see a menu, never a data model.
 //
 
 import Foundation
@@ -66,7 +66,7 @@ extension Equipment {
 extension Session {
     var durationLabel: String { "\(durationMin) min" }
 
-    /// "Mat · 20 min" — what she needs and how long, nothing else.
+    /// "Mat · 20 min" — what you need and how long, nothing else.
     var chips: [String] {
         equipment.compactMap(\.label) + [durationLabel]
     }

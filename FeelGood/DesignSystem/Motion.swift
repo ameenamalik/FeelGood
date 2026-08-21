@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-enum FGMotion {
+nonisolated enum FGMotion {
     /// Items settling onto the menu.
     static let settle = Animation.spring(response: 0.55, dampingFraction: 0.86)
     /// The swap exchange.

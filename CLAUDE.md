@@ -109,12 +109,18 @@ decision already made in the PRD, not a preference.
   This is what makes it exhaustively testable and demo-proof.
 - **Non-UI types are `nonisolated`.** The project defaults to
   `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, which suits views. Engine,
-  content, and service types opt out explicitly.
+  content, service, and design-token types opt out explicitly.
+- **Anything UIKit calls back on its own thread must be `nonisolated`.** This
+  bit us once already: a `UIColor(dynamicProvider:)` closure inherited MainActor
+  isolation, SwiftUI resolved the colour on its rendering thread, and the
+  executor assert trapped the process with SIGTRAP the moment a colour was
+  drawn. It is not a crash the compiler warns about. The same applies to
+  `Layout` conformances and any other UIKit/SwiftUI callback.
 - **Every external call sits behind a protocol** with a fake implementation, so
   the whole app runs offline in tests and previews.
 - **Content is data, not code.** Sessions live in `catalog.json`. Adding real
   video classes later is a JSON change, never a rebuild.
-- **The LLM never chooses what she does with her body.** It writes framing copy
+- **The LLM never chooses what anyone does with their body.** It writes framing copy
   only, and the screen renders fully before it is asked.
 
 ### Voice and product rules
@@ -129,6 +135,17 @@ decision already made in the PRD, not a preference.
 - Never state or imply that a real person wrote, taught, endorsed, or reviewed
   a session. `attribution` stays `nil` until sign-off exists in writing.
 - Every recommendation says why, in plain language.
+- **Never assume the reader's gender.** Address the person as "you" in copy, and
+  use they/them in comments, tests, and docs. The PRD's persona is a woman
+  because that is who the audience data describes, but the app itself is for
+  whoever opens it.
+
+### Typography
+
+SF Rounded for headlines, menu item titles, and small labels — playful without
+being childish. SF Pro for body copy, reasons, and step instructions, where
+legibility matters more than character. Both are system faces: no bundled font
+files, no licensing question, Dynamic Type for free.
 
 ### Timestamps
 

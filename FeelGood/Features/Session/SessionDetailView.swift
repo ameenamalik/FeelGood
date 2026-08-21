@@ -86,8 +86,8 @@ struct SessionDetailView: View {
                     Text(step.name)
                         .font(FGFont.body)
                         .foregroundStyle(FGColor.ink)
-                    // The only route into the glossary is a step she is
-                    // already looking at. It is never browsable.
+                    // The only route into the glossary is a step already
+                    // on screen. It is never browsable.
                     if let term = model.term(for: step) {
                         Button {
                             explaining = term
