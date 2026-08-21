@@ -74,7 +74,6 @@ struct RootView: View {
 
     @Environment(\.modelContext) private var context
     @Query private var profiles: [UserProfile]
-    @Query(sort: \SessionRecord.startedAt, order: .reverse) private var records: [SessionRecord]
 
     var body: some View {
         Group {
@@ -83,7 +82,7 @@ struct RootView: View {
                     TodayScreen(
                         content: content,
                         profile: profile.planProfile,
-                        history: records.map(\.historyEntry)
+                        log: SessionLog(context: context)
                     )
                     .id(profile.updatedAt)
                 } else {
@@ -109,11 +108,11 @@ struct RootView: View {
 private struct TodayScreen: View {
     @State private var model: TodayModel
 
-    init(content: ContentStore, profile: PlanProfile, history: [HistoryEntry]) {
+    init(content: ContentStore, profile: PlanProfile, log: any SessionLogging) {
         _model = State(initialValue: TodayModel(
             store: content,
             profile: profile,
-            history: history,
+            log: log,
             now: Date()
         ))
     }

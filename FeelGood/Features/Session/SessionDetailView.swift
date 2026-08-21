@@ -13,6 +13,7 @@ struct SessionDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var isPlaying = false
+    @State private var startedAt = Date()
     @State private var explaining: ExerciseTerm?
 
     private var session: Session { item.session }
@@ -61,13 +62,24 @@ struct SessionDetailView: View {
                         steps
                     }
 
-                    FGPrimaryButton(title: "Start") { isPlaying = true }
+                    FGPrimaryButton(title: "Start") {
+                        startedAt = Date()
+                        isPlaying = true
+                    }
                 }
                 .padding(FGSpace.page)
             }
         }
         .fullScreenCover(isPresented: $isPlaying) {
-            PlayerView(session: session) { dismiss() }
+            PlayerView(
+                session: session,
+                onFinish: { feel in
+                    model.complete(session, startedAt: startedAt, feel: feel)
+                    isPlaying = false
+                    dismiss()
+                },
+                startedAt: startedAt
+            )
         }
         .sheet(item: $explaining) { term in
             GlossarySheet(term: term)

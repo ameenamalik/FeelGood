@@ -13,6 +13,7 @@ import Observation
 final class TodayModel {
     private let store: any ContentProviding
     private let engine: PlanEngine
+    private let log: any SessionLogging
     private let calendar: Calendar
 
     var profile: PlanProfile
@@ -22,28 +23,35 @@ final class TodayModel {
     /// Sessions already turned down today, so a swap never circles back.
     private(set) var swappedAway: Set<String> = []
 
+    /// Sessions finished today, so a completed item reads as done rather than
+    /// as something still waiting. Not a score and not a count — just a mark.
+    private(set) var completedToday: Set<String> = []
+
     init(
         store: any ContentProviding,
         profile: PlanProfile,
+        log: any SessionLogging = InMemorySessionLog(),
         checkIn: PlanCheckIn? = nil,
-        history: [HistoryEntry] = [],
         now: Date,
         calendar: Calendar = .current
     ) {
         self.store = store
         self.engine = PlanEngine(catalog: store.sessions)
+        self.log = log
         self.profile = profile
         self.checkIn = checkIn
-        self.history = history
+        self.history = log.history(before: now)
         self.calendar = calendar
         self.menu = engine.makeMenu(
             PlanInput(
                 profile: profile,
                 checkIn: checkIn,
-                history: history,
-                context: PlanContext(now: now, calendar: calendar)
+                history: log.history(before: now),
+                context: PlanContext(now: now, calendar: calendar),
+                affinity: log.affinity()
             )
         )
+        refreshCompletedToday(now: now)
     }
 
     private func input(now: Date) -> PlanInput {
@@ -51,7 +59,8 @@ final class TodayModel {
             profile: profile,
             checkIn: checkIn,
             history: history,
-            context: PlanContext(now: now, calendar: calendar)
+            context: PlanContext(now: now, calendar: calendar),
+            affinity: log.affinity()
         )
     }
 
@@ -73,7 +82,30 @@ final class TodayModel {
         ) else { return }
 
         swappedAway.insert(item.session.id)
+        log.recordSwap(of: item.session, at: now)
+        history = log.history(before: now)
         menu = menu.replacing(item, with: replacement)
+    }
+
+    /// Finished. The menu deliberately does not regenerate — the day stays as
+    /// it was, and what happened counts toward tomorrow.
+    func complete(_ session: Session, startedAt: Date, feel: Feel?, now: Date = Date()) {
+        log.recordCompletion(of: session, startedAt: startedAt, endedAt: now, feel: feel)
+        history = log.history(before: now)
+        refreshCompletedToday(now: now)
+    }
+
+    func isCompleted(_ item: MenuItem) -> Bool {
+        completedToday.contains(item.session.id)
+    }
+
+    private func refreshCompletedToday(now: Date) {
+        let today = calendar.startOfDay(for: now)
+        completedToday = Set(
+            history
+                .filter { $0.wasCompleted && calendar.startOfDay(for: $0.date) == today }
+                .map(\.sessionID)
+        )
     }
 
     func canSwap(_ item: MenuItem, now: Date = Date()) -> Bool {
