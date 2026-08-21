@@ -11,7 +11,7 @@ import Foundation
 
 /// Machine-readable reason for a pick. Travels to the copy layer as-is;
 /// nothing here identifies a person.
-enum ReasonCode: String, Codable, Sendable, CaseIterable {
+nonisolated enum ReasonCode: String, Codable, Sendable, CaseIterable {
     case recoveryBalance
     case lowEnergy
     case timeConstrained
@@ -22,7 +22,7 @@ enum ReasonCode: String, Codable, Sendable, CaseIterable {
 }
 
 /// One line on the menu.
-struct MenuItem: Hashable, Sendable, Identifiable {
+nonisolated struct MenuItem: Hashable, Sendable, Identifiable {
     let session: Session
     let course: Course
     let reasons: [ReasonCode]
@@ -33,7 +33,7 @@ struct MenuItem: Hashable, Sendable, Identifiable {
 }
 
 /// Today. Never longer than one screen, never scrolls (PRD §3).
-struct Menu: Hashable, Sendable {
+nonisolated struct Menu: Hashable, Sendable {
     /// Start of the local day this menu belongs to.
     let dayStart: Date
     let appetizer: MenuItem?
@@ -68,7 +68,7 @@ struct Menu: Hashable, Sendable {
 
 /// Deterministic copy. Warm, never clinical; no shame register anywhere, and
 /// no medical or outcome claims (PRD §4, §11).
-enum MenuCopy {
+nonisolated enum MenuCopy {
 
     static func headline(reasons: Set<ReasonCode>, checkIn: PlanCheckIn) -> String {
         if reasons.contains(.returningAfterGap) {

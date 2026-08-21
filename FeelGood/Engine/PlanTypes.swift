@@ -12,7 +12,7 @@ import Foundation
 // MARK: - Profile
 
 /// How often she *wants* to move. Used for gentle balancing, never for grading.
-enum Cadence: String, Codable, CaseIterable, Sendable {
+nonisolated enum Cadence: String, Codable, CaseIterable, Sendable {
     case everyDay, mostDays, fewTimesAWeek, whenICan
 
     /// Sessions per week she's aiming at. Used only to soften suggestions when
@@ -27,12 +27,12 @@ enum Cadence: String, Codable, CaseIterable, Sendable {
     }
 }
 
-enum TimeOfDay: String, Codable, CaseIterable, Sendable {
+nonisolated enum TimeOfDay: String, Codable, CaseIterable, Sendable {
     case morning, midday, evening, varies
 }
 
 /// The engine's view of the profile — the answers from onboarding (PRD §7.1).
-struct PlanProfile: Hashable, Sendable {
+nonisolated struct PlanProfile: Hashable, Sendable {
     var availableActivities: Set<Activity>
     var equipment: Set<Equipment>
     var cadence: Cadence
@@ -64,7 +64,7 @@ struct PlanProfile: Hashable, Sendable {
 // MARK: - Check-in
 
 /// How much time she actually has today.
-enum TimeBudget: String, Codable, CaseIterable, Sendable {
+nonisolated enum TimeBudget: String, Codable, CaseIterable, Sendable {
     case aLittle, some, plenty
 
     /// Hard ceiling on session length. Never recommend 30 when she said 10.
@@ -77,12 +77,12 @@ enum TimeBudget: String, Codable, CaseIterable, Sendable {
     }
 }
 
-enum BodyState: String, Codable, CaseIterable, Sendable {
+nonisolated enum BodyState: String, Codable, CaseIterable, Sendable {
     case sore, stiff, stressed, cramping, good
 }
 
 /// Two taps, ten seconds. The optional third is body.
-struct PlanCheckIn: Hashable, Sendable {
+nonisolated struct PlanCheckIn: Hashable, Sendable {
     var energy: Energy
     var time: TimeBudget
     var body: BodyState?
@@ -97,18 +97,18 @@ struct PlanCheckIn: Hashable, Sendable {
 // MARK: - History
 
 /// How a session felt afterwards. Three faces, no score.
-enum Feel: String, Codable, CaseIterable, Sendable {
+nonisolated enum Feel: String, Codable, CaseIterable, Sendable {
     case lovedIt, fine, tooMuch
 }
 
-enum HistoryOutcome: Hashable, Sendable {
+nonisolated enum HistoryOutcome: Hashable, Sendable {
     case completed(feel: Feel?)
     case swappedAway
     case skipped
 }
 
 /// One day's worth of what actually happened. The engine reads the last 14.
-struct HistoryEntry: Hashable, Sendable {
+nonisolated struct HistoryEntry: Hashable, Sendable {
     var sessionID: String
     var activity: Activity
     var qualities: [Quality]
@@ -127,13 +127,13 @@ struct HistoryEntry: Hashable, Sendable {
 // MARK: - Context
 
 /// Something planned ahead of the day — the 8am reformer class on Thursday.
-struct ScheduledSpecial: Hashable, Sendable {
+nonisolated struct ScheduledSpecial: Hashable, Sendable {
     var sessionID: String
     var date: Date
 }
 
 /// Everything about right now that isn't her.
-struct PlanContext: Hashable, Sendable {
+nonisolated struct PlanContext: Hashable, Sendable {
     var now: Date
     /// Offline, or on cellular with data saver — video Mains are filtered out
     /// silently and the authored catalog carries the day.
@@ -160,7 +160,7 @@ struct PlanContext: Hashable, Sendable {
 }
 
 /// The complete input to `PlanEngine.makeMenu`.
-struct PlanInput: Hashable, Sendable {
+nonisolated struct PlanInput: Hashable, Sendable {
     var profile: PlanProfile
     /// `nil` when she skipped it — the app never blocks on input, so the
     /// engine infers a check-in from history and time of day instead.

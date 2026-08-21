@@ -12,7 +12,7 @@ import Foundation
 // MARK: - Vocabulary
 
 /// What you do. Answers "what is this session".
-enum Activity: String, Codable, CaseIterable, Sendable {
+nonisolated enum Activity: String, Codable, CaseIterable, Sendable {
     case pilates, yoga, qigong, strength, stretching, walking, biking, swimming
     case skating, dance, jumpRope, agility, carries, racquet, climbing, martialArts
     case breathwork
@@ -20,36 +20,36 @@ enum Activity: String, Codable, CaseIterable, Sendable {
 
 /// What it develops. The cross-cutting dimension the engine balances across.
 /// Never surfaced to the user as a taxonomy — only ever as one small line.
-enum Quality: String, Codable, CaseIterable, Sendable {
+nonisolated enum Quality: String, Codable, CaseIterable, Sendable {
     case strength, mobility, endurance, impact, agility, coordination, grip
     case balance, downRegulation
 }
 
 /// Used both for a session's fit and for today's check-in answer.
-enum Energy: String, Codable, CaseIterable, Sendable {
+nonisolated enum Energy: String, Codable, CaseIterable, Sendable {
     case low, steady, strong
 }
 
-enum Equipment: String, Codable, CaseIterable, Sendable {
+nonisolated enum Equipment: String, Codable, CaseIterable, Sendable {
     case none, mat, weights, band, rope, bike, pool, skates, outdoor, reformer
 }
 
-enum BodyFocus: String, Codable, CaseIterable, Sendable {
+nonisolated enum BodyFocus: String, Codable, CaseIterable, Sendable {
     case full, core, lowerBody, upperBody, back, hips, neckShoulders
 }
 
 /// Things to work around. Tagged on a session as "do not surface if flagged",
 /// and on a profile as "I flagged this". Filters, never diagnoses.
-enum WorkAround: String, Codable, CaseIterable, Sendable {
+nonisolated enum WorkAround: String, Codable, CaseIterable, Sendable {
     case pregnancy, postpartum, pelvicFloor, knees, wrists, lowBack, fatigue
 }
 
-enum Intent: String, Codable, CaseIterable, Sendable {
+nonisolated enum Intent: String, Codable, CaseIterable, Sendable {
     case energize, strengthen, calm, mobilize, joy
 }
 
 /// The menu metaphor. See PRD §3.
-enum Course: String, Codable, CaseIterable, Sendable {
+nonisolated enum Course: String, Codable, CaseIterable, Sendable {
     case appetizer, main, side, dessert, special
 }
 
@@ -58,13 +58,13 @@ enum Course: String, Codable, CaseIterable, Sendable {
 /// Attribution for a session. Stays `nil` for all v1 content — nothing in the
 /// app may state or imply that a real person wrote, taught, or endorsed a
 /// session until that is confirmed in writing. See PRD §6.
-struct Creator: Codable, Hashable, Sendable {
+nonisolated struct Creator: Codable, Hashable, Sendable {
     let name: String
     let channelURL: URL
 }
 
 /// One step inside an authored micro-session.
-struct Step: Codable, Hashable, Sendable {
+nonisolated struct Step: Codable, Hashable, Sendable {
     let name: String
     let seconds: Int
     let cue: String
@@ -81,7 +81,7 @@ struct Step: Codable, Hashable, Sendable {
 
 /// Where the movement comes from. Authored sessions carry the offline path;
 /// video sessions require a connection and can never sit behind the paywall.
-enum SessionSource: Codable, Hashable, Sendable {
+nonisolated enum SessionSource: Codable, Hashable, Sendable {
     case authored(steps: [Step])
     case youtube(videoID: String, channel: String)
 
@@ -128,7 +128,7 @@ enum SessionSource: Codable, Hashable, Sendable {
 }
 
 /// Every recommendation is a Session — one unit, two possible sources.
-struct Session: Codable, Hashable, Sendable, Identifiable {
+nonisolated struct Session: Codable, Hashable, Sendable, Identifiable {
     let id: String
     let title: String
     let subtitle: String
@@ -218,7 +218,7 @@ struct Session: Codable, Hashable, Sendable, Identifiable {
 
 /// Public-domain movement glossary, text only. Reachable only from a step
 /// inside a session already in progress — never browsable. See PRD §6.
-struct ExerciseTerm: Codable, Hashable, Sendable, Identifiable {
+nonisolated struct ExerciseTerm: Codable, Hashable, Sendable, Identifiable {
     let id: String
     let name: String
     let aka: [String]
@@ -232,7 +232,7 @@ struct ExerciseTerm: Codable, Hashable, Sendable, Identifiable {
 // MARK: - Catalog
 
 /// The bundled catalog, versioned so a later remote drop can supersede it.
-struct ContentCatalog: Codable, Sendable {
+nonisolated struct ContentCatalog: Codable, Sendable {
     let version: Int
     let sessions: [Session]
     let glossary: [ExerciseTerm]
