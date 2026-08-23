@@ -11,6 +11,7 @@ import SwiftUI
 struct TodayView: View {
     @State var model: TodayModel
     @State private var isCheckingIn = false
+    @State private var isLookingBack = false
     @State private var selected: MenuItem?
     #if DEBUG
     @State private var isDebugging = false
@@ -45,6 +46,9 @@ struct TodayView: View {
         }
         .sheet(item: $selected) { item in
             SessionDetailView(item: item, model: model)
+        }
+        .sheet(isPresented: $isLookingBack) {
+            LookBackView(reflection: model.lookBack(now: .now))
         }
         #if DEBUG
         .sheet(isPresented: $isDebugging) {
@@ -113,6 +117,11 @@ struct TodayView: View {
                 FGQuietButton("Something's changed", systemImage: "arrow.triangle.2.circlepath") {
                     isCheckingIn = true
                 }
+            }
+
+            // Available anytime, and never asking to be opened.
+            FGQuietButton("A look back", systemImage: "text.alignleft") {
+                isLookingBack = true
             }
         }
         .frame(maxWidth: .infinity)
