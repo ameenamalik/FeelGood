@@ -57,8 +57,10 @@ final class TodayModel {
     /// PRD §7.4. The engine reads the same history to plan; this reads it to
     /// reflect. Both are pure, and both get `now` handed to them.
     func lookBack(now: Date) -> Reflection {
+        // Reads the tracked `history` rather than re-querying the log, so the
+        // tab redraws when a session is finished.
         LookBack.reflect(
-            history: log.history(before: now),
+            history: history,
             context: PlanContext(now: now, calendar: calendar)
         )
     }

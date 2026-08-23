@@ -118,7 +118,19 @@ private struct TodayScreen: View {
     }
 
     var body: some View {
-        TodayView(model: model)
+        // Two tabs, and only two. The PRD's "no tab, no browse" (§6) is aimed
+        // at the glossary — 873 browsable exercises is the overwhelm the app
+        // exists to remove — not at the app's own shell. Today stays the
+        // default and stays uncluttered; this is just how the peers to it
+        // become reachable. Library and Settings land here too.
+        TabView {
+            Tab("Today", systemImage: "sun.max") {
+                TodayView(model: model)
+            }
+            Tab("You", systemImage: "person") {
+                LookBackView(reflection: model.lookBack(now: .now))
+            }
+        }
     }
 }
 

@@ -211,24 +211,46 @@ extension TimeOfDay {
 }
 
 extension Reflection.Note {
-    /// One note, said out loud. Statements of fact in a warm register —
-    /// nothing here praises, compares, or asks for anything.
+    /// One note, said out loud.
+    ///
+    /// Identity rather than measurement: the register is "this is who you are
+    /// lately", not "here is your total". Nothing praises, compares, or asks —
+    /// and there is no target anywhere for any of it to fall short of.
     var line: String {
         switch self {
         case .moved(let times):
             times == 1
-                ? "You've moved once in the last two weeks."
-                : "You've moved \(times) times in the last two weeks."
+                ? "Once in the last two weeks. That counts."
+                : "\(Self.spelled(times)) times in the last two weeks."
         case .mostly(let when):
-            "Mostly \(when.lookBackLabel)."
+            when == .varies
+                ? "You move whenever you can."
+                : "You move in the \(when.lookBackLabel), mostly."
         case .activities(let activities):
             activities.count == 1
-                ? "Mostly \(activities[0].lookBackName)."
-                : "Mostly \(activities[0].lookBackName) and \(activities[1].lookBackName)."
+                ? "\(activities[0].lookBackName.capitalisedFirst) more than anything."
+                : "\(activities[0].lookBackName.capitalisedFirst) and \(activities[1].lookBackName), mostly."
         case .keepsReturningTo(let activity):
-            "The \(activity.lookBackName) sessions are the ones you keep coming back to."
+            "You keep coming back to the \(activity.lookBackName) sessions."
         case .madeRoomForRest:
-            "You've made room for the gentle ones, too."
+            "And you make room for the gentle ones."
         }
+    }
+
+    /// Editorial style: words up to ten, figures above. The app is meant to
+    /// read like a cookbook, and cookbooks don't say "8 times".
+    private static func spelled(_ n: Int) -> String {
+        let words = ["zero", "once", "Two", "Three", "Four", "Five",
+                     "Six", "Seven", "Eight", "Nine", "Ten"]
+        return (2...10).contains(n) ? words[n] : "\(n)"
+    }
+}
+
+private extension String {
+    /// Uppercases only the first character, so "qi gong" becomes "Qi gong"
+    /// rather than "Qi Gong".
+    var capitalisedFirst: String {
+        guard let first else { return self }
+        return first.uppercased() + dropFirst()
     }
 }
