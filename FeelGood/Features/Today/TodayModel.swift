@@ -54,6 +54,15 @@ final class TodayModel {
         refreshCompletedToday(now: now)
     }
 
+    /// PRD §7.4. The engine reads the same history to plan; this reads it to
+    /// reflect. Both are pure, and both get `now` handed to them.
+    func lookBack(now: Date) -> Reflection {
+        LookBack.reflect(
+            history: log.history(before: now),
+            context: PlanContext(now: now, calendar: calendar)
+        )
+    }
+
     private func input(now: Date) -> PlanInput {
         PlanInput(
             profile: profile,

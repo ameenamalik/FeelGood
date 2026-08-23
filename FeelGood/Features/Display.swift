@@ -167,3 +167,68 @@ extension BodyState {
         }
     }
 }
+
+// MARK: The Look Back
+
+extension Activity {
+    /// The name as it reads *mid-sentence*: "Mostly Pilates and walking."
+    /// `label` is title-case for tags and headings, which would give
+    /// "Mostly Pilates and Walking" — so the proper noun keeps its capital
+    /// here and everything else goes lower.
+    var lookBackName: String {
+        switch self {
+        case .pilates: "Pilates"
+        case .yoga: "yoga"
+        case .qigong: "qi gong"
+        case .strength: "strength work"
+        case .stretching: "stretching"
+        case .walking: "walking"
+        case .biking: "biking"
+        case .swimming: "swimming"
+        case .skating: "skating"
+        case .dance: "dance"
+        case .jumpRope: "jump rope"
+        case .agility: "footwork"
+        case .carries: "carries"
+        case .racquet: "racquet"
+        case .climbing: "climbing"
+        case .martialArts: "martial arts"
+        case .breathwork: "breathwork"
+        }
+    }
+}
+
+extension TimeOfDay {
+    /// Plural: it describes a habit, not an appointment.
+    var lookBackLabel: String {
+        switch self {
+        case .morning: "mornings"
+        case .midday: "early afternoons"
+        case .evening: "evenings"
+        case .varies: "whenever you can"
+        }
+    }
+}
+
+extension Reflection.Note {
+    /// One note, said out loud. Statements of fact in a warm register —
+    /// nothing here praises, compares, or asks for anything.
+    var line: String {
+        switch self {
+        case .moved(let times):
+            times == 1
+                ? "You've moved once in the last two weeks."
+                : "You've moved \(times) times in the last two weeks."
+        case .mostly(let when):
+            "Mostly \(when.lookBackLabel)."
+        case .activities(let activities):
+            activities.count == 1
+                ? "Mostly \(activities[0].lookBackName)."
+                : "Mostly \(activities[0].lookBackName) and \(activities[1].lookBackName)."
+        case .keepsReturningTo(let activity):
+            "The \(activity.lookBackName) sessions are the ones you keep coming back to."
+        case .madeRoomForRest:
+            "You've made room for the gentle ones, too."
+        }
+    }
+}
