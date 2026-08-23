@@ -20,7 +20,7 @@ struct LookBackView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
-                    Text("A look back")
+                    Text("You, lately")
                         .font(FGFont.title)
                         .foregroundStyle(FGColor.ink)
                         .accessibilityAddTraits(.isHeader)
@@ -36,8 +36,6 @@ struct LookBackView: View {
             }
             .scrollBounceBehavior(.basedOnSize)
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
     }
 
     private var notes: some View {

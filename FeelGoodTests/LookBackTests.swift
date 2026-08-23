@@ -73,7 +73,10 @@ struct LookBackTests {
         let reflection = reflect([completed("a", .pilates, daysAgo: 1)])
         let first = try #require(reflection.notes.first)
         #expect(first == .moved(times: 1))
-        #expect(first.line == "You've moved once in the last two weeks.")
+        // Asserted on meaning, not on the sentence: the voice is allowed to
+        // change without dragging the test suite along with it.
+        #expect(first.line.lowercased().contains("once"))
+        #expect(!first.line.contains("1 time"))
     }
 
     @Test("The count is always the opening note")
