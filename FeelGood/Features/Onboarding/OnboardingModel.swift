@@ -45,19 +45,44 @@ final class OnboardingModel {
 
     private(set) var card: Card = .access
 
-    var activities: Set<Activity> = []
-    var equipment: Set<Equipment> = [.none]
-    var cadence: Cadence = .mostDays
-    var realisticMinutes: Int = 20
-    var timeOfDay: TimeOfDay = .varies
-    var intent: Intent = .energize
-    var workArounds: Set<WorkAround> = []
+    /// The answers themselves live in one value so the same six questions can
+    /// be asked again later from the profile screen. See `ProfileAnswers`.
+    var answers = ProfileAnswers()
+
+    var activities: Set<Activity> {
+        get { answers.activities }
+        set { answers.activities = newValue }
+    }
+    var equipment: Set<Equipment> {
+        get { answers.equipment }
+        set { answers.equipment = newValue }
+    }
+    var cadence: Cadence {
+        get { answers.cadence }
+        set { answers.cadence = newValue }
+    }
+    var realisticMinutes: Int {
+        get { answers.realisticMinutes }
+        set { answers.realisticMinutes = newValue }
+    }
+    var timeOfDay: TimeOfDay {
+        get { answers.bestTimeOfDay }
+        set { answers.bestTimeOfDay = newValue }
+    }
+    var intent: Intent {
+        get { answers.intent }
+        set { answers.intent = newValue }
+    }
+    var workArounds: Set<WorkAround> {
+        get { answers.workArounds }
+        set { answers.workArounds = newValue }
+    }
 
     var isFirstCard: Bool { card == .access }
     var isLastCard: Bool { card == .workArounds }
 
     var canAdvance: Bool {
-        card.isRequired ? !activities.isEmpty : true
+        card.isRequired ? answers.isAnswered : true
     }
 
     var progress: Double {
@@ -74,53 +99,14 @@ final class OnboardingModel {
         card = previous
     }
 
-    /// Equipment is implied by some choices — picking swimming without ticking
-    /// "pool" shouldn't produce an empty menu.
-    private var impliedEquipment: Set<Equipment> {
-        var implied: Set<Equipment> = [.none]
-        for activity in activities {
-            switch activity {
-            case .swimming: implied.insert(.pool)
-            case .biking: implied.insert(.bike)
-            case .skating: implied.insert(.skates)
-            case .jumpRope: implied.insert(.rope)
-            case .walking, .agility, .racquet, .climbing: implied.insert(.outdoor)
-            case .pilates, .yoga, .stretching: implied.insert(.mat)
-            default: break
-            }
-        }
-        return implied
-    }
+    func makeProfile() -> PlanProfile { answers.planProfile }
 
-    func makeProfile() -> PlanProfile {
-        PlanProfile(
-            availableActivities: activities,
-            equipment: equipment.union(impliedEquipment),
-            cadence: cadence,
-            realisticMinutes: realisticMinutes,
-            bestTimeOfDay: timeOfDay,
-            intent: intent,
-            workArounds: workArounds
-        )
-    }
-
-    func makeRecord(now: Date) -> UserProfile {
-        UserProfile(
-            activities: activities,
-            equipment: equipment.union(impliedEquipment),
-            cadence: cadence,
-            realisticMinutes: realisticMinutes,
-            bestTimeOfDay: timeOfDay,
-            intent: intent,
-            workArounds: workArounds,
-            now: now
-        )
-    }
+    func makeRecord(now: Date) -> UserProfile { UserProfile(answers: answers, now: now) }
 }
 
 // MARK: - Answer labels
 
-extension Cadence {
+nonisolated extension Cadence {
     var label: String {
         switch self {
         case .everyDay: "Every day"
@@ -131,7 +117,7 @@ extension Cadence {
     }
 }
 
-extension TimeOfDay {
+nonisolated extension TimeOfDay {
     var label: String {
         switch self {
         case .morning: "Morning"
@@ -142,7 +128,7 @@ extension TimeOfDay {
     }
 }
 
-extension Intent {
+nonisolated extension Intent {
     var label: String {
         switch self {
         case .energize: "Energy"
@@ -154,7 +140,7 @@ extension Intent {
     }
 }
 
-extension WorkAround {
+nonisolated extension WorkAround {
     /// Plain words, no clinical register. These filter; they never diagnose.
     var label: String {
         switch self {

@@ -123,6 +123,63 @@ struct CatalogTests {
         }
     }
 
+    @Test("Movement nobody is asked about still needs nothing to do it")
+    func alwaysAvailableActivitiesHaveAnUnequippedSession() throws {
+        let sessions = try store().sessions
+        for activity in Activity.allCases where activity.isAlwaysAvailable {
+            #expect(
+                sessions.contains { $0.activity == activity && $0.needsNoEquipment },
+                "\(activity) is never asked about, so it must be doable with nothing"
+            )
+        }
+    }
+
+    @Test("Qi gong reaches a stressed evening nobody had to ask for")
+    func realCatalogRecommendsMovementThatWasNeverPicked() throws {
+        let engine = PlanEngine(catalog: try store().sessions)
+        let input = PlanInput(
+            profile: Fixture.profile(
+                activities: [.pilates],
+                equipment: [.none, .mat],
+                intent: .calm
+            ),
+            checkIn: PlanCheckIn(energy: .low, time: .some, body: .stressed),
+            context: Fixture.context()
+        )
+        let menu = engine.makeMenu(input)
+
+        #expect(menu.items.contains { $0.session.activity.isAlwaysAvailable })
+    }
+
+    @Test("A gym membership fills the menu with things you can do at a gym")
+    func realCatalogServesAGymMembership() throws {
+        let engine = PlanEngine(catalog: try store().sessions)
+        let input = PlanInput(
+            profile: Fixture.profile(
+                activities: [.strength],
+                equipment: [.none, .gym, .mat, .weights, .band, .bike],
+                intent: .strengthen
+            ),
+            checkIn: PlanCheckIn(energy: .strong, time: .plenty),
+            context: Fixture.context()
+        )
+        let menu = engine.makeMenu(input)
+
+        #expect(menu.main != nil)
+        #expect(menu.items.contains { $0.session.equipment.contains(.gym) })
+    }
+
+    @Test("Nothing at the gym hangs on a chip the gym doesn't imply")
+    func gymSessionsAreReachableFromAMembership() throws {
+        for session in try store().sessions where session.equipment.contains(.gym) {
+            #expect(
+                session.activity.isAlwaysAvailable
+                    || Equipment.gym.impliedActivities.contains(session.activity),
+                "\(session.id) needs \(session.activity) picked, which a gym membership does not imply"
+            )
+        }
+    }
+
     @Test("The real catalog holds up for someone with nothing but a floor")
     func realCatalogServesTheHardestCase() throws {
         let engine = PlanEngine(catalog: try store().sessions)

@@ -10,8 +10,26 @@ import SwiftUI
 
 struct TodayView: View {
     @State var model: TodayModel
+    /// What was ticked, so the profile screen can show it back.
+    let answers: ProfileAnswers
+    let onProfileSaved: (ProfileAnswers) -> Void
+
     @State private var isCheckingIn = false
+    @State private var isEditingProfile = false
+    @State private var isLogging = false
+    @State private var isLookingBack = false
+    @State private var isBrowsing = false
     @State private var selected: MenuItem?
+
+    init(
+        model: TodayModel,
+        answers: ProfileAnswers = ProfileAnswers(),
+        onProfileSaved: @escaping (ProfileAnswers) -> Void = { _ in }
+    ) {
+        _model = State(initialValue: model)
+        self.answers = answers
+        self.onProfileSaved = onProfileSaved
+    }
 
     var body: some View {
         ZStack {
@@ -38,15 +56,52 @@ struct TodayView: View {
         .sheet(item: $selected) { item in
             SessionDetailView(item: item, model: model)
         }
+        .sheet(isPresented: $isEditingProfile) {
+            ProfileEditView(answers: answers) { updated in
+                onProfileSaved(updated)
+                model.update(profile: updated.planProfile)
+            }
+        }
+        .sheet(isPresented: $isLogging) {
+            LogWorkoutSheet { workout in
+                model.log(workout)
+            }
+        }
+        .sheet(isPresented: $isLookingBack) {
+            LookBackView(lookBack: model.lookBack())
+        }
+        .sheet(isPresented: $isBrowsing) {
+            LibraryView(model: model)
+        }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
-            Text(model.greeting())
-                .font(FGFont.caption)
-                .foregroundStyle(FGColor.inkMuted)
-                .textCase(.uppercase)
-                .tracking(1.2)
+            HStack(alignment: .firstTextBaseline) {
+                Text(model.greeting())
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .textCase(.uppercase)
+                    .tracking(1.2)
+
+                Spacer(minLength: FGSpace.s)
+
+                // One control rather than a row of icons: the menu is the
+                // screen, and everything else is somewhere you go on purpose.
+                // (`SwiftUI.Menu` spelled out: `Menu` is this app's own word
+                // for the day's plan, and that type wins in this file.)
+                SwiftUI.Menu {
+                    Button("The last couple of weeks", systemImage: "leaf") { isLookingBack = true }
+                    Button("Everything", systemImage: "square.stack") { isBrowsing = true }
+                    Button("What's true now", systemImage: "slider.horizontal.3") { isEditingProfile = true }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundStyle(FGColor.inkMuted)
+                        .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget, alignment: .trailing)
+                }
+                .accessibilityLabel("More")
+                .accessibilityHint("Look back, browse everything, or change what you have access to")
+            }
 
             Text(model.menu.headline)
                 .font(FGFont.display)
@@ -54,7 +109,6 @@ struct TodayView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
     }
 
     private var menuItems: some View {
@@ -94,6 +148,12 @@ struct TodayView: View {
                 FGQuietButton("Something's changed", systemImage: "arrow.triangle.2.circlepath") {
                     isCheckingIn = true
                 }
+            }
+
+            // Movement that happened without us. Logging it is how the engine
+            // learns what a normal week actually looks like.
+            FGQuietButton("I did something else", systemImage: "plus") {
+                isLogging = true
             }
         }
         .frame(maxWidth: .infinity)

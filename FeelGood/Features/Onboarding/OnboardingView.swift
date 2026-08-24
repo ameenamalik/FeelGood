@@ -70,22 +70,7 @@ struct OnboardingView: View {
     private var answers: some View {
         switch model.card {
         case .access:
-            VStack(alignment: .leading, spacing: FGSpace.l) {
-                answerGroup("Movement") {
-                    ForEach(Activity.allCases, id: \.self) { activity in
-                        FGChoice(title: activity.label, isSelected: model.activities.contains(activity)) {
-                            toggle(activity, in: \.activities)
-                        }
-                    }
-                }
-                answerGroup("Equipment") {
-                    ForEach(Equipment.allCases.filter { $0 != .none }, id: \.self) { item in
-                        FGChoice(title: item.label ?? "", isSelected: model.equipment.contains(item)) {
-                            toggle(item, in: \.equipment)
-                        }
-                    }
-                }
-            }
+            AccessChoices(activities: $model.activities, equipment: $model.equipment)
 
         case .cadence:
             choiceGrid(Cadence.allCases, label: \.label, selection: $model.cadence)
@@ -112,17 +97,6 @@ struct OnboardingView: View {
                     withAnimation(FGMotion.gentle) { model.workArounds = [] }
                 }
             }
-        }
-    }
-
-    private func answerGroup<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: FGSpace.s) {
-            Text(title)
-                .font(FGFont.label)
-                .foregroundStyle(FGColor.inkMuted)
-                .textCase(.uppercase)
-                .tracking(1.1)
-            FlowRow(spacing: FGSpace.s) { content() }
         }
     }
 
@@ -166,7 +140,7 @@ struct OnboardingView: View {
 
             if !model.isFirstCard {
                 FGQuietButton("Back", systemImage: "chevron.left") { model.goBack() }
-            } else if model.activities.isEmpty {
+            } else if !model.canAdvance {
                 Text("Pick at least one thing to get started.")
                     .font(FGFont.caption)
                     .foregroundStyle(FGColor.inkMuted)

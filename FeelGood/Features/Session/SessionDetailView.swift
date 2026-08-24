@@ -8,14 +8,35 @@
 import SwiftUI
 
 struct SessionDetailView: View {
-    let item: MenuItem
+    let session: Session
+    let course: Course
+    /// Why this was picked, when it was picked. The Library has no reason to
+    /// give — nothing chose it, somebody went looking for it — so the "why
+    /// this" card simply isn't there.
+    let reason: String?
     let model: TodayModel
 
     @Environment(\.dismiss) private var dismiss
     @State private var isPlaying = false
+    @State private var startedAt: Date?
     @State private var explaining: ExerciseTerm?
+    @State private var isRenaming = false
+    @State private var newTitle = ""
+    @State private var isConfirmingRemoval = false
 
-    private var session: Session { item.session }
+    init(item: MenuItem, model: TodayModel) {
+        session = item.session
+        course = item.course
+        reason = item.reasonText
+        self.model = model
+    }
+
+    init(session: Session, model: TodayModel) {
+        self.session = session
+        course = session.course
+        reason = nil
+        self.model = model
+    }
 
     var body: some View {
         ZStack {
@@ -24,7 +45,7 @@ struct SessionDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     VStack(alignment: .leading, spacing: FGSpace.s) {
-                        CourseTag(course: item.course)
+                        CourseTag(course: course)
                         Text(session.title)
                             .font(FGFont.title)
                             .foregroundStyle(FGColor.ink)
@@ -35,16 +56,18 @@ struct SessionDetailView: View {
                         }
                     }
 
-                    FGCard {
-                        VStack(alignment: .leading, spacing: FGSpace.xs) {
-                            Text("Why this")
-                                .font(FGFont.label)
-                                .foregroundStyle(FGColor.skyDeep)
-                                .textCase(.uppercase)
-                                .tracking(1.1)
-                            Text(item.reasonText)
-                                .font(FGFont.body)
-                                .foregroundStyle(FGColor.ink)
+                    if let reason {
+                        FGCard {
+                            VStack(alignment: .leading, spacing: FGSpace.xs) {
+                                Text("Why this")
+                                    .font(FGFont.label)
+                                    .foregroundStyle(FGColor.skyDeep)
+                                    .textCase(.uppercase)
+                                    .tracking(1.1)
+                                Text(reason)
+                                    .font(FGFont.body)
+                                    .foregroundStyle(FGColor.ink)
+                            }
                         }
                     }
 
@@ -61,16 +84,60 @@ struct SessionDetailView: View {
                         steps
                     }
 
-                    FGPrimaryButton(title: "Start") { isPlaying = true }
+                    // Somebody's own workout has no steps to play, because
+                    // nobody wrote any. It gets the honest button instead.
+                    if session.isOwn {
+                        VStack(spacing: FGSpace.s) {
+                            FGPrimaryButton(title: "I did this") {
+                                model.record(.finished(nil), for: session, startedAt: Date())
+                                dismiss()
+                            }
+                            HStack(spacing: FGSpace.m) {
+                                FGQuietButton("Rename", systemImage: "pencil") {
+                                    newTitle = session.title
+                                    isRenaming = true
+                                }
+                                FGQuietButton("Remove", systemImage: "minus.circle") {
+                                    isConfirmingRemoval = true
+                                }
+                            }
+                        }
+                    } else {
+                        FGPrimaryButton(title: "Start") {
+                            startedAt = Date()
+                            isPlaying = true
+                        }
+                    }
                 }
                 .padding(FGSpace.page)
             }
         }
         .fullScreenCover(isPresented: $isPlaying) {
-            PlayerView(session: session) { dismiss() }
+            PlayerView(session: session) { outcome in
+                model.record(outcome, for: session, startedAt: startedAt ?? Date())
+                dismiss()
+            }
         }
         .sheet(item: $explaining) { term in
             GlossarySheet(term: term)
+        }
+        .alert("Name this one", isPresented: $isRenaming) {
+            TextField("Name", text: $newTitle)
+            Button("Save") { model.rename(session, to: newTitle) }
+            Button("Cancel", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "Remove \(session.title)?",
+            isPresented: $isConfirmingRemoval,
+            titleVisibility: .visible
+        ) {
+            Button("Remove", role: .destructive) {
+                model.forget(session)
+                dismiss()
+            }
+            Button("Keep it", role: .cancel) {}
+        } message: {
+            Text("It stops being offered. The times you did it still count.")
         }
         .presentationDragIndicator(.visible)
     }
