@@ -17,5 +17,7 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>RevenueCatAPIKey</key>
+	<string>$(REVENUECAT_API_KEY)</string>
 </dict>
 </plist>
