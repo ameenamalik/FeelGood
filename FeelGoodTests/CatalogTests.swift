@@ -123,6 +123,38 @@ struct CatalogTests {
         }
     }
 
+    @Test("Every appetizer can be done without leaving the house")
+    func appetizersAlwaysWorkAtHome() throws {
+        for session in try store().sessions where session.course == .appetizer {
+            #expect(session.worksAtHome, "\(session.id) needs somewhere other than home")
+        }
+    }
+
+    @Test("Every session says where it can happen")
+    func everySessionIsPlaced() throws {
+        for session in try store().sessions {
+            #expect(!session.places.isEmpty, "\(session.id) has no place")
+        }
+    }
+
+    @Test("Twenty minutes, nothing left, not leaving the house")
+    func theHardDayStillGetsAMenu() throws {
+        let engine = PlanEngine(catalog: try store().sessions)
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .low, time: .some, place: .stayingIn),
+            context: Fixture.context()
+        )
+        let menu = engine.makeMenu(input)
+
+        #expect(menu.appetizer != nil)
+        #expect(menu.main != nil)
+        for item in menu.items {
+            #expect(item.session.places.contains(.home))
+            #expect(item.session.durationMin <= TimeBudget.some.maxMinutes)
+        }
+    }
+
     @Test("The real catalog holds up for someone with nothing but a floor")
     func realCatalogServesTheHardestCase() throws {
         let engine = PlanEngine(catalog: try store().sessions)
@@ -130,6 +162,7 @@ struct CatalogTests {
             profile: Fixture.profile(
                 activities: [.breathwork, .stretching],
                 equipment: [.none],
+                places: [.home],
                 realisticMinutes: 10,
                 workArounds: [.pregnancy, .postpartum, .pelvicFloor, .lowBack, .knees, .wrists]
             ),

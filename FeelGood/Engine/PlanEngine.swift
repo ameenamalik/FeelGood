@@ -69,15 +69,20 @@ nonisolated struct PlanEngine: Sendable {
         let main = first(from: scored, course: .main, excluding: taken)
         if let main { taken.insert(main.session.id) }
 
+        // How many small things belong on the menu is a shape question, not a
+        // workload one: the same time, arranged to fit the day being described.
+        let sideCount = input.profile.moments.sideCount
         var sides: [MenuItem] = []
-        for candidate in scored where candidate.session.course == .side {
-            guard !taken.contains(candidate.session.id) else { continue }
-            // Two sides that are the same activity as the main read as one idea
-            // repeated, not as a menu.
-            if let main, candidate.session.activity == main.session.activity, !sides.isEmpty { continue }
-            sides.append(candidate.item)
-            taken.insert(candidate.session.id)
-            if sides.count == 2 { break }
+        if sideCount > 0 {
+            for candidate in scored where candidate.session.course == .side {
+                guard !taken.contains(candidate.session.id) else { continue }
+                // Two sides that are the same activity as the main read as one
+                // idea repeated, not as a menu.
+                if let main, candidate.session.activity == main.session.activity, !sides.isEmpty { continue }
+                sides.append(candidate.item)
+                taken.insert(candidate.session.id)
+                if sides.count == sideCount { break }
+            }
         }
 
         let appetizer = first(from: scored, course: .appetizer, excluding: taken)
@@ -218,10 +223,24 @@ nonisolated struct PlanEngine: Sendable {
             guard session.durationMin <= checkIn.time.maxMinutes else { return false }
         }
         guard input.profile.availableActivities.contains(session.activity) else { return false }
+        // Place. Nothing that needs leaving the house reaches somebody who has
+        // already decided they're staying in.
+        guard isReachable(session, input: input, checkIn: checkIn) else { return false }
         // Offline or data saver: video is silently unavailable, and it never
         // shows, because the authored catalog covers the day.
         if session.source.isVideo && !input.context.videoAllowed { return false }
         return true
+    }
+
+    /// Somewhere this session can actually happen today. An untagged session
+    /// carries no place constraint.
+    private func isReachable(_ session: Session, input: PlanInput, checkIn: PlanCheckIn) -> Bool {
+        guard !session.places.isEmpty else { return true }
+        var allowed = input.profile.places
+        if let intent = checkIn.place {
+            allowed.formIntersection(intent.places)
+        }
+        return !Set(session.places).isDisjoint(with: allowed)
     }
 
     // MARK: - Scoring
@@ -400,6 +419,7 @@ nonisolated struct PlanEngine: Sendable {
         let fallback = catalog.first {
             $0.course == .appetizer
                 && $0.needsNoEquipment
+                && $0.worksAtHome
                 && !$0.source.isVideo
                 && !excluding.contains($0.id)
                 && Set($0.contraindications).isDisjoint(with: input.profile.workArounds)

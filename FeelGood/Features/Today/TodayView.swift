@@ -10,12 +10,23 @@ import SwiftUI
 
 struct TodayView: View {
     @State var model: TodayModel
+    /// Set by a widget tap. Consumed here and cleared, so the same link does
+    /// not reopen the sheet every time this view is rebuilt.
+    var requestedSessionID: Binding<String?> = .constant(nil)
     @State private var isCheckingIn = false
     @State private var selected: MenuItem?
+    #if DEBUG
+    @State private var isDebugging = false
+    #endif
 
     var body: some View {
         ZStack {
             FGColor.bg.ignoresSafeArea()
+
+            // Rises through the space below the menu. The cards keep a plain
+            // page behind them and still read as cards.
+            FGBrandWash(reach: 0.62)
+                .ignoresSafeArea()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
@@ -38,6 +49,14 @@ struct TodayView: View {
         .sheet(item: $selected) { item in
             SessionDetailView(item: item, model: model)
         }
+        .onChange(of: requestedSessionID.wrappedValue, initial: true) { _, id in
+            openRequestedSession(id)
+        }
+        #if DEBUG
+        .sheet(isPresented: $isDebugging) {
+            DebugMenu(content: model.store) { model.reload() }
+        }
+        #endif
     }
 
     private var header: some View {
@@ -47,6 +66,10 @@ struct TodayView: View {
                 .foregroundStyle(FGColor.inkMuted)
                 .textCase(.uppercase)
                 .tracking(1.2)
+                #if DEBUG
+                // Long-press the date to fabricate history. Debug builds only.
+                .onLongPressGesture(minimumDuration: 0.7) { isDebugging = true }
+                #endif
 
             Text(model.menu.headline)
                 .font(FGFont.display)
@@ -64,14 +87,16 @@ struct TodayView: View {
                     if item.course == .main {
                         MenuItemCard(
                             item: item,
-                            canSwap: model.canSwap(item),
+                            isDone: model.isCompleted(item),
+                            canSwap: model.canSwap(item) && !model.isCompleted(item),
                             onOpen: { selected = item },
                             onSwap: { withAnimation(FGMotion.swap) { model.swap(item) } }
                         )
                     } else {
                         MenuItemRow(
                             item: item,
-                            canSwap: model.canSwap(item),
+                            isDone: model.isCompleted(item),
+                            canSwap: model.canSwap(item) && !model.isCompleted(item),
                             onOpen: { selected = item },
                             onSwap: { withAnimation(FGMotion.swap) { model.swap(item) } }
                         )
@@ -81,6 +106,19 @@ struct TodayView: View {
                 .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: item.id)
             }
         }
+    }
+
+    /// Opens the session a widget tap asked for.
+    ///
+    /// Silently does nothing when the id is not on today's menu — the menu may
+    /// have regenerated since the widget last drew, and dropping someone on
+    /// today's menu is a better answer than an error about a session that is
+    /// no longer being suggested.
+    private func openRequestedSession(_ id: String?) {
+        guard let id else { return }
+        defer { requestedSessionID.wrappedValue = nil }
+        guard let item = model.menu.items.first(where: { $0.session.id == id }) else { return }
+        selected = item
     }
 
     private var checkInFooter: some View {
@@ -121,18 +159,26 @@ struct CourseTag: View {
 
 private struct MenuItemCard: View {
     let item: MenuItem
+    let isDone: Bool
     let canSwap: Bool
     let onOpen: () -> Void
     let onSwap: () -> Void
 
     var body: some View {
-        FGCard(isHighlighted: item.course == .main) {
+        // A finished main stops being the highlighted thing to do.
+        FGCard(isHighlighted: item.course == .main && !isDone) {
             VStack(alignment: .leading, spacing: FGSpace.s) {
-                CourseTag(course: item.course)
+                HStack(spacing: FGSpace.s) {
+                    CourseTag(course: item.course)
+                    if isDone { DoneMark() }
+                }
 
                 Text(item.session.title)
                     .font(FGFont.itemTitle)
-                    .foregroundStyle(FGColor.ink)
+                    .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
+                    // Struck through in lime, not grey: this is "ticked off",
+                    // not "cancelled" or "unavailable".
+                    .strikethrough(isDone, color: FGColor.limeDeep)
                     .fixedSize(horizontal: false, vertical: true)
 
                 // Principle 4: say why. Every single time.
@@ -154,14 +200,32 @@ private struct MenuItemCard: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: onOpen)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(item.course.label). \(item.session.title). \(item.session.chips.joined(separator: ", ")). \(item.reasonText)")
+        .accessibilityLabel(
+            "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : "")"
+            + "\(item.session.chips.joined(separator: ", ")). \(item.reasonText)"
+        )
         .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// Marks something already done today. Not a score, not a count, and nothing
+/// accrues from it — it's here so a finished item stops asking to be started.
+private struct DoneMark: View {
+    var body: some View {
+        HStack(spacing: FGSpace.xs) {
+            Image(systemName: "checkmark.circle.fill")
+            Text("Done")
+        }
+        .font(FGFont.label)
+        .foregroundStyle(FGColor.limeDeep)
+        .accessibilityHidden(true)
     }
 }
 
 /// Everything that isn't the Main. Same information, one glance.
 private struct MenuItemRow: View {
     let item: MenuItem
+    let isDone: Bool
     let canSwap: Bool
     let onOpen: () -> Void
     let onSwap: () -> Void
@@ -175,16 +239,23 @@ private struct MenuItemRow: View {
                         Text(item.session.durationLabel)
                             .font(FGFont.label)
                             .foregroundStyle(FGColor.inkMuted)
+                        if isDone { DoneMark() }
                     }
                     Text(item.session.title)
                         .font(FGFont.body.weight(.medium))
-                        .foregroundStyle(FGColor.ink)
+                        .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
+                        .strikethrough(isDone, color: FGColor.limeDeep)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(item.reasonText)
                         .font(FGFont.caption)
                         .foregroundStyle(FGColor.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                // Take the whole width, so the swap control is pinned to the
+                // card's trailing edge. Without this the text column shrinks to
+                // its longest line and the button hugs it, which leaves the
+                // arrows sitting at a different x on every row.
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 if canSwap {
                     Button(action: onSwap) {
@@ -201,7 +272,10 @@ private struct MenuItemRow: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: onOpen)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(item.course.label). \(item.session.title). \(item.session.durationLabel). \(item.reasonText)")
+        .accessibilityLabel(
+            "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : "")"
+            + "\(item.session.durationLabel). \(item.reasonText)"
+        )
         .accessibilityAddTraits(.isButton)
     }
 }
@@ -213,6 +287,7 @@ private struct MenuItemRow: View {
             profile: PlanProfile(
                 availableActivities: Set(Activity.allCases),
                 equipment: [.none, .mat, .weights, .outdoor],
+                places: Set(Place.allCases),
                 intent: .strengthen
             ),
             now: Date()
