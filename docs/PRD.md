@@ -382,10 +382,18 @@ The free tier is genuinely useful and never crippled — this matches the brand 
 | **History-aware balancing & recovery awareness** | — | ✅ |
 | Unlimited swaps | 1/day | ✅ |
 | **Warm, written-for-you coaching voice** | — | ✅ |
-| Look Back reflections | — | ✅ |
+| Look Back reflections | ✅ *(free — see below)* | ✅ |
 | Custom menus (build your own Desserts/Appetizers) | — | ✅ |
 | Specials — plan ahead for the week | — | ✅ |
 | Home screen widget *(if time allows)* | — | ✅ |
+
+**The Look Back is free.** It was Pro in an earlier draft and that was the wrong
+call. It is the churn mechanic, not an engagement one — its whole job is to make
+returning after a lapse feel like resuming rather than starting over. Gating it
+puts the antidote behind a wall for exactly the people most likely to lapse, and
+it is now a whole tab, so a gated tab is a visible wall on a free tier we have
+promised is "genuinely useful and never crippled". What Pro sells is the app
+adapting to *today*; what the Look Back does is make yesterday survivable.
 
 **Pricing:** $6.99/mo · **$34.99/yr** (7-day free trial) · $69.99 lifetime.
 
@@ -394,7 +402,7 @@ $34.99 is the deliberate middle: it reads as "under $35" and prices the annual a
 
 **Paywall moments** (value first, always):
 1. After her **first completed session** — the earliest point she has felt something work.
-2. On any Pro-gated action (second swap, opening the check-in on day 2, Look Back).
+2. On any Pro-gated action (second swap, opening the check-in on day 2).
 3. A quiet, permanent entry in Settings.
 
 **Never** on launch, never in onboarding, never as a full-screen interrupt before she's done anything. No fake countdowns, no manipulative pre-selected plans.
