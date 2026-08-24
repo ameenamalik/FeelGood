@@ -77,29 +77,11 @@ struct OnboardingView: View {
     private var answers: some View {
         switch model.card {
         case .access:
-            VStack(alignment: .leading, spacing: FGSpace.l) {
-                answerGroup("Movement") {
-                    ForEach(Activity.allCases, id: \.self) { activity in
-                        FGChoice(title: activity.label, isSelected: model.activities.contains(activity)) {
-                            toggle(activity, in: \.activities)
-                        }
-                    }
-                }
-                answerGroup("Equipment") {
-                    ForEach(Equipment.allCases.filter { $0 != .none }, id: \.self) { item in
-                        FGChoice(title: item.label ?? "", isSelected: model.equipment.contains(item)) {
-                            toggle(item, in: \.equipment)
-                        }
-                    }
-                }
-                answerGroup("Where") {
-                    ForEach(Place.allCases, id: \.self) { place in
-                        FGChoice(title: place.label, isSelected: model.places.contains(place)) {
-                            toggle(place, in: \.places)
-                        }
-                    }
-                }
-            }
+            AccessChoices(
+                activities: $model.activities,
+                equipment: $model.equipment,
+                places: $model.places
+            )
 
         case .cadence:
             VStack(alignment: .leading, spacing: FGSpace.l) {
@@ -143,6 +125,7 @@ struct OnboardingView: View {
             }
         }
     }
+
 
     private func answerGroup<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
@@ -196,7 +179,7 @@ struct OnboardingView: View {
 
             if !model.isFirstCard {
                 FGQuietButton("Back", systemImage: "chevron.left") { model.goBack() }
-            } else if model.activities.isEmpty {
+            } else if !model.canAdvance {
                 Text("Pick at least one thing to get started.")
                     .font(FGFont.caption)
                     .foregroundStyle(FGColor.inkMuted)

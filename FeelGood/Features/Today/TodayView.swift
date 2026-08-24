@@ -14,6 +14,7 @@ struct TodayView: View {
     /// not reopen the sheet every time this view is rebuilt.
     var requestedSessionID: Binding<String?> = .constant(nil)
     @State private var isCheckingIn = false
+    @State private var isLogging = false
     @State private var selected: MenuItem?
     #if DEBUG
     @State private var isDebugging = false
@@ -44,6 +45,11 @@ struct TodayView: View {
             CheckInSheet(current: model.checkIn) { checkIn in
                 model.apply(checkIn)
                 isCheckingIn = false
+            }
+        }
+        .sheet(isPresented: $isLogging) {
+            LogWorkoutSheet { workout in
+                model.log(workout)
             }
         }
         .sheet(item: $selected) { item in
@@ -132,6 +138,12 @@ struct TodayView: View {
                 FGQuietButton("Something's changed", systemImage: "arrow.triangle.2.circlepath") {
                     isCheckingIn = true
                 }
+            }
+
+            // Movement that happened without us. Logging it is how the engine
+            // learns what a normal week actually looks like.
+            FGQuietButton("I did something else", systemImage: "plus") {
+                isLogging = true
             }
         }
         .frame(maxWidth: .infinity)

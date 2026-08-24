@@ -16,6 +16,21 @@ nonisolated enum Activity: String, Codable, CaseIterable, Sendable {
     case pilates, yoga, qigong, strength, stretching, walking, biking, swimming
     case skating, dance, jumpRope, agility, carries, racquet, climbing, martialArts
     case breathwork
+
+    /// Some movement is a genuine question of access — a pool, a bike, a pair
+    /// of skates, somewhere to be outside. The rest needs nothing but a body
+    /// and a floor, so asking about it up front turns a menu into a quiz and
+    /// makes someone recognise a word like "carries" before they have seen a
+    /// single session. These never appear in onboarding. The engine reaches
+    /// for them on merit instead — qi gong on a stressed evening, carries when
+    /// the intent is strength — and the equipment filter still decides whether
+    /// any individual session is on the table.
+    var isAlwaysAvailable: Bool {
+        switch self {
+        case .qigong, .breathwork, .carries, .agility: true
+        default: false
+        }
+    }
 }
 
 /// What it develops. The cross-cutting dimension the engine balances across.
@@ -30,8 +45,47 @@ nonisolated enum Energy: String, Codable, CaseIterable, Sendable {
     case low, steady, strong
 }
 
+nonisolated extension Place {
+    /// What being somewhere gives you. A gym membership is one tick that
+    /// stands in for a room full of kit — nobody should have to also tick
+    /// weights, a band and a mat to describe the same building. A pool is
+    /// deliberately not included: plenty of gyms have none, and a session that
+    /// can't happen is worse than one that was never offered.
+    var impliedEquipment: Set<Equipment> {
+        switch self {
+        case .gym: [.gym, .mat, .weights, .band, .bike]
+        case .studio: [.mat, .reformer]
+        case .pool: [.pool]
+        case .outdoors: [.outdoor]
+        case .home: []
+        }
+    }
+}
+
 nonisolated enum Equipment: String, Codable, CaseIterable, Sendable {
-    case none, mat, weights, band, rope, bike, pool, skates, outdoor, reformer
+    case none, mat, weights, band, rope, bike, pool, skates, outdoor, gym, reformer
+
+    /// A membership is one tick that stands in for a room full of kit. Ticking
+    /// it should not also require ticking weights, a band and a mat to describe
+    /// the same building. A pool is deliberately not included — plenty of gyms
+    /// don't have one, and a session that can't happen is worse than one that
+    /// was never offered.
+    var impliedEquipment: Set<Equipment> {
+        switch self {
+        case .gym: [.mat, .weights, .band, .bike]
+        default: []
+        }
+    }
+
+    /// What the room is for. Someone who has a gym has somewhere to lift,
+    /// whether or not they thought to also tick "Strength".
+    var impliedActivities: Set<Activity> {
+        switch self {
+        case .gym: [.strength]
+        case .weights: [.strength]
+        default: []
+        }
+    }
 }
 
 /// Where a session can actually happen. Equipment answers what you have; place

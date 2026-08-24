@@ -202,11 +202,7 @@ nonisolated struct PlanEngine: Sendable {
     }
 
     private func timeOfDay(for context: PlanContext) -> TimeOfDay {
-        switch context.calendar.component(.hour, from: context.now) {
-        case ..<11: .morning
-        case ..<16: .midday
-        default: .evening
-        }
+        TimeOfDay(hour: context.calendar.component(.hour, from: context.now))
     }
 
     // MARK: - Filtering
@@ -222,7 +218,11 @@ nonisolated struct PlanEngine: Sendable {
         if session.course != .special {
             guard session.durationMin <= checkIn.time.maxMinutes else { return false }
         }
-        guard input.profile.availableActivities.contains(session.activity) else { return false }
+        // Activities that need a pool, a bike or a pair of skates are asked
+        // about; the rest are always on the table and earn their place through
+        // scoring. See `Activity.isAlwaysAvailable`.
+        guard session.activity.isAlwaysAvailable
+            || input.profile.availableActivities.contains(session.activity) else { return false }
         // Place. Nothing that needs leaving the house reaches somebody who has
         // already decided they're staying in.
         guard isReachable(session, input: input, checkIn: checkIn) else { return false }

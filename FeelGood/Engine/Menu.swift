@@ -145,7 +145,7 @@ nonisolated enum MenuCopy {
     /// line down the whole screen turns "say why" into noise.
     static func fallbackLine(for session: Session) -> String {
         switch session.course {
-        case .appetizer: "\(session.durationMin) minutes, and that counts."
+        case .appetizer: "Short, and it counts."
         case .main: "Today's main thing, in \(session.durationMin) minutes."
         case .side: "\(session.durationMin) minutes, alongside something you're already doing."
         case .dessert: "\(session.durationMin) minutes, purely because you want to."
@@ -155,7 +155,10 @@ nonisolated enum MenuCopy {
 
     private static func defaultLine(for session: Session) -> String {
         switch session.course {
-        case .appetizer: "Two minutes, and that counts."
+        // The duration has to come from the session: the appetizer course runs
+        // from two minutes to ten, and telling someone "two minutes" about a
+        // five-minute thing is a small lie they will notice.
+        case .appetizer: "\(session.durationMin) minutes, and that counts."
         case .main: "Today's main thing."
         case .side: "Pairs with something you're already doing."
         case .dessert: "Purely for the joy of it."
