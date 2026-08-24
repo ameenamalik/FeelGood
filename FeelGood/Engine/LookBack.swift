@@ -2,144 +2,158 @@
 //  LookBack.swift
 //  FeelGood
 //
-//  Consistency without streaks (PRD §7.4). Observations, not scores: nothing
-//  here can be broken, lost or restored, and **absence is never rendered.**
-//  There is no sentence in this type that names a day somebody wasn't here.
+//  PRD §7.4 — consistency without streaks.
 //
-//  Pure, like the engine: a function of (history, affinity, calendar, now).
+//  Observations, not scores. Nothing here counts down, compares, ranks, or
+//  congratulates, and nothing renders a gap: an absence of movement produces
+//  fewer observations, never an observation about absence. There is
+//  deliberately no case that can say "you missed", "you're behind", or "0".
+//
+//  Pure, like the engine next door: a function of (history, context). No I/O,
+//  no store, and `now` arrives in `PlanContext` rather than from the clock.
+//
+//  What comes out is *structured*, not written. The wording lives in
+//  `Display.swift` with the rest of the copy, so a change of voice is a change
+//  to one switch and the tests here keep asserting on meaning.
 //
 
 import Foundation
 
-nonisolated struct LookBack: Sendable, Hashable {
-
-    /// One plain sentence. Never a number out of a target, never a percentage.
-    struct Observation: Sendable, Hashable, Identifiable {
-        let id: String
-        let text: String
+/// What the last two weeks looked like.
+nonisolated struct Reflection: Hashable, Sendable {
+    /// One thing that is true about the window.
+    ///
+    /// Named `Note` rather than `Observation` on purpose: a top-level type
+    /// called `Observation` shadows Apple's framework of that name, and every
+    /// `@Observable` in the app stops compiling.
+    nonisolated enum Note: Hashable, Sendable {
+        /// How many sessions were finished. Never zero — see `isEarly`.
+        case moved(times: Int)
+        /// When they mostly happened.
+        case mostly(TimeOfDay)
+        /// What they mostly were. One or two, never a ranked list.
+        case activities([Activity])
+        /// The one that gets loved, as distinct from the one that gets done most.
+        case keepsReturningTo(Activity)
+        /// Rest counts as showing up. PRD §6 — recovery is part of the balance.
+        case madeRoomForRest
     }
 
-    let observations: [Observation]
+    /// `moved` first, then the quieter ones. Empty before anything has
+    /// happened — which is a beginning, not a zero, and the view says so.
+    var notes: [Note]
 
-    /// Below this there is nothing worth generalising from, and guessing at a
-    /// pattern from two sessions would be worse than saying nothing.
-    static let minimumSessions = 3
+    var isEarly: Bool { notes.isEmpty }
+}
 
-    /// The forward-looking empty state. Not "you haven't been here" — this is
-    /// where the last two weeks will appear once there are some.
-    static let openingLine = "This is where your last couple of weeks will show up."
+nonisolated enum LookBack {
+    /// Below this, a pattern is a coincidence. Telling someone they are
+    /// "mostly mornings" on the strength of one Tuesday is a made-up fact.
+    static let minimumForPattern = 3
 
-    var isEmpty: Bool { observations.isEmpty }
+    /// How many times a thing has to come round before "you keep coming back
+    /// to this" is a fair thing to say.
+    static let minimumForReturning = 2
 
-    init(
-        history: [HistoryEntry],
-        affinity: [String: Double] = [:],
-        calendar: Calendar,
-        now: Date
-    ) {
-        let today = calendar.startOfDay(for: now)
+    static func reflect(history: [HistoryEntry], context: PlanContext) -> Reflection {
+        let done = completedInWindow(history, context: context)
+        guard !done.isEmpty else { return Reflection(notes: []) }
+
+        var notes: [Reflection.Note] = [.moved(times: done.count)]
+        if let when = dominantTimeOfDay(done, context: context) { notes.append(.mostly(when)) }
+
+        let top = topActivities(done)
+        if !top.isEmpty { notes.append(.activities(top)) }
+
+        if let loved = mostLoved(done, excluding: Set(top)) {
+            notes.append(.keepsReturningTo(loved))
+        }
+        if madeRoomForRest(done) { notes.append(.madeRoomForRest) }
+
+        return Reflection(notes: notes)
+    }
+
+    // MARK: Window
+
+    private static func completedInWindow(
+        _ history: [HistoryEntry],
+        context: PlanContext
+    ) -> [HistoryEntry] {
+        let calendar = context.calendar
+        let today = calendar.startOfDay(for: context.now)
+
         func daysAgo(_ date: Date) -> Int {
             calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: today).day ?? .max
         }
 
-        let window = history.filter {
-            $0.wasCompleted && (0..<PlanEngine.historyWindowDays).contains(daysAgo($0.date))
-        }
-
-        guard window.count >= Self.minimumSessions else {
-            observations = []
-            return
-        }
-
-        var lines: [Observation] = []
-
-        lines.append(Observation(id: "count", text: Self.countLine(window.count)))
-
-        if let when = Self.modal(window.map { TimeOfDay(hour: calendar.component(.hour, from: $0.date)) }) {
-            lines.append(Observation(id: "when", text: "Mostly \(Self.spoken(when))."))
-        }
-
-        let activities = Self.mostCommon(window.map(\.activity), limit: 2)
-        if !activities.isEmpty {
-            let named = activities.map(Self.spoken).joined(separator: " and ")
-            lines.append(Observation(id: "what", text: "Mostly \(named)."))
-        }
-
-        if let favourite = Self.favourite(in: window, affinity: affinity) {
-            lines.append(
-                Observation(
-                    id: "favourite",
-                    text: "The \(Self.spoken(favourite)) sessions are the ones you keep coming back to."
-                )
-            )
-        }
-
-        observations = lines
-    }
-
-    // MARK: - Copy
-
-    private static func countLine(_ count: Int) -> String {
-        switch count {
-        case 1: "You've moved once in the last two weeks."
-        case 2: "You've moved twice in the last two weeks."
-        default: "You've moved \(count) times in the last two weeks."
+        return history.filter {
+            $0.wasCompleted
+                && daysAgo($0.date) >= 0
+                && daysAgo($0.date) < PlanEngine.historyWindowDays
         }
     }
 
-    /// Mid-sentence, so everything is lowercase except the one activity that
-    /// is a proper name.
-    private static func spoken(_ activity: Activity) -> String {
-        activity == .pilates ? activity.label : activity.label.lowercased()
+    // MARK: Patterns
+
+    private static func dominantTimeOfDay(
+        _ done: [HistoryEntry],
+        context: PlanContext
+    ) -> TimeOfDay? {
+        guard done.count >= minimumForPattern else { return nil }
+
+        let counts = Dictionary(
+            done.map { (bucket(for: $0.date, context: context), 1) },
+            uniquingKeysWith: +
+        )
+        guard let winner = counts.max(by: { ($0.value, $1.key.rawValue) < ($1.value, $0.key.rawValue) })
+        else { return nil }
+        // "Mostly" has to mean mostly. A three-way split has no dominant time
+        // of day, and claiming one would be inventing a habit.
+        guard winner.value * 2 >= done.count else { return nil }
+
+        return winner.key
     }
 
-    private static func spoken(_ when: TimeOfDay) -> String {
-        switch when {
-        case .morning: "mornings"
-        case .midday: "the middle of the day"
-        case .evening: "evenings"
-        case .varies: "whenever there's room"
-        }
-    }
+    /// At most two, and only two when one alone doesn't carry "mostly".
+    private static func topActivities(_ done: [HistoryEntry]) -> [Activity] {
+        guard done.count >= minimumForPattern else { return [] }
 
-    // MARK: - Patterns
-
-    /// The clear winner, or nothing. A pattern that only just edges ahead is
-    /// not a pattern, and stating it as one would be making something up.
-    private static func modal<T: Hashable>(_ values: [T]) -> T? {
-        var counts: [T: Int] = [:]
-        for value in values { counts[value, default: 0] += 1 }
-        let ranked = counts.sorted { $0.value > $1.value }
-        guard let top = ranked.first else { return nil }
-        guard Double(top.value) > Double(values.count) / 2 else { return nil }
-        if ranked.count > 1, ranked[1].value == top.value { return nil }
-        return top.key
-    }
-
-    private static func mostCommon(_ activities: [Activity], limit: Int) -> [Activity] {
-        var counts: [Activity: Int] = [:]
-        for activity in activities { counts[activity, default: 0] += 1 }
-        return counts
-            // Count first, then the raw value, so the same fortnight always
-            // reads the same way.
-            .sorted { $0.value == $1.value ? $0.key.rawValue < $1.key.rawValue : $0.value > $1.value }
-            .prefix(limit)
-            .filter { $0.value > 1 }
+        let counts = Dictionary(done.map { ($0.activity, 1) }, uniquingKeysWith: +)
+        // Ties break on the raw value so the same history always reads the same.
+        let ranked = counts
+            .sorted { ($0.value, $1.key.rawValue) > ($1.value, $0.key.rawValue) }
             .map(\.key)
+
+        guard let first = ranked.first else { return [] }
+        if (counts[first] ?? 0) * 2 >= done.count { return [first] }
+        return Array(ranked.prefix(2))
     }
 
-    /// What genuinely got loved, not merely what got done most.
-    private static func favourite(in window: [HistoryEntry], affinity: [String: Double]) -> Activity? {
-        var byActivity: [Activity: Double] = [:]
-        for entry in window {
-            guard let score = affinity[entry.sessionID], score > 0 else { continue }
-            byActivity[entry.activity, default: 0] += score
+    private static func mostLoved(_ done: [HistoryEntry], excluding named: Set<Activity>) -> Activity? {
+        let loved = done.filter {
+            if case .completed(let feel) = $0.outcome { return feel == .lovedIt }
+            return false
         }
-        let ranked = byActivity.sorted {
-            $0.value == $1.value ? $0.key.rawValue < $1.key.rawValue : $0.value > $1.value
+        let counts = Dictionary(loved.map { ($0.activity, 1) }, uniquingKeysWith: +)
+        guard let winner = counts.max(by: { ($0.value, $1.key.rawValue) < ($1.value, $0.key.rawValue) }),
+              winner.value >= minimumForReturning,
+              // Never say the same thing twice in one reflection.
+              !named.contains(winner.key)
+        else { return nil }
+
+        return winner.key
+    }
+
+    private static func madeRoomForRest(_ done: [HistoryEntry]) -> Bool {
+        let restful = done.filter { $0.intensity <= PlanWeights().restfulIntensity }
+        return restful.count >= minimumForReturning
+    }
+
+    private static func bucket(for date: Date, context: PlanContext) -> TimeOfDay {
+        switch context.calendar.component(.hour, from: date) {
+        case ..<12: .morning
+        case 12..<17: .midday
+        default: .evening
         }
-        guard let top = ranked.first, top.value > 0 else { return nil }
-        if ranked.count > 1, ranked[1].value == top.value { return nil }
-        return top.key
     }
 }

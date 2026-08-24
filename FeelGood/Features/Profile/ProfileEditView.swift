@@ -36,11 +36,23 @@ struct ProfileEditView: View {
                     }
 
                     section("What do you have access to?") {
-                        AccessChoices(activities: $answers.activities, equipment: $answers.equipment)
+                        AccessChoices(
+                            activities: $answers.activities,
+                            equipment: $answers.equipment,
+                            places: $answers.places
+                        )
                     }
 
                     section("How often do you want to move?") {
-                        choices(Cadence.allCases, label: \.label, selection: $answers.cadence)
+                        VStack(alignment: .leading, spacing: FGSpace.m) {
+                            choices(Cadence.allCases, label: \.label, selection: $answers.cadence)
+                            Text("Within a day")
+                                .font(FGFont.label)
+                                .foregroundStyle(FGColor.inkMuted)
+                                .textCase(.uppercase)
+                                .tracking(1.1)
+                            choices(MovementMoments.allCases, label: \.label, selection: $answers.moments)
+                        }
                     }
 
                     section("On a normal day, how much time is realistic?") {

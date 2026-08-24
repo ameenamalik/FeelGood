@@ -57,9 +57,17 @@ final class OnboardingModel {
         get { answers.equipment }
         set { answers.equipment = newValue }
     }
+    var places: Set<Place> {
+        get { answers.places }
+        set { answers.places = newValue }
+    }
     var cadence: Cadence {
         get { answers.cadence }
         set { answers.cadence = newValue }
+    }
+    var moments: MovementMoments {
+        get { answers.moments }
+        set { answers.moments = newValue }
     }
     var realisticMinutes: Int {
         get { answers.realisticMinutes }
@@ -124,6 +132,28 @@ nonisolated extension TimeOfDay {
         case .midday: "Midday"
         case .evening: "Evening"
         case .varies: "It varies"
+        }
+    }
+}
+
+nonisolated extension Place {
+    var label: String {
+        switch self {
+        case .home: "At home"
+        case .outdoors: "Outdoors"
+        case .gym: "A gym"
+        case .studio: "A studio or class"
+        case .pool: "A pool"
+        }
+    }
+}
+
+nonisolated extension MovementMoments {
+    var label: String {
+        switch self {
+        case .once: "Once, properly"
+        case .aCouple: "A couple of times"
+        case .sprinkled: "Sprinkled through the day"
         }
     }
 }

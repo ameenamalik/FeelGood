@@ -17,10 +17,11 @@ struct OnboardingTests {
     @Test("A gym membership stands in for the room full of kit")
     func gymImpliesWhatIsInside() {
         let model = OnboardingModel()
-        model.equipment = [.none, .gym]
+        model.places = [.home, .gym]
         let profile = model.makeProfile()
 
         #expect(profile.equipment.isSuperset(of: [.gym, .mat, .weights, .band, .bike]))
+        #expect(profile.places.contains(.gym))
         // Plenty of gyms have no pool, and a session that can't happen is worse
         // than one that was never offered.
         #expect(!profile.equipment.contains(.pool))
@@ -29,7 +30,7 @@ struct OnboardingTests {
     @Test("A gym membership means somewhere to lift, whether or not it was ticked")
     func gymImpliesStrength() {
         let model = OnboardingModel()
-        model.equipment = [.none, .gym]
+        model.places = [.home, .gym]
 
         #expect(model.makeProfile().availableActivities.contains(.strength))
         // ...and it is enough on its own to leave the first card.
@@ -55,14 +56,16 @@ struct OnboardingTests {
     @Test("Ticking only the gym produces a menu of things you can do at a gym")
     func gymMembershipEndToEnd() throws {
         let model = OnboardingModel()
-        model.equipment = [.none, .gym]
+        model.places = [.home, .gym]
         model.intent = .strengthen
 
         let engine = PlanEngine(catalog: try ContentStore.bundled().sessions)
         let menu = engine.makeMenu(
             PlanInput(
                 profile: model.makeProfile(),
-                checkIn: PlanCheckIn(energy: .strong, time: .plenty),
+                // Willing to go: a gym session is not reachable from a day
+                // somebody has already decided to stay in.
+                checkIn: PlanCheckIn(energy: .strong, time: .plenty, place: .atTheGym),
                 context: Fixture.context()
             )
         )

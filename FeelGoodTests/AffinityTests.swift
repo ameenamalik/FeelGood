@@ -17,7 +17,8 @@ struct AffinityTests {
     func feelMovesTheScore() {
         #expect(Affinity.updated(0, after: .completed(feel: .lovedIt)) > 0)
         #expect(Affinity.updated(0, after: .completed(feel: .tooMuch)) < 0)
-        #expect(Affinity.updated(0, after: .completed(feel: .fine)) > 0)
+        // Doing a thing is not the same as asking for it again.
+        #expect(Affinity.updated(0, after: .completed(feel: .fine)) == 0)
     }
 
     @Test("Skipping is not held against anything")

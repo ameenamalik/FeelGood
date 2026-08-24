@@ -72,6 +72,7 @@ nonisolated struct ContentStore: ContentProviding {
         case duplicateTermID(String)
         case unresolvedGlossaryReference(sessionID: String, glossaryID: String)
         case noGuaranteedAppetizer
+        case appetizerCannotBeDoneAtHome(sessionID: String)
         case intensityOutOfRange(sessionID: String, intensity: Int)
         case emptyEnergyFit(sessionID: String)
         case videoBehindPaywallRisk(sessionID: String)
@@ -82,6 +83,7 @@ nonisolated struct ContentStore: ContentProviding {
             case .duplicateTermID(let id): "Duplicate glossary term id: \(id)"
             case .unresolvedGlossaryReference(let s, let g): "Session \(s) references unknown glossary term \(g)"
             case .noGuaranteedAppetizer: "No no-equipment, contraindication-free appetizer exists"
+            case .appetizerCannotBeDoneAtHome(let id): "Appetizer \(id) needs somewhere other than home"
             case .intensityOutOfRange(let id, let i): "Session \(id) has intensity \(i), expected 1...5"
             case .emptyEnergyFit(let id): "Session \(id) fits no energy level, so it can never be surfaced"
             case .videoBehindPaywallRisk(let id): "Video session \(id) must stay free — YouTube policy"
@@ -115,9 +117,19 @@ nonisolated struct ContentStore: ContentProviding {
             }
         }
 
+        // The two-minute option has to survive the worst possible day, which
+        // includes not leaving the house.
+        for session in sessions where session.course == .appetizer && !session.worksAtHome {
+            issues.append(.appetizerCannotBeDoneAtHome(sessionID: session.id))
+        }
+
         // The floor of the product: something to offer no matter what.
         let hasFallback = sessions.contains {
-            $0.course == .appetizer && $0.needsNoEquipment && !$0.source.isVideo && $0.contraindications.isEmpty
+            $0.course == .appetizer
+                && $0.needsNoEquipment
+                && $0.worksAtHome
+                && !$0.source.isVideo
+                && $0.contraindications.isEmpty
         }
         if !hasFallback { issues.append(.noGuaranteedAppetizer) }
 

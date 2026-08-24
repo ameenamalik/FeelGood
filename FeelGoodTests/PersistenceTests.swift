@@ -54,10 +54,10 @@ struct PersistenceTests {
     @Test("Finishing a session writes a record and a score")
     func recordingPersists() throws {
         let context = try context()
-        let log = SwiftDataActivityLog(context: context)
+        let log = SessionLog(context: context, calendar: Fixture.utc)
         let session = Fixture.catalog.first { $0.id == "a-stretch" }!
 
-        log.record(session, outcome: .completed(feel: .lovedIt), startedAt: Fixture.now, endedAt: Fixture.now, dayStart: Fixture.now)
+        log.recordCompletion(of: session, startedAt: Fixture.now, endedAt: Fixture.now, feel: .lovedIt)
 
         let records = try context.fetch(FetchDescriptor<SessionRecord>())
         #expect(records.count == 1)
@@ -70,11 +70,11 @@ struct PersistenceTests {
     @Test("Feedback on the same session accumulates rather than resetting")
     func affinityAccumulates() throws {
         let context = try context()
-        let log = SwiftDataActivityLog(context: context)
+        let log = SessionLog(context: context, calendar: Fixture.utc)
         let session = Fixture.catalog.first { $0.id == "a-stretch" }!
 
         for _ in 0..<3 {
-            log.record(session, outcome: .completed(feel: .lovedIt), startedAt: Fixture.now, endedAt: Fixture.now, dayStart: Fixture.now)
+            log.recordCompletion(of: session, startedAt: Fixture.now, endedAt: Fixture.now, feel: .lovedIt)
         }
 
         let scores = try context.fetch(FetchDescriptor<AffinityRecord>())
@@ -82,13 +82,13 @@ struct PersistenceTests {
         #expect((scores.first?.score ?? 0) > Affinity.updated(0, after: .completed(feel: .lovedIt)))
     }
 
-    @Test("Skipping writes the record and leaves the score alone")
-    func skippingWritesNoScore() throws {
+    @Test("Saying nothing after a session writes the record and no score")
+    func sayingNothingWritesNoScore() throws {
         let context = try context()
-        let log = SwiftDataActivityLog(context: context)
+        let log = SessionLog(context: context, calendar: Fixture.utc)
         let session = Fixture.catalog.first { $0.id == "m-pilates-30" }!
 
-        log.record(session, outcome: .skipped, startedAt: Fixture.now, endedAt: nil, dayStart: Fixture.now)
+        log.recordCompletion(of: session, startedAt: Fixture.now, endedAt: Fixture.now, feel: nil)
 
         #expect(try context.fetch(FetchDescriptor<SessionRecord>()).count == 1)
         #expect(try context.fetch(FetchDescriptor<AffinityRecord>()).isEmpty)
@@ -97,13 +97,37 @@ struct PersistenceTests {
     @Test("A kept workout survives as something the engine can offer")
     func keptWorkoutsPersist() throws {
         let context = try context()
-        let log = SwiftDataActivityLog(context: context)
+        let log = SessionLog(context: context, calendar: Fixture.utc)
 
         let session = log.keep(title: "My gym session", activity: .strength, durationMin: 30, intensity: 3, now: Fixture.now)
 
-        let kept = try context.fetch(FetchDescriptor<CustomSession>())
-        #expect(kept.count == 1)
-        #expect(kept.first?.session == session)
-        #expect(kept.first?.session.title == "My gym session")
+        #expect(log.kept().count == 1)
+        #expect(log.kept().first == session)
+        #expect(try context.fetch(FetchDescriptor<CustomSession>()).first?.title == "My gym session")
+    }
+
+    @Test("Renaming and forgetting are somebody's own to do")
+    func keptWorkoutsCanBeChanged() throws {
+        let context = try context()
+        let log = SessionLog(context: context, calendar: Fixture.utc)
+        let session = log.keep(title: "Mine", activity: .strength, durationMin: 30, intensity: 3, now: Fixture.now)
+
+        log.rename(session.id, to: "Thursday lifting")
+        #expect(log.kept().first?.title == "Thursday lifting")
+
+        log.forget(session.id)
+        #expect(log.kept().isEmpty)
+    }
+
+    @Test("Today's answers come back on the same day and not on the next one")
+    func checkInsBelongToTheirDay() throws {
+        let context = try context()
+        let log = SessionLog(context: context, calendar: Fixture.utc)
+        let today = Fixture.utc.startOfDay(for: Fixture.now)
+
+        log.record(PlanCheckIn(energy: .low, time: .aLittle), at: Fixture.now, dayStart: today)
+
+        #expect(log.checkIn(on: today)?.energy == .low)
+        #expect(log.checkIn(on: Fixture.utc.startOfDay(for: Fixture.daysAgo(1))) == nil)
     }
 }

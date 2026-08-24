@@ -23,13 +23,14 @@ nonisolated enum Affinity {
         case .completed(let feel):
             switch feel {
             case .lovedIt: 0.25
-            case .fine: 0.05
             case .tooMuch: -0.25
-            case .none: 0.02
+            // Doing a thing is not the same as asking for it again, and
+            // saying nothing afterwards is not a verdict either way.
+            case .fine, .none: 0
             }
         // Turning something down is information, not a verdict. It moves the
         // needle a little so the same card stops arriving, and no further.
-        case .swappedAway: -0.1
+        case .swappedAway: -0.15
         // Skipping is not a judgement. It's a Tuesday.
         case .skipped: 0
         }

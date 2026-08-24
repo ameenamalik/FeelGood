@@ -8,69 +8,90 @@
 
 import Foundation
 import Observation
+import WidgetKit
 
 @Observable
 final class TodayModel {
-    private let store: any ContentProviding
-    private let log: any ActivityLogging
+    let store: any ContentProviding
     /// Rebuilt when somebody keeps a workout of their own. Not observed: the
     /// menu is what the screen watches, and this only ever produces one.
     @ObservationIgnored private var engine: PlanEngine
+    private let log: any SessionLogging
     private let calendar: Calendar
 
     var profile: PlanProfile
     private(set) var checkIn: PlanCheckIn?
     private(set) var history: [HistoryEntry]
-    /// Long-memory preference, one entry per session id. Outlives the engine's
-    /// fourteen-day history window.
-    private(set) var affinity: [String: Double]
-    /// Somebody's own workouts, scored alongside the authored catalog.
-    private(set) var ownSessions: [Session]
     private(set) var menu: Menu
     /// Sessions already turned down today, so a swap never circles back.
     private(set) var swappedAway: Set<String> = []
 
+    /// Sessions finished today, so a completed item reads as done rather than
+    /// as something still waiting. Not a score and not a count — just a mark.
+    private(set) var completedToday: Set<String> = []
+
+    /// Somebody's own kept workouts, scored alongside the authored catalog.
+    private(set) var ownSessions: [Session]
+
     init(
         store: any ContentProviding,
         profile: PlanProfile,
+        log: any SessionLogging = InMemorySessionLog(),
         checkIn: PlanCheckIn? = nil,
-        history: [HistoryEntry] = [],
-        affinity: [String: Double] = [:],
-        ownSessions: [Session] = [],
-        log: any ActivityLogging = InMemoryActivityLog(),
-        /// The day as it was already generated and stored. Used when it belongs
-        /// to today, so reopening the app is the same day rather than a new
-        /// guess at it.
-        restoring stored: Menu? = nil,
         now: Date,
         calendar: Calendar = .current
     ) {
+        let own = log.kept()
+        let engine = PlanEngine(catalog: store.sessions + own)
+        let today = calendar.startOfDay(for: now)
+
+        // Answers already given today are answers, not a question to ask again.
+        let todaysCheckIn = checkIn ?? log.checkIn(on: today)
+        let recorded = log.history(before: now)
+
         self.store = store
-        self.log = log
-        let engine = PlanEngine(catalog: store.sessions + ownSessions)
         self.engine = engine
+        self.log = log
         self.profile = profile
-        self.checkIn = checkIn
-        self.history = history
-        self.affinity = affinity
-        self.ownSessions = ownSessions
+        self.ownSessions = own
+        self.checkIn = todaysCheckIn
+        self.history = recorded
         self.calendar = calendar
 
-        if let stored, stored.dayStart == calendar.startOfDay(for: now) {
-            menu = stored
+        // The day as it was already generated and stored. Reopening the app is
+        // the same day, not a fresh guess at it.
+        let sessions = Dictionary(
+            (store.sessions + own).map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        if let stored = log.day(today, resolving: { sessions[$0] }) {
+            self.menu = stored
         } else {
             let generated = engine.makeMenu(
                 PlanInput(
                     profile: profile,
-                    checkIn: checkIn,
-                    history: history,
+                    checkIn: todaysCheckIn,
+                    history: recorded,
                     context: PlanContext(now: now, calendar: calendar),
-                    affinity: affinity
+                    affinity: log.affinity()
                 )
             )
-            menu = generated
+            self.menu = generated
             log.save(generated, generatedAt: now)
         }
+        refreshCompletedToday(now: now)
+        publishSnapshot(now: now)
+    }
+
+    /// PRD §7.4. The engine reads the same history to plan; this reads it to
+    /// reflect. Both are pure, and both get `now` handed to them.
+    func lookBack(now: Date) -> Reflection {
+        // Reads the tracked `history` rather than re-querying the log, so the
+        // tab redraws when a session is finished.
+        LookBack.reflect(
+            history: history,
+            context: PlanContext(now: now, calendar: calendar)
+        )
     }
 
     private func input(now: Date) -> PlanInput {
@@ -79,8 +100,19 @@ final class TodayModel {
             checkIn: checkIn,
             history: history,
             context: PlanContext(now: now, calendar: calendar),
-            affinity: affinity
+            affinity: log.affinity()
         )
+    }
+
+    /// Rebuilds against whatever the store now holds. Used when history
+    /// changes underneath the screen rather than because of it.
+    func reload(now: Date = Date()) {
+        history = log.history(before: now)
+        swappedAway = []
+        menu = engine.makeMenu(input(now: now))
+        log.save(menu, generatedAt: now)
+        refreshCompletedToday(now: now)
+        publishSnapshot(now: now)
     }
 
     /// The check-in regenerates the menu in place.
@@ -89,7 +121,8 @@ final class TodayModel {
         swappedAway = []
         menu = engine.makeMenu(input(now: now))
         log.record(checkIn, at: now, dayStart: calendar.startOfDay(for: now))
-        persist(now: now)
+        log.save(menu, generatedAt: now)
+        publishSnapshot(now: now)
     }
 
     /// "Not today". A swap is engagement, not rejection — it is a choice being made,
@@ -103,25 +136,35 @@ final class TodayModel {
         ) else { return }
 
         swappedAway.insert(item.session.id)
+        log.recordSwap(of: item.session, at: now)
+        history = log.history(before: now)
         menu = menu.replacing(item, with: replacement)
-        remember(item.session, outcome: .swappedAway, startedAt: now, endedAt: nil, now: now)
         // The card you exchanged stays exchanged when you come back to it.
-        persist(now: now)
+        log.save(menu, generatedAt: now)
+        publishSnapshot(now: now)
     }
 
-    // MARK: - What happened
+    /// Finished. The menu deliberately does not regenerate — the day stays as
+    /// it was, and what happened counts toward tomorrow.
+    func complete(_ session: Session, startedAt: Date, feel: Feel?, now: Date = Date()) {
+        log.recordCompletion(of: session, startedAt: startedAt, endedAt: now, feel: feel)
+        history = log.history(before: now)
+        refreshCompletedToday(now: now)
+        publishSnapshot(now: now)
+    }
 
-    /// The player finished or was left. Neither is a failure, and neither
-    /// rebuilds the menu: what you just did should not vanish off the screen
-    /// you are still looking at. It counts from the next menu on.
-    func record(_ outcome: PlayerOutcome, for session: Session, startedAt: Date, now: Date = Date()) {
-        remember(session, outcome: outcome.historyOutcome, startedAt: startedAt, endedAt: now, now: now)
+    // MARK: Somebody's own movement
+
+    /// Everything that can be offered — the catalogue and somebody's own kept
+    /// workouts alike. What the Library browses is exactly what the engine
+    /// picks from; there is no second, smaller world.
+    var everything: [Session] {
+        (store.sessions + ownSessions).sorted { $0.title < $1.title }
     }
 
     /// Something done that was never on the menu. Kept workouts join the pool
     /// the engine picks from, so they can come back on a later menu.
     func log(_ workout: LoggedWorkout, now: Date = Date()) {
-        let id = "own-\(UUID().uuidString)"
         let session: Session = workout.isKept
             ? log.keep(
                 title: workout.title,
@@ -131,7 +174,7 @@ final class TodayModel {
                 now: now
             )
             : .own(
-                id: id,
+                id: "own-\(UUID().uuidString)",
                 title: workout.title,
                 activity: workout.activity,
                 durationMin: workout.durationMin,
@@ -139,10 +182,33 @@ final class TodayModel {
             )
 
         if workout.isKept {
-            ownSessions.append(session)
+            ownSessions = log.kept()
             rebuildEngine()
         }
-        remember(session, outcome: .completed(feel: nil), startedAt: now, endedAt: now, now: now)
+        complete(session, startedAt: now, feel: nil, now: now)
+    }
+
+    func rename(_ session: Session, to title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, ownSessions.contains(where: { $0.id == session.id }) else { return }
+        log.rename(session.id, to: trimmed)
+        ownSessions = log.kept()
+        rebuildEngine()
+    }
+
+    /// Removing a kept workout removes it from what can be offered. It does not
+    /// remove the fact that it was done.
+    func forget(_ session: Session, now: Date = Date()) {
+        log.forget(session.id)
+        ownSessions = log.kept()
+        rebuildEngine()
+        // Today's menu may have been built on it, so the day is rebuilt rather
+        // than left pointing at something that no longer exists.
+        if menu.items.contains(where: { $0.session.id == session.id }) {
+            menu = engine.makeMenu(input(now: now))
+            log.save(menu, generatedAt: now)
+            publishSnapshot(now: now)
+        }
     }
 
     /// The profile changed on the profile screen. The menu follows the same
@@ -151,38 +217,46 @@ final class TodayModel {
         self.profile = profile
         swappedAway = []
         menu = engine.makeMenu(input(now: now))
-        persist(now: now)
-    }
-
-    private func persist(now: Date) {
         log.save(menu, generatedAt: now)
+        publishSnapshot(now: now)
     }
 
-    private func remember(
-        _ session: Session,
-        outcome: HistoryOutcome,
-        startedAt: Date,
-        endedAt: Date?,
-        now: Date
-    ) {
-        history.append(
-            HistoryEntry(
-                sessionID: session.id,
-                activity: session.activity,
-                qualities: session.qualities,
-                intensity: session.intensity,
-                course: session.course,
-                date: endedAt ?? startedAt,
-                outcome: outcome
-            )
-        )
-        affinity[session.id] = Affinity.updated(affinity[session.id] ?? 0, after: outcome)
-        log.record(
-            session,
-            outcome: outcome,
-            startedAt: startedAt,
-            endedAt: endedAt,
-            dayStart: calendar.startOfDay(for: now)
+    private func rebuildEngine() {
+        engine = PlanEngine(catalog: store.sessions + ownSessions)
+    }
+
+    /// The home screen's copy of today's Main.
+    ///
+    /// Flattened on the way out — the widget gets strings and a colour, never
+    /// the model — and re-published on every change, because a widget offering
+    /// a session you already finished is worse than one offering nothing.
+    private func publishSnapshot(now: Date) {
+        guard let main = menu.items.first(where: { $0.course == .main }) ?? menu.items.first
+        else { return }
+
+        SharedContainer.writeSnapshot(TodaySnapshot(
+            day: calendar.startOfDay(for: now),
+            sessionID: main.session.id,
+            courseLabel: main.course.label,
+            accentHex: main.course.accentHex,
+            title: main.session.title,
+            reason: main.reasonText,
+            durationLabel: main.session.durationLabel,
+            isDone: completedToday.contains(main.session.id)
+        ))
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    func isCompleted(_ item: MenuItem) -> Bool {
+        completedToday.contains(item.session.id)
+    }
+
+    private func refreshCompletedToday(now: Date) {
+        let today = calendar.startOfDay(for: now)
+        completedToday = Set(
+            history
+                .filter { $0.wasCompleted && calendar.startOfDay(for: $0.date) == today }
+                .map(\.sessionID)
         )
     }
 
@@ -192,50 +266,6 @@ final class TodayModel {
 
     func term(for step: Step) -> ExerciseTerm? {
         store.term(id: step.glossaryID)
-    }
-
-    /// Everything that can be offered — the catalogue and somebody's own kept
-    /// workouts alike. What the Library browses is exactly what the engine
-    /// picks from; there is no second, smaller world.
-    var everything: [Session] {
-        (store.sessions + ownSessions).sorted { $0.title < $1.title }
-    }
-
-    /// A gentle reflection on the last fortnight. Never a score. See PRD §7.4.
-    func lookBack(now: Date = Date()) -> LookBack {
-        LookBack(history: history, affinity: affinity, calendar: calendar, now: now)
-    }
-
-    func rename(_ session: Session, to title: String) {
-        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let index = ownSessions.firstIndex(where: { $0.id == session.id }) else { return }
-        ownSessions[index] = .own(
-            id: session.id,
-            title: trimmed,
-            activity: session.activity,
-            durationMin: session.durationMin,
-            intensity: session.intensity
-        )
-        rebuildEngine()
-        log.rename(session.id, to: trimmed)
-    }
-
-    /// Removing a kept workout removes it from what can be offered. It does not
-    /// remove the fact that it was done.
-    func forget(_ session: Session, now: Date = Date()) {
-        ownSessions.removeAll { $0.id == session.id }
-        rebuildEngine()
-        log.forget(session.id)
-        // Today's menu may have been built on it, so the day is rebuilt rather
-        // than left pointing at something that no longer exists.
-        if menu.items.contains(where: { $0.session.id == session.id }) {
-            menu = engine.makeMenu(input(now: now))
-            persist(now: now)
-        }
-    }
-
-    private func rebuildEngine() {
-        engine = PlanEngine(catalog: store.sessions + ownSessions)
     }
 
     /// "Thursday morning" — a place in the week, never a count of days.

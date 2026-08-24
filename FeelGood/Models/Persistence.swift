@@ -17,7 +17,13 @@ import SwiftData
 final class UserProfile {
     var activitiesRaw: [String]
     var equipmentRaw: [String]
+    // Attributes added after the first build carry defaults so lightweight
+    // migration can fill them in for stores that predate them. A new mandatory
+    // attribute with no default fails migration outright, and the store then
+    // cannot be opened at all.
+    var placesRaw: [String] = [Place.home.rawValue]
     var cadenceRaw: String
+    var momentsRaw: String = MovementMoments.aCouple.rawValue
     var realisticMinutes: Int
     var bestTimeOfDayRaw: String
     var intentRaw: String
@@ -30,7 +36,9 @@ final class UserProfile {
     init(answers: ProfileAnswers, reminderHour: Int? = nil, now: Date) {
         activitiesRaw = answers.activities.map(\.rawValue).sorted()
         equipmentRaw = answers.equipment.map(\.rawValue).sorted()
+        placesRaw = answers.places.map(\.rawValue).sorted()
         cadenceRaw = answers.cadence.rawValue
+        momentsRaw = answers.moments.rawValue
         realisticMinutes = answers.realisticMinutes
         bestTimeOfDayRaw = answers.bestTimeOfDay.rawValue
         intentRaw = answers.intent.rawValue
@@ -48,7 +56,9 @@ final class UserProfile {
         ProfileAnswers(
             activities: Set(activitiesRaw.compactMap(Activity.init(rawValue:))),
             equipment: Set(equipmentRaw.compactMap(Equipment.init(rawValue:))).union([.none]),
+            places: Set(placesRaw.compactMap(Place.init(rawValue:))),
             cadence: Cadence(rawValue: cadenceRaw) ?? .mostDays,
+            moments: MovementMoments(rawValue: momentsRaw) ?? .aCouple,
             realisticMinutes: realisticMinutes,
             bestTimeOfDay: TimeOfDay(rawValue: bestTimeOfDayRaw) ?? .varies,
             intent: Intent(rawValue: intentRaw) ?? .energize,
@@ -61,7 +71,9 @@ final class UserProfile {
     func apply(_ answers: ProfileAnswers, now: Date) {
         activitiesRaw = answers.activities.map(\.rawValue).sorted()
         equipmentRaw = answers.equipment.map(\.rawValue).sorted()
+        placesRaw = answers.places.map(\.rawValue).sorted()
         cadenceRaw = answers.cadence.rawValue
+        momentsRaw = answers.moments.rawValue
         realisticMinutes = answers.realisticMinutes
         bestTimeOfDayRaw = answers.bestTimeOfDay.rawValue
         intentRaw = answers.intent.rawValue
@@ -84,6 +96,7 @@ final class CheckInRecord {
     var dayStart: Date
     var energyRaw: String
     var timeRaw: String
+    var placeRaw: String?
     var bodyRaw: String?
 
     init(checkIn: PlanCheckIn, takenAt: Date, dayStart: Date) {
@@ -91,13 +104,19 @@ final class CheckInRecord {
         self.dayStart = dayStart
         energyRaw = checkIn.energy.rawValue
         timeRaw = checkIn.time.rawValue
+        placeRaw = checkIn.place?.rawValue
         bodyRaw = checkIn.body?.rawValue
     }
 
     var planCheckIn: PlanCheckIn? {
         guard let energy = Energy(rawValue: energyRaw),
               let time = TimeBudget(rawValue: timeRaw) else { return nil }
-        return PlanCheckIn(energy: energy, time: time, body: bodyRaw.flatMap(BodyState.init(rawValue:)))
+        return PlanCheckIn(
+            energy: energy,
+            time: time,
+            place: placeRaw.flatMap(PlaceIntent.init(rawValue:)),
+            body: bodyRaw.flatMap(BodyState.init(rawValue:))
+        )
     }
 }
 
@@ -263,6 +282,13 @@ final class SessionRecord {
         case .skipped:
             outcomeRaw = "skipped"
         }
+    }
+
+    /// Mirrors `HistoryEntry.wasCompleted`, so callers don't have to build a
+    /// history entry just to ask whether this happened.
+    var wasCompleted: Bool {
+        if case .completed = outcome { return true }
+        return false
     }
 
     var outcome: HistoryOutcome {
