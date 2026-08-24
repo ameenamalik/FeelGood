@@ -44,9 +44,11 @@ enum Fixture {
 
     // MARK: - Profile
 
-    /// Someone with a mat, some weights, and the outdoors.
+    /// Someone with a mat, some weights, and the outdoors. Breathwork and
+    /// carries are deliberately absent: onboarding never asks about them, so a
+    /// realistic profile never names them.
     static func profile(
-        activities: Set<Activity> = [.pilates, .walking, .strength, .stretching, .breathwork, .dance, .carries],
+        activities: Set<Activity> = [.pilates, .walking, .strength, .stretching, .dance],
         equipment: Set<Equipment> = [.none, .mat, .weights, .outdoor],
         cadence: Cadence = .mostDays,
         realisticMinutes: Int = 30,

@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "sessions": [
     {
       "id": "app-box-breathing",
@@ -1846,6 +1846,291 @@
         "wrists",
         "pregnancy"
       ]
+    },
+    {
+      "id": "app-gym-carry-the-floor",
+      "title": "Two heavy things, one lap",
+      "subtitle": "The simplest thing in the building",
+      "activity": "carries",
+      "qualities": [
+        "grip",
+        "strength"
+      ],
+      "durationMin": 5,
+      "intensity": 2,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "gym"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "appetizer",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Pick your weight",
+            "seconds": 45,
+            "cue": "Two dumbbells you can hold, not two you have to fight."
+          },
+          {
+            "name": "Walk",
+            "seconds": 90,
+            "cue": "Tall, slow, shoulders down. Walk until your grip tells you.",
+            "glossaryID": "farmers-carry"
+          },
+          {
+            "name": "Set down and breathe",
+            "seconds": 45,
+            "cue": "Put them down before your grip gives out, not after."
+          },
+          {
+            "name": "Once more",
+            "seconds": 120,
+            "cue": "Same walk, same pace. That's the whole thing.",
+            "glossaryID": "farmers-carry"
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-gym-machines-20",
+      "title": "Twenty minutes on the machines",
+      "subtitle": "Nothing to set up, nothing to balance",
+      "activity": "strength",
+      "qualities": [
+        "strength"
+      ],
+      "durationMin": 20,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "gym"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Settle in",
+            "seconds": 120,
+            "cue": "Walk a couple of minutes. Roll your shoulders. No rush."
+          },
+          {
+            "name": "Leg press",
+            "seconds": 240,
+            "cue": "Feet flat, push through your whole foot, don't lock out hard.",
+            "glossaryID": "leg-press"
+          },
+          {
+            "name": "Chest press",
+            "seconds": 240,
+            "cue": "Elbows a little below your shoulders, press away and back.",
+            "glossaryID": "chest-press"
+          },
+          {
+            "name": "Lat pulldown",
+            "seconds": 240,
+            "cue": "Sit tall, pull the bar to your collarbone, let it rise slowly.",
+            "glossaryID": "lat-pulldown"
+          },
+          {
+            "name": "Seated row",
+            "seconds": 240,
+            "cue": "Pull the handle to your ribs and let your shoulder blades come together.",
+            "glossaryID": "seated-cable-row"
+          },
+          {
+            "name": "Finish",
+            "seconds": 120,
+            "cue": "Shake out your hands. A slow walk to the door."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-gym-floor-30",
+      "title": "Thirty minutes on the gym floor",
+      "subtitle": "The whole body, one round at a time",
+      "activity": "strength",
+      "qualities": [
+        "strength",
+        "grip"
+      ],
+      "durationMin": 30,
+      "intensity": 4,
+      "energyFit": [
+        "strong"
+      ],
+      "equipment": [
+        "gym"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Warm up",
+            "seconds": 240,
+            "cue": "Five minutes of easy walking, then arm circles and a few squats with nothing in your hands."
+          },
+          {
+            "name": "Goblet squats",
+            "seconds": 300,
+            "cue": "One weight at the chest. Sit down between your feet, stand tall.",
+            "glossaryID": "goblet-squat"
+          },
+          {
+            "name": "Romanian deadlift",
+            "seconds": 300,
+            "cue": "Hips back, back long, weights close to your legs the whole way.",
+            "glossaryID": "romanian-deadlift"
+          },
+          {
+            "name": "Lat pulldown",
+            "seconds": 300,
+            "cue": "Sit tall and pull the bar down to your collarbone.",
+            "glossaryID": "lat-pulldown"
+          },
+          {
+            "name": "Overhead press",
+            "seconds": 300,
+            "cue": "Ribs down, press straight up, let the weight come back slowly.",
+            "glossaryID": "overhead-press"
+          },
+          {
+            "name": "Carry to finish",
+            "seconds": 240,
+            "cue": "Two heavy things, one lap of the floor, then put them down.",
+            "glossaryID": "farmers-carry"
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-gym-pull-8",
+      "title": "Eight minutes of pulling",
+      "subtitle": "For a back that spent the day at a desk",
+      "activity": "strength",
+      "qualities": [
+        "strength",
+        "grip"
+      ],
+      "durationMin": 8,
+      "intensity": 2,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "gym"
+      ],
+      "bodyFocus": [
+        "back",
+        "upperBody"
+      ],
+      "intents": [
+        "strengthen",
+        "mobilize"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Seated row",
+            "seconds": 180,
+            "cue": "Light. Pull to your ribs, let your shoulder blades come together, release slowly.",
+            "glossaryID": "seated-cable-row"
+          },
+          {
+            "name": "Lat pulldown",
+            "seconds": 180,
+            "cue": "Sit tall. Pull to your collarbone, and let the bar rise all the way back up.",
+            "glossaryID": "lat-pulldown"
+          },
+          {
+            "name": "Doorway or rack stretch",
+            "seconds": 120,
+            "cue": "One forearm on the upright, turn gently away from it.",
+            "glossaryID": "doorway-chest-stretch"
+          }
+        ]
+      }
+    },
+    {
+      "id": "dessert-gym-sauna-and-stretch",
+      "title": "Sauna, then the quiet mat in the corner",
+      "subtitle": "The part of the membership nobody uses",
+      "activity": "breathwork",
+      "qualities": [
+        "downRegulation"
+      ],
+      "durationMin": 15,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "gym"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "pregnancy"
+      ],
+      "intents": [
+        "calm"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Heat",
+            "seconds": 480,
+            "cue": "Sit. Take your time getting out. Water afterwards."
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 180,
+            "cue": "Knees wide, forehead down, let your shoulders go.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Figure four",
+            "seconds": 240,
+            "cue": "One ankle over the opposite knee, draw the legs in until you feel it.",
+            "glossaryID": "figure-four-stretch"
+          }
+        ]
+      }
     }
   ],
   "glossary": [
@@ -2306,6 +2591,75 @@
       "muscles": [
         "forearms",
         "wrists"
+      ]
+    },
+    {
+      "id": "lat-pulldown",
+      "name": "Lat pulldown",
+      "aka": [
+        "pulldown"
+      ],
+      "instructions": [
+        "Sit facing the machine with your thighs under the pads and take a wide hold of the bar.",
+        "Sit tall and pull the bar down towards your collarbone, leading with your elbows.",
+        "Let your shoulder blades slide down as the bar comes towards you.",
+        "Let the bar rise all the way back up under control before the next one."
+      ],
+      "muscles": [
+        "sides of the back",
+        "upper arms"
+      ]
+    },
+    {
+      "id": "seated-cable-row",
+      "name": "Seated row",
+      "aka": [
+        "cable row"
+      ],
+      "instructions": [
+        "Sit with your feet on the platform and your knees softly bent.",
+        "Hold the handle with your arms straight and your back long.",
+        "Pull the handle towards your ribs, letting your shoulder blades come together.",
+        "Straighten your arms slowly and let your back stay long the whole time."
+      ],
+      "muscles": [
+        "middle of the back",
+        "back of the shoulders",
+        "upper arms"
+      ]
+    },
+    {
+      "id": "leg-press",
+      "name": "Leg press",
+      "aka": [],
+      "instructions": [
+        "Sit back in the seat with your feet flat on the platform, about hip width apart.",
+        "Push the platform away through your whole foot until your legs are nearly straight.",
+        "Stop short of locking your knees.",
+        "Bend your knees slowly to bring the platform back, keeping your lower back on the seat."
+      ],
+      "muscles": [
+        "front of the thighs",
+        "back of the thighs",
+        "glutes"
+      ]
+    },
+    {
+      "id": "chest-press",
+      "name": "Chest press",
+      "aka": [
+        "machine press"
+      ],
+      "instructions": [
+        "Sit with your back against the pad and the handles roughly level with the middle of your chest.",
+        "Set your elbows a little below shoulder height rather than straight out to the sides.",
+        "Press the handles away until your arms are nearly straight.",
+        "Let them come back slowly until you feel a gentle stretch across your chest."
+      ],
+      "muscles": [
+        "chest",
+        "front of the shoulders",
+        "back of the upper arms"
       ]
     }
   ]

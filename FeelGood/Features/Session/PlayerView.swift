@@ -8,10 +8,24 @@
 
 import SwiftUI
 
+/// How a session ended. Leaving early is a perfectly good outcome and is never
+/// recorded as a failure — the engine treats a skip as a Tuesday.
+nonisolated enum PlayerOutcome: Hashable, Sendable {
+    case left
+    case finished(Feel?)
+
+    var historyOutcome: HistoryOutcome {
+        switch self {
+        case .left: .skipped
+        case .finished(let feel): .completed(feel: feel)
+        }
+    }
+}
+
 struct PlayerView: View {
     let session: Session
-    /// Called on finishing or leaving. Logging and affinity land in week 3.
-    let onFinish: () -> Void
+    /// Called on finishing or leaving, with what happened.
+    let onFinish: (PlayerOutcome) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var index = 0
@@ -47,7 +61,7 @@ struct PlayerView: View {
     private func running(_ step: Step) -> some View {
         VStack(spacing: FGSpace.l) {
             HStack {
-                FGQuietButton("Leave", systemImage: "xmark") { onFinish() }
+                FGQuietButton("Leave", systemImage: "xmark") { onFinish(.left) }
                 Spacer()
                 Text("\(index + 1) of \(steps.count)")
                     .font(FGFont.label)
@@ -99,8 +113,7 @@ struct PlayerView: View {
             HStack(spacing: FGSpace.m) {
                 ForEach(Feel.allCases, id: \.self) { feel in
                     Button {
-                        // Week 3 wires this to affinity and the session log.
-                        onFinish()
+                        onFinish(.finished(feel))
                     } label: {
                         VStack(spacing: FGSpace.xs) {
                             Image(systemName: symbol(for: feel))
@@ -118,6 +131,13 @@ struct PlayerView: View {
                     .buttonStyle(.plain)
                 }
             }
+
+            // The question is never a toll gate. Saying nothing still counts
+            // as having done it.
+            FGQuietButton("Skip the question", systemImage: "arrow.right") {
+                onFinish(.finished(nil))
+            }
+
             Spacer()
         }
         .padding(FGSpace.page)
