@@ -20,6 +20,8 @@ struct FeelGoodApp: App {
     init() {
         _storage = State(initialValue: Storage.open())
         content = try? ContentStore.bundled()
+        // Must run before any view reads PurchasesManager.shared.isProUnlocked / offerings.
+        PurchasesManager.shared.configure()
     }
 
     var body: some Scene {
@@ -34,6 +36,7 @@ struct FeelGoodApp: App {
             }
         }
         .modelContainer(storage.container)
+        .environment(PurchasesManager.shared)
     }
 
 }
