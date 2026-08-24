@@ -122,6 +122,19 @@ decision already made in the PRD, not a preference.
   video classes later is a JSON change, never a rebuild.
 - **The LLM never chooses what anyone does with their body.** It writes framing copy
   only, and the screen renders fully before it is asked.
+- **The copy payload is an allow-list, enforced by a type.** Only session ids,
+  `ReasonCode`s, and coarse state (energy / time / days since last) may leave
+  the device. `PlanCheckIn.body` and `PlanProfile.workArounds` never do —
+  `cramping`, `pregnancy`, `postpartum`, and `pelvicFloor` are reproductive
+  health data, and no framing sentence is worth sending them. Build the payload
+  as a struct those fields are structurally absent from, rather than filtering
+  them at the call site, so the rule is a compile error and not a habit. Work-
+  arounds are already applied as a filter and never surface as a `ReasonCode`;
+  keep it that way.
+- **`Engine/` and `Content/` import Foundation and nothing else.** Enforced by
+  `EngineBoundaryTests` as an allow-list, because both are folders in the app
+  target rather than modules. A new entry on that list is an architecture
+  decision, not a build fix — the logic almost certainly belongs in `Services/`.
 
 ### Voice and product rules
 
