@@ -29,17 +29,15 @@ struct DayStabilityTests {
     }
 
     private func model(
-        log: any ActivityLogging = InMemoryActivityLog(),
+        log: any SessionLogging = InMemorySessionLog(),
         checkIn: PlanCheckIn? = PlanCheckIn(energy: .steady, time: .some),
-        restoring: Menu? = nil,
         now: Date = Fixture.now
     ) -> TodayModel {
         TodayModel(
             store: store(),
             profile: Fixture.profile(),
-            checkIn: checkIn,
             log: log,
-            restoring: restoring,
+            checkIn: checkIn,
             now: now,
             calendar: Fixture.utc
         )
@@ -50,51 +48,68 @@ struct DayStabilityTests {
     @Test("A stored day rebuilds into the menu that was shown")
     func storedDayRebuildsExactly() throws {
         let context = try context()
-        let log = SwiftDataActivityLog(context: context)
+        let log = SessionLog(context: context, calendar: Fixture.utc)
         let original = model().menu
 
         log.save(original, generatedAt: Fixture.now)
 
-        let stored = try #require(try context.fetch(FetchDescriptor<PlanDay>()).first)
         let catalog = store()
-        let restored = stored.menu { catalog.session(id: $0) }
+        let restored = log.day(original.dayStart) { catalog.session(id: $0) }
 
         #expect(restored == original)
-        #expect(restored.items.map(\.id) == original.items.map(\.id))
-        #expect(restored.items.map(\.reasonText) == original.items.map(\.reasonText))
+        #expect(restored?.items.map(\.reasonText) == original.items.map(\.reasonText))
     }
 
     @Test("Only one day is ever stored for one day")
     func savingTwiceReplacesTheDay() throws {
         let context = try context()
-        let log = SwiftDataActivityLog(context: context)
+        let log = SessionLog(context: context, calendar: Fixture.utc)
         let model = model()
 
         log.save(model.menu, generatedAt: Fixture.now)
         model.apply(PlanCheckIn(energy: .low, time: .aLittle), now: Fixture.now)
         log.save(model.menu, generatedAt: Fixture.now)
 
-        let days = try context.fetch(FetchDescriptor<PlanDay>())
-        #expect(days.count == 1)
-        #expect(days.first?.items.count == model.menu.items.count)
+        #expect(try context.fetch(FetchDescriptor<PlanDay>()).count == 1)
         // The replaced day took its items with it rather than orphaning them.
         #expect(try context.fetch(FetchDescriptor<PlanItem>()).count == model.menu.items.count)
+    }
+
+    @Test("A session the catalog no longer carries leaves a gap, not a crash")
+    func missingSessionsAreSkipped() throws {
+        let context = try context()
+        let log = SessionLog(context: context, calendar: Fixture.utc)
+        let original = model().menu
+        log.save(original, generatedAt: Fixture.now)
+
+        let thinned = store(Fixture.catalog.filter { $0.course != .main })
+        let restored = log.day(original.dayStart) { thinned.session(id: $0) }
+
+        #expect(restored?.main == nil)
+        #expect(restored?.items.count == original.items.count - 1)
     }
 
     // MARK: - Restoring
 
     @Test("Today's stored menu is shown again rather than regenerated")
     func todaysMenuIsRestored() {
-        let first = model()
-        let reopened = model(restoring: first.menu)
+        let log = InMemorySessionLog()
+        let first = model(log: log, checkIn: nil)
+        first.apply(PlanCheckIn(energy: .low, time: .aLittle), now: Fixture.now)
+
+        let reopened = model(log: log, checkIn: nil)
 
         #expect(reopened.menu == first.menu)
+        // ...and the answers already given today are not asked for again.
+        #expect(reopened.checkIn == first.checkIn)
     }
 
     @Test("Yesterday's menu is not today's")
     func yesterdaysMenuIsNotRestored() {
-        let yesterday = model(now: Fixture.daysAgo(1)).menu
-        let today = model(restoring: yesterday)
+        let log = InMemorySessionLog()
+        let yesterday = model(log: log, now: Fixture.daysAgo(1)).menu
+
+        let today = model(log: log)
 
         #expect(today.menu.dayStart != yesterday.dayStart)
         #expect(today.menu.dayStart == Fixture.utc.startOfDay(for: Fixture.now))
@@ -102,36 +117,19 @@ struct DayStabilityTests {
 
     @Test("Generating a day stores it; restoring one does not store it again")
     func generatingStoresTheDay() {
-        let fresh = InMemoryActivityLog()
+        let fresh = InMemorySessionLog()
         _ = model(log: fresh)
         #expect(fresh.savedDays.count == 1)
 
-        let reopened = InMemoryActivityLog()
-        let stored = model().menu
-        _ = model(log: reopened, restoring: stored)
-        #expect(reopened.savedDays.isEmpty)
-    }
-
-    @Test("A session the catalog no longer carries leaves a gap, not a crash")
-    func missingSessionsAreSkipped() throws {
-        let context = try context()
-        let log = SwiftDataActivityLog(context: context)
-        let original = model().menu
-        log.save(original, generatedAt: Fixture.now)
-
-        let stored = try #require(try context.fetch(FetchDescriptor<PlanDay>()).first)
-        let thinned = store(Fixture.catalog.filter { $0.course != .main })
-        let restored = stored.menu { thinned.session(id: $0) }
-
-        #expect(restored.main == nil)
-        #expect(restored.items.count == original.items.count - 1)
+        _ = model(log: fresh)
+        #expect(fresh.savedDays.count == 1, "the second launch restored rather than regenerated")
     }
 
     // MARK: - What re-saves the day
 
     @Test("A check-in is recorded and re-stores the day")
     func checkingInStoresTheDay() {
-        let log = InMemoryActivityLog()
+        let log = InMemorySessionLog()
         let model = model(log: log, checkIn: nil)
 
         model.apply(PlanCheckIn(energy: .low, time: .aLittle), now: Fixture.now)
@@ -143,21 +141,20 @@ struct DayStabilityTests {
 
     @Test("A swap stays swapped when you come back to it")
     func swappingStoresTheDay() throws {
-        let log = InMemoryActivityLog()
+        let log = InMemorySessionLog()
         let today = model(log: log)
         let main = try #require(today.menu.main)
         #expect(today.canSwap(main, now: Fixture.now))
 
         today.swap(main, now: Fixture.now)
-        let reopened = model(restoring: log.savedDays.last)
 
         #expect(log.savedDays.last?.main?.session.id != main.session.id)
-        #expect(reopened.menu.main?.session.id != main.session.id)
+        #expect(model(log: log, checkIn: nil).menu.main?.session.id != main.session.id)
     }
 
     @Test("Editing the profile replaces the stored day")
     func editingTheProfileStoresTheDay() {
-        let log = InMemoryActivityLog()
+        let log = InMemorySessionLog()
         let model = model(log: log)
 
         model.update(profile: Fixture.profile(activities: [.pilates], equipment: [.none, .mat]), now: Fixture.now)

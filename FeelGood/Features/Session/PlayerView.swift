@@ -8,24 +8,14 @@
 
 import SwiftUI
 
-/// How a session ended. Leaving early is a perfectly good outcome and is never
-/// recorded as a failure — the engine treats a skip as a Tuesday.
-nonisolated enum PlayerOutcome: Hashable, Sendable {
-    case left
-    case finished(Feel?)
-
-    var historyOutcome: HistoryOutcome {
-        switch self {
-        case .left: .skipped
-        case .finished(let feel): .completed(feel: feel)
-        }
-    }
-}
-
 struct PlayerView: View {
     let session: Session
-    /// Called on finishing or leaving, with what happened.
-    let onFinish: (PlayerOutcome) -> Void
+    /// Called on finishing or leaving. `feel` is nil when the session was left
+    /// early or the question was skipped — both are fine, and both still count
+    /// as having shown up.
+    let onFinish: (Feel?) -> Void
+    /// When Start was tapped, so the record reflects real elapsed time.
+    let startedAt: Date
 
     @Environment(\.dismiss) private var dismiss
     @State private var index = 0
@@ -61,7 +51,7 @@ struct PlayerView: View {
     private func running(_ step: Step) -> some View {
         VStack(spacing: FGSpace.l) {
             HStack {
-                FGQuietButton("Leave", systemImage: "xmark") { onFinish(.left) }
+                FGQuietButton("Leave", systemImage: "xmark") { onFinish(nil) }
                 Spacer()
                 Text("\(index + 1) of \(steps.count)")
                     .font(FGFont.label)
@@ -113,7 +103,7 @@ struct PlayerView: View {
             HStack(spacing: FGSpace.m) {
                 ForEach(Feel.allCases, id: \.self) { feel in
                     Button {
-                        onFinish(.finished(feel))
+                        onFinish(feel)
                     } label: {
                         VStack(spacing: FGSpace.xs) {
                             Image(systemName: symbol(for: feel))
@@ -131,16 +121,13 @@ struct PlayerView: View {
                     .buttonStyle(.plain)
                 }
             }
-
-            // The question is never a toll gate. Saying nothing still counts
-            // as having done it.
-            FGQuietButton("Skip the question", systemImage: "arrow.right") {
-                onFinish(.finished(nil))
-            }
-
+            FGQuietButton("Skip") { onFinish(nil) }
             Spacer()
         }
         .padding(FGSpace.page)
+        // Full bleed here: this is the only screen empty enough to carry it,
+        // and the only one where decoration is the point.
+        .background(FGBrandWash().ignoresSafeArea())
     }
 
     private var timeString: String {

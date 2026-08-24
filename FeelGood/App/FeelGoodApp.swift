@@ -44,29 +44,17 @@ struct RootView: View {
 
     @Environment(\.modelContext) private var context
     @Query private var profiles: [UserProfile]
-    @Query(sort: \SessionRecord.startedAt, order: .reverse) private var records: [SessionRecord]
-    @Query private var affinity: [AffinityRecord]
-    @Query(sort: \CustomSession.createdAt) private var ownSessions: [CustomSession]
-    @Query(sort: \PlanDay.dayStart, order: .reverse) private var days: [PlanDay]
-    @Query(sort: \CheckInRecord.takenAt, order: .reverse) private var checkIns: [CheckInRecord]
 
     var body: some View {
         Group {
             if let content {
                 if let profile = profiles.first {
-                    // Deliberately not re-keyed on the profile: an edit is
-                    // applied to the live model instead, so changing your mind
-                    // never throws away today's check-in.
                     TodayScreen(
                         content: content,
                         profile: profile,
-                        history: records.map(\.historyEntry),
-                        affinity: Dictionary(affinity.map { ($0.sessionID, $0.score) }, uniquingKeysWith: { first, _ in first }),
-                        ownSessions: ownSessions.map(\.session),
-                        log: SwiftDataActivityLog(context: context),
-                        storedDay: storedDay(content: content),
-                        storedCheckIn: storedCheckIn
+                        log: SessionLog(context: context)
                     )
+                    .id(profile.updatedAt)
                 } else {
                     OnboardingView { onboarding in
                         context.insert(onboarding.makeRecord(now: Date()))
@@ -86,57 +74,51 @@ struct RootView: View {
     }
 }
 
-private extension RootView {
-    var todayStart: Date { Calendar.current.startOfDay(for: Date()) }
-
-    /// The menu already generated for today, if there is one. Sessions resolve
-    /// through the bundled catalog first and somebody's own kept workouts
-    /// second — the engine draws from both, so restoring has to as well.
-    func storedDay(content: ContentStore) -> Menu? {
-        guard let today = days.first, today.dayStart == todayStart else { return nil }
-        let own = Dictionary(ownSessions.map { ($0.id, $0.session) }, uniquingKeysWith: { first, _ in first })
-        return today.menu { content.session(id: $0) ?? own[$0] }
-    }
-
-    /// Today's most recent answers, so the app doesn't ask twice.
-    var storedCheckIn: PlanCheckIn? {
-        guard let latest = checkIns.first, latest.dayStart == todayStart else { return nil }
-        return latest.planCheckIn
-    }
-}
-
 /// Owns the day's model so a swap or a check-in survives a re-render.
 private struct TodayScreen: View {
     private let profile: UserProfile
     @State private var model: TodayModel
 
-    init(
-        content: ContentStore,
-        profile: UserProfile,
-        history: [HistoryEntry],
-        affinity: [String: Double],
-        ownSessions: [Session],
-        log: any ActivityLogging,
-        storedDay: Menu?,
-        storedCheckIn: PlanCheckIn?
-    ) {
+    init(content: ContentStore, profile: UserProfile, log: any SessionLogging) {
         self.profile = profile
         _model = State(initialValue: TodayModel(
             store: content,
             profile: profile.planProfile,
-            checkIn: storedCheckIn,
-            history: history,
-            affinity: affinity,
-            ownSessions: ownSessions,
             log: log,
-            restoring: storedDay,
             now: Date()
         ))
     }
 
+    /// Which tab is showing, so a deep link can bring Today forward even if
+    /// the app was last left on the reflection.
+    @State private var tab = Destination.today
+    /// A session the widget asked for. Cleared once Today has opened it.
+    @State private var requestedSessionID: String?
+
+    /// Named `Destination` rather than `Tab`: a nested type called `Tab`
+    /// shadows SwiftUI's `Tab` view and the TabView stops compiling.
+    private enum Destination: Hashable { case today, you }
+
     var body: some View {
-        TodayView(model: model, answers: profile.answers) { answers in
-            profile.apply(answers, now: Date())
+        // Two tabs, and only two. The PRD's "no tab, no browse" (§6) is aimed
+        // at the glossary — 873 browsable exercises is the overwhelm the app
+        // exists to remove — not at the app's own shell. Today stays the
+        // default and stays uncluttered; this is just how the peers to it
+        // become reachable. Library and Settings land here too.
+        TabView(selection: $tab) {
+            Tab("Today", systemImage: "sun.max", value: Destination.today) {
+                TodayView(model: model, requestedSessionID: $requestedSessionID)
+            }
+            Tab("You", systemImage: "person", value: Destination.you) {
+                YouView(model: model, answers: profile.answers) { answers in
+                    profile.apply(answers, now: Date())
+                }
+            }
+        }
+        .onOpenURL { url in
+            guard let id = DeepLink.sessionID(from: url) else { return }
+            tab = .today
+            requestedSessionID = id
         }
     }
 }

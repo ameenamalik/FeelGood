@@ -9,12 +9,19 @@ import SwiftUI
 
 struct OnboardingView: View {
     @State private var model = OnboardingModel()
+    @Environment(\.dynamicTypeSize) private var typeSize
     /// Handed the finished profile; persistence and routing happen upstream.
     let onFinish: (OnboardingModel) -> Void
 
     var body: some View {
         ZStack {
             FGColor.bg.ignoresSafeArea()
+
+            // The app's first impression, since there is no account screen to
+            // make one on. Low enough to sit behind the footer, not the
+            // question.
+            FGBrandWash(reach: 0.5)
+                .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: FGSpace.l) {
                 progressBar
@@ -70,10 +77,29 @@ struct OnboardingView: View {
     private var answers: some View {
         switch model.card {
         case .access:
-            AccessChoices(activities: $model.activities, equipment: $model.equipment)
+            AccessChoices(
+                activities: $model.activities,
+                equipment: $model.equipment,
+                places: $model.places
+            )
 
         case .cadence:
-            choiceGrid(Cadence.allCases, label: \.label, selection: $model.cadence)
+            VStack(alignment: .leading, spacing: FGSpace.l) {
+                answerGroup("Across the week") {
+                    ForEach(Cadence.allCases, id: \.self) { option in
+                        FGChoice(title: option.label, isSelected: model.cadence == option) {
+                            withAnimation(FGMotion.gentle) { model.cadence = option }
+                        }
+                    }
+                }
+                answerGroup("Within a day") {
+                    ForEach(MovementMoments.allCases, id: \.self) { option in
+                        FGChoice(title: option.label, isSelected: model.moments == option) {
+                            withAnimation(FGMotion.gentle) { model.moments = option }
+                        }
+                    }
+                }
+            }
 
         case .time:
             choiceGrid([10, 20, 30, 45], label: { $0 == 45 ? "45+ min" : "\($0) min" }, selection: $model.realisticMinutes)
@@ -86,7 +112,7 @@ struct OnboardingView: View {
 
         case .workArounds:
             VStack(alignment: .leading, spacing: FGSpace.s) {
-                FlowRow(spacing: FGSpace.s) {
+                FlowRow(spacing: FGSpace.s, maxPerRow: typeSize.isAccessibilitySize ? 1 : 3) {
                     ForEach(WorkAround.allCases, id: \.self) { workAround in
                         FGChoice(title: workAround.label, isSelected: model.workArounds.contains(workAround)) {
                             toggle(workAround, in: \.workArounds)
@@ -97,6 +123,18 @@ struct OnboardingView: View {
                     withAnimation(FGMotion.gentle) { model.workArounds = [] }
                 }
             }
+        }
+    }
+
+
+    private func answerGroup<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: FGSpace.s) {
+            Text(title)
+                .font(FGFont.label)
+                .foregroundStyle(FGColor.inkMuted)
+                .textCase(.uppercase)
+                .tracking(1.1)
+            FlowRow(spacing: FGSpace.s, maxPerRow: typeSize.isAccessibilitySize ? 1 : 3) { content() }
         }
     }
 
@@ -128,15 +166,16 @@ struct OnboardingView: View {
 
     private var footer: some View {
         VStack(spacing: FGSpace.s) {
-            FGPrimaryButton(title: model.isLastCard ? "Show me today" : "Next") {
+            FGPrimaryButton(
+                title: model.isLastCard ? "Show me today" : "Next",
+                isEnabled: model.canAdvance
+            ) {
                 if model.isLastCard {
                     onFinish(model)
                 } else {
                     model.advance()
                 }
             }
-            .opacity(model.canAdvance ? 1 : 0.4)
-            .disabled(!model.canAdvance)
 
             if !model.isFirstCard {
                 FGQuietButton("Back", systemImage: "chevron.left") { model.goBack() }

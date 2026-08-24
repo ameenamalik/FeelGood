@@ -45,6 +45,23 @@ nonisolated enum Energy: String, Codable, CaseIterable, Sendable {
     case low, steady, strong
 }
 
+nonisolated extension Place {
+    /// What being somewhere gives you. A gym membership is one tick that
+    /// stands in for a room full of kit — nobody should have to also tick
+    /// weights, a band and a mat to describe the same building. A pool is
+    /// deliberately not included: plenty of gyms have none, and a session that
+    /// can't happen is worse than one that was never offered.
+    var impliedEquipment: Set<Equipment> {
+        switch self {
+        case .gym: [.gym, .mat, .weights, .band, .bike]
+        case .studio: [.mat, .reformer]
+        case .pool: [.pool]
+        case .outdoors: [.outdoor]
+        case .home: []
+        }
+    }
+}
+
 nonisolated enum Equipment: String, Codable, CaseIterable, Sendable {
     case none, mat, weights, band, rope, bike, pool, skates, outdoor, gym, reformer
 
@@ -69,6 +86,22 @@ nonisolated enum Equipment: String, Codable, CaseIterable, Sendable {
         default: []
         }
     }
+}
+
+/// Where a session can actually happen. Equipment answers what you have; place
+/// answers where you are and whether you're willing to leave.
+nonisolated enum Place: String, Codable, CaseIterable, Sendable {
+    /// Needs nothing but the room you're standing in — which includes a hotel
+    /// floor, an office, or a corner of a gym. Every appetizer is home-safe.
+    case home
+    /// Shoes on, out the door.
+    case outdoors
+    /// Equipment you don't own.
+    case gym
+    /// Somebody else's class, at somebody else's time.
+    case studio
+    /// Its own place, because access is binary and rarely spontaneous.
+    case pool
 }
 
 nonisolated enum BodyFocus: String, Codable, CaseIterable, Sendable {
@@ -176,6 +209,8 @@ nonisolated struct Session: Codable, Hashable, Sendable, Identifiable {
     let intensity: Int
     let energyFit: [Energy]
     let equipment: [Equipment]
+    /// Empty means no place constraint — it can happen anywhere.
+    let places: [Place]
     let bodyFocus: [BodyFocus]
     let contraindications: [WorkAround]
     let intents: [Intent]
@@ -185,7 +220,7 @@ nonisolated struct Session: Codable, Hashable, Sendable, Identifiable {
 
     private enum CodingKeys: String, CodingKey {
         case id, title, subtitle, activity, qualities, durationMin, intensity
-        case energyFit, equipment, bodyFocus, contraindications, intents, course
+        case energyFit, equipment, places, bodyFocus, contraindications, intents, course
         case source, attribution
     }
 
@@ -202,6 +237,7 @@ nonisolated struct Session: Codable, Hashable, Sendable, Identifiable {
         intensity = try c.decode(Int.self, forKey: .intensity)
         energyFit = try c.decodeIfPresent([Energy].self, forKey: .energyFit) ?? Energy.allCases
         equipment = try c.decodeIfPresent([Equipment].self, forKey: .equipment) ?? [.none]
+        places = try c.decodeIfPresent([Place].self, forKey: .places) ?? []
         bodyFocus = try c.decodeIfPresent([BodyFocus].self, forKey: .bodyFocus) ?? [.full]
         contraindications = try c.decodeIfPresent([WorkAround].self, forKey: .contraindications) ?? []
         intents = try c.decodeIfPresent([Intent].self, forKey: .intents) ?? []
@@ -216,6 +252,11 @@ nonisolated struct Session: Codable, Hashable, Sendable, Identifiable {
         equipment.isEmpty || equipment == [.none]
     }
 
+    /// Doable without leaving wherever you already are.
+    var worksAtHome: Bool {
+        places.isEmpty || places.contains(.home)
+    }
+
     init(
         id: String,
         title: String,
@@ -226,6 +267,7 @@ nonisolated struct Session: Codable, Hashable, Sendable, Identifiable {
         intensity: Int,
         energyFit: [Energy],
         equipment: [Equipment],
+        places: [Place] = [],
         bodyFocus: [BodyFocus],
         contraindications: [WorkAround] = [],
         intents: [Intent],
@@ -242,6 +284,7 @@ nonisolated struct Session: Codable, Hashable, Sendable, Identifiable {
         self.intensity = intensity
         self.energyFit = energyFit
         self.equipment = equipment
+        self.places = places
         self.bodyFocus = bodyFocus
         self.contraindications = contraindications
         self.intents = intents

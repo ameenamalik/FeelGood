@@ -37,6 +37,17 @@ nonisolated extension Activity {
         }
     }
 
+    /// Where this kind of movement happens. Somebody who saves a swim should
+    /// not be offered it on a day they have already decided to stay in.
+    var impliedPlaces: Set<Place> {
+        switch self {
+        case .swimming: [.pool]
+        case .biking, .walking, .racquet, .climbing, .skating: [.outdoors]
+        case .strength, .carries: [.home, .gym]
+        default: [.home]
+        }
+    }
+
     /// What this kind of movement can't happen without. Someone who saves a
     /// swim shouldn't be offered it on a day they have no pool.
     var impliedEquipment: Set<Equipment> {
@@ -75,6 +86,7 @@ nonisolated extension Session {
             intensity: intensity,
             energyFit: energyFit(for: intensity),
             equipment: Array(activity.impliedEquipment.sorted { $0.rawValue < $1.rawValue }),
+            places: Array(activity.impliedPlaces.sorted { $0.rawValue < $1.rawValue }),
             bodyFocus: [.full],
             // The same safety rule the authored catalog holds to: anything
             // bouncy stays off the menu for someone who flagged pregnancy,

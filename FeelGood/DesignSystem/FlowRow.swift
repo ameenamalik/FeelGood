@@ -10,6 +10,11 @@ import SwiftUI
 
 struct FlowRow: Layout {
     var spacing: CGFloat = 8
+    /// Fewer, wider columns as the type grows. A `Layout` cannot read the
+    /// environment, so the view passes `dynamicTypeSize.isAccessibilitySize`
+    /// down as a column count — without it, three columns of accessibility
+    /// XXXL text is three columns of words broken mid-syllable.
+    var maxPerRow: Int = 3
     /// Never go below this, whatever the proposal says.
     private let minimumItemWidth: CGFloat = 1
 
@@ -25,10 +30,15 @@ struct FlowRow: Layout {
         for row in arrange(subviews: subviews, width: bounds.width) {
             var x = bounds.minX
             for index in row.indices {
-                let size = subviews[index].sizeThatFits(.unspecified)
+                // The row was measured at `itemWidth`, so it must be placed at
+                // `itemWidth` too. Proposing the subview's *unconstrained*
+                // height instead pins it to one line: the label truncates
+                // rather than wrapping, and the row keeps the taller height it
+                // was measured at, leaving a gap underneath. Offering the whole
+                // row height also squares off every tile in the row.
                 subviews[index].place(
                     at: CGPoint(x: x, y: y),
-                    proposal: ProposedViewSize(width: row.itemWidth, height: size.height)
+                    proposal: ProposedViewSize(width: row.itemWidth, height: row.height)
                 )
                 x += row.itemWidth + spacing
             }
@@ -51,11 +61,12 @@ struct FlowRow: Layout {
         var itemWidth: CGFloat
     }
 
-    /// Choices share the row evenly, up to three across.
+    /// Choices share the row evenly, up to `maxPerRow` across.
     private func arrange(subviews: Subviews, width proposedWidth: CGFloat) -> [Row] {
         guard !subviews.isEmpty else { return [] }
         let width = resolvedWidth(proposedWidth)
-        let perRow = max(1, width < 340 ? 2 : min(3, subviews.count))
+        let columns = width < 340 ? min(2, maxPerRow) : maxPerRow
+        let perRow = max(1, min(columns, subviews.count))
         let itemWidth = max(minimumItemWidth, (width - spacing * CGFloat(perRow - 1)) / CGFloat(perRow))
 
         var rows: [Row] = []

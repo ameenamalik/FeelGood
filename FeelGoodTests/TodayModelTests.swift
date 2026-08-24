@@ -19,15 +19,15 @@ struct TodayModelTests {
     }
 
     private func model(
-        log: InMemoryActivityLog = InMemoryActivityLog(),
+        log: InMemorySessionLog = InMemorySessionLog(),
         profile: PlanProfile = Fixture.profile(),
         sessions: [Session] = Fixture.catalog
     ) -> TodayModel {
         TodayModel(
             store: store(sessions),
             profile: profile,
-            checkIn: PlanCheckIn(energy: .steady, time: .some),
             log: log,
+            checkIn: PlanCheckIn(energy: .steady, time: .some),
             now: Fixture.now,
             calendar: Fixture.utc
         )
@@ -35,27 +35,29 @@ struct TodayModelTests {
 
     @Test("Finishing something writes it down and moves affinity")
     func finishingIsRecorded() {
-        let log = InMemoryActivityLog()
+        let log = InMemorySessionLog()
         let model = model(log: log)
         let session = Fixture.catalog.first { $0.id == "a-stretch" }!
 
-        model.record(.finished(.lovedIt), for: session, startedAt: Fixture.now, now: Fixture.now)
+        model.complete(session, startedAt: Fixture.now, feel: .lovedIt, now: Fixture.now)
 
         #expect(model.history.last?.sessionID == "a-stretch")
         #expect(model.history.last?.wasCompleted == true)
-        #expect((model.affinity["a-stretch"] ?? 0) > 0)
-        #expect(log.recorded.count == 1)
+        #expect((log.affinity()["a-stretch"] ?? 0) > 0)
+        #expect(model.isCompleted(MenuItem(session: session, course: .appetizer, reasons: [], reasonText: "")))
     }
 
-    @Test("Leaving early is recorded, and held against nothing")
-    func leavingEarlyIsNotAFailure() {
-        let model = model()
+    @Test("Saying nothing about how it felt is still having done it")
+    func finishingWithoutAnAnswerStillCounts() {
+        let log = InMemorySessionLog()
+        let model = model(log: log)
         let session = Fixture.catalog.first { $0.id == "m-pilates-30" }!
 
-        model.record(.left, for: session, startedAt: Fixture.now, now: Fixture.now)
+        model.complete(session, startedAt: Fixture.now, feel: nil, now: Fixture.now)
 
-        #expect(model.history.last?.wasCompleted == false)
-        #expect(model.affinity["m-pilates-30"] == nil || model.affinity["m-pilates-30"] == 0)
+        #expect(model.history.last?.wasCompleted == true)
+        // No answer is not a verdict either way.
+        #expect(log.affinity()["m-pilates-30"] == nil)
     }
 
     @Test("What you just did does not vanish off the screen you're looking at")
@@ -64,7 +66,7 @@ struct TodayModelTests {
         let before = model.menu.items.map(\.id)
 
         for item in model.menu.items {
-            model.record(.finished(.lovedIt), for: item.session, startedAt: Fixture.now, now: Fixture.now)
+            model.complete(item.session, startedAt: Fixture.now, feel: .lovedIt, now: Fixture.now)
         }
 
         #expect(model.menu.items.map(\.id) == before)
@@ -72,7 +74,7 @@ struct TodayModelTests {
 
     @Test("Turning something down is recorded quietly")
     func swappingIsRecorded() throws {
-        let log = InMemoryActivityLog()
+        let log = InMemorySessionLog()
         let model = model(log: log)
         let main = try #require(model.menu.main)
         #expect(model.canSwap(main, now: Fixture.now))
@@ -80,13 +82,12 @@ struct TodayModelTests {
         model.swap(main, now: Fixture.now)
 
         #expect(model.menu.main?.session.id != main.session.id)
-        #expect(log.recorded.contains { $0.session.id == main.session.id })
-        #expect((model.affinity[main.session.id] ?? 0) < 0)
+        #expect((log.affinity()[main.session.id] ?? 0) < 0)
     }
 
     @Test("Logging your own workout counts toward the week without being kept")
     func loggingWithoutKeeping() {
-        let log = InMemoryActivityLog()
+        let log = InMemorySessionLog()
         let model = model(log: log)
 
         model.log(
@@ -97,14 +98,19 @@ struct TodayModelTests {
         #expect(model.history.last?.activity == .swimming)
         #expect(model.history.last?.qualities.contains(.endurance) == true)
         #expect(model.ownSessions.isEmpty)
-        #expect(log.kept.isEmpty)
+        #expect(log.keptSessions.isEmpty)
     }
 
     @Test("Keeping one puts it on a later menu")
     func keepingAddsItToThePool() {
         // A profile with nothing but a floor, and a catalog whose only main
         // needs a mat: the kept workout is the one thing that can be offered.
-        let profile = Fixture.profile(activities: [.strength], equipment: [.none], intent: .strengthen)
+        let profile = Fixture.profile(
+            activities: [.strength],
+            equipment: [.none],
+            places: [.home],
+            intent: .strengthen
+        )
         let model = model(
             profile: profile,
             sessions: Fixture.catalog.filter { $0.course != .main } + [
@@ -138,7 +144,7 @@ struct TodayModelTests {
 
     @Test("A kept workout can be renamed")
     func keptWorkoutsCanBeRenamed() throws {
-        let log = InMemoryActivityLog()
+        let log = InMemorySessionLog()
         let model = model(log: log)
         model.log(
             LoggedWorkout(activity: .strength, durationMin: 30, intensity: 3, isKept: true, title: "Mine"),
@@ -150,7 +156,6 @@ struct TodayModelTests {
 
         #expect(model.ownSessions.first?.title == "Thursday lifting")
         #expect(model.ownSessions.first?.id == kept.id)
-        #expect(log.renamed[kept.id] == "Thursday lifting")
         // An empty name is a slip, not an instruction.
         model.rename(kept, to: "   ")
         #expect(model.ownSessions.first?.title == "Thursday lifting")
@@ -158,7 +163,7 @@ struct TodayModelTests {
 
     @Test("Forgetting a kept workout stops it being offered but not from having happened")
     func keptWorkoutsCanBeForgotten() throws {
-        let log = InMemoryActivityLog()
+        let log = InMemorySessionLog()
         let model = model(log: log)
         model.log(
             LoggedWorkout(activity: .strength, durationMin: 30, intensity: 3, isKept: true, title: "Mine"),
@@ -178,11 +183,14 @@ struct TodayModelTests {
     @Test("Changing the profile updates today's menu without losing the check-in")
     func editingTheProfileKeepsTheDay() {
         // Nothing but a floor: the fixture catalog has no main that fits.
-        let model = model(profile: Fixture.profile(activities: [.stretching], equipment: [.none]))
+        let model = model(profile: Fixture.profile(activities: [.stretching], equipment: [.none], places: [.home]))
         let checkIn = model.checkIn
         #expect(model.menu.main == nil)
 
-        model.update(profile: Fixture.profile(activities: [.pilates], equipment: [.none, .mat]), now: Fixture.now)
+        model.update(
+            profile: Fixture.profile(activities: [.pilates], equipment: [.none, .mat], places: [.home]),
+            now: Fixture.now
+        )
 
         #expect(model.checkIn == checkIn)
         #expect(model.menu.main?.session.activity == .pilates)
