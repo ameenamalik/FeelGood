@@ -14,7 +14,8 @@
 import SwiftUI
 
 struct SessionDetailView: View {
-    let item: MenuItem
+    let session: Session
+    let course: Course
     let model: TodayModel
 
     @Environment(\.dismiss) private var dismiss
@@ -22,8 +23,23 @@ struct SessionDetailView: View {
     @State private var startedAt = Date()
     @State private var explaining: ExerciseTerm?
     @State private var isShowingSteps = false
+    @State private var isRenaming = false
+    @State private var newTitle = ""
+    @State private var isConfirmingRemoval = false
 
-    private var session: Session { item.session }
+    /// From the menu, where something chose it.
+    init(item: MenuItem, model: TodayModel) {
+        session = item.session
+        course = item.course
+        self.model = model
+    }
+
+    /// From the Library, where nobody chose it and somebody went looking.
+    init(session: Session, model: TodayModel) {
+        self.session = session
+        course = session.course
+        self.model = model
+    }
 
     var body: some View {
         ZStack {
@@ -43,9 +59,29 @@ struct SessionDetailView: View {
                         lineup
                     }
 
-                    FGPrimaryButton(title: "Start") {
-                        startedAt = Date()
-                        isPlaying = true
+                    // Somebody's own workout has no steps to play, because
+                    // nobody wrote any. It gets the honest button instead.
+                    if session.isOwn {
+                        VStack(spacing: FGSpace.s) {
+                            FGPrimaryButton(title: "I did this") {
+                                model.complete(session, startedAt: Date(), feel: nil)
+                                dismiss()
+                            }
+                            HStack(spacing: FGSpace.m) {
+                                FGQuietButton("Rename", systemImage: "pencil") {
+                                    newTitle = session.title
+                                    isRenaming = true
+                                }
+                                FGQuietButton("Remove", systemImage: "minus.circle") {
+                                    isConfirmingRemoval = true
+                                }
+                            }
+                        }
+                    } else {
+                        FGPrimaryButton(title: "Start") {
+                            startedAt = Date()
+                            isPlaying = true
+                        }
                     }
                 }
                 .padding(FGSpace.page)
@@ -65,13 +101,31 @@ struct SessionDetailView: View {
         .sheet(item: $explaining) { term in
             GlossarySheet(term: term)
         }
+        .alert("Name this one", isPresented: $isRenaming) {
+            TextField("Name", text: $newTitle)
+            Button("Save") { model.rename(session, to: newTitle) }
+            Button("Cancel", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "Remove \(session.title)?",
+            isPresented: $isConfirmingRemoval,
+            titleVisibility: .visible
+        ) {
+            Button("Remove", role: .destructive) {
+                model.forget(session)
+                dismiss()
+            }
+            Button("Keep it", role: .cancel) {}
+        } message: {
+            Text("It stops being offered. The times you did it still count.")
+        }
         .presentationDragIndicator(.visible)
     }
 
     /// The title is the screen. Display weight, and everything under it quiet.
     private var heading: some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
-            CourseTag(course: item.course)
+            CourseTag(course: course)
             Text(session.title)
                 .font(FGFont.display)
                 .foregroundStyle(FGColor.ink)

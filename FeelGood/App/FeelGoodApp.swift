@@ -9,63 +9,33 @@ import os
 
 @main
 struct FeelGoodApp: App {
-    private let container: ModelContainer
+    @State private var storage: Storage
+    /// Set when somebody chose to carry on without a store. Only reachable
+    /// from `StoreUnavailableView`, and only for the life of this launch.
+    @State private var isContinuingWithoutStore = false
     /// Loaded once at launch and handed down; the catalog never changes while
     /// the app is running.
     private let content: ContentStore?
 
     init() {
-        container = Self.makeContainer()
+        _storage = State(initialValue: Storage.open())
         content = try? ContentStore.bundled()
     }
 
     var body: some Scene {
         WindowGroup {
-            RootView(content: content)
+            if storage.isEphemeral && !isContinuingWithoutStore {
+                StoreUnavailableView(
+                    onRetry: { storage = Storage.open() },
+                    onContinueAnyway: { isContinuingWithoutStore = true }
+                )
+            } else {
+                RootView(content: content)
+            }
         }
-        .modelContainer(container)
+        .modelContainer(storage.container)
     }
 
-    /// On a fresh install `Library/Application Support` does not exist yet.
-    /// CoreData will get there eventually, but only after stat-ing every parent
-    /// directory and logging several hundred lines of diagnostics first.
-    /// Creating it up front keeps first launch quiet and the store path honest.
-    private static func prepareStoreDirectory() {
-        do {
-            try FileManager.default.url(
-                for: .applicationSupportDirectory,
-                in: .userDomainMask,
-                appropriateFor: nil,
-                create: true
-            )
-        } catch {
-            // Not fatal: the container below still tries, and falls back to
-            // memory if the store genuinely cannot be opened.
-            Logger(subsystem: "com.ameenamalik.FeelGood", category: "storage")
-                .error("Could not prepare Application Support: \(error, privacy: .public)")
-        }
-    }
-
-    /// A store that cannot be opened must not be a crash on launch. Falling
-    /// back to memory means there is still a menu today; the failure is logged
-    /// and the next launch tries the real store again.
-    private static func makeContainer() -> ModelContainer {
-        prepareStoreDirectory()
-        let schema = Schema(FeelGoodSchema.models)
-        do {
-            return try ModelContainer(
-                for: schema,
-                configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)]
-            )
-        } catch {
-            Logger(subsystem: "com.ameenamalik.FeelGood", category: "storage")
-                .error("Persistent store unavailable, running in memory: \(error, privacy: .public)")
-            return try! ModelContainer(
-                for: schema,
-                configurations: [ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)]
-            )
-        }
-    }
 }
 
 /// Routing. No profile yet means onboarding; otherwise, today's menu.
@@ -81,7 +51,7 @@ struct RootView: View {
                 if let profile = profiles.first {
                     TodayScreen(
                         content: content,
-                        profile: profile.planProfile,
+                        profile: profile,
                         log: SessionLog(context: context)
                     )
                     .id(profile.updatedAt)
@@ -106,12 +76,14 @@ struct RootView: View {
 
 /// Owns the day's model so a swap or a check-in survives a re-render.
 private struct TodayScreen: View {
+    private let profile: UserProfile
     @State private var model: TodayModel
 
-    init(content: ContentStore, profile: PlanProfile, log: any SessionLogging) {
+    init(content: ContentStore, profile: UserProfile, log: any SessionLogging) {
+        self.profile = profile
         _model = State(initialValue: TodayModel(
             store: content,
-            profile: profile,
+            profile: profile.planProfile,
             log: log,
             now: Date()
         ))
@@ -138,7 +110,9 @@ private struct TodayScreen: View {
                 TodayView(model: model, requestedSessionID: $requestedSessionID)
             }
             Tab("You", systemImage: "person", value: Destination.you) {
-                LookBackView(reflection: model.lookBack(now: .now))
+                YouView(model: model, answers: profile.answers) { answers in
+                    profile.apply(answers, now: Date())
+                }
             }
         }
         .onOpenURL { url in

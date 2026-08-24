@@ -97,6 +97,24 @@ struct PlanEngineTests {
         }
     }
 
+    @Test("Movement that needs nothing is eligible without ever having been picked")
+    func theActivityGateAppliesOnlyToAccess() {
+        // A profile that named one thing: Pilates. Breathwork and carries were
+        // never on the onboarding card to name, so the engine may still reach
+        // for them — but a rope is a real question, and this profile has one.
+        let input = PlanInput(
+            profile: Fixture.profile(activities: [.pilates], equipment: [.none, .mat, .rope]),
+            context: Fixture.context()
+        )
+        let checkIn = PlanCheckIn(energy: .strong, time: .plenty)
+        let byID = Dictionary(uniqueKeysWithValues: Fixture.catalog.map { ($0.id, $0) })
+
+        #expect(Fixture.engine.isEligible(byID["a-breath"]!, input: input, checkIn: checkIn))
+        #expect(Fixture.engine.isEligible(byID["s-carry"]!, input: input, checkIn: checkIn))
+        #expect(!Fixture.engine.isEligible(byID["a-jump"]!, input: input, checkIn: checkIn))
+        #expect(!Fixture.engine.isEligible(byID["m-walk-20"]!, input: input, checkIn: checkIn))
+    }
+
     @Test("Nothing bouncy reaches someone who flagged their pelvic floor")
     func workAroundsHardFilterImpact() {
         let input = PlanInput(

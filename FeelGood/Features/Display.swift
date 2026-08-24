@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Course {
+nonisolated extension Course {
     /// The menu metaphor is user-facing; the rest of the schema is not.
     var label: String {
         switch self {
@@ -21,7 +21,7 @@ extension Course {
     }
 }
 
-extension Activity {
+nonisolated extension Activity {
     var label: String {
         switch self {
         case .pilates: "Pilates"
@@ -45,7 +45,7 @@ extension Activity {
     }
 }
 
-extension Equipment {
+nonisolated extension Equipment {
     /// `nil` for things that aren't worth saying out loud.
     var label: String? {
         switch self {
@@ -58,12 +58,13 @@ extension Equipment {
         case .pool: "Pool"
         case .skates: "Skates"
         case .outdoor: "Outside"
+        case .gym: "Gym"
         case .reformer: "Reformer"
         }
     }
 }
 
-extension Session {
+nonisolated extension Session {
     var durationLabel: String { "\(durationMin) min" }
 
     /// "Mat · 20 min" — what you need and how long, nothing else.
@@ -80,7 +81,7 @@ extension Session {
 // house glyph, whose roofs are red-brown. Nothing medical, either: no bandages
 // and no pills next to a question about someone's body.
 
-extension Energy {
+nonisolated extension Energy {
     var checkInLabel: String {
         switch self {
         case .low: "Empty"
@@ -100,7 +101,7 @@ extension Energy {
     }
 }
 
-extension TimeBudget {
+nonisolated extension TimeBudget {
     var checkInLabel: String {
         switch self {
         case .aLittle: "A little"
@@ -146,7 +147,7 @@ extension PlaceIntent {
     }
 }
 
-extension BodyState {
+nonisolated extension BodyState {
     var checkInLabel: String {
         switch self {
         case .sore: "Sore"

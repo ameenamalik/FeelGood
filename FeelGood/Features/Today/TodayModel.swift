@@ -13,7 +13,9 @@ import WidgetKit
 @Observable
 final class TodayModel {
     let store: any ContentProviding
-    private let engine: PlanEngine
+    /// Rebuilt when somebody keeps a workout of their own. Not observed: the
+    /// menu is what the screen watches, and this only ever produces one.
+    @ObservationIgnored private var engine: PlanEngine
     private let log: any SessionLogging
     private let calendar: Calendar
 
@@ -28,6 +30,9 @@ final class TodayModel {
     /// as something still waiting. Not a score and not a count — just a mark.
     private(set) var completedToday: Set<String> = []
 
+    /// Somebody's own kept workouts, scored alongside the authored catalog.
+    private(set) var ownSessions: [Session]
+
     init(
         store: any ContentProviding,
         profile: PlanProfile,
@@ -36,22 +41,44 @@ final class TodayModel {
         now: Date,
         calendar: Calendar = .current
     ) {
+        let own = log.kept()
+        let engine = PlanEngine(catalog: store.sessions + own)
+        let today = calendar.startOfDay(for: now)
+
+        // Answers already given today are answers, not a question to ask again.
+        let todaysCheckIn = checkIn ?? log.checkIn(on: today)
+        let recorded = log.history(before: now)
+
         self.store = store
-        self.engine = PlanEngine(catalog: store.sessions)
+        self.engine = engine
         self.log = log
         self.profile = profile
-        self.checkIn = checkIn
-        self.history = log.history(before: now)
+        self.ownSessions = own
+        self.checkIn = todaysCheckIn
+        self.history = recorded
         self.calendar = calendar
-        self.menu = engine.makeMenu(
-            PlanInput(
-                profile: profile,
-                checkIn: checkIn,
-                history: log.history(before: now),
-                context: PlanContext(now: now, calendar: calendar),
-                affinity: log.affinity()
-            )
+
+        // The day as it was already generated and stored. Reopening the app is
+        // the same day, not a fresh guess at it.
+        let sessions = Dictionary(
+            (store.sessions + own).map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
         )
+        if let stored = log.day(today, resolving: { sessions[$0] }) {
+            self.menu = stored
+        } else {
+            let generated = engine.makeMenu(
+                PlanInput(
+                    profile: profile,
+                    checkIn: todaysCheckIn,
+                    history: recorded,
+                    context: PlanContext(now: now, calendar: calendar),
+                    affinity: log.affinity()
+                )
+            )
+            self.menu = generated
+            log.save(generated, generatedAt: now)
+        }
         refreshCompletedToday(now: now)
         publishSnapshot(now: now)
     }
@@ -83,6 +110,7 @@ final class TodayModel {
         history = log.history(before: now)
         swappedAway = []
         menu = engine.makeMenu(input(now: now))
+        log.save(menu, generatedAt: now)
         refreshCompletedToday(now: now)
         publishSnapshot(now: now)
     }
@@ -92,6 +120,8 @@ final class TodayModel {
         self.checkIn = checkIn
         swappedAway = []
         menu = engine.makeMenu(input(now: now))
+        log.record(checkIn, at: now, dayStart: calendar.startOfDay(for: now))
+        log.save(menu, generatedAt: now)
         publishSnapshot(now: now)
     }
 
@@ -109,6 +139,8 @@ final class TodayModel {
         log.recordSwap(of: item.session, at: now)
         history = log.history(before: now)
         menu = menu.replacing(item, with: replacement)
+        // The card you exchanged stays exchanged when you come back to it.
+        log.save(menu, generatedAt: now)
         publishSnapshot(now: now)
     }
 
@@ -119,6 +151,78 @@ final class TodayModel {
         history = log.history(before: now)
         refreshCompletedToday(now: now)
         publishSnapshot(now: now)
+    }
+
+    // MARK: Somebody's own movement
+
+    /// Everything that can be offered — the catalogue and somebody's own kept
+    /// workouts alike. What the Library browses is exactly what the engine
+    /// picks from; there is no second, smaller world.
+    var everything: [Session] {
+        (store.sessions + ownSessions).sorted { $0.title < $1.title }
+    }
+
+    /// Something done that was never on the menu. Kept workouts join the pool
+    /// the engine picks from, so they can come back on a later menu.
+    func log(_ workout: LoggedWorkout, now: Date = Date()) {
+        let session: Session = workout.isKept
+            ? log.keep(
+                title: workout.title,
+                activity: workout.activity,
+                durationMin: workout.durationMin,
+                intensity: workout.intensity,
+                now: now
+            )
+            : .own(
+                id: "own-\(UUID().uuidString)",
+                title: workout.title,
+                activity: workout.activity,
+                durationMin: workout.durationMin,
+                intensity: workout.intensity
+            )
+
+        if workout.isKept {
+            ownSessions = log.kept()
+            rebuildEngine()
+        }
+        complete(session, startedAt: now, feel: nil, now: now)
+    }
+
+    func rename(_ session: Session, to title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, ownSessions.contains(where: { $0.id == session.id }) else { return }
+        log.rename(session.id, to: trimmed)
+        ownSessions = log.kept()
+        rebuildEngine()
+    }
+
+    /// Removing a kept workout removes it from what can be offered. It does not
+    /// remove the fact that it was done.
+    func forget(_ session: Session, now: Date = Date()) {
+        log.forget(session.id)
+        ownSessions = log.kept()
+        rebuildEngine()
+        // Today's menu may have been built on it, so the day is rebuilt rather
+        // than left pointing at something that no longer exists.
+        if menu.items.contains(where: { $0.session.id == session.id }) {
+            menu = engine.makeMenu(input(now: now))
+            log.save(menu, generatedAt: now)
+            publishSnapshot(now: now)
+        }
+    }
+
+    /// The profile changed on the profile screen. The menu follows the same
+    /// day, keeping today's check-in — changing your mind is not a reset.
+    func update(profile: PlanProfile, now: Date = Date()) {
+        self.profile = profile
+        swappedAway = []
+        menu = engine.makeMenu(input(now: now))
+        log.save(menu, generatedAt: now)
+        publishSnapshot(now: now)
+    }
+
+    private func rebuildEngine() {
+        engine = PlanEngine(catalog: store.sessions + ownSessions)
     }
 
     /// The home screen's copy of today's Main.

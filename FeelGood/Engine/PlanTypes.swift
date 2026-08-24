@@ -50,6 +50,17 @@ nonisolated enum MovementMoments: String, Codable, CaseIterable, Sendable {
 
 nonisolated enum TimeOfDay: String, Codable, CaseIterable, Sendable {
     case morning, midday, evening, varies
+
+    /// Where an hour falls in the day. The engine and the Look Back both read
+    /// this, so the two can never come to different conclusions about what
+    /// counts as a morning.
+    init(hour: Int) {
+        switch hour {
+        case ..<11: self = .morning
+        case ..<16: self = .midday
+        default: self = .evening
+        }
+    }
 }
 
 /// The engine's view of the profile — the answers from onboarding (PRD §7.1).

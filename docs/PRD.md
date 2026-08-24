@@ -180,7 +180,7 @@ Session
   durationMin         (2 | 5 | 10 | 15 | 20 | 30 | 45)
   intensity           1...5
   energyFit           [low, steady, strong]
-  equipment           [none, mat, weights, band, rope, bike, pool, skates, outdoor, reformer]
+  equipment           [none, mat, weights, band, rope, bike, pool, skates, outdoor, gym, reformer]
   places              [home, outdoors, gym, studio, pool]   ← where it can happen
   bodyFocus           [full, core, lowerBody, upperBody, back, hips, neckShoulders]
   contraindications   [pregnancy, postpartum, pelvicFloor, knees, wrists, lowBack]
@@ -229,7 +229,7 @@ This does not damage the business model; it confirms the one already chosen. **W
 
 Framed around *availability and reality*, never around goals-as-metrics.
 
-1. **What do you have access to?** Multi-select activities + equipment **+ places** (home · outdoors · gym · studio · pool). (Determines the entire candidate pool. The single most important question.)
+1. **What do you have access to?** Multi-select activities + equipment **+ places** (home · outdoors · gym · studio · pool). Only movement that genuinely depends on owning something or going somewhere is offered — a pool, a bike, skates, a mat, somewhere to be outside. Movement that needs nothing but a body and a floor (**qi gong, breathwork, carries, footwork**) is deliberately *not* on this card: nobody should have to recognise the word "carries" before they have seen a single session. Those stay in the candidate pool permanently and are recommended on merit — qi gong on a stressed evening, carries when the intent is strength. **A place implies what is in it:** ticking *a gym* stands in for the mat, weights, bands and bikes inside it and for having somewhere to lift, so it is never asked twice as a separate equipment chip. A pool is deliberately not implied by a gym — plenty of gyms have none, and a session that can't happen is worse than one that was never offered. See `Activity.isAlwaysAvailable` and `Place.impliedEquipment`. (Determines the entire candidate pool. The single most important question.)
 2. **How often do you want to move?** Two rows on one card, because they are different questions and both are cheap to answer:
    - *Across the week:* Every day · Most days · A few times a week · When I can. *(Cadence target — used for gentle balancing, never for grading.)*
    - ***Within a day: how many times would you like intentional movement?*** Once, properly · A couple of times · Sprinkled through the day. *(Shapes the menu, not the workload — see below.)*
@@ -271,6 +271,35 @@ to be. But *where* carries more signal than almost anything else on a bad day:
 exactly the sentence this product exists to answer.
 
 Then the menu regenerates in place with a warm one-liner. If she skips the check-in, we infer from history + time of day and show a menu anyway — **the app never blocks on input.**
+
+### 7.2a What actually happened — the loop that makes it personal
+
+The engine's history signals (variety, recovery balance, quality gaps, coming
+back after a gap) are only worth having if something feeds them. Three things do:
+
+- **Finishing or leaving a session.** Both are recorded; leaving early is a
+  `skipped` outcome and is held against nothing. The optional "how did that
+  feel?" tap moves a **long-memory affinity score** that outlives the
+  fourteen-day history window, so "loved it" keeps counting quietly. Its deltas
+  are deliberately smaller than the in-window ones — for the first fortnight
+  both signals count the same event.
+- **Turning something down.** A swap nudges affinity down a little, so the same
+  card stops arriving. It is not a verdict.
+- **Movement that happened without us.** "I did something else" logs a workout
+  in three taps — what, how long, how hard — and everything the engine needs
+  beyond that is inferred (`Session.own`): what it develops, what it needs, what
+  energy it fits, which course it belongs to, and the same impact safety gate
+  the authored catalog holds to. Optionally it is **kept**, which puts it in the
+  candidate pool permanently, scored exactly like an authored session. The
+  engine has no notion of "yours" versus "ours".
+
+**Today's menu never rearranges itself underneath the person looking at it.**
+Recording something changes the next menu, not the one on screen. Anything else
+would mean the thing you just did vanishing as a reward for doing it.
+
+**The profile is editable, always.** The same six questions, reachable from the
+menu. Answers are stored as given and their implications derived on read, so
+unticking the gym takes the weights with it.
 
 ### 7.3 The planning engine — deterministic rules, LLM voice
 
@@ -376,10 +405,11 @@ The free tier is genuinely useful and never crippled — this matches the brand 
 |---|---|---|
 | **Simone's full video library, browsable and playable** | ✅ *(always free — YouTube policy, §6)* | ✅ |
 | Authored micro-sessions | ✅ | ✅ |
-| A daily menu | ✅ *(profile-based, static through the day)* | ✅ |
+| A daily menu | ✅ *(today's answers, no memory of any other day)* | ✅ |
 | Guided player, logging | ✅ | ✅ |
-| **Daily check-in → menu adapts to today** | — | ✅ |
+| **Daily check-in → menu adapts to today** | ✅ *(free forever — see below)* | ✅ |
 | **History-aware balancing & recovery awareness** | — | ✅ |
+| **Affinity — "loved it" / "too much" carrying forward** | — | ✅ |
 | Unlimited swaps | 1/day | ✅ |
 | **Warm, written-for-you coaching voice** | — | ✅ |
 | Look Back reflections | ✅ *(free — see below)* | ✅ |
@@ -387,13 +417,41 @@ The free tier is genuinely useful and never crippled — this matches the brand 
 | Specials — plan ahead for the week | — | ✅ |
 | Home screen widget *(if time allows)* | — | ✅ |
 
-**The Look Back is free.** It was Pro in an earlier draft and that was the wrong
-call. It is the churn mechanic, not an engagement one — its whole job is to make
-returning after a lapse feel like resuming rather than starting over. Gating it
-puts the antidote behind a wall for exactly the people most likely to lapse, and
-it is now a whole tab, so a gated tab is a visible wall on a free tier we have
-promised is "genuinely useful and never crippled". What Pro sells is the app
-adapting to *today*; what the Look Back does is make yesterday survivable.
+**The line, in one sentence: free adapts to *today*; Pro remembers *you* and
+gets better at it.** Confirmed 2026-08-24.
+*(Revised 2026-08-24. The original draft put the daily check-in behind the
+paywall from day 2. That contradicted §7.2 — the check-in is "the ritual the
+whole product hangs on," and a free tier without it is a static list
+indistinguishable from every app in §1 that this one is a reaction against. The
+check-in is the hook and stays free forever.)*
+
+What Pro buys is **memory, and what memory compounds into**: the fourteen days
+of history the engine balances across, recovery awareness, affinity that carries
+"loved it" forward, unlimited swaps, Specials, and the written voice. A free
+user gets a menu that fits this morning. A Pro user gets one that knows they
+lifted on Tuesday, loved the stretching, and haven't done anything for their
+bones in two weeks.
+
+The distinction is worth stating precisely, because it is also the honest sales
+line: **a free menu is as good on day 90 as it was on day 1. A paid one is
+not — it is better.** Free is not a worse version of the same thing; it is the
+same thing without a past. Every signal Pro adds needs history to mean anything,
+which is why gating them costs the free tier nothing it could have had on day 1
+and gives the paid tier something that cannot be demoed, only lived. It also
+sets the honest expectation for a subscription: what is being paid for is not
+access to content, it is an app that is still learning.
+
+**The Look Back is free**, despite being made of memory. It was Pro in an
+earlier draft and that was the wrong call. It is the churn mechanic, not an
+engagement one — its whole job is to make returning after a lapse feel like
+resuming rather than starting over. Gating it puts the antidote behind a wall
+for exactly the people most likely to lapse, and it is now a whole tab, so a
+gated tab is a visible wall on a free tier we have promised is "genuinely useful
+and never crippled."
+
+Mechanically this is a clean seam and costs the engine nothing: free menus are
+generated with `history: []` and `affinity: [:]`. `PlanEngine` stays a pure
+function either way — there is no `isPro` branch anywhere inside it.
 
 **Pricing:** $6.99/mo · **$34.99/yr** (7-day free trial) · $69.99 lifetime.
 
@@ -402,7 +460,7 @@ $34.99 is the deliberate middle: it reads as "under $35" and prices the annual a
 
 **Paywall moments** (value first, always):
 1. After her **first completed session** — the earliest point she has felt something work.
-2. On any Pro-gated action (second swap, opening the check-in on day 2).
+2. On any Pro-gated action (second swap of the day, scheduling a Special).
 3. A quiet, permanent entry in Settings.
 
 **Never** on launch, never in onboarding, never as a full-screen interrupt before she's done anything. No fake countdowns, no manipulative pre-selected plans.
@@ -581,6 +639,7 @@ Called out in the submission because vision is rewarded and costs zero build tim
 | 7 | Movement glossary | **Yes — text only.** `free-exercise-db` (Unlicense) supplies instructions for the ~80–120 moves our micro-sessions name. Photos rejected on brand grounds. Reachable only from a step inside a session, never as a browsable library. See §6. |
 | 4 | Content | **Both sources.** Simone's public YouTube library supplies the Mains via the official embedded player, always free per YouTube policy; we author the 2–10 min micro-sessions that don't exist as videos and carry the offline path. Attribution and link-back on every video; no claim of partnership until she says so. See §6. |
 | 5 | Pricing | **$34.99/yr, $6.99/mo, $69.99 lifetime**, with remote price testing via RevenueCat Offerings. See §10. |
+| 10 *(2026-08-24)* | Where the paywall sits | **Free adapts to today; Pro remembers you and gets smarter over time.** The daily check-in and the Look Back are free forever; Pro buys history balancing, recovery awareness, affinity, unlimited swaps and Specials — everything that needs a past to work. Supersedes the original §10 table. Confirmed by the founder the same day. |
 | 6 | Proxy hosting | **Cloudflare Worker**, dev/prod key separation, server-side entitlement check. Fully specced in §11. |
 
 ### Still open
