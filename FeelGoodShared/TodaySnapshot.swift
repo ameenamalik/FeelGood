@@ -17,6 +17,9 @@ import Foundation
 nonisolated struct TodaySnapshot: Codable, Hashable, Sendable {
     /// Start of the local day this describes, so a stale snapshot is obvious.
     var day: Date
+    /// Which session this is, so tapping the widget opens *this* one rather
+    /// than dropping the reader on the menu to find it again.
+    var sessionID: String
     var courseLabel: String
     var accentHex: UInt32
     var title: String
@@ -52,5 +55,29 @@ nonisolated enum SharedContainer {
     static func readSnapshot() -> TodaySnapshot? {
         guard let fileURL, let data = try? Data(contentsOf: fileURL) else { return nil }
         return try? JSONDecoder().decode(TodaySnapshot.self, from: data)
+    }
+}
+
+/// The one URL shape the widget and the app both have to agree on.
+///
+/// Lives here rather than in either target, because a scheme that only one
+/// side knows about is a link that silently does nothing.
+nonisolated enum DeepLink {
+    static let scheme = "feelgood"
+
+    /// `feelgood://session/main-pilates-core-20`
+    static func session(_ id: String) -> URL? {
+        var components = URLComponents()
+        components.scheme = scheme
+        components.host = "session"
+        components.path = "/" + id
+        return components.url
+    }
+
+    /// The session id in a link, or `nil` if this isn't one of ours.
+    static func sessionID(from url: URL) -> String? {
+        guard url.scheme == scheme, url.host == "session" else { return nil }
+        let id = url.path.trimmingPrefix("/")
+        return id.isEmpty ? nil : String(id)
     }
 }

@@ -132,6 +132,7 @@ final class TodayModel {
 
         SharedContainer.writeSnapshot(TodaySnapshot(
             day: calendar.startOfDay(for: now),
+            sessionID: main.session.id,
             courseLabel: main.course.label,
             accentHex: main.course.accentHex,
             title: main.session.title,

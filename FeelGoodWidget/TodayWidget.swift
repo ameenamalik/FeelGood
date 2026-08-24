@@ -99,7 +99,8 @@ struct TodayWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .widgetURL(URL(string: "feelgood://today"))
+        // Opens the session it is showing, not just the app.
+        .widgetURL(snapshot.flatMap { DeepLink.session($0.sessionID) })
     }
 
     private func courseTag(_ snapshot: TodaySnapshot) -> some View {
@@ -152,6 +153,7 @@ nonisolated extension Color {
 extension TodaySnapshot {
     static let preview = TodaySnapshot(
         day: .now,
+        sessionID: "main-pilates-gentle-10",
         courseLabel: "Main",
         accentHex: 0xC7EA4E,
         title: "Ten gentle minutes on the mat",
