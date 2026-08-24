@@ -417,18 +417,29 @@ The free tier is genuinely useful and never crippled — this matches the brand 
 | Specials — plan ahead for the week | — | ✅ |
 | Home screen widget *(if time allows)* | — | ✅ |
 
-**The line, in one sentence: free adapts to *today*; Pro remembers *you*.**
+**The line, in one sentence: free adapts to *today*; Pro remembers *you* and
+gets better at it.** Confirmed 2026-08-24.
 *(Revised 2026-08-24. The original draft put the daily check-in behind the
 paywall from day 2. That contradicted §7.2 — the check-in is "the ritual the
 whole product hangs on," and a free tier without it is a static list
 indistinguishable from every app in §1 that this one is a reaction against. The
 check-in is the hook and stays free forever.)*
 
-What Pro buys is **memory**: the fourteen days of history the engine balances
-across, recovery awareness, affinity that carries "loved it" forward, unlimited
-swaps, Specials, and the written voice. A free user gets a menu that fits this
-morning. A Pro user gets one that knows they lifted on Tuesday, loved the
-stretching, and haven't done anything for their bones in two weeks.
+What Pro buys is **memory, and what memory compounds into**: the fourteen days
+of history the engine balances across, recovery awareness, affinity that carries
+"loved it" forward, unlimited swaps, Specials, and the written voice. A free
+user gets a menu that fits this morning. A Pro user gets one that knows they
+lifted on Tuesday, loved the stretching, and haven't done anything for their
+bones in two weeks.
+
+The distinction is worth stating precisely, because it is also the honest sales
+line: **a free menu is as good on day 90 as it was on day 1. A paid one is
+not — it is better.** Free is not a worse version of the same thing; it is the
+same thing without a past. Every signal Pro adds needs history to mean anything,
+which is why gating them costs the free tier nothing it could have had on day 1
+and gives the paid tier something that cannot be demoed, only lived. It also
+sets the honest expectation for a subscription: what is being paid for is not
+access to content, it is an app that is still learning.
 
 **The Look Back is free**, despite being made of memory. It was Pro in an
 earlier draft and that was the wrong call. It is the churn mechanic, not an
@@ -628,7 +639,7 @@ Called out in the submission because vision is rewarded and costs zero build tim
 | 7 | Movement glossary | **Yes — text only.** `free-exercise-db` (Unlicense) supplies instructions for the ~80–120 moves our micro-sessions name. Photos rejected on brand grounds. Reachable only from a step inside a session, never as a browsable library. See §6. |
 | 4 | Content | **Both sources.** Simone's public YouTube library supplies the Mains via the official embedded player, always free per YouTube policy; we author the 2–10 min micro-sessions that don't exist as videos and carry the offline path. Attribution and link-back on every video; no claim of partnership until she says so. See §6. |
 | 5 | Pricing | **$34.99/yr, $6.99/mo, $69.99 lifetime**, with remote price testing via RevenueCat Offerings. See §10. |
-| 10 *(2026-08-24)* | Where the paywall sits | **Free adapts to today; Pro remembers you.** The daily check-in is free forever; Pro buys history balancing, recovery awareness, affinity, Look Back, unlimited swaps and Specials. Supersedes the original §10 table. |
+| 10 *(2026-08-24)* | Where the paywall sits | **Free adapts to today; Pro remembers you and gets smarter over time.** The daily check-in and the Look Back are free forever; Pro buys history balancing, recovery awareness, affinity, unlimited swaps and Specials — everything that needs a past to work. Supersedes the original §10 table. Confirmed by the founder the same day. |
 | 6 | Proxy hosting | **Cloudflare Worker**, dev/prod key separation, server-side entitlement check. Fully specced in §11. |
 
 ### Still open
