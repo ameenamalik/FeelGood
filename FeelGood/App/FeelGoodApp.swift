@@ -117,19 +117,34 @@ private struct TodayScreen: View {
         ))
     }
 
+    /// Which tab is showing, so a deep link can bring Today forward even if
+    /// the app was last left on the reflection.
+    @State private var tab = Destination.today
+    /// A session the widget asked for. Cleared once Today has opened it.
+    @State private var requestedSessionID: String?
+
+    /// Named `Destination` rather than `Tab`: a nested type called `Tab`
+    /// shadows SwiftUI's `Tab` view and the TabView stops compiling.
+    private enum Destination: Hashable { case today, you }
+
     var body: some View {
         // Two tabs, and only two. The PRD's "no tab, no browse" (§6) is aimed
         // at the glossary — 873 browsable exercises is the overwhelm the app
         // exists to remove — not at the app's own shell. Today stays the
         // default and stays uncluttered; this is just how the peers to it
         // become reachable. Library and Settings land here too.
-        TabView {
-            Tab("Today", systemImage: "sun.max") {
-                TodayView(model: model)
+        TabView(selection: $tab) {
+            Tab("Today", systemImage: "sun.max", value: Destination.today) {
+                TodayView(model: model, requestedSessionID: $requestedSessionID)
             }
-            Tab("You", systemImage: "person") {
+            Tab("You", systemImage: "person", value: Destination.you) {
                 LookBackView(reflection: model.lookBack(now: .now))
             }
+        }
+        .onOpenURL { url in
+            guard let id = DeepLink.sessionID(from: url) else { return }
+            tab = .today
+            requestedSessionID = id
         }
     }
 }

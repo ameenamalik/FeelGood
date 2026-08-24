@@ -10,6 +10,9 @@ import SwiftUI
 
 struct TodayView: View {
     @State var model: TodayModel
+    /// Set by a widget tap. Consumed here and cleared, so the same link does
+    /// not reopen the sheet every time this view is rebuilt.
+    var requestedSessionID: Binding<String?> = .constant(nil)
     @State private var isCheckingIn = false
     @State private var selected: MenuItem?
     #if DEBUG
@@ -45,6 +48,9 @@ struct TodayView: View {
         }
         .sheet(item: $selected) { item in
             SessionDetailView(item: item, model: model)
+        }
+        .onChange(of: requestedSessionID.wrappedValue, initial: true) { _, id in
+            openRequestedSession(id)
         }
         #if DEBUG
         .sheet(isPresented: $isDebugging) {
@@ -100,6 +106,19 @@ struct TodayView: View {
                 .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: item.id)
             }
         }
+    }
+
+    /// Opens the session a widget tap asked for.
+    ///
+    /// Silently does nothing when the id is not on today's menu — the menu may
+    /// have regenerated since the widget last drew, and dropping someone on
+    /// today's menu is a better answer than an error about a session that is
+    /// no longer being suggested.
+    private func openRequestedSession(_ id: String?) {
+        guard let id else { return }
+        defer { requestedSessionID.wrappedValue = nil }
+        guard let item = model.menu.items.first(where: { $0.session.id == id }) else { return }
+        selected = item
     }
 
     private var checkInFooter: some View {
