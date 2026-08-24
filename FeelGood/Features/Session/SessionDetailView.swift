@@ -2,7 +2,13 @@
 //  SessionDetailView.swift
 //  FeelGood
 //
-//  What it is, why it was picked, what you need. One action.
+//  What it is, what you need, one action. The title carries the screen; the
+//  detail waits behind a disclosure for whoever actually wants it.
+//
+//  The "why" is deliberately absent here. It is not missing from the product —
+//  the menu card on Today already carries `reasonText`, so principle 4 is
+//  answered at the point the recommendation is made. Repeating it in a
+//  bordered box one tap later was saying the same sentence twice.
 //
 
 import SwiftUI
@@ -15,6 +21,7 @@ struct SessionDetailView: View {
     @State private var isPlaying = false
     @State private var startedAt = Date()
     @State private var explaining: ExerciseTerm?
+    @State private var isShowingSteps = false
 
     private var session: Session { item.session }
 
@@ -24,42 +31,16 @@ struct SessionDetailView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
-                    VStack(alignment: .leading, spacing: FGSpace.s) {
-                        CourseTag(course: item.course)
-                        Text(session.title)
-                            .font(FGFont.title)
-                            .foregroundStyle(FGColor.ink)
-                        if !session.subtitle.isEmpty {
-                            Text(session.subtitle)
-                                .font(FGFont.body)
-                                .foregroundStyle(FGColor.inkMuted)
-                        }
-                    }
+                    heading
 
-                    FGCard {
-                        VStack(alignment: .leading, spacing: FGSpace.xs) {
-                            Text("Why this")
-                                .font(FGFont.label)
-                                .foregroundStyle(FGColor.skyDeep)
-                                .textCase(.uppercase)
-                                .tracking(1.1)
-                            Text(item.reasonText)
-                                .font(FGFont.body)
-                                .foregroundStyle(FGColor.ink)
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: FGSpace.s) {
-                        Text("What you need")
-                            .font(FGFont.body.weight(.medium))
-                            .foregroundStyle(FGColor.ink)
-                        HStack(spacing: FGSpace.s) {
-                            ForEach(session.chips, id: \.self) { FGChip(text: $0) }
-                        }
+                    // The chips say what they are — "Mat", "20 min" — so the
+                    // "What you need" label above them was a word about words.
+                    HStack(spacing: FGSpace.s) {
+                        ForEach(session.chips, id: \.self) { FGChip(text: $0) }
                     }
 
                     if !session.source.steps.isEmpty {
-                        steps
+                        lineup
                     }
 
                     FGPrimaryButton(title: "Start") {
@@ -87,12 +68,66 @@ struct SessionDetailView: View {
         .presentationDragIndicator(.visible)
     }
 
+    /// The title is the screen. Display weight, and everything under it quiet.
+    private var heading: some View {
+        VStack(alignment: .leading, spacing: FGSpace.s) {
+            CourseTag(course: item.course)
+            Text(session.title)
+                .font(FGFont.display)
+                .foregroundStyle(FGColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            if !session.subtitle.isEmpty {
+                Text(session.subtitle)
+                    .font(FGFont.body)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    /// Closed by default. Someone deciding whether to start needs the title and
+    /// the length; the breakdown is for whoever wants to know before they say
+    /// yes, and it should cost them one tap rather than everyone else a screen.
+    private var lineup: some View {
+        VStack(alignment: .leading, spacing: FGSpace.s) {
+            Button {
+                isShowingSteps.toggle()
+            } label: {
+                HStack(spacing: FGSpace.s) {
+                    Text("What you'll do")
+                        .font(FGFont.body.weight(.medium))
+                        .foregroundStyle(FGColor.ink)
+                    Spacer(minLength: FGSpace.s)
+                    Text(partsLabel)
+                        .font(FGFont.label)
+                        .foregroundStyle(FGColor.inkMuted)
+                    Image(systemName: "chevron.down")
+                        .font(FGFont.label)
+                        .foregroundStyle(FGColor.inkMuted)
+                        .rotationEffect(.degrees(isShowingSteps ? 0 : -90))
+                }
+                .frame(minHeight: FGSize.minTouchTarget)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("What you'll do, \(partsLabel)")
+            .accessibilityValue(isShowingSteps ? "Expanded" : "Collapsed")
+            .accessibilityHint(isShowingSteps ? "Hides the steps" : "Shows the steps")
+
+            if isShowingSteps { steps }
+        }
+        .fgAnimation(FGMotion.gentle, value: isShowingSteps)
+    }
+
+    private var partsLabel: String {
+        let count = session.source.steps.count
+        return count == 1 ? "1 part" : "\(count) parts"
+    }
+
     private var steps: some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
-            Text("How it goes")
-                .font(FGFont.body.weight(.medium))
-                .foregroundStyle(FGColor.ink)
-
             ForEach(Array(session.source.steps.enumerated()), id: \.offset) { _, step in
                 HStack(alignment: .firstTextBaseline, spacing: FGSpace.s) {
                     Text(step.name)
