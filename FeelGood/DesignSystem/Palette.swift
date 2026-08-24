@@ -168,6 +168,18 @@ nonisolated extension Course {
         }
     }
 
+    /// The same accent as a raw value, for the widget snapshot. Kept beside
+    /// `accent` so the two cannot drift apart unnoticed.
+    var accentHex: UInt32 {
+        switch self {
+        case .main: 0xC7EA4E
+        case .appetizer: 0x5FBEE8
+        case .side: 0xB9C9F2
+        case .dessert: 0xF0A9D0
+        case .special: 0x14171A
+        }
+    }
+
     /// Ink on every accent; the page colour on the ink-filled one. `.special`
     /// is the exception that keeps `bg`, because its fill flips with the
     /// appearance and so must its text.

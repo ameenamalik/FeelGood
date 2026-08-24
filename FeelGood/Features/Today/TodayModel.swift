@@ -8,6 +8,7 @@
 
 import Foundation
 import Observation
+import WidgetKit
 
 @Observable
 final class TodayModel {
@@ -52,6 +53,7 @@ final class TodayModel {
             )
         )
         refreshCompletedToday(now: now)
+        publishSnapshot(now: now)
     }
 
     /// PRD §7.4. The engine reads the same history to plan; this reads it to
@@ -82,6 +84,7 @@ final class TodayModel {
         swappedAway = []
         menu = engine.makeMenu(input(now: now))
         refreshCompletedToday(now: now)
+        publishSnapshot(now: now)
     }
 
     /// The check-in regenerates the menu in place.
@@ -89,6 +92,7 @@ final class TodayModel {
         self.checkIn = checkIn
         swappedAway = []
         menu = engine.makeMenu(input(now: now))
+        publishSnapshot(now: now)
     }
 
     /// "Not today". A swap is engagement, not rejection — it is a choice being made,
@@ -105,6 +109,7 @@ final class TodayModel {
         log.recordSwap(of: item.session, at: now)
         history = log.history(before: now)
         menu = menu.replacing(item, with: replacement)
+        publishSnapshot(now: now)
     }
 
     /// Finished. The menu deliberately does not regenerate — the day stays as
@@ -113,6 +118,28 @@ final class TodayModel {
         log.recordCompletion(of: session, startedAt: startedAt, endedAt: now, feel: feel)
         history = log.history(before: now)
         refreshCompletedToday(now: now)
+        publishSnapshot(now: now)
+    }
+
+    /// The home screen's copy of today's Main.
+    ///
+    /// Flattened on the way out — the widget gets strings and a colour, never
+    /// the model — and re-published on every change, because a widget offering
+    /// a session you already finished is worse than one offering nothing.
+    private func publishSnapshot(now: Date) {
+        guard let main = menu.items.first(where: { $0.course == .main }) ?? menu.items.first
+        else { return }
+
+        SharedContainer.writeSnapshot(TodaySnapshot(
+            day: calendar.startOfDay(for: now),
+            courseLabel: main.course.label,
+            accentHex: main.course.accentHex,
+            title: main.session.title,
+            reason: main.reasonText,
+            durationLabel: main.session.durationLabel,
+            isDone: completedToday.contains(main.session.id)
+        ))
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func isCompleted(_ item: MenuItem) -> Bool {

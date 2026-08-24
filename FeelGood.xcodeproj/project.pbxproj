@@ -21,12 +21,24 @@
 			remoteGlobalIDString = 43A871C33033C6D300DD35A1;
 			remoteInfo = FeelGood;
 		};
+		FEE1DA00000000000000000D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 43A871BC3033C6D300DD35A1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FEE1DA000000000000000001;
+			remoteInfo = FeelGoodWidget;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXBuildFile section */
+		FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FEE1DA000000000000000002 /* FeelGoodWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		43A871C43033C6D300DD35A1 /* FeelGood.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FeelGood.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		43A871D53033C6D600DD35A1 /* FeelGoodTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FeelGoodTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		43A871DF3033C6D600DD35A1 /* FeelGoodUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FeelGoodUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FEE1DA000000000000000002 /* FeelGoodWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FeelGoodWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -36,6 +48,13 @@
 				Info.plist,
 			);
 			target = 43A871C33033C6D300DD35A1 /* FeelGood */;
+		};
+		FEE1DA00000000000000000E /* Exceptions for "FeelGoodWidget" folder in "FeelGoodWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FEE1DA000000000000000001 /* FeelGoodWidget */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -56,6 +75,19 @@
 		43A871E23033C6D600DD35A1 /* FeelGoodUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FeelGoodUITests;
+			sourceTree = "<group>";
+		};
+		FEE1DA000000000000000003 /* FeelGoodWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FEE1DA00000000000000000E /* Exceptions for "FeelGoodWidget" folder in "FeelGoodWidget" target */,
+			);
+			path = FeelGoodWidget;
+			sourceTree = "<group>";
+		};
+		FEE1DA00000000000000000F /* FeelGoodShared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FeelGoodShared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -82,7 +114,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FEE1DA000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FEE1DA00000000000000000A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXGroup section */
 		43A871BB3033C6D300DD35A1 = {
@@ -91,6 +144,8 @@
 				43A871C63033C6D300DD35A1 /* FeelGood */,
 				43A871D83033C6D600DD35A1 /* FeelGoodTests */,
 				43A871E23033C6D600DD35A1 /* FeelGoodUITests */,
+				FEE1DA00000000000000000F /* FeelGoodShared */,
+				FEE1DA000000000000000003 /* FeelGoodWidget */,
 				43A871C53033C6D300DD35A1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -101,6 +156,7 @@
 				43A871C43033C6D300DD35A1 /* FeelGood.app */,
 				43A871D53033C6D600DD35A1 /* FeelGoodTests.xctest */,
 				43A871DF3033C6D600DD35A1 /* FeelGoodUITests.xctest */,
+				FEE1DA000000000000000002 /* FeelGoodWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -115,13 +171,16 @@
 				43A871C03033C6D300DD35A1 /* Sources */,
 				43A871C13033C6D300DD35A1 /* Frameworks */,
 				43A871C23033C6D300DD35A1 /* Resources */,
+				FEE1DA00000000000000000A /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				FEE1DA00000000000000000C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				43A871C63033C6D300DD35A1 /* FeelGood */,
+				FEE1DA00000000000000000F /* FeelGoodShared */,
 			);
 			name = FeelGood;
 			packageProductDependencies = (
@@ -176,6 +235,29 @@
 			productReference = 43A871DF3033C6D600DD35A1 /* FeelGoodUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		FEE1DA000000000000000001 /* FeelGoodWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FEE1DA000000000000000007 /* Build configuration list for PBXNativeTarget "FeelGoodWidget" */;
+			buildPhases = (
+				FEE1DA000000000000000004 /* Sources */,
+				FEE1DA000000000000000005 /* Frameworks */,
+				FEE1DA000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				FEE1DA000000000000000003 /* FeelGoodWidget */,
+				FEE1DA00000000000000000F /* FeelGoodShared */,
+			);
+			name = FeelGoodWidget;
+			packageProductDependencies = (
+			);
+			productName = FeelGoodWidget;
+			productReference = FEE1DA000000000000000002 /* FeelGoodWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -197,6 +279,9 @@
 						CreatedOnToolsVersion = 26.6;
 						TestTargetID = 43A871C33033C6D300DD35A1;
 					};
+					FEE1DA000000000000000001 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 				};
 			};
 			buildConfigurationList = 43A871BF3033C6D300DD35A1 /* Build configuration list for PBXProject "FeelGood" */;
@@ -216,11 +301,19 @@
 				43A871C33033C6D300DD35A1 /* FeelGood */,
 				43A871D43033C6D600DD35A1 /* FeelGoodTests */,
 				43A871DE3033C6D600DD35A1 /* FeelGoodUITests */,
+				FEE1DA000000000000000001 /* FeelGoodWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		FEE1DA000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		43A871C23033C6D300DD35A1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -245,6 +338,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		FEE1DA000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		43A871C03033C6D300DD35A1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -269,6 +369,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		FEE1DA00000000000000000C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FEE1DA000000000000000001 /* FeelGoodWidget */;
+			targetProxy = FEE1DA00000000000000000D /* PBXContainerItemProxy */;
+		};
 		43A871D73033C6D600DD35A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 43A871C33033C6D300DD35A1 /* FeelGood */;
@@ -555,6 +660,68 @@
 			};
 			name = Release;
 		};
+		FEE1DA000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = FeelGoodWidget/FeelGoodWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 322ZGVD4Z7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FeelGoodWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FeelGood;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ameenamalik.FeelGood.FeelGoodWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FEE1DA000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = FeelGoodWidget/FeelGoodWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 322ZGVD4Z7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FeelGoodWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FeelGood;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ameenamalik.FeelGood.FeelGoodWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -590,6 +757,15 @@
 			buildConfigurations = (
 				43A871F13033C6D600DD35A1 /* Debug */,
 				43A871F23033C6D600DD35A1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FEE1DA000000000000000007 /* Build configuration list for PBXNativeTarget "FeelGoodWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FEE1DA000000000000000008 /* Debug */,
+				FEE1DA000000000000000009 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
