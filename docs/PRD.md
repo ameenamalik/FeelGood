@@ -550,14 +550,27 @@ export default {
 
 **Cost.** Per call: ~600 input tokens, ~100 output. On `claude-opus-5` ($5/M in, $25/M out) that's roughly **half a cent a call**; budget a full cent to be safe since adaptive thinking bills as output. A Pro user generating ~1.5 menus a day costs **~$0.20–0.45/month** against ~$2.92/month of revenue — under 15% of revenue in the worst case, and only ever incurred for paying users. Caching the stable system prefix and the `(picks + state)` response cache both push it lower. If it ever needs to be cheaper, `claude-haiku-4-5` ($1/M in, $5/M out) is a one-line change — but Opus 5 writing genuinely warm copy is a large part of what the paid tier *is*, so we start there.
 
-**What the app sends:** picks (session IDs), reason codes, and coarse state (`energy: low`, `time: little`, `daysSinceLast: 6`). No name, no free text, no device ID, no location, no health record. Nothing that identifies a person.
+**What the app sends — the complete list, not an example.** The payload is an allow-list built as a `CopyPayload` struct, so anything not named here is structurally absent rather than filtered out at the call site:
+
+| Sent | Never sent |
+|---|---|
+| `picks` — session ids | `PlanCheckIn.body` (`sore` / `stiff` / `stressed` / **`cramping`**) |
+| `reasonCodes` — the seven `ReasonCode` cases | `PlanProfile.workArounds` (**`pregnancy`**, **`postpartum`**, **`pelvicFloor`**, `knees`, `wrists`, `lowBack`, `fatigue`) |
+| coarse state — `energy`, `time`, `daysSinceLast` | name, free text, location, device id, HealthKit data, session history |
+| `anonInstallID` | anything tying the install to a name or account |
+
+**Why the right-hand column is drawn where it is.** `cramping`, `pregnancy`, `postpartum`, and `pelvicFloor` are reproductive health data — the most scrutinised category there is, under both App Store review and GDPR Article 9. They are load-bearing for the engine and worthless to the copy layer, which is writing one warm sentence. There is no version of that sentence worth sending them for. A test asserts the encoded JSON keys exactly, so this stays true through a refactor.
+
+Work-arounds are applied as a *filter* — `isDisjoint(with: input.profile.workArounds)` — and never surface as a `ReasonCode`. That is deliberate and worth preserving: it means the reason channel is clean by construction rather than by redaction. (The set of picked session ids is a weak statistical proxy for what was filtered out. Noted, accepted, not worth a mitigation.)
+
+**On `anonInstallID`:** it is a random per-install identifier, required so the Worker can check entitlement and rate-limit. Because it is verified against RevenueCat it is *pseudonymous, not anonymous* — it is never linked to a name, email, or account, and the honest phrasing is that rather than "nothing that identifies a person".
 
 **Failure is invisible.** The proxy is on a 2-second timeout. Miss it — offline, cold start, rate limit, 500, anything — and the template copy that's already on screen simply stays there. The user never sees a spinner, an error, or a retry. **The product works completely with the proxy switched off**, which is exactly why it's the last item on the cut list.
 
 **Testing — unhappy paths are mandatory**
 First launch with no data · profile with zero equipment · 5 minutes and empty energy · every candidate filtered out (fallback: always at least one Appetizer exists that needs nothing) · offline · Claude timeout/malformed response · RevenueCat unreachable · purchase interrupted · returning after 30 days · clock changes and timezone shifts. **All timestamps stored UTC, rendered local.**
 
-**Privacy:** all personal data on-device. No account, no analytics SDK that collects health data. `PrivacyInfo.xcprivacy` completed with required-reason API declarations. App Store health-app rules: **no medical claims, no diagnosis, no treatment language** anywhere in copy or metadata.
+**Privacy:** all personal data on-device. No account, no analytics SDK that collects health data. The app has no outbound network path at all until the copy layer lands in W4, and works completely with it switched off after that — the claim to make is the specific one ("the engine that decides runs on your phone; the only thing that ever leaves is a line of framing copy, for paying users"), never the vague one ("private-first"), because the specific one survives the follow-up question. `PrivacyInfo.xcprivacy` completed with required-reason API declarations. App Store health-app rules: **no medical claims, no diagnosis, no treatment language** anywhere in copy or metadata.
 
 ---
 
