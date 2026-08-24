@@ -663,8 +663,6 @@
 		FEE1DA000000000000000008 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = FeelGoodWidget/FeelGoodWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -694,8 +692,6 @@
 		FEE1DA000000000000000009 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = FeelGoodWidget/FeelGoodWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
