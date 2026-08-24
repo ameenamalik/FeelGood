@@ -47,7 +47,9 @@ final class OnboardingModel {
 
     var activities: Set<Activity> = []
     var equipment: Set<Equipment> = [.none]
+    var places: Set<Place> = [.home]
     var cadence: Cadence = .mostDays
+    var moments: MovementMoments = .aCouple
     var realisticMinutes: Int = 20
     var timeOfDay: TimeOfDay = .varies
     var intent: Intent = .energize
@@ -96,7 +98,9 @@ final class OnboardingModel {
         PlanProfile(
             availableActivities: activities,
             equipment: equipment.union(impliedEquipment),
+            places: places,
             cadence: cadence,
+            moments: moments,
             realisticMinutes: realisticMinutes,
             bestTimeOfDay: timeOfDay,
             intent: intent,
@@ -108,7 +112,9 @@ final class OnboardingModel {
         UserProfile(
             activities: activities,
             equipment: equipment.union(impliedEquipment),
+            places: places.union([.home]),
             cadence: cadence,
+            moments: moments,
             realisticMinutes: realisticMinutes,
             bestTimeOfDay: timeOfDay,
             intent: intent,
@@ -138,6 +144,28 @@ extension TimeOfDay {
         case .midday: "Midday"
         case .evening: "Evening"
         case .varies: "It varies"
+        }
+    }
+}
+
+extension Place {
+    var label: String {
+        switch self {
+        case .home: "At home"
+        case .outdoors: "Outdoors"
+        case .gym: "A gym"
+        case .studio: "A studio or class"
+        case .pool: "A pool"
+        }
+    }
+}
+
+extension MovementMoments {
+    var label: String {
+        switch self {
+        case .once: "Once, properly"
+        case .aCouple: "A couple of times"
+        case .sprinkled: "Sprinkled through the day"
         }
     }
 }

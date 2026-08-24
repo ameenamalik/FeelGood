@@ -118,6 +118,30 @@ That is the anti-overwhelm version of the longevity conversation — not a lectu
 
 **The sport-shaped ones** — pickleball, climbing, jiu-jitsu — are **Specials**, not Mains. You don't get handed rock climbing at 7:14am; you plan it. The Specials course already exists for exactly this, so they slot in with no new machinery.
 
+### Place — the dimension that decides whether a menu is usable at all
+
+Equipment answers *what you have*. **Place answers where you are, and where you
+are willing to go** — which on a real Tuesday is the difference between a menu
+that gets used and one that gets closed.
+
+| Place | What it means |
+|---|---|
+| `home` | The mat, the floor, the kitchen counter. Needs nothing but the room you're in. |
+| `outdoors` | You're willing to put shoes on and leave: walking, biking, sunlight, a park. |
+| `gym` | Equipment you don't own — racks, machines, a lap pool in a leisure centre. |
+| `studio` | Somebody else's class, at somebody else's time. Reformer, mat classes, martial arts. |
+| `pool` | Its own place because access is binary and rarely spontaneous. |
+
+Most sessions are tagged with more than one — a walk is `outdoors`, a bodyweight
+strength session is `home` *and* `gym`. **Every appetizer is `home`**, without
+exception, because the two-minute option must survive the worst possible day.
+
+Place is both a profile answer ("what's realistically available to me") and a
+daily one ("today, I am not leaving the house"). The engine treats it as a hard
+filter in exactly the same way it treats time and equipment: a gym session
+offered to somebody who has already decided not to leave is not a suggestion,
+it's noise.
+
 ### Two content sources
 
 1. **Simone's YouTube library** — her real Pilates and wellness videos, embedded via the official YouTube player. These are the **Mains**: the substantial 15–45 minute sessions. This is the brief taken literally ("It might bring together Pilates classes, recovery, and other parts of a person's journey"), it requires no content deal to start, and it sends her views.
@@ -157,6 +181,7 @@ Session
   intensity           1...5
   energyFit           [low, steady, strong]
   equipment           [none, mat, weights, band, rope, bike, pool, skates, outdoor, reformer]
+  places              [home, outdoors, gym, studio, pool]   ← where it can happen
   bodyFocus           [full, core, lowerBody, upperBody, back, hips, neckShoulders]
   contraindications   [pregnancy, postpartum, pelvicFloor, knees, wrists, lowBack]
   intent              [energize, strengthen, calm, mobilize, joy]
@@ -204,12 +229,29 @@ This does not damage the business model; it confirms the one already chosen. **W
 
 Framed around *availability and reality*, never around goals-as-metrics.
 
-1. **What do you have access to?** Multi-select activities + equipment. (Determines the entire candidate pool. The single most important question.)
-2. **How often do you want to move?** Every day · Most days · A few times a week · When I can. *(Cadence target — used for gentle balancing, never for grading.)*
+1. **What do you have access to?** Multi-select activities + equipment **+ places** (home · outdoors · gym · studio · pool). (Determines the entire candidate pool. The single most important question.)
+2. **How often do you want to move?** Two rows on one card, because they are different questions and both are cheap to answer:
+   - *Across the week:* Every day · Most days · A few times a week · When I can. *(Cadence target — used for gentle balancing, never for grading.)*
+   - ***Within a day: how many times would you like intentional movement?*** Once, properly · A couple of times · Sprinkled through the day. *(Shapes the menu, not the workload — see below.)*
 3. **On a normal day, how much time is realistic?** 10 · 20 · 30 · 45+ min.
 4. **When do you have the most in you?** Morning · Midday · Evening · It varies.
 5. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up. *(One pick. Sets the `intent` weighting.)*
 6. **Anything to work around?** Free-text-lite chips: lower back, knees, wrists, pregnancy/postpartum, low iron/fatigue, none. *(Filters, never diagnoses.)*
+
+**Why "how many times a day" is a real question and not a second cadence slider.**
+It changes the *shape* of the menu rather than its size. Somebody who wants one
+proper session gets a hero Main and very little else. Somebody who wants
+movement sprinkled through the day gets the same total minutes rearranged — two
+or three Sides and an Appetizer, each attached to something already happening
+(the kettle, the school run, the call). Same person, same twenty minutes,
+completely different menu.
+
+This matters for the target user specifically: "47 tabs open" rarely means one
+free 30-minute block. It usually means five loose five-minute ones, and no
+existing app is shaped for that.
+
+It is never a target and never counted back. Asking for three moments and doing
+one is not a partial anything — the day still just shows what fits.
 
 No account required. No email gate. No paywall in onboarding. First menu appears before any ask.
 
@@ -219,7 +261,14 @@ This is the ritual the whole product hangs on.
 
 - **Energy:** running on empty · steady · strong
 - **Time:** a little (≤10) · some (~20–30) · plenty (45+)
-- *(optional third tap)* **Body:** sore · stiff · stressed · cramping · good
+- *(optional)* **Where:** staying in · happy to go out · at the gym
+- *(optional)* **Body:** sore · stiff · stressed · cramping · good
+
+The two required taps stay two. **Where** and **Body** are both optional and both
+default to the profile — the ritual is still ten seconds for anyone who wants it
+to be. But *where* carries more signal than almost anything else on a bad day:
+"twenty minutes, running on empty, staying in" is a complete brief, and it is
+exactly the sentence this product exists to answer.
 
 Then the menu regenerates in place with a warm one-liner. If she skips the check-in, we infer from history + time of day and show a menu anyway — **the app never blocks on input.**
 
@@ -239,6 +288,8 @@ Then the menu regenerates in place with a warm one-liner. If she skips the check
 |---|---|
 | Time fit | Hard filter. Never recommend 30 min when she said 10. |
 | Equipment fit | Hard filter. Never recommend what she doesn't have. |
+| **Place fit** | Hard filter. Nothing that needs leaving the house is ever offered to somebody who said they're staying in — and nothing gym-shaped reaches somebody without a gym. Every appetizer is home-safe, so the floor of the menu never disappears. |
+| **Moments per day** | Shapes the menu rather than scoring it. One-a-day weights the Main heavily and trims sides; sprinkled promotes Sides and Appetizers that attach to something already happening. Total load is unchanged. |
 | Work-around safety | Hard filter (e.g. no loaded flexion for a flagged lower back). |
 | Energy match | `energyFit` alignment; low energy pushes toward qi gong, walking, stretching, breathwork. |
 | Recovery balance | Two consecutive high-intensity days → strongly downweight a third. |
@@ -331,10 +382,18 @@ The free tier is genuinely useful and never crippled — this matches the brand 
 | **History-aware balancing & recovery awareness** | — | ✅ |
 | Unlimited swaps | 1/day | ✅ |
 | **Warm, written-for-you coaching voice** | — | ✅ |
-| Look Back reflections | — | ✅ |
+| Look Back reflections | ✅ *(free — see below)* | ✅ |
 | Custom menus (build your own Desserts/Appetizers) | — | ✅ |
 | Specials — plan ahead for the week | — | ✅ |
 | Home screen widget *(if time allows)* | — | ✅ |
+
+**The Look Back is free.** It was Pro in an earlier draft and that was the wrong
+call. It is the churn mechanic, not an engagement one — its whole job is to make
+returning after a lapse feel like resuming rather than starting over. Gating it
+puts the antidote behind a wall for exactly the people most likely to lapse, and
+it is now a whole tab, so a gated tab is a visible wall on a free tier we have
+promised is "genuinely useful and never crippled". What Pro sells is the app
+adapting to *today*; what the Look Back does is make yesterday survivable.
 
 **Pricing:** $6.99/mo · **$34.99/yr** (7-day free trial) · $69.99 lifetime.
 
@@ -343,7 +402,7 @@ $34.99 is the deliberate middle: it reads as "under $35" and prices the annual a
 
 **Paywall moments** (value first, always):
 1. After her **first completed session** — the earliest point she has felt something work.
-2. On any Pro-gated action (second swap, opening the check-in on day 2, Look Back).
+2. On any Pro-gated action (second swap, opening the check-in on day 2).
 3. A quiet, permanent entry in Settings.
 
 **Never** on launch, never in onboarding, never as a full-screen interrupt before she's done anything. No fake countdowns, no manipulative pre-selected plans.
