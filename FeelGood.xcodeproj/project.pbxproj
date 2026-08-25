@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		21DCC2181839CD994036E35C /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 19EE39390C500A69431EBC30 /* RevenueCatUI */; };
 		7B7D390B64588ACDCF50AE26 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 0A32FDDC7017E56EDD5653CD /* RevenueCat */; };
+		FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FEE1DA000000000000000002 /* FeelGoodWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,9 +36,19 @@
 		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXBuildFile section */
-		FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FEE1DA000000000000000002 /* FeelGoodWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-/* End PBXBuildFile section */
+/* Begin PBXCopyFilesBuildPhase section */
+		FEE1DA00000000000000000A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		43A871C43033C6D300DD35A1 /* FeelGood.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FeelGood.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -74,15 +85,11 @@
 		};
 		43A871D83033C6D600DD35A1 /* FeelGoodTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = FeelGoodTests;
 			sourceTree = "<group>";
 		};
 		43A871E23033C6D600DD35A1 /* FeelGoodUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = FeelGoodUITests;
 			sourceTree = "<group>";
 		};
@@ -133,20 +140,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		FEE1DA00000000000000000A /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXGroup section */
 		43A871BB3033C6D300DD35A1 = {
@@ -319,13 +312,6 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		FEE1DA000000000000000006 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		43A871C23033C6D300DD35A1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -347,16 +333,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-/* End PBXResourcesBuildPhase section */
-
-/* Begin PBXSourcesBuildPhase section */
-		FEE1DA000000000000000004 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
+		FEE1DA000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
 		43A871C03033C6D300DD35A1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -378,14 +364,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FEE1DA000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		FEE1DA00000000000000000C /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = FEE1DA000000000000000001 /* FeelGoodWidget */;
-			targetProxy = FEE1DA00000000000000000D /* PBXContainerItemProxy */;
-		};
 		43A871D73033C6D600DD35A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 43A871C33033C6D300DD35A1 /* FeelGood */;
@@ -395,6 +383,11 @@
 			isa = PBXTargetDependency;
 			target = 43A871C33033C6D300DD35A1 /* FeelGood */;
 			targetProxy = 43A871E03033C6D600DD35A1 /* PBXContainerItemProxy */;
+		};
+		FEE1DA00000000000000000C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FEE1DA000000000000000001 /* FeelGoodWidget */;
+			targetProxy = FEE1DA00000000000000000D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
