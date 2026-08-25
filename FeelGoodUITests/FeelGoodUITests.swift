@@ -34,6 +34,80 @@ final class FeelGoodUITests: XCTestCase {
     }
 
     @MainActor
+    private func completeOnboarding(_ app: XCUIApplication) {
+        let pilates = app.buttons["Pilates"]
+        guard pilates.waitForExistence(timeout: 5) else { return }
+        pilates.tap()
+        for _ in 0..<4 {
+            app.buttons["Next"].tap()
+        }
+        app.buttons["Show me today"].tap()
+    }
+
+    @MainActor
+    private func openViaLibrary(_ app: XCUIApplication, titleContains: String) {
+        app.tabBars.buttons["You"].tap()
+        let everything = app.buttons["Everything"]
+        XCTAssertTrue(everything.waitForExistence(timeout: 5))
+        everything.tap()
+        let cell = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS %@", titleContains)
+        ).firstMatch
+        XCTAssertTrue(cell.waitForExistence(timeout: 5))
+        cell.tap()
+        let start = app.buttons["Start"]
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        start.tap()
+    }
+
+    @MainActor
+    private func screenshot(_ app: XCUIApplication, name: String, afterSteps: [String]) {
+        let next = app.buttons["Next"]
+        for stepName in afterSteps {
+            XCTAssertTrue(next.waitForExistence(timeout: 5))
+            next.tap()
+            XCTAssertTrue(app.staticTexts[stepName].waitForExistence(timeout: 5))
+        }
+        sleep(2)
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    @MainActor
+    func testGluteBridgeDemoScreenshot() throws {
+        let app = XCUIApplication()
+        app.launch()
+        completeOnboarding(app)
+        openViaLibrary(app, titleContains: "Ten gentle minutes on the mat")
+        // Breathing -> Pelvic tilts -> Dead bug -> Bridge
+        screenshot(app, name: "GluteBridgeDemo", afterSteps: ["Pelvic tilts", "Dead bug", "Bridge"])
+    }
+
+    @MainActor
+    func testGobletSquatDemoScreenshot() throws {
+        let app = XCUIApplication()
+        app.launch()
+        completeOnboarding(app)
+        openViaLibrary(app, titleContains: "Fifteen minutes with weights")
+        // Warm up -> Goblet squats
+        screenshot(app, name: "GobletSquatDemo", afterSteps: ["Goblet squats"])
+    }
+
+    @MainActor
+    func testPlankAndSidePlankDemoScreenshot() throws {
+        let app = XCUIApplication()
+        app.launch()
+        completeOnboarding(app)
+        openViaLibrary(app, titleContains: "Thirty minutes, full body")
+        // Warm up -> The hundred -> Roll ups -> Leg series -> Bridge series -> Side series
+        screenshot(app, name: "SidePlankDemo", afterSteps: ["The hundred", "Roll ups and roll overs", "Leg series", "Bridge series", "Side series"])
+        // Side series -> Front support
+        screenshot(app, name: "PlankDemo", afterSteps: ["Front support"])
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

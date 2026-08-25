@@ -66,6 +66,8 @@ struct PlayerView: View {
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
 
+                ExerciseDemoView(glossaryID: step.glossaryID)
+
                 Text(timeString)
                     .font(.system(.largeTitle, design: .serif).monospacedDigit())
                     .foregroundStyle(FGColor.skyDeep)
