@@ -111,8 +111,8 @@ nonisolated struct PlanEngine: Sendable {
 
         // Give every line on the menu something different to say.
         let spoken = distinctReasons(
-            ordered: [special, main] + trimmedSides + [appetizer, trimmedDessert],
-            intent: input.profile.intent
+            ordered: [appetizer, main] + trimmedSides + [trimmedDessert, special],
+            intents: input.profile.intents
         )
         let reasons = Set(spoken.values.flatMap(\.reasons))
         func said(_ item: MenuItem?) -> MenuItem? { item.flatMap { spoken[$0.id] } }
@@ -132,8 +132,8 @@ nonisolated struct PlanEngine: Sendable {
     /// Rewrites any reason that has already been used further up the menu,
     /// walking down this item's remaining reasons before falling back to
     /// something specific to the session itself. Menu order decides who keeps
-    /// the good line, so the Main is served first.
-    private func distinctReasons(ordered items: [MenuItem?], intent: Intent) -> [String: MenuItem] {
+    /// the good line, so this order matches the cards the person sees.
+    private func distinctReasons(ordered items: [MenuItem?], intents: Set<Intent>) -> [String: MenuItem] {
         var used: Set<String> = []
         var result: [String: MenuItem] = [:]
 
@@ -143,7 +143,12 @@ nonisolated struct PlanEngine: Sendable {
 
             while used.contains(text) && !codes.isEmpty {
                 codes = Array(codes.dropFirst())
-                text = MenuCopy.reason(for: item.session, codes: codes, gapQuality: nil, intent: intent)
+                text = MenuCopy.reason(
+                    for: item.session,
+                    codes: codes,
+                    gapQuality: nil,
+                    intent: matchingIntent(for: item.session, from: intents)
+                )
             }
             if used.contains(text) { text = MenuCopy.fallbackLine(for: item.session) }
             if used.contains(text), !item.session.subtitle.isEmpty { text = item.session.subtitle }
@@ -302,7 +307,7 @@ nonisolated struct PlanEngine: Sendable {
         }
 
         // Intent.
-        if session.intents.contains(input.profile.intent) {
+        if !Set(session.intents).isDisjoint(with: input.profile.intents) {
             score += weights.intentMatch
             reasons.append(.matchesIntent)
         }
@@ -350,10 +355,16 @@ nonisolated struct PlanEngine: Sendable {
                 for: session,
                 codes: ordered,
                 gapQuality: gapQuality,
-                intent: input.profile.intent
+                intent: matchingIntent(for: session, from: input.profile.intents)
             )
         )
         return Candidate(session: session, score: score, item: item)
+    }
+
+    private func matchingIntent(for session: Session, from intents: Set<Intent>) -> Intent {
+        Intent.allCases.first { intents.contains($0) && session.intents.contains($0) }
+            ?? Intent.allCases.first(where: intents.contains)
+            ?? .energize
     }
 
     private func bodyScore(_ session: Session, body: BodyState) -> Double {

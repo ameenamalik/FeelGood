@@ -108,7 +108,13 @@ struct OnboardingView: View {
             choiceGrid(TimeOfDay.allCases, label: \.label, selection: $model.timeOfDay)
 
         case .intent:
-            choiceGrid(Intent.allCases, label: \.label, selection: $model.intent)
+            VStack(spacing: FGSpace.s) {
+                ForEach(Intent.allCases, id: \.self) { intent in
+                    FGChoice(title: intent.label, isSelected: model.intents.contains(intent)) {
+                        toggle(intent, in: \.intents)
+                    }
+                }
+            }
 
         case .workArounds:
             VStack(alignment: .leading, spacing: FGSpace.s) {
@@ -179,8 +185,12 @@ struct OnboardingView: View {
 
             if !model.isFirstCard {
                 FGQuietButton("Back", systemImage: "chevron.left") { model.goBack() }
-            } else if !model.canAdvance {
-                Text("Pick at least one thing to get started.")
+            }
+
+            if !model.canAdvance {
+                Text(model.card == .intent
+                     ? "Pick at least one direction to continue."
+                     : "Pick at least one thing to get started.")
                     .font(FGFont.caption)
                     .foregroundStyle(FGColor.inkMuted)
             }

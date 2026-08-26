@@ -38,6 +38,17 @@ struct PersistenceTests {
         #expect(profile.answers.activities.isEmpty)
     }
 
+    @Test("A profile preserves every selected direction")
+    func profileStoresMultipleIntents() throws {
+        let context = try context()
+        let answers = ProfileAnswers(activities: [.pilates], intents: [.strengthen, .calm])
+        let profile = UserProfile(answers: answers, now: Fixture.now)
+        context.insert(profile)
+
+        #expect(profile.answers.intents == [.strengthen, .calm])
+        #expect(profile.planProfile.intents == [.strengthen, .calm])
+    }
+
     @Test("Unticking the gym takes the weights with it")
     func implicationsAreNotStuckOn() throws {
         let context = try context()

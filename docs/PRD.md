@@ -235,7 +235,7 @@ Framed around *availability and reality*, never around goals-as-metrics.
    - ***Within a day: how many times would you like intentional movement?*** Once, properly · A couple of times · Sprinkled through the day. *(Shapes the menu, not the workload — see below.)*
 3. **On a normal day, how much time is realistic?** 10 · 20 · 30 · 45+ min.
 4. **When do you have the most in you?** Morning · Midday · Evening · It varies.
-5. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up. *(One pick. Sets the `intent` weighting.)*
+5. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up. *(Pick one or more. A session matching any selected direction gets the `intent` weighting.)*
 6. **Anything to work around?** Free-text-lite chips: lower back, knees, wrists, pregnancy/postpartum, low iron/fatigue, none. *(Filters, never diagnoses.)*
 
 **Why "how many times a day" is a real question and not a second cadence slider.**
@@ -363,7 +363,7 @@ Observations, not scores. Nothing to break, nothing to lose, nothing to restore.
 | # | Screen | Purpose |
 |---|---|---|
 | 1 | **Onboarding** | 6 cards, ≤90s, ends on a real generated menu. |
-| 2 | **Today** *(home)* | The menu. Hero Main + Appetizer + Sides + Dessert. One screen, no scroll. |
+| 2 | **Today** *(home)* | The menu. Appetizer → hero Main → Sides → Dessert. One screen, no scroll. |
 | 3 | **Check-in sheet** | Two-tap energy/time, optional body. Regenerates in place. |
 | 4 | **Session detail** | What it is, why it was picked, what you need. Start. |
 | 5 | **Player** | Step timer with cues, or video player when `video != nil`. Pausable, backgroundable. |

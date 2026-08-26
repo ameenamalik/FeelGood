@@ -64,6 +64,7 @@ struct FGPrimaryButton: View {
                 .font(FGFont.body.weight(.medium))
                 .foregroundStyle(isEnabled ? FGColor.bg : FGColor.inkMuted)
                 .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
+                .contentShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
         }
         .buttonStyle(.plain)
         .disabled(!isEnabled)

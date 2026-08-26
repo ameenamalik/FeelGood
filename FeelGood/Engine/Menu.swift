@@ -49,11 +49,11 @@ nonisolated struct Menu: Hashable, Sendable {
     /// Menu order, top to bottom.
     var items: [MenuItem] {
         var result: [MenuItem] = []
-        if let special { result.append(special) }
+        if let appetizer { result.append(appetizer) }
         if let main { result.append(main) }
         result.append(contentsOf: sides)
-        if let appetizer { result.append(appetizer) }
         if let dessert { result.append(dessert) }
+        if let special { result.append(special) }
         return result
     }
 

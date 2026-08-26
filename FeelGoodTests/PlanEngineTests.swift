@@ -40,6 +40,28 @@ struct PlanEngineTests {
         #expect(!menu.headline.isEmpty)
     }
 
+    @Test("Menu cards follow their course order")
+    func menuCardsFollowCourseOrder() {
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            context: Fixture.context()
+        )
+        let courses = Fixture.engine.makeMenu(input).items.map(\.course)
+        let position: [Course: Int] = [
+            .appetizer: 0,
+            .main: 1,
+            .side: 2,
+            .dessert: 3,
+            .special: 4,
+        ]
+
+        #expect(courses.first == .appetizer)
+        #expect(zip(courses, courses.dropFirst()).allSatisfy { pair in
+            (position[pair.0] ?? 0) <= (position[pair.1] ?? 0)
+        })
+    }
+
     @Test("Every item carries a plain-language reason")
     func everyItemSaysWhy() {
         let input = PlanInput(profile: Fixture.profile(), context: Fixture.context())
@@ -64,6 +86,37 @@ struct PlanEngineTests {
             let texts = Fixture.engine.makeMenu(input).items.map(\.reasonText)
             #expect(Set(texts).count == texts.count, "repeated reason for \(intent): \(texts)")
         }
+    }
+
+    @Test("A session can match any selected direction")
+    func anySelectedIntentCanMatch() {
+        let calm = Fixture.session(
+            id: "a-calm",
+            activity: .breathwork,
+            qualities: [.downRegulation],
+            durationMin: 10,
+            intensity: 1,
+            course: .main,
+            intents: [.calm]
+        )
+        let joy = Fixture.session(
+            id: "b-joy",
+            activity: .breathwork,
+            qualities: [.downRegulation],
+            durationMin: 10,
+            intensity: 1,
+            course: .main,
+            intents: [.joy]
+        )
+        let input = PlanInput(
+            profile: Fixture.profile(intents: [.strengthen, .calm]),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            context: Fixture.context()
+        )
+
+        let menu = PlanEngine(catalog: [joy, calm]).makeMenu(input)
+        #expect(menu.main?.session.id == calm.id)
+        #expect(menu.main?.reasons.contains(.matchesIntent) == true)
     }
 
     // MARK: - Hard filters
