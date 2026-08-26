@@ -29,6 +29,11 @@ xcuserdata/
 Pods/
 Carthage/Build/
 
+# Cloudflare Worker (the copy proxy)
+worker/node_modules/
+worker/.wrangler/
+worker/dist/
+
 # Secrets — the Anthropic key lives in the Cloudflare Worker, never here
 *.xcconfig.local
 .env

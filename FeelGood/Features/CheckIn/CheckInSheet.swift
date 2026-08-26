@@ -15,17 +15,21 @@ import SwiftUI
 struct CheckInSheet: View {
     let current: PlanCheckIn?
     let onDone: (PlanCheckIn) -> Void
+    let parser: any CheckInTextParsing
 
     @State private var energy: Energy?
     @State private var time: TimeBudget?
     @State private var place: PlaceIntent?
     @State private var body_: BodyState?
+    @State private var freeText = ""
+    @State private var isParsing = false
     @State private var hasAppeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    init(current: PlanCheckIn?, onDone: @escaping (PlanCheckIn) -> Void) {
+    init(current: PlanCheckIn?, parser: any CheckInTextParsing = CheckInTextParser(), onDone: @escaping (PlanCheckIn) -> Void) {
         self.current = current
+        self.parser = parser
         self.onDone = onDone
         _energy = State(initialValue: current?.energy)
         _time = State(initialValue: current?.time)
@@ -40,6 +44,7 @@ struct CheckInSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     title
+                    freeTextEntry
 
                     question("What have you got in the tank?", accent: .sky, index: 0) {
                         ForEach(Energy.allCases, id: \.self) { option in
@@ -118,6 +123,37 @@ struct CheckInSheet: View {
             .accessibilityAddTraits(.isHeader)
     }
 
+    /// Typing here only ever pre-fills the buttons below — it never answers
+    /// on its own. Someone can still see, correct, or clear anything it got
+    /// wrong before "Show me today", the same guarantee every other answer
+    /// on this sheet already has.
+    private var freeTextEntry: some View {
+        HStack(spacing: FGSpace.s) {
+            TextField("or tell me — \u{201c}twenty minutes, running on empty, staying in\u{201d}", text: $freeText, axis: .vertical)
+                .font(FGFont.body)
+                .foregroundStyle(FGColor.ink)
+                .textFieldStyle(.plain)
+                .submitLabel(.done)
+                .onSubmit { parseFreeText() }
+
+            if !freeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Button(action: parseFreeText) {
+                    Image(systemName: isParsing ? "hourglass" : "wand.and.stars")
+                        .foregroundStyle(FGColor.inkMuted)
+                        .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
+                }
+                .buttonStyle(.plain)
+                .disabled(isParsing)
+                .accessibilityLabel("Fill in the questions below from what you typed")
+            }
+        }
+        .padding(FGSpace.m)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                .fill(FGColor.surface)
+        )
+    }
+
     private func question<Options: View>(
         _ title: String,
         accent: FGAccent,
@@ -167,6 +203,24 @@ struct CheckInSheet: View {
 
     private func finish() {
         onDone(answers)
+    }
+
+    /// Pre-fills only what the parser was confident about, and only fields
+    /// nothing has already been tapped for — it never overwrites an answer
+    /// somebody set by hand. A gibberish or empty result is a silent no-op:
+    /// the buttons and "Skip" work exactly as if nothing had been typed.
+    private func parseFreeText() {
+        isParsing = true
+        Task {
+            let result = await parser.parse(freeText)
+            isParsing = false
+            withAnimation(FGMotion.gentle) {
+                if energy == nil { energy = result.energy }
+                if time == nil { time = result.time }
+                if place == nil { place = result.place }
+                if body_ == nil { body_ = result.body }
+            }
+        }
     }
 }
 

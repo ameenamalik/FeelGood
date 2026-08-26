@@ -77,7 +77,7 @@ struct TodayView: View {
                 .onLongPressGesture(minimumDuration: 0.7) { isDebugging = true }
                 #endif
 
-            Text(model.menu.headline)
+            Text(model.upgradedHeadline ?? model.menu.headline)
                 .font(FGFont.display)
                 .foregroundStyle(FGColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
