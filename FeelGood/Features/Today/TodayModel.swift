@@ -17,12 +17,24 @@ final class TodayModel {
     /// menu is what the screen watches, and this only ever produces one.
     @ObservationIgnored private var engine: PlanEngine
     private let log: any SessionLogging
+    private let copy: any CopyProviding
     private let calendar: Calendar
+    /// In flight while the copy layer upgrades the headline. Cancelled and
+    /// restarted whenever the menu changes underneath it, so a slow response
+    /// can never land on a headline it no longer describes.
+    @ObservationIgnored private var copyTask: Task<Void, Never>?
 
     var profile: PlanProfile
     private(set) var checkIn: PlanCheckIn?
     private(set) var history: [HistoryEntry]
     private(set) var menu: Menu
+    /// `Menu.headline` upgraded by the copy layer, PRD §7.3 — a sibling
+    /// property rather than a mutation of `menu.headline` in place, because
+    /// `menu` is what gets persisted verbatim: overwriting `headline` there
+    /// would either be lost on next launch or force a re-save on every
+    /// response. `nil` until (and unless) a warmer line comes back; the view
+    /// always has the deterministic one to fall back to.
+    private(set) var upgradedHeadline: String?
     /// Sessions already turned down today, so a swap never circles back.
     private(set) var swappedAway: Set<String> = []
 
@@ -37,6 +49,7 @@ final class TodayModel {
         store: any ContentProviding,
         profile: PlanProfile,
         log: any SessionLogging = InMemorySessionLog(),
+        copy: any CopyProviding = InMemoryCopyService(),
         checkIn: PlanCheckIn? = nil,
         now: Date,
         calendar: Calendar = .current
@@ -52,6 +65,7 @@ final class TodayModel {
         self.store = store
         self.engine = engine
         self.log = log
+        self.copy = copy
         self.profile = profile
         self.ownSessions = own
         self.checkIn = todaysCheckIn
@@ -81,6 +95,7 @@ final class TodayModel {
         }
         refreshCompletedToday(now: now)
         publishSnapshot(now: now)
+        requestCopyUpgrade(now: now)
     }
 
     /// PRD §7.4. The engine reads the same history to plan; this reads it to
@@ -113,6 +128,7 @@ final class TodayModel {
         log.save(menu, generatedAt: now)
         refreshCompletedToday(now: now)
         publishSnapshot(now: now)
+        requestCopyUpgrade(now: now)
     }
 
     /// The check-in regenerates the menu in place.
@@ -123,6 +139,7 @@ final class TodayModel {
         log.record(checkIn, at: now, dayStart: calendar.startOfDay(for: now))
         log.save(menu, generatedAt: now)
         publishSnapshot(now: now)
+        requestCopyUpgrade(now: now)
     }
 
     /// "Not today". A swap is engagement, not rejection — it is a choice being made,
@@ -208,6 +225,7 @@ final class TodayModel {
             menu = engine.makeMenu(input(now: now))
             log.save(menu, generatedAt: now)
             publishSnapshot(now: now)
+            requestCopyUpgrade(now: now)
         }
     }
 
@@ -219,10 +237,36 @@ final class TodayModel {
         menu = engine.makeMenu(input(now: now))
         log.save(menu, generatedAt: now)
         publishSnapshot(now: now)
+        requestCopyUpgrade(now: now)
     }
 
     private func rebuildEngine() {
         engine = PlanEngine(catalog: store.sessions + ownSessions)
+    }
+
+    /// Asks the copy layer to upgrade `menu.headline` in place. Not called
+    /// from `swap(_:)` — the headline depends on `reasons`/`checkIn`, not on
+    /// which specific items are on the menu, so a swap shouldn't re-bill a
+    /// call for a line that wouldn't actually change.
+    private func requestCopyUpgrade(now: Date) {
+        copyTask?.cancel()
+        // Clears immediately rather than waiting for the new response, so a
+        // stale line never lingers on screen through a menu change.
+        upgradedHeadline = nil
+
+        let requestedMenu = menu
+        let requestedCheckIn = checkIn ?? menu.assumedCheckIn
+        let stats = HistoryStats(input: input(now: now))
+        let copy = copy
+
+        copyTask = Task { [weak self] in
+            guard let line = await copy.upgradedHeadline(menu: requestedMenu, checkIn: requestedCheckIn, stats: stats) else { return }
+            guard let self, !Task.isCancelled else { return }
+            // Only lands if the menu/check-in this was asked about are still
+            // current — guards a swap or a second check-in landing first.
+            guard self.menu == requestedMenu, (self.checkIn ?? self.menu.assumedCheckIn) == requestedCheckIn else { return }
+            self.upgradedHeadline = line
+        }
     }
 
     /// The home screen's copy of today's Main.

@@ -111,7 +111,11 @@ nonisolated enum BodyFocus: String, Codable, CaseIterable, Sendable {
 /// Things to work around. Tagged on a session as "do not surface if flagged",
 /// and on a profile as "I flagged this". Filters, never diagnoses.
 nonisolated enum WorkAround: String, Codable, CaseIterable, Sendable {
-    case pregnancy, postpartum, pelvicFloor, knees, wrists, lowBack, fatigue
+    // Declaration order is display order (`allCases`, iterated directly by
+    // both the onboarding and profile-edit chip UIs). Universal categories
+    // lead; the reproductive-health ones are last rather than first, so the
+    // single most sensitive screen in the app doesn't open on them.
+    case lowBack, knees, wrists, fatigue, pregnancy, postpartum, pelvicFloor
 }
 
 nonisolated enum Intent: String, Codable, CaseIterable, Sendable {

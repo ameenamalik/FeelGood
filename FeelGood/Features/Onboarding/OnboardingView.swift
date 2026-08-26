@@ -102,10 +102,22 @@ struct OnboardingView: View {
             }
 
         case .time:
-            choiceGrid([10, 20, 30, 45], label: { $0 == 45 ? "45+ min" : "\($0) min" }, selection: $model.realisticMinutes)
-
-        case .timeOfDay:
-            choiceGrid(TimeOfDay.allCases, label: \.label, selection: $model.timeOfDay)
+            VStack(alignment: .leading, spacing: FGSpace.l) {
+                answerGroup("On a normal day") {
+                    ForEach([10, 20, 30, 45], id: \.self) { minutes in
+                        FGChoice(title: minutes == 45 ? "45+ min" : "\(minutes) min", isSelected: model.realisticMinutes == minutes) {
+                            withAnimation(FGMotion.gentle) { model.realisticMinutes = minutes }
+                        }
+                    }
+                }
+                answerGroup("When you have the most in you") {
+                    ForEach(TimeOfDay.allCases, id: \.self) { option in
+                        FGChoice(title: option.label, isSelected: model.timeOfDay == option) {
+                            withAnimation(FGMotion.gentle) { model.timeOfDay = option }
+                        }
+                    }
+                }
+            }
 
         case .intent:
             VStack(spacing: FGSpace.s) {
@@ -144,20 +156,6 @@ struct OnboardingView: View {
         }
     }
 
-    private func choiceGrid<Option: Hashable>(
-        _ options: [Option],
-        label: @escaping (Option) -> String,
-        selection: Binding<Option>
-    ) -> some View {
-        VStack(spacing: FGSpace.s) {
-            ForEach(options, id: \.self) { option in
-                FGChoice(title: label(option), isSelected: selection.wrappedValue == option) {
-                    withAnimation(FGMotion.gentle) { selection.wrappedValue = option }
-                }
-            }
-        }
-    }
-
     private func toggle<T: Hashable>(_ value: T, in keyPath: ReferenceWritableKeyPath<OnboardingModel, Set<T>>) {
         withAnimation(FGMotion.gentle) {
             if model[keyPath: keyPath].contains(value) {
@@ -188,9 +186,11 @@ struct OnboardingView: View {
             }
 
             if !model.canAdvance {
-                Text(model.card == .intent
-                     ? "Pick at least one direction to continue."
-                     : "Pick at least one thing to get started.")
+                // Only `.access` is `isRequired`, so this can only ever render
+                // there — a single, always-correct message rather than a
+                // per-card ternary implying an enforcement that doesn't exist
+                // on any other card.
+                Text("Pick at least one thing to get started.")
                     .font(FGFont.caption)
                     .foregroundStyle(FGColor.inkMuted)
             }

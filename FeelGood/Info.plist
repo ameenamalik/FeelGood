@@ -19,5 +19,7 @@
 	</array>
 	<key>RevenueCatAPIKey</key>
 	<string>$(REVENUECAT_API_KEY)</string>
+	<key>CopyWorkerBaseURL</key>
+	<string>$(COPY_WORKER_BASE_URL)</string>
 </dict>
 </plist>

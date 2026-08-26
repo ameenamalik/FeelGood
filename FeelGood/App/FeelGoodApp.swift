@@ -88,6 +88,7 @@ private struct TodayScreen: View {
             store: content,
             profile: profile.planProfile,
             log: log,
+            copy: CopyService(),
             now: Date()
         ))
     }
@@ -113,7 +114,7 @@ private struct TodayScreen: View {
                 TodayView(model: model, requestedSessionID: $requestedSessionID)
             }
             Tab("You", systemImage: "person", value: Destination.you) {
-                YouView(model: model, answers: profile.answers) { answers in
+                YouView(model: model, profile: profile) { answers in
                     profile.apply(answers, now: Date())
                 }
             }

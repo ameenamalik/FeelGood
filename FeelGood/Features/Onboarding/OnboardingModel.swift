@@ -2,9 +2,13 @@
 //  OnboardingModel.swift
 //  FeelGood
 //
-//  Six cards, ninety seconds, framed around what's available to you rather than
+//  Five cards, ninety seconds, framed around what's available to you rather than
 //  around goals-as-metrics. No account, no email, no paywall — the first menu
-//  appears before anything is asked for. See PRD §7.1.
+//  appears before anything is asked for. See PRD §7.1. (Time-of-day is asked
+//  as a second row on the time card rather than its own screen — the same
+//  move already made for cadence+moments — since it's the weakest signal of
+//  the six: the engine only reads it as a fallback when the daily check-in is
+//  skipped, and a real check-in overrides it immediately.)
 //
 
 import Foundation
@@ -14,14 +18,13 @@ import Observation
 final class OnboardingModel {
 
     enum Card: Int, CaseIterable {
-        case access, cadence, time, timeOfDay, intent, workArounds
+        case access, cadence, time, intent, workArounds
 
         var title: String {
             switch self {
             case .access: "What do you have access to?"
             case .cadence: "How often do you want to move?"
-            case .time: "On a normal day, how much time is realistic?"
-            case .timeOfDay: "When do you have the most in you?"
+            case .time: "How much time, and when?"
             case .intent: "What are you moving toward?"
             case .workArounds: "Anything to work around?"
             }
@@ -32,9 +35,8 @@ final class OnboardingModel {
             case .access: "Pick everything that's genuinely available. This shapes everything else."
             case .cadence: "Used to keep things balanced — never to grade you."
             case .time: nil
-            case .timeOfDay: nil
             case .intent: "Pick one or more."
-            case .workArounds: "We'll quietly leave these out. Nothing here is a diagnosis."
+            case .workArounds: "We'll quietly leave these out. Nothing here is a diagnosis, and it never leaves your device."
             }
         }
 

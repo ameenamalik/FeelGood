@@ -399,6 +399,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = FeelGood/FeelGood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				COPY_WORKER_BASE_URL = "https://feelgood-copy-dev.YOUR_SUBDOMAIN.workers.dev/copy";
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 322ZGVD4Z7;
 				ENABLE_PREVIEWS = YES;
@@ -434,6 +435,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = FeelGood/FeelGood.entitlements;
 				CODE_SIGN_STYLE = Automatic;
+				COPY_WORKER_BASE_URL = "https://feelgood-copy-production.YOUR_SUBDOMAIN.workers.dev/copy";
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 322ZGVD4Z7;
 				ENABLE_PREVIEWS = YES;

@@ -1,0 +1,23 @@
+name = "feelgood-copy-dev"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Free tier covers 100,000 requests/day, which is far beyond anything this
+# app does during Shipaton (PRD §11).
+
+# Secrets — set per environment, never committed here:
+#   wrangler secret put ANTHROPIC_API_KEY
+#   wrangler secret put REVENUECAT_SECRET_API_KEY
+# (the RevenueCat *secret* v2 REST key, distinct from the public SDK key in
+# FeelGood/Support/RevenueCatConstants.swift)
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "REPLACE_WITH_DEV_KV_NAMESPACE_ID"
+
+[env.production]
+name = "feelgood-copy-production"
+
+[[env.production.kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "REPLACE_WITH_PRODUCTION_KV_NAMESPACE_ID"

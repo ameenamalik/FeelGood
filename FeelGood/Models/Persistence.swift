@@ -35,6 +35,26 @@ final class UserProfile {
     var createdAt: Date
     var updatedAt: Date
 
+    // MARK: Identity
+    //
+    // Separate from `answers` on purpose: these are facts about a person, not
+    // inputs to the engine, and they never flow into `PlanProfile` or
+    // `CopyPayload` — CLAUDE.md's "no name, no free text" rule for anything
+    // that leaves the device applies here by construction, not by filtering.
+
+    /// A free-text preference, same footing as a kept workout's own title —
+    /// cosmetic, never read by the engine. Defaults to what Sign in with
+    /// Apple offers on first grant, but always further editable.
+    var nickname: String = ""
+    /// Set once Sign in with Apple succeeds. Also what's handed to
+    /// `PurchasesManager.logIn(appUserID:)` so RevenueCat's anonymous id
+    /// swaps for a stable one tied to this Apple ID.
+    var appleUserID: String?
+    /// Apple only ever returns this on the *first* authorization for a given
+    /// Apple ID + app pair — never re-sent on a later sign-in — so it is
+    /// stored the moment it's seen and never overwritten with `nil`.
+    var email: String?
+
     init(answers: ProfileAnswers, reminderHour: Int? = nil, now: Date) {
         let intentValues = answers.intents.map(\.rawValue).sorted()
         activitiesRaw = answers.activities.map(\.rawValue).sorted()
@@ -96,6 +116,29 @@ final class UserProfile {
     /// imply. Derived on read, never stored, so unticking the gym takes the
     /// weights with it.
     var planProfile: PlanProfile { answers.planProfile }
+
+    /// Sign in with Apple succeeded. `email`/`fullName` are only ever
+    /// non-`nil` on the very first authorization for this Apple ID and this
+    /// app — never resent afterward — so an existing value is never
+    /// overwritten with something absent. Does not touch `updatedAt`:
+    /// identity has no bearing on the plan or the menu, and bumping it would
+    /// force `RootView`'s `.id(profile.updatedAt)` to remount `TodayScreen`
+    /// for no reason connected to the day it's showing.
+    func applyAppleSignIn(userID: String, email: String?, fullName: PersonNameComponents?) {
+        appleUserID = userID
+        if self.email == nil, let email { self.email = email }
+        if nickname.isEmpty, let fullName {
+            let formatted = PersonNameComponentsFormatter.localizedString(from: fullName, style: .default)
+            if !formatted.isEmpty { nickname = formatted }
+        }
+    }
+
+    /// Local sign-out. `nickname` survives — it's a preference somebody may
+    /// have typed themselves, not a fact about the Apple account.
+    func signOutOfApple() {
+        appleUserID = nil
+        email = nil
+    }
 }
 
 // MARK: - Check-in
