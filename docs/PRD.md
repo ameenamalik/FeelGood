@@ -157,7 +157,9 @@ Sessions tell her *what* to do. A glossary answers *"what even is a dead bug?"* 
 
 The instructions are genuinely good. The photography is a dark gym, dramatic lighting, visible abs, sports bra, performance register — a beautifully shot image of exactly the thing this app is positioned against. A woman standing in her kitchen at 7am with fifteen minutes does not need a comparison trigger next to the instruction. That image is the aesthetic of every app she has already deleted.
 
-So v1 ships the glossary **text-only**: name, plain-language steps, plain-language muscles. Simple line illustrations, drawn in our own design language for the 80-ish moves we actually reference, are a stretch goal and a strong v2.
+So v1 ships the glossary **text-only**: name, plain-language steps, plain-language muscles.
+
+The step-timer player separately shows a looping line-art animation where one exists, sourced from Everkinetic (CC BY-SA 4.0, via Bryl Lim) rather than drawn in-house — this shipped ahead of schedule and supersedes the "stretch goal, v2" framing this section used to carry. Coverage is partial by design: dead bug, glute bridge, goblet squat, plank, and side plank so far, added by dropping numbered PNGs into `Content/ExerciseDemos/` with no code change, growing toward the ~80-ish moves as time allows. See `Content/ExerciseDemos/ATTRIBUTION.md` for the license terms this carries forward.
 
 **Three rules keep it from becoming the problem it solves:**
 
