@@ -26,7 +26,9 @@ final class UserProfile {
     var momentsRaw: String = MovementMoments.aCouple.rawValue
     var realisticMinutes: Int
     var bestTimeOfDayRaw: String
+    /// Kept for stores written before moving toward became multi-select.
     var intentRaw: String
+    var intentsRaw: [String] = []
     var workAroundsRaw: [String]
     /// Local hour for the optional daily invitation. `nil` means no reminder.
     var reminderHour: Int?
@@ -34,6 +36,7 @@ final class UserProfile {
     var updatedAt: Date
 
     init(answers: ProfileAnswers, reminderHour: Int? = nil, now: Date) {
+        let intentValues = answers.intents.map(\.rawValue).sorted()
         activitiesRaw = answers.activities.map(\.rawValue).sorted()
         equipmentRaw = answers.equipment.map(\.rawValue).sorted()
         placesRaw = answers.places.map(\.rawValue).sorted()
@@ -41,7 +44,8 @@ final class UserProfile {
         momentsRaw = answers.moments.rawValue
         realisticMinutes = answers.realisticMinutes
         bestTimeOfDayRaw = answers.bestTimeOfDay.rawValue
-        intentRaw = answers.intent.rawValue
+        intentsRaw = intentValues
+        intentRaw = intentValues.first ?? Intent.energize.rawValue
         workAroundsRaw = answers.workArounds.map(\.rawValue).sorted()
         self.reminderHour = reminderHour
         createdAt = now
@@ -61,9 +65,15 @@ final class UserProfile {
             moments: MovementMoments(rawValue: momentsRaw) ?? .aCouple,
             realisticMinutes: realisticMinutes,
             bestTimeOfDay: TimeOfDay(rawValue: bestTimeOfDayRaw) ?? .varies,
-            intent: Intent(rawValue: intentRaw) ?? .energize,
+            intents: decodedIntents,
             workArounds: Set(workAroundsRaw.compactMap(WorkAround.init(rawValue:)))
         )
+    }
+
+    private var decodedIntents: Set<Intent> {
+        let stored = Set(intentsRaw.compactMap(Intent.init(rawValue:)))
+        if !stored.isEmpty { return stored }
+        return [Intent(rawValue: intentRaw) ?? .energize]
     }
 
     /// Changing your mind is a normal thing to do, and the menu should follow
@@ -76,7 +86,8 @@ final class UserProfile {
         momentsRaw = answers.moments.rawValue
         realisticMinutes = answers.realisticMinutes
         bestTimeOfDayRaw = answers.bestTimeOfDay.rawValue
-        intentRaw = answers.intent.rawValue
+        intentsRaw = answers.intents.map(\.rawValue).sorted()
+        intentRaw = intentsRaw.first ?? Intent.energize.rawValue
         workAroundsRaw = answers.workArounds.map(\.rawValue).sorted()
         updatedAt = now
     }

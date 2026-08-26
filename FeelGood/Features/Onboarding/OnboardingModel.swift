@@ -33,7 +33,7 @@ final class OnboardingModel {
             case .cadence: "Used to keep things balanced — never to grade you."
             case .time: nil
             case .timeOfDay: nil
-            case .intent: "Pick one."
+            case .intent: "Pick one or more."
             case .workArounds: "We'll quietly leave these out. Nothing here is a diagnosis."
             }
         }
@@ -77,9 +77,9 @@ final class OnboardingModel {
         get { answers.bestTimeOfDay }
         set { answers.bestTimeOfDay = newValue }
     }
-    var intent: Intent {
-        get { answers.intent }
-        set { answers.intent = newValue }
+    var intents: Set<Intent> {
+        get { answers.intents }
+        set { answers.intents = newValue }
     }
     var workArounds: Set<WorkAround> {
         get { answers.workArounds }

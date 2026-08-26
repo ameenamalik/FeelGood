@@ -33,7 +33,7 @@ import SwiftData
 /// The shipped shape of the store. Nothing has been released yet, so this is
 /// still editable in place — see the note above for when that stops being true.
 enum FeelGoodSchemaV1: VersionedSchema {
-    static let versionIdentifier = Schema.Version(1, 0, 0)
+    static var versionIdentifier: Schema.Version { Schema.Version(1, 0, 0) }
 
     static var models: [any PersistentModel.Type] {
         [

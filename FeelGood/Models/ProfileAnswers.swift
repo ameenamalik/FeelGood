@@ -17,7 +17,7 @@ nonisolated struct ProfileAnswers: Hashable, Sendable {
     var moments: MovementMoments = .aCouple
     var realisticMinutes: Int = 20
     var bestTimeOfDay: TimeOfDay = .varies
-    var intent: Intent = .energize
+    var intents: Set<Intent> = [.energize]
     var workArounds: Set<WorkAround> = []
 
     /// A room implies what happens in it: a gym means somewhere to lift, even
@@ -51,7 +51,7 @@ nonisolated struct ProfileAnswers: Hashable, Sendable {
     }
 
     /// Enough has been said to plan a day.
-    var isAnswered: Bool { !availableActivities.isEmpty }
+    var isAnswered: Bool { !availableActivities.isEmpty && !intents.isEmpty }
 
     var planProfile: PlanProfile {
         PlanProfile(
@@ -62,8 +62,8 @@ nonisolated struct ProfileAnswers: Hashable, Sendable {
             moments: moments,
             realisticMinutes: realisticMinutes,
             bestTimeOfDay: bestTimeOfDay,
-            intent: intent,
-            workArounds: workArounds
+            workArounds: workArounds,
+            intents: intents
         )
     }
 }

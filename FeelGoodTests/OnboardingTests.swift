@@ -57,7 +57,7 @@ struct OnboardingTests {
     func gymMembershipEndToEnd() throws {
         let model = OnboardingModel()
         model.places = [.home, .gym]
-        model.intent = .strengthen
+        model.intents = [.strengthen]
 
         let engine = PlanEngine(catalog: try ContentStore.bundled().sessions)
         let menu = engine.makeMenu(
@@ -72,6 +72,15 @@ struct OnboardingTests {
 
         #expect(menu.main != nil)
         #expect(menu.items.contains { $0.session.equipment.contains(.gym) })
+    }
+
+    @Test("Moving toward can hold more than one direction")
+    func multipleIntentsAreKept() {
+        let model = OnboardingModel()
+        model.activities = [.pilates]
+        model.intents = [.strengthen, .calm]
+
+        #expect(model.makeProfile().intents == [.strengthen, .calm])
     }
 
     @Test("Picking an activity still implies the obvious equipment")

@@ -65,7 +65,19 @@ struct ProfileEditView: View {
                     }
 
                     section("What are you moving toward?") {
-                        choices(Intent.allCases, label: \.label, selection: $answers.intent)
+                        FlowRow(spacing: FGSpace.s) {
+                            ForEach(Intent.allCases, id: \.self) { intent in
+                                FGChoice(title: intent.label, isSelected: answers.intents.contains(intent)) {
+                                    withAnimation(FGMotion.gentle) {
+                                        if answers.intents.contains(intent) {
+                                            answers.intents.remove(intent)
+                                        } else {
+                                            answers.intents.insert(intent)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     section("Anything to work around?") {

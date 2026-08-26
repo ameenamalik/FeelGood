@@ -75,7 +75,14 @@ nonisolated struct PlanProfile: Hashable, Sendable {
     /// What's realistic on a normal day: 10 / 20 / 30 / 45.
     var realisticMinutes: Int
     var bestTimeOfDay: TimeOfDay
-    var intent: Intent
+    /// Any direction that feels relevant. A session matching at least one gets
+    /// the intent nudge; choosing more never multiplies its score.
+    var intents: Set<Intent>
+
+    /// Stable fallback for copy that needs to speak about one direction.
+    var primaryIntent: Intent {
+        Intent.allCases.first(where: intents.contains) ?? .energize
+    }
     var workArounds: Set<WorkAround>
 
     init(
@@ -87,7 +94,8 @@ nonisolated struct PlanProfile: Hashable, Sendable {
         realisticMinutes: Int = 20,
         bestTimeOfDay: TimeOfDay = .varies,
         intent: Intent = .energize,
-        workArounds: Set<WorkAround> = []
+        workArounds: Set<WorkAround> = [],
+        intents: Set<Intent>? = nil
     ) {
         self.availableActivities = availableActivities
         self.equipment = equipment.union([.none])
@@ -96,7 +104,7 @@ nonisolated struct PlanProfile: Hashable, Sendable {
         self.moments = moments
         self.realisticMinutes = realisticMinutes
         self.bestTimeOfDay = bestTimeOfDay
-        self.intent = intent
+        self.intents = intents.flatMap { $0.isEmpty ? nil : $0 } ?? [intent]
         self.workArounds = workArounds
     }
 }

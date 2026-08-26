@@ -85,8 +85,13 @@ struct PlayerView: View {
                 FGPrimaryButton(title: isRunning ? "Pause" : "Resume") {
                     isRunning.toggle()
                 }
-                FGQuietButton("Next", systemImage: "forward.end") { advance() }
-                    .frame(maxWidth: .infinity)
+                HStack {
+                    if index > steps.startIndex {
+                        FGQuietButton("Back", systemImage: "backward.end") { goBack() }
+                    }
+                    Spacer()
+                    FGQuietButton("Next", systemImage: "forward.end") { advance() }
+                }
             }
         }
         .padding(FGSpace.page)
@@ -123,6 +128,9 @@ struct PlayerView: View {
                     .buttonStyle(.plain)
                 }
             }
+            FGQuietButton("Back to last exercise", systemImage: "backward.end") {
+                goBack()
+            }
             FGQuietButton("Skip") { onFinish(nil) }
             Spacer()
         }
@@ -140,7 +148,24 @@ struct PlayerView: View {
         if index + 1 < steps.count {
             withAnimation(FGMotion.gentle) { index += 1 }
         } else {
-            withAnimation(FGMotion.gentle) { isDone = true }
+            withAnimation(FGMotion.gentle) {
+                // Move beyond the last valid index so going back changes the
+                // task identity and restarts that exercise's timer.
+                index = steps.endIndex
+                isDone = true
+            }
+        }
+    }
+
+    private func goBack() {
+        guard !steps.isEmpty else { return }
+        withAnimation(FGMotion.gentle) {
+            if isDone {
+                index = steps.index(before: steps.endIndex)
+                isDone = false
+            } else if index > steps.startIndex {
+                index -= 1
+            }
         }
     }
 
