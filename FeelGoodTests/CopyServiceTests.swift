@@ -15,6 +15,14 @@ import Foundation
 @Suite("Copy service")
 struct CopyServiceTests {
 
+    @Test("A missing Worker URL disables the upgrade instead of crashing")
+    func missingWorkerURLIsDisabled() {
+        #expect(CopyServiceConstants.workerURL(from: nil) == nil)
+        #expect(CopyServiceConstants.workerURL(from: "") == nil)
+        #expect(CopyServiceConstants.workerURL(from: "$(COPY_WORKER_BASE_URL)") == nil)
+        #expect(CopyServiceConstants.workerURL(from: "https://copy.example.com/copy") != nil)
+    }
+
     private func input() -> PlanInput {
         PlanInput(
             profile: Fixture.profile(),

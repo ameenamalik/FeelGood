@@ -38,10 +38,23 @@ final class FeelGoodUITests: XCTestCase {
         let pilates = app.buttons["Pilates"]
         guard pilates.waitForExistence(timeout: 5) else { return }
         pilates.tap()
-        for _ in 0..<4 {
+        for _ in 0..<5 {
             app.buttons["Next"].tap()
         }
         app.buttons["Show me today"].tap()
+    }
+
+    @MainActor
+    func testYouTabOpens() throws {
+        let app = XCUIApplication()
+        app.launch()
+        completeOnboarding(app)
+
+        let youTab = app.tabBars.buttons["You"]
+        XCTAssertTrue(youTab.waitForExistence(timeout: 5))
+        youTab.tap()
+
+        XCTAssertTrue(app.staticTexts["You, lately."].waitForExistence(timeout: 5))
     }
 
     @MainActor

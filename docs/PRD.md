@@ -356,6 +356,12 @@ A soft, non-judgmental reflection available anytime:
 
 Observations, not scores. Nothing to break, nothing to lose, nothing to restore. **Gaps are not rendered.** There is no visual language in this app for "you weren't here."
 
+The **You** tab gives those observations an editorial card treatment beneath a
+quiet profile mark. It uses sentence case throughout, with no eyebrow text or
+plan badge. Small labels describe the kind of observation (rhythm, mix, rest);
+they never display a score, target, comparison, or streak. Account, subscription,
+and profile controls remain secondary to the reflection.
+
 **Re-entry design (critical):** returning after 5+ days triggers the `returningAfterGap` reason code, which produces a shorter, easier menu and copy in the register of *"good to see you — let's start small."* We will test this path explicitly in the demo video, because it is the clearest possible statement of what makes this app different.
 
 ---
@@ -370,7 +376,7 @@ Observations, not scores. Nothing to break, nothing to lose, nothing to restore.
 | 4 | **Session detail** | What it is, why it was picked, what you need. Start. |
 | 5 | **Player** | Step timer with cues, or video player when `video != nil`. Pausable, backgroundable. |
 | 6 | **Complete** | "How did that feel?" — three faces. Feeds affinity. No score. |
-| 7 | **Look Back** | Gentle reflection (§7.4). |
+| 7 | **You / Look Back** | Quiet profile header and gentle recent-pattern cards (§7.4). |
 | 8 | **Library** | Browse everything, free. Deliberately *not* the home screen. |
 | 9 | **Paywall** | RevenueCat remote-configured. |
 | 10 | **Settings** | "What's available to you" (editable anytime), cadence, reminder time, restore purchases, privacy. |

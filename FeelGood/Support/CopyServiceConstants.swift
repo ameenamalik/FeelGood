@@ -10,16 +10,23 @@ nonisolated enum CopyServiceConstants {
     /// shape as `RevenueCatConstants.apiKey` — Debug and Release point at
     /// separate Workers (see worker/README.md), so the dev key never touches
     /// a shipped build.
-    static let workerBaseURL: URL = {
+    /// Optional by design. The deterministic headline is the product's
+    /// always-available path, so an unconfigured Worker disables only the
+    /// copy upgrade; it must never prevent the app (or a tab) from opening.
+    static let workerBaseURL: URL? = workerURL(
+        from: Bundle.main.object(forInfoDictionaryKey: "CopyWorkerBaseURL") as? String
+    )
+
+    static func workerURL(from string: String?) -> URL? {
         guard
-            let string = Bundle.main.object(forInfoDictionaryKey: "CopyWorkerBaseURL") as? String,
+            let string,
             !string.isEmpty,
-            let url = URL(string: string)
-        else {
-            fatalError("Missing or invalid CopyWorkerBaseURL in Info.plist — set the COPY_WORKER_BASE_URL build setting for this configuration.")
-        }
+            let url = URL(string: string),
+            ["http", "https"].contains(url.scheme?.lowercased() ?? ""),
+            url.host != nil
+        else { return nil }
         return url
-    }()
+    }
 
     /// PRD §11: the Worker is given ~2s before the deterministic template
     /// copy wins by default.
