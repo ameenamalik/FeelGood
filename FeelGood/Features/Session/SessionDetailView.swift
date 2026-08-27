@@ -64,6 +64,7 @@ struct SessionDetailView: View {
                     if session.isOwn {
                         VStack(spacing: FGSpace.s) {
                             FGPrimaryButton(title: "I did this") {
+                                Analytics.capture("workout_completed", properties: workoutProperties)
                                 model.complete(session, startedAt: Date(), feel: nil)
                                 dismiss()
                             }
@@ -79,6 +80,7 @@ struct SessionDetailView: View {
                         }
                     } else {
                         FGPrimaryButton(title: "Start") {
+                            Analytics.capture("workout_started", properties: workoutProperties)
                             startedAt = Date()
                             isPlaying = true
                         }
@@ -90,7 +92,10 @@ struct SessionDetailView: View {
         .fullScreenCover(isPresented: $isPlaying) {
             PlayerView(
                 session: session,
-                onFinish: { feel in
+                onFinish: { feel, didComplete in
+                    if didComplete {
+                        Analytics.capture("workout_completed", properties: workoutProperties)
+                    }
                     model.complete(session, startedAt: startedAt, feel: feel)
                     isPlaying = false
                     dismiss()
@@ -120,6 +125,16 @@ struct SessionDetailView: View {
             Text("It stops being offered. The times you did it still count.")
         }
         .presentationDragIndicator(.visible)
+    }
+
+    private var workoutProperties: [String: Any] {
+        [
+            "session_id": session.id,
+            "activity": session.activity.rawValue,
+            "course": course.rawValue,
+            "duration_minutes": session.durationMin,
+            "is_saved_workout": session.isOwn
+        ]
     }
 
     /// The title is the screen. Display weight, and everything under it quiet.

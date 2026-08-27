@@ -21,5 +21,9 @@
 	<string>$(REVENUECAT_API_KEY)</string>
 	<key>CopyWorkerBaseURL</key>
 	<string>$(COPY_WORKER_BASE_URL)</string>
+	<key>PostHogProjectToken</key>
+	<string>$(POSTHOG_PROJECT_TOKEN)</string>
+	<key>PostHogHost</key>
+	<string>$(POSTHOG_HOST)</string>
 </dict>
 </plist>

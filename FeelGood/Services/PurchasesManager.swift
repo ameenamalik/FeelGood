@@ -26,12 +26,30 @@ final class PurchasesManager {
     private(set) var hasLoadedCustomerInfo = false
 
     var isProUnlocked: Bool {
-        customerInfo?.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+        #if DEBUG
+        if Self.debugForceProUnlocked { return true }
+        #endif
+        return customerInfo?.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
     }
+
+    #if DEBUG
+    /// Debug-only override so every Pro-gated flow (the copy upgrade,
+    /// `ProGateView`, etc.) can be tested without a sandbox purchase.
+    /// Reachable from `DebugMenu`; persisted so it survives a relaunch
+    /// mid-testing. Compiled out of Release entirely — there is no key for
+    /// a reviewer or a real build to stumble into.
+    static var debugForceProUnlocked: Bool {
+        get { UserDefaults.standard.bool(forKey: "debugForceProUnlocked") }
+        set { UserDefaults.standard.set(newValue, forKey: "debugForceProUnlocked") }
+    }
+    #endif
 
     /// The current offering's monthly/yearly packages, when available, for direct purchase buttons.
     var monthlyPackage: Package? { offerings?.current?.monthly }
     var yearlyPackage: Package? { offerings?.current?.annual }
+    /// PRD §10's $69.99 one-time tier. Configure a "$rc_lifetime" package on
+    /// the current offering in the RevenueCat dashboard for this to resolve.
+    var lifetimePackage: Package? { offerings?.current?.lifetime }
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.feelgood.app", category: "Purchases")
     private var customerInfoObservationTask: Task<Void, Never>?
@@ -113,7 +131,13 @@ final class PurchasesManager {
             let result = try await Purchases.shared.purchase(package: package)
             guard !result.userCancelled else { return false }
             customerInfo = result.customerInfo
-            return result.customerInfo.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+            let unlocked = result.customerInfo.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+            if unlocked {
+                Analytics.capture("subscription_purchased", properties: [
+                    "package_id": package.identifier
+                ])
+            }
+            return unlocked
         } catch {
             lastError = .purchaseFailed(error)
             logger.error("Purchase failed: \(error.localizedDescription)")
@@ -126,7 +150,11 @@ final class PurchasesManager {
         do {
             let info = try await Purchases.shared.restorePurchases()
             customerInfo = info
-            return info.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+            let unlocked = info.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+            if unlocked {
+                Analytics.capture("subscription_restored")
+            }
+            return unlocked
         } catch {
             lastError = .restoreFailed(error)
             logger.error("Restore failed: \(error.localizedDescription)")

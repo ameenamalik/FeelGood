@@ -6,6 +6,7 @@
 import SwiftUI
 import SwiftData
 import os
+import PostHog
 
 @main
 struct FeelGoodApp: App {
@@ -18,6 +19,19 @@ struct FeelGoodApp: App {
     private let content: ContentStore?
 
     init() {
+        if let projectToken = Bundle.main.object(forInfoDictionaryKey: "PostHogProjectToken") as? String,
+           let host = Bundle.main.object(forInfoDictionaryKey: "PostHogHost") as? String,
+           !projectToken.isEmpty,
+           !host.isEmpty {
+            let config = PostHogConfig(projectToken: projectToken, host: host)
+            config.errorTrackingConfig.autoCapture = true
+            PostHogSDK.shared.setup(config)
+        } else {
+            #if DEBUG
+            assertionFailure("POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once POSTHOG_PROJECT_TOKEN is configured")
+            #endif
+        }
+
         _storage = State(initialValue: Storage.open())
         content = try? ContentStore.bundled()
         // Must run before any view reads PurchasesManager.shared.isProUnlocked / offerings.
