@@ -90,6 +90,7 @@ nonisolated struct PlanEngine: Sendable {
         if let appetizer { taken.insert(appetizer.session.id) }
 
         let dessert = first(from: scored, course: .dessert, excluding: taken)
+            ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken)
         if let dessert { taken.insert(dessert.session.id) }
 
         // Trim to one screen. The appetizer and the main are the two things the
@@ -164,7 +165,7 @@ nonisolated struct PlanEngine: Sendable {
         return result
     }
 
-    /// "Not today" — returns the next-best candidate for the same course.
+    /// "Shuffle" — returns the next-best candidate for the same course.
     /// A swap is a success signal, not a rejection: it means engaging with the
     /// decision instead of closing the app.
     func alternative(for item: MenuItem, onMenu menu: Menu, input: PlanInput, alreadySeen: Set<String> = []) -> MenuItem? {
@@ -178,7 +179,38 @@ nonisolated struct PlanEngine: Sendable {
         }
         // An appetizer must always be offerable, even on the third swap.
         if item.course == .appetizer {
-            return guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: excluded)
+            if let guaranteed = guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: excluded) {
+                return guaranteed
+            }
+        }
+        // A dessert must always be offerable.
+        if item.course == .dessert {
+            if let guaranteed = guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: excluded) {
+                return guaranteed
+            }
+        }
+        return nil
+    }
+
+    /// Returns the next alternative when cycling back after all unseen options have been seen.
+    func cyclicAlternative(for item: MenuItem, onMenu menu: Menu, input: PlanInput) -> MenuItem? {
+        let checkIn = resolvedCheckIn(input)
+        let stats = HistoryStats(input: input)
+        let scored = rankedCandidates(input, checkIn: checkIn, stats: stats)
+        let excluded = Set(menu.items.map(\.session.id)).union([item.session.id])
+
+        if let next = first(from: scored, course: item.course, excluding: excluded) {
+            return next
+        }
+        if item.course == .appetizer {
+            if let guaranteed = guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: excluded) {
+                return guaranteed
+            }
+        }
+        if item.course == .dessert {
+            if let guaranteed = guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: excluded) {
+                return guaranteed
+            }
         }
         return nil
     }
@@ -429,6 +461,20 @@ nonisolated struct PlanEngine: Sendable {
     private func guaranteedAppetizer(_ input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats, excluding: Set<String>) -> MenuItem? {
         let fallback = catalog.first {
             $0.course == .appetizer
+                && $0.needsNoEquipment
+                && $0.worksAtHome
+                && !$0.source.isVideo
+                && !excluding.contains($0.id)
+                && Set($0.contraindications).isDisjoint(with: input.profile.workArounds)
+        }
+        return fallback.map { candidate(for: $0, input: input, checkIn: checkIn, stats: stats).item }
+    }
+
+    /// A dessert must always be offerable: zero equipment, home-friendly, safe,
+    /// purely for the joy of it.
+    private func guaranteedDessert(_ input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats, excluding: Set<String>) -> MenuItem? {
+        let fallback = catalog.first {
+            $0.course == .dessert
                 && $0.needsNoEquipment
                 && $0.worksAtHome
                 && !$0.source.isVideo

@@ -39,3 +39,8 @@ worker/dist/
 .env
 .env.*
 !.env.example
+
+# Claude Code tooling — skills cache and worktrees, not app content
+.agents/
+.claude/
+skills-lock.json
