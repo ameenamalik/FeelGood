@@ -13,7 +13,7 @@ struct PlayerView: View {
     /// Called on finishing or leaving. `feel` is nil when the session was left
     /// early or the question was skipped — both are fine, and both still count
     /// as having shown up.
-    let onFinish: (Feel?) -> Void
+    let onFinish: (Feel?, Bool) -> Void
     /// When Start was tapped, so the record reflects real elapsed time.
     let startedAt: Date
 
@@ -32,6 +32,8 @@ struct PlayerView: View {
 
             if isDone {
                 completion
+            } else if case .youtube(let videoID, let channel) = session.source {
+                videoPlayer(videoID: videoID, channel: channel)
             } else if let step {
                 running(step)
             }
@@ -48,10 +50,53 @@ struct PlayerView: View {
         }
     }
 
+    private func videoPlayer(videoID: String, channel: String) -> some View {
+        VStack(spacing: FGSpace.l) {
+            HStack {
+                FGQuietButton("Leave", systemImage: "xmark") { onFinish(nil, false) }
+                Spacer()
+                Text(channel)
+                    .font(FGFont.label)
+                    .foregroundStyle(FGColor.inkMuted)
+            }
+
+            Spacer()
+
+            VStack(spacing: FGSpace.m) {
+                Text(session.title)
+                    .font(FGFont.display)
+                    .foregroundStyle(FGColor.ink)
+                    .multilineTextAlignment(.center)
+
+                YouTubeWebView(videoID: videoID)
+                    .aspectRatio(16/9, contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 4)
+
+                if !session.subtitle.isEmpty {
+                    Text(session.subtitle)
+                        .font(FGFont.body)
+                        .foregroundStyle(FGColor.inkMuted)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Spacer()
+
+            FGPrimaryButton(title: "Complete Workout") {
+                withAnimation(FGMotion.gentle) {
+                    isDone = true
+                }
+            }
+        }
+        .padding(FGSpace.page)
+    }
+
     private func running(_ step: Step) -> some View {
         VStack(spacing: FGSpace.l) {
             HStack {
-                FGQuietButton("Leave", systemImage: "xmark") { onFinish(nil) }
+                FGQuietButton("Leave", systemImage: "xmark") { onFinish(nil, false) }
                 Spacer()
                 Text("\(index + 1) of \(steps.count)")
                     .font(FGFont.label)
@@ -110,7 +155,7 @@ struct PlayerView: View {
             HStack(spacing: FGSpace.m) {
                 ForEach(Feel.allCases, id: \.self) { feel in
                     Button {
-                        onFinish(feel)
+                        onFinish(feel, true)
                     } label: {
                         VStack(spacing: FGSpace.xs) {
                             Image(systemName: symbol(for: feel))
@@ -131,7 +176,7 @@ struct PlayerView: View {
             FGQuietButton("Back to last exercise", systemImage: "backward.end") {
                 goBack()
             }
-            FGQuietButton("Skip") { onFinish(nil) }
+            FGQuietButton("Skip") { onFinish(nil, true) }
             Spacer()
         }
         .padding(FGSpace.page)
