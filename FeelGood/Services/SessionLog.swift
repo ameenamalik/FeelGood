@@ -17,7 +17,7 @@ protocol SessionLogging {
     /// A session was finished. `feel` is optional — leaving without answering
     /// is a perfectly good outcome and is still a completion.
     func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?)
-    /// "Not today" on a menu item. A swap is a preference signal, never a failure.
+    /// "Shuffle" on a menu item. A swap is a preference signal, never a failure.
     func recordSwap(of session: Session, at date: Date)
 
     /// The last two weeks, as the engine wants them.

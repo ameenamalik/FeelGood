@@ -2270,6 +2270,540 @@
       "places": [
         "gym"
       ]
+    },
+    {
+      "id": "dessert-living-room-floor-unwind",
+      "title": "Living room floor unwind",
+      "subtitle": "Ten minutes off your feet",
+      "activity": "breathwork",
+      "qualities": [
+        "downRegulation",
+        "mobility"
+      ],
+      "durationMin": 10,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm",
+        "joy"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Get on the floor",
+            "seconds": 60,
+            "cue": "Carpet, rug, or mat. Lie on your back."
+          },
+          {
+            "name": "Knees to chest",
+            "seconds": 180,
+            "cue": "Gentle rock side to side."
+          },
+          {
+            "name": "Constructive rest",
+            "seconds": 300,
+            "cue": "Feet flat on the floor, knees bent together, hands on belly."
+          },
+          {
+            "name": "Roll up",
+            "seconds": 60,
+            "cue": "Take your time coming up."
+          }
+        ]
+      }
+    },
+    {
+      "id": "dessert-barefoot-breath",
+      "title": "Barefoot porch breath",
+      "subtitle": "Five minutes of fresh air and stillness",
+      "activity": "breathwork",
+      "qualities": [
+        "downRegulation"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm",
+        "joy"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Step out",
+            "seconds": 60,
+            "cue": "Barefoot on the porch, balcony, or by an open window."
+          },
+          {
+            "name": "Box breathing",
+            "seconds": 180,
+            "cue": "Inhale for 4, hold for 4, exhale for 4, hold for 4."
+          },
+          {
+            "name": "Look at the horizon",
+            "seconds": 60,
+            "cue": "Soft gaze into the distance."
+          }
+        ]
+      }
+    },
+    {
+      "id": "dessert-favorite-playlist-groove",
+      "title": "Favorite playlist groove",
+      "subtitle": "Two songs, zero rules",
+      "activity": "breathwork",
+      "qualities": [
+        "coordination",
+        "downRegulation"
+      ],
+      "durationMin": 8,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "joy",
+        "energize"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Pick two tracks",
+            "seconds": 60,
+            "cue": "Put on whatever makes you smile."
+          },
+          {
+            "name": "Move freely",
+            "seconds": 360,
+            "cue": "Sway, tap, or shake out whatever feels stiff."
+          },
+          {
+            "name": "Deep breath",
+            "seconds": 60,
+            "cue": "One long exhale to close."
+          }
+        ]
+      }
+    },
+    {
+      "id": "dessert-tea-and-quiet-stretch",
+      "title": "Tea and quiet floor stretch",
+      "subtitle": "Gentle restorative unwinding",
+      "activity": "breathwork",
+      "qualities": [
+        "downRegulation",
+        "mobility"
+      ],
+      "durationMin": 10,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Child's pose",
+            "seconds": 240,
+            "cue": "Sit back on your heels, reach forward softly.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Seated side reach",
+            "seconds": 240,
+            "cue": "Right arm up and over, then left."
+          },
+          {
+            "name": "Quiet stillness",
+            "seconds": 120,
+            "cue": "Sip your tea or just close your eyes."
+          }
+        ]
+      }
+    },
+    {
+      "id": "dessert-park-bench-stretch",
+      "title": "Park bench quiet stretch",
+      "subtitle": "Ten minutes in the open air",
+      "activity": "stretching",
+      "qualities": [
+        "downRegulation",
+        "mobility"
+      ],
+      "durationMin": 10,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "outdoor"
+      ],
+      "places": [
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm",
+        "joy"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Find a bench",
+            "seconds": 60,
+            "cue": "Sit tall, feet flat on the grass or path."
+          },
+          {
+            "name": "Seated figure four",
+            "seconds": 240,
+            "cue": "Ankle over knee, gentle lean forward.",
+            "glossaryID": "figure-four-stretch"
+          },
+          {
+            "name": "Chest opener",
+            "seconds": 240,
+            "cue": "Hands behind bench, open the collarbones."
+          },
+          {
+            "name": "Breathe",
+            "seconds": 60,
+            "cue": "Listen to the park around you."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-doorway-chest-opener",
+      "title": "Doorway chest and spine opener",
+      "subtitle": "Counteract hours of sitting",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "gym"
+      ],
+      "bodyFocus": [
+        "upperBody"
+      ],
+      "intents": [
+        "calm",
+        "strengthen"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Doorway stretch",
+            "seconds": 120,
+            "cue": "Forearms on the door frame, step gently through.",
+            "glossaryID": "doorway-chest-stretch"
+          },
+          {
+            "name": "Thoracic rotation",
+            "seconds": 120,
+            "cue": "Hands behind head, gentle twists side to side.",
+            "glossaryID": "thoracic-rotation"
+          },
+          {
+            "name": "Shoulder rolls",
+            "seconds": 60,
+            "cue": "Roll shoulders backward 5 times, forward 5 times."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-toothbrush-calf-raises",
+      "title": "Calf raises while brushing teeth",
+      "subtitle": "Two minutes of ankle and calf strength",
+      "activity": "strength",
+      "qualities": [
+        "strength",
+        "balance"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "lowerBody"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Slow calf raises",
+            "seconds": 120,
+            "cue": "Rise up on toes, pause, lower slowly for 3 seconds."
+          },
+          {
+            "name": "Single leg hold",
+            "seconds": 120,
+            "cue": "60 seconds per side standing tall.",
+            "glossaryID": "single-leg-stand"
+          },
+          {
+            "name": "Ankle circles",
+            "seconds": 60,
+            "cue": "Clockwise and counterclockwise."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-desk-wrist-reset",
+      "title": "Desk wrist and forearm reset",
+      "subtitle": "Five minutes for tired hands and forearms",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "gym"
+      ],
+      "bodyFocus": [
+        "upperBody"
+      ],
+      "intents": [
+        "calm"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Forearm extensor stretch",
+            "seconds": 120,
+            "cue": "Arm straight, pull fingertips down gently.",
+            "glossaryID": "forearm-stretch"
+          },
+          {
+            "name": "Forearm flexor stretch",
+            "seconds": 120,
+            "cue": "Arm straight, pull fingertips back towards wrist."
+          },
+          {
+            "name": "Finger fan and fist",
+            "seconds": 60,
+            "cue": "Spread fingers wide, make gentle fists."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-stairs-step-ups",
+      "title": "Five minutes of stairs",
+      "subtitle": "Quick leg drive on the bottom step",
+      "activity": "agility",
+      "qualities": [
+        "agility",
+        "endurance",
+        "strength"
+      ],
+      "durationMin": 5,
+      "intensity": 2,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "outdoors",
+        "gym"
+      ],
+      "bodyFocus": [
+        "lowerBody"
+      ],
+      "intents": [
+        "energize",
+        "strengthen"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Rhythm step-ups",
+            "seconds": 120,
+            "cue": "Step up, step down on the bottom stair."
+          },
+          {
+            "name": "Rest and shake out",
+            "seconds": 30,
+            "cue": "Breathe."
+          },
+          {
+            "name": "Side step-ups",
+            "seconds": 120,
+            "cue": "60s leading left, 60s leading right."
+          },
+          {
+            "name": "Calf stretch on the edge",
+            "seconds": 30,
+            "cue": "Heel drop off the step edge.",
+            "glossaryID": "calf-stretch"
+          }
+        ]
+      },
+      "contraindications": [
+        "knees"
+      ]
+    },
+    {
+      "id": "side-quick-block-loop",
+      "title": "One lap around the block",
+      "subtitle": "Fresh air between tasks",
+      "activity": "walking",
+      "qualities": [
+        "endurance",
+        "downRegulation"
+      ],
+      "durationMin": 8,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "outdoor"
+      ],
+      "places": [
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "energize",
+        "calm"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Step out",
+            "seconds": 60,
+            "cue": "Lace up and head out the front door."
+          },
+          {
+            "name": "Brisk walk",
+            "seconds": 360,
+            "cue": "Natural stride, arms swinging freely."
+          },
+          {
+            "name": "Cool down walk",
+            "seconds": 60,
+            "cue": "Slow pace back to your door."
+          }
+        ]
+      }
     }
   ],
   "glossary": [

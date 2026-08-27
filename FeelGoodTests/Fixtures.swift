@@ -170,6 +170,8 @@ enum Fixture {
         // Dessert.
         session(id: "d-dance", activity: .dance, qualities: [.coordination],
                 durationMin: 10, intensity: 2, course: .dessert, intents: [.joy]),
+        session(id: "d-legs-up", activity: .breathwork, qualities: [.downRegulation],
+                durationMin: 10, intensity: 1, course: .dessert, intents: [.calm]),
 
         // Special — needs a pool, and is planned ahead rather than picked today.
         session(id: "sp-swim", activity: .swimming, qualities: [.endurance],

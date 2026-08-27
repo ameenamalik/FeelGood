@@ -2,13 +2,18 @@
 //  ExerciseDemo.swift
 //  FeelGood
 //
-//  Bundled line-art animation frames, keyed by glossary id. Most exercises
-//  don't have one yet — adding a demo is dropping numbered PNGs into
-//  ExerciseDemos/, never a code change. Frames are white strokes on a
-//  transparent field so they render as template images and pick up whatever
-//  ink colour the screen is using.
+//  Bundled exercise demos, keyed by glossary id. Most exercises don't have
+//  one yet — adding a demo is dropping a file into ExerciseDemos/, never a
+//  code change. Two formats coexist during the move to house-drawn art:
 //
-//  Artwork: Bryl Lim (https://bryllim.com), building on Everkinetic
+//  - `{id}.json`: a Lottie animation, our own art, checked in-house.
+//  - `{id}-{n}.png`: the older numbered-frame flipbook. Frames are white
+//    strokes on a transparent field so they render as template images and
+//    pick up whatever ink colour the screen is using.
+//
+//  Lottie is preferred where both exist. See ExerciseDemoView.
+//
+//  PNG artwork: Bryl Lim (https://bryllim.com), building on Everkinetic
 //  (https://github.com/everkinetic/data). CC BY-SA 4.0 — unmodified here.
 //  See FeelGood/Content/ExerciseDemos/ATTRIBUTION.md.
 //
@@ -16,6 +21,12 @@
 import Foundation
 
 nonisolated enum ExerciseDemo {
+    /// A bundled Lottie animation for a glossary id, if one has been drawn.
+    static func lottieURL(for glossaryID: String?) -> URL? {
+        guard let glossaryID else { return nil }
+        return Bundle.main.url(forResource: glossaryID, withExtension: "json")
+    }
+
     /// Bundled frames for a glossary id, in order. Empty when none exist.
     static func frameURLs(for glossaryID: String?) -> [URL] {
         guard let glossaryID else { return [] }
