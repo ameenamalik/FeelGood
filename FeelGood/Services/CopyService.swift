@@ -29,7 +29,10 @@ nonisolated protocol CopyTransport: Sendable {
 /// `POST`s to the Worker and decodes `{ "line": "..." }`.
 nonisolated struct URLSessionCopyTransport: CopyTransport {
     func fetchLine(payload: CopyPayload, timeout: TimeInterval) async throws -> String {
-        var request = URLRequest(url: CopyServiceConstants.workerBaseURL)
+        guard let workerBaseURL = CopyServiceConstants.workerBaseURL else {
+            throw CopyTransportError.notConfigured
+        }
+        var request = URLRequest(url: workerBaseURL)
         request.httpMethod = "POST"
         request.timeoutInterval = timeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -52,6 +55,7 @@ nonisolated struct URLSessionCopyTransport: CopyTransport {
     }
 
     private enum CopyTransportError: Error {
+        case notConfigured
         case badResponse
         case emptyLine
     }

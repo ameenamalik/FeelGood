@@ -45,9 +45,12 @@ npm run deploy:production   # production
 Each command prints the Worker's `*.workers.dev` URL. Copy it into the Xcode
 project's `COPY_WORKER_BASE_URL` build setting for the matching configuration
 (`FeelGood.xcodeproj/project.pbxproj` — Debug gets the dev URL, Release gets
-the production one; both currently hold placeholder values that need
-replacing), then append `/copy` to match what
+the production one), then append `/copy` to match what
 `FeelGood/Support/CopyServiceConstants.swift` expects to POST to.
+
+If the setting is absent or invalid, the app keeps its deterministic headline
+and skips the optional copy upgrade. An unconfigured Worker must never prevent
+the app from launching.
 
 ## Verifying it's up
 

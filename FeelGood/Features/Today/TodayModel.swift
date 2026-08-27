@@ -11,6 +11,7 @@ import Observation
 import WidgetKit
 
 @Observable
+@MainActor
 final class TodayModel {
     let store: any ContentProviding
     /// Rebuilt when somebody keeps a workout of their own. Not observed: the
@@ -259,7 +260,7 @@ final class TodayModel {
         let stats = HistoryStats(input: input(now: now))
         let copy = copy
 
-        copyTask = Task { [weak self] in
+        copyTask = Task { @MainActor [weak self] in
             guard let line = await copy.upgradedHeadline(menu: requestedMenu, checkIn: requestedCheckIn, stats: stats) else { return }
             guard let self, !Task.isCancelled else { return }
             // Only lands if the menu/check-in this was asked about are still
