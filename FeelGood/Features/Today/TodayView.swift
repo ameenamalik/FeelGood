@@ -169,6 +169,8 @@ struct CourseTag: View {
         Text(course.label)
             .font(FGFont.label)
             .foregroundStyle(course.accentText)
+            .textCase(.uppercase)
+            .tracking(1.1)
             .padding(.horizontal, FGSpace.s)
             .padding(.vertical, FGSpace.xs)
             .background(
