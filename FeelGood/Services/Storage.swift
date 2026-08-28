@@ -18,6 +18,7 @@
 
 import Foundation
 import OSLog
+import PostHog
 import SwiftData
 
 struct Storage {
@@ -55,6 +56,11 @@ struct Storage {
         } catch {
             // Left exactly where it is. See rule 1 above.
             logger.error("Store could not be opened, running in memory: \(error, privacy: .public)")
+            Analytics.log(
+                "Store could not be opened, running in memory",
+                level: .error,
+                attributes: ["error": String(describing: error)]
+            )
             return Storage(container: ephemeralContainer(schema), isEphemeral: true)
         }
     }
@@ -86,6 +92,11 @@ struct Storage {
             )
         } catch {
             logger.error("Could not prepare Application Support: \(error, privacy: .public)")
+            Analytics.log(
+                "Could not prepare Application Support",
+                level: .error,
+                attributes: ["error": String(describing: error)]
+            )
         }
     }
 }

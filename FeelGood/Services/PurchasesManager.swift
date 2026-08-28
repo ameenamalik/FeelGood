@@ -5,6 +5,7 @@
 
 import Foundation
 import Observation
+import PostHog
 import RevenueCat
 import os
 
@@ -83,6 +84,7 @@ final class PurchasesManager {
         } catch {
             lastError = .other(error)
             logger.error("logIn failed: \(error.localizedDescription)")
+            Analytics.log("logIn failed", level: .error, attributes: ["error": error.localizedDescription])
         }
     }
 
@@ -93,6 +95,7 @@ final class PurchasesManager {
         } catch {
             lastError = .other(error)
             logger.error("logOut failed: \(error.localizedDescription)")
+            Analytics.log("logOut failed", level: .error, attributes: ["error": error.localizedDescription])
         }
     }
 
@@ -106,7 +109,9 @@ final class PurchasesManager {
             for await info in Purchases.shared.customerInfoStream {
                 self.customerInfo = info
                 self.hasLoadedCustomerInfo = true
-                self.logger.debug("CustomerInfo updated — pro active: \(info.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true)")
+                let proActive = info.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+                self.logger.debug("CustomerInfo updated — pro active: \(proActive)")
+                Analytics.log("CustomerInfo updated", level: .debug, attributes: ["pro_active": proActive])
             }
         }
     }
@@ -119,6 +124,7 @@ final class PurchasesManager {
         } catch {
             lastError = .offeringsFetchFailed(error)
             logger.error("Failed to fetch offerings: \(error.localizedDescription)")
+            Analytics.log("Failed to fetch offerings", level: .error, attributes: ["error": error.localizedDescription])
         }
     }
 
@@ -141,6 +147,7 @@ final class PurchasesManager {
         } catch {
             lastError = .purchaseFailed(error)
             logger.error("Purchase failed: \(error.localizedDescription)")
+            Analytics.log("Purchase failed", level: .error, attributes: ["error": error.localizedDescription])
             return false
         }
     }
@@ -158,6 +165,7 @@ final class PurchasesManager {
         } catch {
             lastError = .restoreFailed(error)
             logger.error("Restore failed: \(error.localizedDescription)")
+            Analytics.log("Restore failed", level: .error, attributes: ["error": error.localizedDescription])
             return false
         }
     }
