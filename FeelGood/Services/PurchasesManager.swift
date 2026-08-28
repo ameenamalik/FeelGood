@@ -5,6 +5,7 @@
 
 import Foundation
 import Observation
+import PostHog
 import RevenueCat
 import os
 
@@ -26,8 +27,23 @@ final class PurchasesManager {
     private(set) var hasLoadedCustomerInfo = false
 
     var isProUnlocked: Bool {
-        customerInfo?.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+        #if DEBUG
+        if Self.debugForceProUnlocked { return true }
+        #endif
+        return customerInfo?.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
     }
+
+    #if DEBUG
+    /// Debug-only override so every Pro-gated flow (the copy upgrade,
+    /// `ProGateView`, etc.) can be tested without a sandbox purchase.
+    /// Reachable from `DebugMenu`; persisted so it survives a relaunch
+    /// mid-testing. Compiled out of Release entirely — there is no key for
+    /// a reviewer or a real build to stumble into.
+    static var debugForceProUnlocked: Bool {
+        get { UserDefaults.standard.bool(forKey: "debugForceProUnlocked") }
+        set { UserDefaults.standard.set(newValue, forKey: "debugForceProUnlocked") }
+    }
+    #endif
 
     /// The current offering's monthly/yearly packages, when available, for direct purchase buttons.
     var monthlyPackage: Package? { offerings?.current?.monthly }
@@ -65,6 +81,7 @@ final class PurchasesManager {
         } catch {
             lastError = .other(error)
             logger.error("logIn failed: \(error.localizedDescription)")
+            Analytics.log("logIn failed", level: .error, attributes: ["error": error.localizedDescription])
         }
     }
 
@@ -75,6 +92,7 @@ final class PurchasesManager {
         } catch {
             lastError = .other(error)
             logger.error("logOut failed: \(error.localizedDescription)")
+            Analytics.log("logOut failed", level: .error, attributes: ["error": error.localizedDescription])
         }
     }
 
@@ -88,7 +106,9 @@ final class PurchasesManager {
             for await info in Purchases.shared.customerInfoStream {
                 self.customerInfo = info
                 self.hasLoadedCustomerInfo = true
-                self.logger.debug("CustomerInfo updated — pro active: \(info.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true)")
+                let proActive = info.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+                self.logger.debug("CustomerInfo updated — pro active: \(proActive)")
+                Analytics.log("CustomerInfo updated", level: .debug, attributes: ["pro_active": proActive])
             }
         }
     }
@@ -101,6 +121,7 @@ final class PurchasesManager {
         } catch {
             lastError = .offeringsFetchFailed(error)
             logger.error("Failed to fetch offerings: \(error.localizedDescription)")
+            Analytics.log("Failed to fetch offerings", level: .error, attributes: ["error": error.localizedDescription])
         }
     }
 
@@ -113,10 +134,23 @@ final class PurchasesManager {
             let result = try await Purchases.shared.purchase(package: package)
             guard !result.userCancelled else { return false }
             customerInfo = result.customerInfo
-            return result.customerInfo.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+            let unlocked = result.customerInfo.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+            if unlocked {
+                Analytics.capture("subscription_purchased", properties: [
+                    "package_id": package.identifier
+                ])
+            }
+            return unlocked
+        } catch ErrorCode.paymentPendingError {
+            // Ask to Buy / deferred approval: no unlock yet — Transaction.updates
+            // (via customerInfoStream) delivers entitlement once a parent approves.
+            lastError = .purchasePending
+            logger.info("Purchase pending approval (Ask to Buy or deferred transaction).")
+            return false
         } catch {
             lastError = .purchaseFailed(error)
             logger.error("Purchase failed: \(error.localizedDescription)")
+            Analytics.log("Purchase failed", level: .error, attributes: ["error": error.localizedDescription])
             return false
         }
     }
@@ -126,10 +160,15 @@ final class PurchasesManager {
         do {
             let info = try await Purchases.shared.restorePurchases()
             customerInfo = info
-            return info.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+            let unlocked = info.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+            if unlocked {
+                Analytics.capture("subscription_restored")
+            }
+            return unlocked
         } catch {
             lastError = .restoreFailed(error)
             logger.error("Restore failed: \(error.localizedDescription)")
+            Analytics.log("Restore failed", level: .error, attributes: ["error": error.localizedDescription])
             return false
         }
     }
@@ -138,6 +177,7 @@ final class PurchasesManager {
 enum PurchasesManagerError: LocalizedError, Identifiable {
     case offeringsFetchFailed(Error)
     case purchaseFailed(Error)
+    case purchasePending
     case restoreFailed(Error)
     case other(Error)
 
@@ -149,6 +189,8 @@ enum PurchasesManagerError: LocalizedError, Identifiable {
             "Couldn't load subscription plans. \(error.localizedDescription)"
         case .purchaseFailed(let error):
             "Purchase failed. \(error.localizedDescription)"
+        case .purchasePending:
+            "Waiting for approval — ask the account holder to approve this purchase, then check back."
         case .restoreFailed(let error):
             "Restore failed. \(error.localizedDescription)"
         case .other(let error):

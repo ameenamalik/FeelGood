@@ -203,6 +203,7 @@ struct OnboardingView: View {
                 isEnabled: model.canAdvance
             ) {
                 if model.isLastCard {
+                    Analytics.capture("onboarding_completed")
                     onFinish(model)
                 } else {
                     model.advance()

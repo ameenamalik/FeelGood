@@ -44,10 +44,32 @@ struct CopyServiceTests {
         HistoryStats(input: input())
     }
 
+    @Test("Not Pro never reaches the transport, and returns nil")
+    func notProReturnsNilWithoutCallingTransport() async {
+        let transport = FakeCopyTransport(result: .success("Here's a lighter one."))
+        let service = CopyService(transport: transport, timeout: 1, isProUnlocked: { false })
+
+        let line = await service.upgradedHeadline(menu: menu(), checkIn: checkIn(), stats: stats())
+
+        #expect(line == nil)
+        #expect(await transport.callCount == 0, "A non-Pro check must never generate a line, on-device or not.")
+    }
+
+    @Test("Pro reaches the transport as usual")
+    func proCallsTransport() async {
+        let transport = FakeCopyTransport(result: .success("Here's a lighter one."))
+        let service = CopyService(transport: transport, timeout: 1, isProUnlocked: { true })
+
+        let line = await service.upgradedHeadline(menu: menu(), checkIn: checkIn(), stats: stats())
+
+        #expect(line == "Here's a lighter one.")
+        #expect(await transport.callCount == 1)
+    }
+
     @Test("A successful response is returned")
     func successReturnsLine() async {
         let transport = FakeCopyTransport(result: .success("Here's a lighter one."))
-        let service = CopyService(transport: transport, timeout: 1)
+        let service = CopyService(transport: transport, timeout: 1, isProUnlocked: { true })
 
         let line = await service.upgradedHeadline(menu: menu(), checkIn: checkIn(), stats: stats())
 
@@ -58,7 +80,7 @@ struct CopyServiceTests {
     @Test("An identical request a second time hits the cache, not the transport")
     func identicalRequestIsCached() async {
         let transport = FakeCopyTransport(result: .success("Here's a lighter one."))
-        let service = CopyService(transport: transport, timeout: 1)
+        let service = CopyService(transport: transport, timeout: 1, isProUnlocked: { true })
 
         _ = await service.upgradedHeadline(menu: menu(), checkIn: checkIn(), stats: stats())
         let second = await service.upgradedHeadline(menu: menu(), checkIn: checkIn(), stats: stats())
@@ -70,7 +92,7 @@ struct CopyServiceTests {
     @Test("A thrown transport error falls back to nil, never crashes")
     func transportErrorReturnsNil() async {
         let transport = FakeCopyTransport(result: .failure(FakeCopyTransportError.boom))
-        let service = CopyService(transport: transport, timeout: 1)
+        let service = CopyService(transport: transport, timeout: 1, isProUnlocked: { true })
 
         let line = await service.upgradedHeadline(menu: menu(), checkIn: checkIn(), stats: stats())
 
@@ -90,7 +112,7 @@ struct CopyServiceTests {
     @Test("A failure is never cached")
     func failureIsNotCached() async {
         let transport = FakeCopyTransport(result: .failure(FakeCopyTransportError.boom))
-        let service = CopyService(transport: transport, timeout: 1)
+        let service = CopyService(transport: transport, timeout: 1, isProUnlocked: { true })
 
         _ = await service.upgradedHeadline(menu: menu(), checkIn: checkIn(), stats: stats())
         await transport.setResult(.success("Recovered."))
