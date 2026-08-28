@@ -136,6 +136,12 @@ struct LogWorkoutSheet: View {
     private func done() {
         guard let activity else { return }
         let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        Analytics.capture("workout_logged", properties: [
+            "activity": activity.rawValue,
+            "duration_minutes": durationMin,
+            "intensity": intensity,
+            "saved_for_later": isKept
+        ])
         onDone(
             LoggedWorkout(
                 activity: activity,

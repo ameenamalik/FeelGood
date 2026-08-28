@@ -69,17 +69,32 @@ nonisolated struct URLSessionCopyTransport: CopyTransport {
 /// relaunch — the menu changes only a handful of times a day, so identical
 /// state not re-billing *within a session* is the only guarantee worth the
 /// complexity here.
+///
+/// PRD §10: this line is a Pro feature ("Warm, written-for-you coaching
+/// voice"). The Worker design would have checked this server-side before
+/// generating anything; `MLXCopyTransport` runs entirely on-device and has
+/// no server to enforce it, so the check happens here instead, fresh on
+/// every call rather than once at construction, so a purchase mid-session
+/// starts producing upgraded copy without needing a relaunch.
 actor CopyService: CopyProviding {
     private let transport: any CopyTransport
     private let timeout: TimeInterval
+    private let isProUnlocked: @Sendable () async -> Bool
     private var cache: [CopyPayload: String] = [:]
 
-    init(transport: any CopyTransport = URLSessionCopyTransport(), timeout: TimeInterval = CopyServiceConstants.requestTimeout) {
+    init(
+        transport: any CopyTransport = MLXCopyTransport(),
+        timeout: TimeInterval = CopyServiceConstants.requestTimeout,
+        isProUnlocked: @escaping @Sendable () async -> Bool = { await PurchasesManager.shared.isProUnlocked }
+    ) {
         self.transport = transport
         self.timeout = timeout
+        self.isProUnlocked = isProUnlocked
     }
 
     func upgradedHeadline(menu: Menu, checkIn: PlanCheckIn, stats: HistoryStats) async -> String? {
+        guard await isProUnlocked() else { return nil }
+
         let payload = CopyPayload(menu: menu, checkIn: checkIn, stats: stats, anonInstallID: AnonInstallID.current)
 
         if let cached = cache[payload] {
