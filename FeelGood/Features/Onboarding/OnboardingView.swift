@@ -150,8 +150,6 @@ struct OnboardingView: View {
             Text(title)
                 .font(FGFont.label)
                 .foregroundStyle(FGColor.inkMuted)
-                .textCase(.uppercase)
-                .tracking(1.1)
             FlowRow(spacing: FGSpace.s, maxPerRow: typeSize.isAccessibilitySize ? 1 : 3) { content() }
         }
     }
