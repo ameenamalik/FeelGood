@@ -75,11 +75,8 @@ nonisolated extension Session {
 
 // MARK: The check-in
 
-// Every emoji below is checked against one rule: no red anywhere. That rules
-// out the obvious picks — 🪫 for low energy (Apple renders it red, and it is
-// precisely the "you're behind" signal this app refuses to send), ⏰, and any
-// house glyph, whose roofs are red-brown. Nothing medical, either: no bandages
-// and no pills next to a question about someone's body.
+// SF Symbols keep the check-in visually consistent with onboarding. Nothing
+// medical: no bandages or pills next to a question about someone's body.
 
 nonisolated extension Energy {
     var checkInLabel: String {
@@ -92,11 +89,11 @@ nonisolated extension Energy {
 
     /// Weather, not a battery meter — a cloudy morning is a kind of day, not a
     /// depleted version of a sunny one.
-    var checkInEmoji: String {
+    var checkInSymbol: String {
         switch self {
-        case .low: "☁️"
-        case .steady: "🌤️"
-        case .strong: "☀️"
+        case .low: "cloud"
+        case .steady: "cloud.sun"
+        case .strong: "sun.max"
         }
     }
 }
@@ -118,11 +115,11 @@ nonisolated extension TimeBudget {
         }
     }
 
-    var checkInEmoji: String {
+    var checkInSymbol: String {
         switch self {
-        case .aLittle: "⏳"
-        case .some: "🕰️"
-        case .plenty: "🪁"
+        case .aLittle: "10.circle"
+        case .some: "30.circle"
+        case .plenty: "45.circle"
         }
     }
 }
@@ -136,13 +133,11 @@ extension PlaceIntent {
         }
     }
 
-    /// An arm rather than a weightlifter: the base glyph renders as a man, and
-    /// this app does not assume who is reading it.
-    var checkInEmoji: String {
+    var checkInSymbol: String {
         switch self {
-        case .stayingIn: "🛋️"
-        case .happyToGoOut: "🌳"
-        case .atTheGym: "💪"
+        case .stayingIn: "house"
+        case .happyToGoOut: "tree"
+        case .atTheGym: "dumbbell"
         }
     }
 }
@@ -158,13 +153,13 @@ nonisolated extension BodyState {
         }
     }
 
-    var checkInEmoji: String {
+    var checkInSymbol: String {
         switch self {
-        case .sore: "😔"
-        case .stiff: "🪵"
-        case .stressed: "🌀"
-        case .cramping: "🌊"
-        case .good: "🌼"
+        case .sore: "figure.walk.motion"
+        case .stiff: "figure.flexibility"
+        case .stressed: "brain.head.profile"
+        case .cramping: "water.waves"
+        case .good: "sparkles"
         }
     }
 }

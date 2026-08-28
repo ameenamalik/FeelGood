@@ -13,13 +13,17 @@ struct AccessChoices: View {
     @Binding var activities: Set<Activity>
     @Binding var equipment: Set<Equipment>
     @Binding var places: Set<Place>
+    var showsSymbols = false
+    var accent: FGAccent = .ink
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
     /// A gym is asked about as a *place*, and the kit inside it follows from
     /// that — see `Place.impliedEquipment`. Asking again under Equipment would
     /// be the same question twice with two ways to answer it wrong.
-    private static let equipmentChoices = Equipment.allCases.filter { $0 != .none && $0 != .gym }
+    private static let equipmentChoices = Equipment.allCases.filter {
+        $0 != .none && $0 != .gym && $0 != .outdoor
+    }
 
     /// Only movement that genuinely depends on owning something or going
     /// somewhere is worth a chip. Breathwork, qi gong, carries and footwork
@@ -31,21 +35,36 @@ struct AccessChoices: View {
         VStack(alignment: .leading, spacing: FGSpace.l) {
             group("Movement") {
                 ForEach(Self.movementChoices, id: \.self) { activity in
-                    FGChoice(title: activity.label, isSelected: activities.contains(activity)) {
+                    FGChoice(
+                        title: activity.label,
+                        systemImage: showsSymbols ? activity.onboardingSymbol : nil,
+                        accent: accent,
+                        isSelected: activities.contains(activity)
+                    ) {
                         toggle(activity, in: $activities)
                     }
                 }
             }
             group("Equipment") {
                 ForEach(Self.equipmentChoices, id: \.self) { item in
-                    FGChoice(title: item.label ?? "", isSelected: equipment.contains(item)) {
+                    FGChoice(
+                        title: item.label ?? "",
+                        systemImage: showsSymbols ? item.onboardingSymbol : nil,
+                        accent: accent,
+                        isSelected: equipment.contains(item)
+                    ) {
                         toggle(item, in: $equipment)
                     }
                 }
             }
             group("Where") {
                 ForEach(Place.allCases, id: \.self) { place in
-                    FGChoice(title: place.label, isSelected: places.contains(place)) {
+                    FGChoice(
+                        title: place.label,
+                        systemImage: showsSymbols ? place.onboardingSymbol : nil,
+                        accent: accent,
+                        isSelected: places.contains(place)
+                    ) {
                         toggle(place, in: $places)
                     }
                 }
@@ -56,11 +75,13 @@ struct AccessChoices: View {
     private func group<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
             Text(title)
-                .font(FGFont.label)
-                .foregroundStyle(FGColor.inkMuted)
-                .textCase(.uppercase)
-                .tracking(1.1)
-            FlowRow(spacing: FGSpace.s, maxPerRow: typeSize.isAccessibilitySize ? 1 : 3) { content() }
+                .font(FGFont.body.weight(.medium))
+                .foregroundStyle(FGColor.ink)
+            FlowRow(
+                spacing: showsSymbols ? 12 : FGSpace.s,
+                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
+                minimumItemWidth: showsSymbols ? 110 : 1
+            ) { content() }
         }
     }
 

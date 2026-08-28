@@ -80,11 +80,13 @@ nonisolated enum FGColor {
     // MARK: Accents darkened enough to carry text or an icon on a light page
 
     /// 5.7:1 on white.
-    static let skyDeep = Color(light: 0x0A6E9A, dark: 0x8FD3F2)
+    static let skyDeep = Color(light: 0x075173, dark: 0x8FD3F2)
     /// 6.3:1 on white.
-    static let limeDeep = Color(light: 0x4F6810, dark: 0xD7F07E)
+    static let limeDeep = Color(light: 0x344707, dark: 0xD7F07E)
+    /// 6.1:1 on white.
+    static let lavenderDeep = Color(light: 0x314477, dark: 0xD7DEFA)
     /// 7.6:1 on white.
-    static let pinkDeep = Color(light: 0x8E2F68, dark: 0xF6C3DF)
+    static let pinkDeep = Color(light: 0x6E1F4D, dark: 0xF6C3DF)
 
     /// The cloud mark. Used once per screen at most, never as a background.
     static let cloud = LinearGradient(
@@ -127,10 +129,10 @@ nonisolated struct FGAccent: Equatable {
     let text: Color
 
     static let ink      = FGAccent(fill: FGColor.ink,      text: FGColor.bg)
-    static let sky      = FGAccent(fill: FGColor.sky,      text: FGColor.inkOnAccent)
-    static let lime     = FGAccent(fill: FGColor.lime,     text: FGColor.inkOnAccent)
-    static let lavender = FGAccent(fill: FGColor.lavender, text: FGColor.inkOnAccent)
-    static let pink     = FGAccent(fill: FGColor.pink,     text: FGColor.inkOnAccent)
+    static let sky      = FGAccent(fill: FGColor.sky,      text: FGColor.skyDeep)
+    static let lime     = FGAccent(fill: FGColor.lime,     text: FGColor.limeDeep)
+    static let lavender = FGAccent(fill: FGColor.lavender, text: FGColor.lavenderDeep)
+    static let pink     = FGAccent(fill: FGColor.pink,     text: FGColor.pinkDeep)
 }
 
 // MARK: The check-in's four questions, one colour each

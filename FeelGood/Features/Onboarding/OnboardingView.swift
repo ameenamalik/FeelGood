@@ -23,43 +23,56 @@ struct OnboardingView: View {
             FGBrandWash(reach: 0.5)
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: FGSpace.l) {
-                progressBar
+            GeometryReader { geometry in
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: FGSpace.l) {
+                            progressBar
+                                .id("onboarding-top")
 
-                VStack(alignment: .leading, spacing: FGSpace.s) {
-                    Text(model.card.title)
-                        .font(FGFont.title)
-                        .foregroundStyle(FGColor.ink)
-                        .fixedSize(horizontal: false, vertical: true)
+                            VStack(alignment: .leading, spacing: FGSpace.s) {
+                                Text(model.card.title)
+                                    .font(FGFont.title)
+                                    .foregroundStyle(FGColor.ink)
+                                    .fixedSize(horizontal: false, vertical: true)
 
-                    if let detail = model.card.detail {
-                        Text(detail)
-                            .font(FGFont.reason)
-                            .foregroundStyle(FGColor.inkMuted)
-                            .fixedSize(horizontal: false, vertical: true)
+                                if let detail = model.card.detail {
+                                    Text(detail)
+                                        .font(FGFont.reason)
+                                        .foregroundStyle(FGColor.inkMuted)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityAddTraits(.isHeader)
+
+                            answers
+                        }
+                        .frame(
+                            minHeight: max(0, geometry.size.height - (FGSpace.page * 2)),
+                            alignment: .top
+                        )
+                        .padding(FGSpace.page)
+                        .fgAnimation(FGMotion.gentle, value: model.card)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .onChange(of: model.card) { _, _ in
+                        scrollProxy.scrollTo("onboarding-top", anchor: .top)
                     }
                 }
-                .accessibilityElement(children: .combine)
-                .accessibilityAddTraits(.isHeader)
-
-                ScrollView {
-                    answers
-                        .padding(.bottom, FGSpace.m)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    footer
+                        .padding(.horizontal, FGSpace.page)
+                        .padding(.vertical, FGSpace.s)
                 }
-                .scrollBounceBehavior(.basedOnSize)
-
-                footer
             }
-            .padding(FGSpace.page)
-            .fgAnimation(FGMotion.gentle, value: model.card)
         }
     }
 
     // MARK: Progress
 
     private var progressBar: some View {
-        // A quiet position indicator, not a score. Six short questions is
-        // worth showing; anything more would need a different app.
+        // A quiet position indicator, not a score.
         HStack(spacing: FGSpace.xs) {
             ForEach(OnboardingModel.Card.allCases, id: \.self) { card in
                 Capsule()
@@ -80,64 +93,64 @@ struct OnboardingView: View {
             AccessChoices(
                 activities: $model.activities,
                 equipment: $model.equipment,
-                places: $model.places
+                places: $model.places,
+                showsSymbols: true,
+                accent: .sky
             )
 
         case .cadence:
             VStack(alignment: .leading, spacing: FGSpace.l) {
-                answerGroup("Across the week") {
+                answerGroup("Each week") {
                     ForEach(Cadence.allCases, id: \.self) { option in
-                        FGChoice(title: option.label, isSelected: model.cadence == option) {
+                        FGChoice(title: option.label, systemImage: option.onboardingSymbol, accent: .lime, isSelected: model.cadence == option) {
                             withAnimation(FGMotion.gentle) { model.cadence = option }
                         }
                     }
                 }
-                answerGroup("Within a day") {
+                answerGroup("Each day") {
                     ForEach(MovementMoments.allCases, id: \.self) { option in
-                        FGChoice(title: option.label, isSelected: model.moments == option) {
+                        FGChoice(title: option.label, systemImage: option.onboardingSymbol, accent: .lime, isSelected: model.moments == option) {
                             withAnimation(FGMotion.gentle) { model.moments = option }
                         }
                     }
                 }
             }
 
-        case .time:
-            VStack(alignment: .leading, spacing: FGSpace.l) {
-                answerGroup("On a normal day") {
-                    ForEach([10, 20, 30, 45], id: \.self) { minutes in
-                        FGChoice(title: minutes == 45 ? "45+ min" : "\(minutes) min", isSelected: model.realisticMinutes == minutes) {
-                            withAnimation(FGMotion.gentle) { model.realisticMinutes = minutes }
-                        }
-                    }
-                }
-                answerGroup("When you have the most in you") {
-                    ForEach(TimeOfDay.allCases, id: \.self) { option in
-                        FGChoice(title: option.label, isSelected: model.timeOfDay == option) {
-                            withAnimation(FGMotion.gentle) { model.timeOfDay = option }
-                        }
-                    }
-                }
-            }
-
         case .intent:
-            VStack(spacing: FGSpace.s) {
+            FlowRow(
+                spacing: 12,
+                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
+                minimumItemWidth: 110
+            ) {
                 ForEach(Intent.allCases, id: \.self) { intent in
-                    FGChoice(title: intent.label, isSelected: model.intents.contains(intent)) {
+                    FGChoice(
+                        title: intent.label,
+                        systemImage: intent.onboardingSymbol,
+                        accent: .lavender,
+                        isSelected: model.intents.contains(intent)
+                    ) {
                         toggle(intent, in: \.intents)
                     }
                 }
             }
 
         case .workArounds:
-            VStack(alignment: .leading, spacing: FGSpace.s) {
-                FlowRow(spacing: FGSpace.s, maxPerRow: typeSize.isAccessibilitySize ? 1 : 3) {
-                    ForEach(WorkAround.allCases, id: \.self) { workAround in
-                        FGChoice(title: workAround.label, isSelected: model.workArounds.contains(workAround)) {
-                            toggle(workAround, in: \.workArounds)
-                        }
+            FlowRow(
+                spacing: 12,
+                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
+                minimumItemWidth: 110
+            ) {
+                ForEach(WorkAround.allCases, id: \.self) { workAround in
+                    FGChoice(
+                        title: workAround.label,
+                        systemImage: workAround.onboardingSymbol,
+                        accent: .pink,
+                        isSelected: model.workArounds.contains(workAround)
+                    ) {
+                        toggle(workAround, in: \.workArounds)
                     }
                 }
-                FGChoice(title: "None of these", isSelected: model.workArounds.isEmpty) {
+                FGChoice(title: "None of these", systemImage: "checkmark", accent: .pink, isSelected: model.workArounds.isEmpty) {
                     withAnimation(FGMotion.gentle) { model.workArounds = [] }
                 }
             }
@@ -148,11 +161,14 @@ struct OnboardingView: View {
     private func answerGroup<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
             Text(title)
-                .font(FGFont.label)
-                .foregroundStyle(FGColor.inkMuted)
-                .textCase(.uppercase)
-                .tracking(1.1)
-            FlowRow(spacing: FGSpace.s, maxPerRow: typeSize.isAccessibilitySize ? 1 : 3) { content() }
+                .font(FGFont.body.weight(.medium))
+                .foregroundStyle(FGColor.ink)
+
+            FlowRow(
+                spacing: 12,
+                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
+                minimumItemWidth: 110
+            ) { content() }
         }
     }
 
@@ -170,6 +186,18 @@ struct OnboardingView: View {
 
     private var footer: some View {
         VStack(spacing: FGSpace.s) {
+            if !model.canAdvance {
+                Text("Pick at least one thing to get started.")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+            }
+
+            if !model.isFirstCard {
+                FGQuietButton("Back", systemImage: "chevron.left") {
+                    model.goBack()
+                }
+            }
+
             FGPrimaryButton(
                 title: model.isLastCard ? "Show me today" : "Next",
                 isEnabled: model.canAdvance
@@ -181,19 +209,6 @@ struct OnboardingView: View {
                 }
             }
 
-            if !model.isFirstCard {
-                FGQuietButton("Back", systemImage: "chevron.left") { model.goBack() }
-            }
-
-            if !model.canAdvance {
-                // Only `.access` is `isRequired`, so this can only ever render
-                // there — a single, always-correct message rather than a
-                // per-card ternary implying an enforcement that doesn't exist
-                // on any other card.
-                Text("Pick at least one thing to get started.")
-                    .font(FGFont.caption)
-                    .foregroundStyle(FGColor.inkMuted)
-            }
         }
         .frame(maxWidth: .infinity)
     }

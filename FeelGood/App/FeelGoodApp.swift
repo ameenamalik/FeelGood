@@ -119,6 +119,9 @@ private struct TodayScreen: View {
                 }
             }
         }
+        .tint(FGColor.ink)
+        .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
         .onOpenURL { url in
             guard let id = DeepLink.sessionID(from: url) else { return }
             tab = .today

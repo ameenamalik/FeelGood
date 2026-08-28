@@ -50,7 +50,7 @@ struct CheckInSheet: View {
                         ForEach(Energy.allCases, id: \.self) { option in
                             FGChoice(
                                 title: option.checkInLabel,
-                                emoji: option.checkInEmoji,
+                                systemImage: option.checkInSymbol,
                                 accent: option.checkInAccent,
                                 isSelected: energy == option
                             ) {
@@ -63,7 +63,7 @@ struct CheckInSheet: View {
                         ForEach(TimeBudget.allCases, id: \.self) { option in
                             FGChoice(
                                 title: option.checkInLabel,
-                                emoji: option.checkInEmoji,
+                                systemImage: option.checkInSymbol,
                                 detail: option.checkInDetail,
                                 accent: option.checkInAccent,
                                 isSelected: time == option
@@ -77,7 +77,7 @@ struct CheckInSheet: View {
                         ForEach(PlaceIntent.allCases, id: \.self) { option in
                             FGChoice(
                                 title: option.checkInLabel,
-                                emoji: option.checkInEmoji,
+                                systemImage: option.checkInSymbol,
                                 accent: option.checkInAccent,
                                 isSelected: place == option
                             ) {
@@ -90,7 +90,7 @@ struct CheckInSheet: View {
                         ForEach(BodyState.allCases, id: \.self) { option in
                             FGChoice(
                                 title: option.checkInLabel,
-                                emoji: option.checkInEmoji,
+                                systemImage: option.checkInSymbol,
                                 accent: option.checkInAccent,
                                 isSelected: body_ == option
                             ) {
@@ -176,7 +176,11 @@ struct CheckInSheet: View {
             // Wraps rather than truncating when the type is large, and drops
             // to a single column once the type is large enough that three
             // would break words apart.
-            FlowRow(spacing: FGSpace.s, maxPerRow: typeSize.isAccessibilitySize ? 1 : 3) { options() }
+            FlowRow(
+                spacing: 12,
+                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
+                minimumItemWidth: 110
+            ) { options() }
         }
         .opacity(hasAppeared ? 1 : 0)
         .offset(y: hasAppeared ? 0 : 12)
