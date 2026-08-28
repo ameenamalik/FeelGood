@@ -70,8 +70,6 @@ struct TodayView: View {
             Text(model.greeting())
                 .font(FGFont.caption)
                 .foregroundStyle(FGColor.inkMuted)
-                .textCase(.uppercase)
-                .tracking(1.2)
                 #if DEBUG
                 // Long-press the date to fabricate history. Debug builds only.
                 .onLongPressGesture(minimumDuration: 0.7) { isDebugging = true }
@@ -95,16 +93,28 @@ struct TodayView: View {
                             item: item,
                             isDone: model.isCompleted(item),
                             canSwap: model.canSwap(item) && !model.isCompleted(item),
+                            isReset: model.isCycleReset(item),
                             onOpen: { selected = item },
-                            onSwap: { withAnimation(FGMotion.swap) { model.swap(item) } }
+                            onSwap: {
+                                withAnimation(FGMotion.swap) { model.swap(item) }
+                                if let updated = model.menu.items.first(where: { $0.course == item.course }) {
+                                    AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
+                                }
+                            }
                         )
                     } else {
                         MenuItemRow(
                             item: item,
                             isDone: model.isCompleted(item),
                             canSwap: model.canSwap(item) && !model.isCompleted(item),
+                            isReset: model.isCycleReset(item),
                             onOpen: { selected = item },
-                            onSwap: { withAnimation(FGMotion.swap) { model.swap(item) } }
+                            onSwap: {
+                                withAnimation(FGMotion.swap) { model.swap(item) }
+                                if let updated = model.menu.items.first(where: { $0.course == item.course }) {
+                                    AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
+                                }
+                            }
                         )
                     }
                 }
@@ -173,6 +183,7 @@ private struct MenuItemCard: View {
     let item: MenuItem
     let isDone: Bool
     let canSwap: Bool
+    let isReset: Bool
     let onOpen: () -> Void
     let onSwap: () -> Void
 
@@ -201,8 +212,13 @@ private struct MenuItemCard: View {
 
                 HStack(spacing: FGSpace.s) {
                     if canSwap {
-                        FGQuietButton("Not today", systemImage: "arrow.2.squarepath", action: onSwap)
-                            .accessibilityHint("Shows a different \(item.course.label.lowercased())")
+                        if isReset {
+                            FGQuietButton("Start over", systemImage: "arrow.counterclockwise", action: onSwap)
+                                .accessibilityHint("Cycles back to the first \(item.course.label.lowercased()) options")
+                        } else {
+                            FGQuietButton("Shuffle", systemImage: "shuffle", action: onSwap)
+                                .accessibilityHint("Swaps in a different \(item.course.label.lowercased()); doesn't skip it")
+                        }
                     }
                     Spacer(minLength: FGSpace.s)
                     ForEach(item.session.chips, id: \.self) { FGChip(text: $0) }
@@ -217,6 +233,9 @@ private struct MenuItemCard: View {
             + "\(item.session.chips.joined(separator: ", ")). \(item.reasonText)"
         )
         .accessibilityAddTraits(.isButton)
+        .accessibilityAction(named: isReset ? "Start over \(item.course.label)" : "Shuffle \(item.course.label)") {
+            if canSwap { onSwap() }
+        }
     }
 }
 
@@ -239,45 +258,41 @@ private struct MenuItemRow: View {
     let item: MenuItem
     let isDone: Bool
     let canSwap: Bool
+    let isReset: Bool
     let onOpen: () -> Void
     let onSwap: () -> Void
 
     var body: some View {
+        // Same shape as MenuItemCard: header, title, reason, then a footer
+        // row for Shuffle. Every item offers the control in the same spot,
+        // not just the Main.
         FGCard {
-            HStack(alignment: .top, spacing: FGSpace.s) {
-                VStack(alignment: .leading, spacing: FGSpace.xs) {
-                    HStack(spacing: FGSpace.s) {
-                        CourseTag(course: item.course)
-                        Text(item.session.durationLabel)
-                            .font(FGFont.label)
-                            .foregroundStyle(FGColor.inkMuted)
-                        if isDone { DoneMark() }
-                    }
-                    Text(item.session.title)
-                        .font(FGFont.body.weight(.medium))
-                        .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
-                        .strikethrough(isDone, color: FGColor.limeDeep)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(item.reasonText)
-                        .font(FGFont.caption)
+            VStack(alignment: .leading, spacing: FGSpace.xs) {
+                HStack(spacing: FGSpace.s) {
+                    CourseTag(course: item.course)
+                    Text(item.session.durationLabel)
+                        .font(FGFont.label)
                         .foregroundStyle(FGColor.inkMuted)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if isDone { DoneMark() }
                 }
-                // Take the whole width, so the swap control is pinned to the
-                // card's trailing edge. Without this the text column shrinks to
-                // its longest line and the button hugs it, which leaves the
-                // arrows sitting at a different x on every row.
-                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(item.session.title)
+                    .font(FGFont.body.weight(.medium))
+                    .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
+                    .strikethrough(isDone, color: FGColor.limeDeep)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(item.reasonText)
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 if canSwap {
-                    Button(action: onSwap) {
-                        Image(systemName: "arrow.2.squarepath")
-                            .foregroundStyle(FGColor.inkMuted)
-                            .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
+                    if isReset {
+                        FGQuietButton("Start over", systemImage: "arrow.counterclockwise", action: onSwap)
+                            .accessibilityHint("Cycles back to the first \(item.course.label.lowercased()) options")
+                    } else {
+                        FGQuietButton("Shuffle", systemImage: "shuffle", action: onSwap)
+                            .accessibilityHint("Swaps in a different \(item.course.label.lowercased()); doesn't skip it")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Not today")
-                    .accessibilityHint("Shows a different \(item.course.label.lowercased())")
                 }
             }
         }
@@ -289,6 +304,9 @@ private struct MenuItemRow: View {
             + "\(item.session.durationLabel). \(item.reasonText)"
         )
         .accessibilityAddTraits(.isButton)
+        .accessibilityAction(named: isReset ? "Start over \(item.course.label)" : "Shuffle \(item.course.label)") {
+            if canSwap { onSwap() }
+        }
     }
 }
 

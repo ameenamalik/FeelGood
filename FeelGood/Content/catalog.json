@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "sessions": [
     {
       "id": "app-box-breathing",
@@ -2270,6 +2270,1026 @@
       "places": [
         "gym"
       ]
+    },
+    {
+      "id": "dessert-living-room-floor-unwind",
+      "title": "Living room floor unwind",
+      "subtitle": "Ten minutes off your feet",
+      "activity": "breathwork",
+      "qualities": [
+        "downRegulation",
+        "mobility"
+      ],
+      "durationMin": 10,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm",
+        "joy"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Get on the floor",
+            "seconds": 60,
+            "cue": "Carpet, rug, or mat. Lie on your back."
+          },
+          {
+            "name": "Knees to chest",
+            "seconds": 180,
+            "cue": "Gentle rock side to side."
+          },
+          {
+            "name": "Constructive rest",
+            "seconds": 300,
+            "cue": "Feet flat on the floor, knees bent together, hands on belly."
+          },
+          {
+            "name": "Roll up",
+            "seconds": 60,
+            "cue": "Take your time coming up."
+          }
+        ]
+      }
+    },
+    {
+      "id": "dessert-barefoot-breath",
+      "title": "Barefoot porch breath",
+      "subtitle": "Five minutes of fresh air and stillness",
+      "activity": "breathwork",
+      "qualities": [
+        "downRegulation"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm",
+        "joy"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Step out",
+            "seconds": 60,
+            "cue": "Barefoot on the porch, balcony, or by an open window."
+          },
+          {
+            "name": "Box breathing",
+            "seconds": 180,
+            "cue": "Inhale for 4, hold for 4, exhale for 4, hold for 4."
+          },
+          {
+            "name": "Look at the horizon",
+            "seconds": 60,
+            "cue": "Soft gaze into the distance."
+          }
+        ]
+      }
+    },
+    {
+      "id": "dessert-favorite-playlist-groove",
+      "title": "Favorite playlist groove",
+      "subtitle": "Two songs, zero rules",
+      "activity": "breathwork",
+      "qualities": [
+        "coordination",
+        "downRegulation"
+      ],
+      "durationMin": 8,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "joy",
+        "energize"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Pick two tracks",
+            "seconds": 60,
+            "cue": "Put on whatever makes you smile."
+          },
+          {
+            "name": "Move freely",
+            "seconds": 360,
+            "cue": "Sway, tap, or shake out whatever feels stiff."
+          },
+          {
+            "name": "Deep breath",
+            "seconds": 60,
+            "cue": "One long exhale to close."
+          }
+        ]
+      }
+    },
+    {
+      "id": "dessert-tea-and-quiet-stretch",
+      "title": "Tea and quiet floor stretch",
+      "subtitle": "Gentle restorative unwinding",
+      "activity": "breathwork",
+      "qualities": [
+        "downRegulation",
+        "mobility"
+      ],
+      "durationMin": 10,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Child's pose",
+            "seconds": 240,
+            "cue": "Sit back on your heels, reach forward softly.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Seated side reach",
+            "seconds": 240,
+            "cue": "Right arm up and over, then left."
+          },
+          {
+            "name": "Quiet stillness",
+            "seconds": 120,
+            "cue": "Sip your tea or just close your eyes."
+          }
+        ]
+      }
+    },
+    {
+      "id": "dessert-park-bench-stretch",
+      "title": "Park bench quiet stretch",
+      "subtitle": "Ten minutes in the open air",
+      "activity": "stretching",
+      "qualities": [
+        "downRegulation",
+        "mobility"
+      ],
+      "durationMin": 10,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "outdoor"
+      ],
+      "places": [
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm",
+        "joy"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Find a bench",
+            "seconds": 60,
+            "cue": "Sit tall, feet flat on the grass or path."
+          },
+          {
+            "name": "Seated figure four",
+            "seconds": 240,
+            "cue": "Ankle over knee, gentle lean forward.",
+            "glossaryID": "figure-four-stretch"
+          },
+          {
+            "name": "Chest opener",
+            "seconds": 240,
+            "cue": "Hands behind bench, open the collarbones."
+          },
+          {
+            "name": "Breathe",
+            "seconds": 60,
+            "cue": "Listen to the park around you."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-doorway-chest-opener",
+      "title": "Doorway chest and spine opener",
+      "subtitle": "Counteract hours of sitting",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "gym"
+      ],
+      "bodyFocus": [
+        "upperBody"
+      ],
+      "intents": [
+        "calm",
+        "strengthen"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Doorway stretch",
+            "seconds": 120,
+            "cue": "Forearms on the door frame, step gently through.",
+            "glossaryID": "doorway-chest-stretch"
+          },
+          {
+            "name": "Thoracic rotation",
+            "seconds": 120,
+            "cue": "Hands behind head, gentle twists side to side.",
+            "glossaryID": "thoracic-rotation"
+          },
+          {
+            "name": "Shoulder rolls",
+            "seconds": 60,
+            "cue": "Roll shoulders backward 5 times, forward 5 times."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-toothbrush-calf-raises",
+      "title": "Calf raises while brushing teeth",
+      "subtitle": "Two minutes of ankle and calf strength",
+      "activity": "strength",
+      "qualities": [
+        "strength",
+        "balance"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "lowerBody"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Slow calf raises",
+            "seconds": 120,
+            "cue": "Rise up on toes, pause, lower slowly for 3 seconds."
+          },
+          {
+            "name": "Single leg hold",
+            "seconds": 120,
+            "cue": "60 seconds per side standing tall.",
+            "glossaryID": "single-leg-stand"
+          },
+          {
+            "name": "Ankle circles",
+            "seconds": 60,
+            "cue": "Clockwise and counterclockwise."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-desk-wrist-reset",
+      "title": "Desk wrist and forearm reset",
+      "subtitle": "Five minutes for tired hands and forearms",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "gym"
+      ],
+      "bodyFocus": [
+        "upperBody"
+      ],
+      "intents": [
+        "calm"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Forearm extensor stretch",
+            "seconds": 120,
+            "cue": "Arm straight, pull fingertips down gently.",
+            "glossaryID": "forearm-stretch"
+          },
+          {
+            "name": "Forearm flexor stretch",
+            "seconds": 120,
+            "cue": "Arm straight, pull fingertips back towards wrist."
+          },
+          {
+            "name": "Finger fan and fist",
+            "seconds": 60,
+            "cue": "Spread fingers wide, make gentle fists."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-stairs-step-ups",
+      "title": "Five minutes of stairs",
+      "subtitle": "Quick leg drive on the bottom step",
+      "activity": "agility",
+      "qualities": [
+        "agility",
+        "endurance",
+        "strength"
+      ],
+      "durationMin": 5,
+      "intensity": 2,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "outdoors",
+        "gym"
+      ],
+      "bodyFocus": [
+        "lowerBody"
+      ],
+      "intents": [
+        "energize",
+        "strengthen"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Rhythm step-ups",
+            "seconds": 120,
+            "cue": "Step up, step down on the bottom stair."
+          },
+          {
+            "name": "Rest and shake out",
+            "seconds": 30,
+            "cue": "Breathe."
+          },
+          {
+            "name": "Side step-ups",
+            "seconds": 120,
+            "cue": "60s leading left, 60s leading right."
+          },
+          {
+            "name": "Calf stretch on the edge",
+            "seconds": 30,
+            "cue": "Heel drop off the step edge.",
+            "glossaryID": "calf-stretch"
+          }
+        ]
+      },
+      "contraindications": [
+        "knees"
+      ]
+    },
+    {
+      "id": "side-quick-block-loop",
+      "title": "One lap around the block",
+      "subtitle": "Fresh air between tasks",
+      "activity": "walking",
+      "qualities": [
+        "endurance",
+        "downRegulation"
+      ],
+      "durationMin": 8,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "outdoor"
+      ],
+      "places": [
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "energize",
+        "calm"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Step out",
+            "seconds": 60,
+            "cue": "Lace up and head out the front door."
+          },
+          {
+            "name": "Brisk walk",
+            "seconds": 360,
+            "cue": "Natural stride, arms swinging freely."
+          },
+          {
+            "name": "Cool down walk",
+            "seconds": 60,
+            "cue": "Slow pace back to your door."
+          }
+        ]
+      }
+    },
+    {
+      "id": "yt-kNbJJOJumlM",
+      "title": "Ten minutes, side abs and inner thighs",
+      "subtitle": "A quick, focused burn for the obliques and thighs",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility"
+      ],
+      "durationMin": 10,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "core"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "strengthen",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "kNbJJOJumlM",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-huL9JFjDwVI",
+      "title": "Twenty-five minutes, full body beginner mat Pilates",
+      "subtitle": "A steady, whole-body flow to build core strength",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility"
+      ],
+      "durationMin": 30,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "strengthen",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "huL9JFjDwVI",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-bE0ssPhfBfg",
+      "title": "Eleven minutes, Pilates arms with weights",
+      "subtitle": "Sculpt and strengthen your shoulders and posture",
+      "activity": "pilates",
+      "qualities": [
+        "strength"
+      ],
+      "durationMin": 15,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat",
+        "weights"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "upperBody"
+      ],
+      "contraindications": [
+        "wrists"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "bE0ssPhfBfg",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-grzqpN2bNTs",
+      "title": "Fifteen minutes, core and glutes hourglass flow",
+      "subtitle": "A quick, low-impact sequence for the waist and hips",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility"
+      ],
+      "durationMin": 15,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "strengthen",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "grzqpN2bNTs",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-UDuZNDwQrqI",
+      "title": "Twenty-five minutes, gentle stress-relief flow",
+      "subtitle": "Slow down, move mindfully, and release tension",
+      "activity": "pilates",
+      "qualities": [
+        "mobility",
+        "downRegulation"
+      ],
+      "durationMin": 30,
+      "intensity": 2,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "calm",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "UDuZNDwQrqI",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-nZaHiSEXqrg",
+      "title": "Fifteen minutes, quick full body reset",
+      "subtitle": "A fast and efficient flow to wake up the whole body",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility"
+      ],
+      "durationMin": 15,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "energize",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "nZaHiSEXqrg",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-5m-hvk7D6QI",
+      "title": "Forty-one minutes, full body sculpt with weights",
+      "subtitle": "A comprehensive, strength-focused Pilates session",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "endurance"
+      ],
+      "durationMin": 45,
+      "intensity": 4,
+      "energyFit": [
+        "strong"
+      ],
+      "equipment": [
+        "mat",
+        "weights"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor",
+        "wrists"
+      ],
+      "intents": [
+        "strengthen",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "5m-hvk7D6QI",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-en2Zs4n4yio",
+      "title": "Twenty-four minutes, legs and glutes focus",
+      "subtitle": "A mat-based burn targeting the lower body",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility"
+      ],
+      "durationMin": 30,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "lowerBody"
+      ],
+      "contraindications": [
+        "knees"
+      ],
+      "intents": [
+        "strengthen",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "en2Zs4n4yio",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-l31iSekrSPw",
+      "title": "Twelve minutes, tight core and abs",
+      "subtitle": "A focused core-strengthening mat routine",
+      "activity": "pilates",
+      "qualities": [
+        "strength"
+      ],
+      "durationMin": 15,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "core"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "l31iSekrSPw",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-K3ZQF0VFcNk",
+      "title": "Twenty minutes, core and glutes flow",
+      "subtitle": "Target the core and hips with this mat routine",
+      "activity": "pilates",
+      "qualities": [
+        "strength"
+      ],
+      "durationMin": 20,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "core"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "strengthen",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "K3ZQF0VFcNk",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-HTDFOwzCs4g",
+      "title": "Twenty-three minutes, low impact beginner Pilates",
+      "subtitle": "A gentle, full-body mat flow with zero jumping",
+      "activity": "pilates",
+      "qualities": [
+        "mobility",
+        "strength"
+      ],
+      "durationMin": 30,
+      "intensity": 2,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "mobilize",
+        "calm"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "HTDFOwzCs4g",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-cItPBVsnIgw",
+      "title": "Eighteen minutes, high-intensity Pilates arms",
+      "subtitle": "A burn-inducing upper body sequence with no equipment",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "endurance"
+      ],
+      "durationMin": 20,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "upperBody"
+      ],
+      "contraindications": [
+        "wrists"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "cItPBVsnIgw",
+        "channel": "SIMONE SHARICE"
+      }
     }
   ],
   "glossary": [

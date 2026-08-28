@@ -463,10 +463,10 @@ Mechanically this is a clean seam and costs the engine nothing: free menus are
 generated with `history: []` and `affinity: [:]`. `PlanEngine` stays a pure
 function either way — there is no `isPro` branch anywhere inside it.
 
-**Pricing:** $6.99/mo · **$34.99/yr** (7-day free trial) · $69.99 lifetime.
+**Pricing:** $6.99/mo · **$34.99/yr** (7-day free trial).
 
 $34.99 is the deliberate middle: it reads as "under $35" and prices the annual at ~$2.92/mo, a 58% discount that makes the yearly plan the obvious pick. We don't have to guess forever, though — **RevenueCat Offerings let us A/B test $29.99 vs $34.99 vs $39.99 remotely, with no app update and no resubmission.** Ship at $34.99, watch the first two weeks of real conversion, adjust from the dashboard. That experiment is also the most concrete thing we can point at for the HAMM Award.
-**RevenueCat:** entitlement `pro`, offering `default`, packages `monthly` / `annual` / `lifetime`. Paywall built with **RevenueCat Paywalls (remote config)** so pricing and copy can be tuned without a build — which is also the honest answer to the HAMM Award's "smartest use of RevenueCat."
+**RevenueCat:** entitlement `pro`, offering `default`, packages `monthly` / `annual`. No lifetime tier — subscription only. Paywall built with **RevenueCat Paywalls (remote config)** so pricing and copy can be tuned without a build — which is also the honest answer to the HAMM Award's "smartest use of RevenueCat."
 
 **Paywall moments** (value first, always):
 1. After her **first completed session** — the earliest point she has felt something work.
@@ -664,6 +664,7 @@ Called out in the submission because vision is rewarded and costs zero build tim
 | 5 | Pricing | **$34.99/yr, $6.99/mo, $69.99 lifetime**, with remote price testing via RevenueCat Offerings. See §10. |
 | 10 *(2026-08-24)* | Where the paywall sits | **Free adapts to today; Pro remembers you and gets smarter over time.** The daily check-in and the Look Back are free forever; Pro buys history balancing, recovery awareness, affinity, unlimited swaps and Specials — everything that needs a past to work. Supersedes the original §10 table. Confirmed by the founder the same day. |
 | 6 | Proxy hosting | **Cloudflare Worker**, dev/prod key separation, server-side entitlement check. Fully specced in §11. |
+| 5 *(2026-08-27)* | Pricing — lifetime tier dropped | **$34.99/yr, $6.99/mo. No lifetime tier.** Subscription-only; supersedes the $69.99 lifetime line in row 5. |
 
 ### Still open
 

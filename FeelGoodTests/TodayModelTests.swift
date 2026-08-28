@@ -195,4 +195,32 @@ struct TodayModelTests {
         #expect(model.checkIn == checkIn)
         #expect(model.menu.main?.session.activity == .pilates)
     }
+
+    @Test("Shuffling cycles back to earlier options when unseen alternatives are exhausted")
+    func shufflingCyclesBackWhenOptionsAreExhausted() throws {
+        let log = InMemorySessionLog()
+        let model = model(log: log)
+        let main = try #require(model.menu.main)
+        let firstID = main.session.id
+
+        // Swap to the next option
+        #expect(!model.isCycleReset(main, now: Fixture.now))
+        model.swap(main, now: Fixture.now)
+        let secondMain = try #require(model.menu.main)
+        #expect(secondMain.session.id != firstID)
+
+        // Keep swapping until we reach the end of unseen options
+        while !model.isCycleReset(model.menu.main!, now: Fixture.now) {
+            model.swap(model.menu.main!, now: Fixture.now)
+        }
+
+        let atEnd = try #require(model.menu.main)
+        #expect(model.canSwap(atEnd, now: Fixture.now))
+        #expect(model.isCycleReset(atEnd, now: Fixture.now))
+
+        // Swap once more to trigger "Start over" / cycle reset
+        model.swap(atEnd, now: Fixture.now)
+        let cycledMain = try #require(model.menu.main)
+        #expect(cycledMain.session.id != atEnd.session.id)
+    }
 }

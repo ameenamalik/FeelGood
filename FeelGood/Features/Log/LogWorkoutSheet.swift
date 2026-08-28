@@ -127,8 +127,6 @@ struct LogWorkoutSheet: View {
             Text(title)
                 .font(FGFont.label)
                 .foregroundStyle(FGColor.inkMuted)
-                .textCase(.uppercase)
-                .tracking(1.1)
             FlowRow(spacing: FGSpace.s) { content() }
         }
     }
@@ -136,6 +134,12 @@ struct LogWorkoutSheet: View {
     private func done() {
         guard let activity else { return }
         let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        Analytics.capture("workout_logged", properties: [
+            "activity": activity.rawValue,
+            "duration_minutes": durationMin,
+            "intensity": intensity,
+            "saved_for_later": isKept
+        ])
         onDone(
             LoggedWorkout(
                 activity: activity,

@@ -8,8 +8,8 @@ import Foundation
 enum RevenueCatConstants {
     /// Loaded from the `REVENUECAT_API_KEY` build setting via Info.plist so Debug/Release
     /// (and any future staging configuration) can point at different RevenueCat projects.
-    /// See project.pbxproj build settings — swap the Release value for your production key
-    /// before shipping; the current value is a RevenueCat Test Store key ("test_" prefix).
+    /// Debug stays on the RevenueCat Test Store key ("test_" prefix) so `DebugMenu` can drive
+    /// real purchases without a sandbox account; Release points at the production App Store app.
     static let apiKey: String = {
         guard
             let key = Bundle.main.object(forInfoDictionaryKey: "RevenueCatAPIKey") as? String,
@@ -21,9 +21,5 @@ enum RevenueCatConstants {
     }()
 
     /// Identifier exactly as configured on the Entitlements tab of the RevenueCat dashboard.
-    static let proEntitlementID = "FeelGood Pro"
-
-    /// Standard RevenueCat package types for the "monthly" and "yearly" products/offerings.
-    static let monthlyProductID = "monthly"
-    static let yearlyProductID = "yearly"
+    static let proEntitlementID = "pro"
 }

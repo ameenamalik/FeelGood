@@ -143,23 +143,37 @@ final class TodayModel {
         requestCopyUpgrade(now: now)
     }
 
-    /// "Not today". A swap is engagement, not rejection — it is a choice being made,
+    /// "Shuffle". A swap is engagement, not rejection — it is a choice being made,
     /// which is the whole point of the screen.
     func swap(_ item: MenuItem, now: Date = Date()) {
-        guard let replacement = engine.alternative(
+        let currentInput = input(now: now)
+        if let replacement = engine.alternative(
             for: item,
             onMenu: menu,
-            input: input(now: now),
+            input: currentInput,
             alreadySeen: swappedAway
-        ) else { return }
-
-        swappedAway.insert(item.session.id)
-        log.recordSwap(of: item.session, at: now)
-        history = log.history(before: now)
-        menu = menu.replacing(item, with: replacement)
-        // The card you exchanged stays exchanged when you come back to it.
-        log.save(menu, generatedAt: now)
-        publishSnapshot(now: now)
+        ) {
+            swappedAway.insert(item.session.id)
+            log.recordSwap(of: item.session, at: now)
+            history = log.history(before: now)
+            menu = menu.replacing(item, with: replacement)
+            // The card you exchanged stays exchanged when you come back to it.
+            log.save(menu, generatedAt: now)
+            publishSnapshot(now: now)
+        } else if let cycleReplacement = engine.cyclicAlternative(
+            for: item,
+            onMenu: menu,
+            input: currentInput
+        ) {
+            // Reached the end of unseen candidates — reset seen items and cycle back.
+            swappedAway.removeAll()
+            swappedAway.insert(item.session.id)
+            log.recordSwap(of: item.session, at: now)
+            history = log.history(before: now)
+            menu = menu.replacing(item, with: cycleReplacement)
+            log.save(menu, generatedAt: now)
+            publishSnapshot(now: now)
+        }
     }
 
     /// Finished. The menu deliberately does not regenerate — the day stays as
@@ -306,7 +320,18 @@ final class TodayModel {
     }
 
     func canSwap(_ item: MenuItem, now: Date = Date()) -> Bool {
-        engine.alternative(for: item, onMenu: menu, input: input(now: now), alreadySeen: swappedAway) != nil
+        let currentInput = input(now: now)
+        return engine.alternative(for: item, onMenu: menu, input: currentInput, alreadySeen: swappedAway) != nil
+            || engine.cyclicAlternative(for: item, onMenu: menu, input: currentInput) != nil
+    }
+
+    /// True if all unseen alternatives for this item have been exhausted, meaning
+    /// the next swap action will cycle back to the top alternative.
+    func isCycleReset(_ item: MenuItem, now: Date = Date()) -> Bool {
+        let currentInput = input(now: now)
+        let hasUnseen = engine.alternative(for: item, onMenu: menu, input: currentInput, alreadySeen: swappedAway) != nil
+        if hasUnseen { return false }
+        return engine.cyclicAlternative(for: item, onMenu: menu, input: currentInput) != nil
     }
 
     func term(for step: Step) -> ExerciseTerm? {
