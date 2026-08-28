@@ -18,7 +18,6 @@
 
 import Foundation
 import HuggingFace
-import MLXHuggingFace
 import MLXLLM
 // `ChatSession` isn't `Sendable` yet — mlx-swift-lm hasn't finished its own
 // Swift 6 concurrency audit. `@preconcurrency` downgrades that gap to a
@@ -95,7 +94,11 @@ actor MLXCopyTransport: CopyTransport {
         if let session {
             activeSession = session
         } else {
-            let container = try await #huggingFaceLoadModelContainer(configuration: Self.modelConfiguration)
+            let container = try await loadModelContainer(
+                from: HuggingFaceModelDownloader(),
+                using: HuggingFaceTokenizerLoader(),
+                configuration: Self.modelConfiguration
+            )
             activeSession = ChatSession(
                 container,
                 instructions: Self.instructions,
@@ -142,7 +145,87 @@ actor MLXCopyTransport: CopyTransport {
     }
 }
 
+/// Runtime equivalents of MLX's Hugging Face convenience macros. Keeping
+/// these adapters as ordinary Swift avoids requiring every developer to trust
+/// and enable a compiler plug-in before Xcode can build or index the app.
+private struct HuggingFaceModelDownloader: Downloader {
+    private let client = HubClient()
+
+    func download(
+        id: String,
+        revision: String?,
+        matching patterns: [String],
+        useLatest: Bool,
+        progressHandler: @Sendable @escaping (Progress) -> Void
+    ) async throws -> URL {
+        guard let repository = Repo.ID(rawValue: id) else {
+            throw MLXCopyTransportError.invalidRepositoryID(id)
+        }
+
+        return try await client.downloadSnapshot(
+            of: repository,
+            revision: revision ?? "main",
+            matching: patterns,
+            progressHandler: { @MainActor progress in
+                progressHandler(progress)
+            }
+        )
+    }
+}
+
+private struct HuggingFaceTokenizerLoader: TokenizerLoader {
+    func load(from directory: URL) async throws -> any MLXLMCommon.Tokenizer {
+        let tokenizer = try await AutoTokenizer.from(modelFolder: directory)
+        return HuggingFaceTokenizer(tokenizer)
+    }
+}
+
+private struct HuggingFaceTokenizer: MLXLMCommon.Tokenizer {
+    private let tokenizer: any Tokenizers.Tokenizer
+
+    init(_ tokenizer: any Tokenizers.Tokenizer) {
+        self.tokenizer = tokenizer
+    }
+
+    func encode(text: String, addSpecialTokens: Bool) -> [Int] {
+        tokenizer.encode(text: text, addSpecialTokens: addSpecialTokens)
+    }
+
+    func decode(tokenIds: [Int], skipSpecialTokens: Bool) -> String {
+        tokenizer.decode(tokens: tokenIds, skipSpecialTokens: skipSpecialTokens)
+    }
+
+    func convertTokenToId(_ token: String) -> Int? {
+        tokenizer.convertTokenToId(token)
+    }
+
+    func convertIdToToken(_ id: Int) -> String? {
+        tokenizer.convertIdToToken(id)
+    }
+
+    var bosToken: String? { tokenizer.bosToken }
+    var eosToken: String? { tokenizer.eosToken }
+    var unknownToken: String? { tokenizer.unknownToken }
+
+    func applyChatTemplate(
+        messages: [[String: any Sendable]],
+        tools: [[String: any Sendable]]?,
+        additionalContext: [String: any Sendable]?
+    ) throws -> [Int] {
+        do {
+            return try tokenizer.applyChatTemplate(
+                messages: messages,
+                tools: tools,
+                additionalContext: additionalContext
+            )
+        } catch Tokenizers.TokenizerError.missingChatTemplate {
+            throw MLXLMCommon.TokenizerError.missingChatTemplate
+        }
+    }
+}
+
 private enum MLXCopyTransportError: Error {
     case emptyLine
     case timedOut
+    case invalidRepositoryID(String)
 }

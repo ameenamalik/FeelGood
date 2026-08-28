@@ -10,7 +10,6 @@
 		18A12CB6E79D8EBE26B82618 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 6714F52D1618CBB4DFFF9BB1 /* MLXLLM */; };
 		21DCC2181839CD994036E35C /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 19EE39390C500A69431EBC30 /* RevenueCatUI */; };
 		7B7D390B64588ACDCF50AE26 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 0A32FDDC7017E56EDD5653CD /* RevenueCat */; };
-		93C9785DE7AF3867D2BE51A1 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = FC133877E94AD48FE3A21053 /* MLXHuggingFace */; };
 		BE3DEE93D8AA07C049563AB2 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = FBDAE7CDB97D8D69D34F4285 /* MLXLMCommon */; };
 		C9A4756F90D3FAA7DF176DA5 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 378D96DFB6B72F152DA61DD7 /* Lottie */; };
 		C9EE63236D0EE3DDB0175B2F /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = F4B9B9D464255A3A34A74696 /* HuggingFace */; };
@@ -125,7 +124,6 @@
 				C9A4756F90D3FAA7DF176DA5 /* Lottie in Frameworks */,
 				18A12CB6E79D8EBE26B82618 /* MLXLLM in Frameworks */,
 				BE3DEE93D8AA07C049563AB2 /* MLXLMCommon in Frameworks */,
-				93C9785DE7AF3867D2BE51A1 /* MLXHuggingFace in Frameworks */,
 				C9EE63236D0EE3DDB0175B2F /* HuggingFace in Frameworks */,
 				F7462400C7C85D30A540E5BE /* Tokenizers in Frameworks */,
 				D58111500000000000000001 /* PostHog in Frameworks */,
@@ -207,7 +205,6 @@
 				378D96DFB6B72F152DA61DD7 /* Lottie */,
 				6714F52D1618CBB4DFFF9BB1 /* MLXLLM */,
 				FBDAE7CDB97D8D69D34F4285 /* MLXLMCommon */,
-				FC133877E94AD48FE3A21053 /* MLXHuggingFace */,
 				F4B9B9D464255A3A34A74696 /* HuggingFace */,
 				50DCD78BC0A945C5E4F54D34 /* Tokenizers */,
 				D58111500000000000000002 /* PostHog */,
@@ -894,11 +891,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D58111500000000000000003 /* XCRemoteSwiftPackageReference "posthog-ios" */;
 			productName = PostHog;
-		};
-		FC133877E94AD48FE3A21053 /* MLXHuggingFace */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A4140BFEE4A0848749CA06C9 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
-			productName = MLXHuggingFace;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
