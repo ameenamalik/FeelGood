@@ -32,8 +32,9 @@ struct TodayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     header
+                    checkInPrompt
                     menuItems
-                    checkInFooter
+                    logFooter
                 }
                 .padding(FGSpace.page)
             }
@@ -137,7 +138,7 @@ struct TodayView: View {
         selected = item
     }
 
-    private var checkInFooter: some View {
+    private var checkInPrompt: some View {
         VStack(spacing: FGSpace.s) {
             if model.checkIn == nil {
                 FGPrimaryButton(title: "How are you today?") { isCheckingIn = true }
@@ -149,12 +150,15 @@ struct TodayView: View {
                     isCheckingIn = true
                 }
             }
+        }
+        .frame(maxWidth: .infinity)
+    }
 
-            // Movement that happened without us. Logging it is how the engine
-            // learns what a normal week actually looks like.
-            FGQuietButton("I did something else", systemImage: "plus") {
-                isLogging = true
-            }
+    private var logFooter: some View {
+        // Movement that happened without us. Logging it is how the engine
+        // learns what a normal week actually looks like.
+        FGQuietButton("I did something else", systemImage: "plus") {
+            isLogging = true
         }
         .frame(maxWidth: .infinity)
     }
