@@ -48,9 +48,6 @@ final class PurchasesManager {
     /// The current offering's monthly/yearly packages, when available, for direct purchase buttons.
     var monthlyPackage: Package? { offerings?.current?.monthly }
     var yearlyPackage: Package? { offerings?.current?.annual }
-    /// PRD §10's $69.99 one-time tier. Configure a "$rc_lifetime" package on
-    /// the current offering in the RevenueCat dashboard for this to resolve.
-    var lifetimePackage: Package? { offerings?.current?.lifetime }
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.feelgood.app", category: "Purchases")
     private var customerInfoObservationTask: Task<Void, Never>?
@@ -144,6 +141,12 @@ final class PurchasesManager {
                 ])
             }
             return unlocked
+        } catch ErrorCode.paymentPendingError {
+            // Ask to Buy / deferred approval: no unlock yet — Transaction.updates
+            // (via customerInfoStream) delivers entitlement once a parent approves.
+            lastError = .purchasePending
+            logger.info("Purchase pending approval (Ask to Buy or deferred transaction).")
+            return false
         } catch {
             lastError = .purchaseFailed(error)
             logger.error("Purchase failed: \(error.localizedDescription)")
@@ -174,6 +177,7 @@ final class PurchasesManager {
 enum PurchasesManagerError: LocalizedError, Identifiable {
     case offeringsFetchFailed(Error)
     case purchaseFailed(Error)
+    case purchasePending
     case restoreFailed(Error)
     case other(Error)
 
@@ -185,6 +189,8 @@ enum PurchasesManagerError: LocalizedError, Identifiable {
             "Couldn't load subscription plans. \(error.localizedDescription)"
         case .purchaseFailed(let error):
             "Purchase failed. \(error.localizedDescription)"
+        case .purchasePending:
+            "Waiting for approval — ask the account holder to approve this purchase, then check back."
         case .restoreFailed(let error):
             "Restore failed. \(error.localizedDescription)"
         case .other(let error):

@@ -651,4 +651,49 @@ struct PlanEngineTests {
             }
         }
     }
+
+    @Test("De-duplicates activities across courses (Main vs Appetizer/Dessert/Sides)")
+    func deDuplicatesActivitiesAcrossCourses() {
+        let mainYoga = Fixture.session(id: "main-yoga", activity: .yoga, qualities: [.mobility], durationMin: 20, intensity: 2, course: .main)
+        let mainPilates = Fixture.session(id: "main-pilates", activity: .pilates, qualities: [.strength], durationMin: 20, intensity: 3, course: .main)
+        
+        let appYoga = Fixture.session(id: "app-yoga", activity: .yoga, qualities: [.mobility], durationMin: 5, intensity: 1, course: .appetizer)
+        let appPilates = Fixture.session(id: "app-pilates", activity: .pilates, qualities: [.strength], durationMin: 5, intensity: 1, course: .appetizer)
+        
+        let desYoga = Fixture.session(id: "des-yoga", activity: .yoga, qualities: [.mobility], durationMin: 5, intensity: 1, course: .dessert)
+        let desPilates = Fixture.session(id: "des-pilates", activity: .pilates, qualities: [.strength], durationMin: 5, intensity: 1, course: .dessert)
+        
+        let input = PlanInput(
+            profile: Fixture.profile(activities: [.yoga, .pilates], intent: .mobilize),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            context: Fixture.context()
+        )
+        
+        let catalog = [mainYoga, mainPilates, appYoga, appPilates, desYoga, desPilates]
+        let engine = PlanEngine(catalog: catalog)
+        let menu = engine.makeMenu(input)
+        
+        #expect(menu.main?.session.id == "main-yoga")
+        #expect(menu.appetizer?.session.id == "app-pilates")
+        #expect(menu.dessert?.session.id == "des-yoga")
+    }
+
+    @Test("Falls back to duplicate activity if no distinct activities are available")
+    func fallsBackToDuplicateActivityWhenNoChoice() {
+        let mainYoga = Fixture.session(id: "main-yoga", activity: .yoga, qualities: [.mobility], durationMin: 20, intensity: 2, course: .main)
+        let appYoga = Fixture.session(id: "app-yoga", activity: .yoga, qualities: [.mobility], durationMin: 5, intensity: 1, course: .appetizer)
+        
+        let input = PlanInput(
+            profile: Fixture.profile(activities: [.yoga], intent: .mobilize),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            context: Fixture.context()
+        )
+        
+        let catalog = [mainYoga, appYoga]
+        let engine = PlanEngine(catalog: catalog)
+        let menu = engine.makeMenu(input)
+        
+        #expect(menu.main?.session.id == "main-yoga")
+        #expect(menu.appetizer?.session.id == "app-yoga")
+    }
 }

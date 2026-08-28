@@ -99,7 +99,7 @@ struct DebugMenu: View {
                         Text("Plans")
                             .font(FGFont.title)
                             .foregroundStyle(FGColor.ink)
-                        Text("Real purchases against the RevenueCat Test Store — no sandbox account needed. Requires monthly/yearly/lifetime packages configured on the current offering.")
+                        Text("Real purchases against the RevenueCat Test Store — no sandbox account needed. Requires monthly/yearly packages configured on the current offering.")
                             .font(FGFont.reason)
                             .foregroundStyle(FGColor.inkMuted)
                             .fixedSize(horizontal: false, vertical: true)
@@ -111,7 +111,6 @@ struct DebugMenu: View {
                         } else {
                             planRow(title: "Monthly", package: purchasesManager.monthlyPackage)
                             planRow(title: "Yearly", package: purchasesManager.yearlyPackage)
-                            planRow(title: "Lifetime", package: purchasesManager.lifetimePackage)
                         }
                     }
 
