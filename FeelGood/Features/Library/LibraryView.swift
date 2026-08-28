@@ -42,8 +42,6 @@ struct LibraryView: View {
                             Text(group.course.label)
                                 .font(FGFont.label)
                                 .foregroundStyle(FGColor.inkMuted)
-                                .textCase(.uppercase)
-                                .tracking(1.1)
 
                             ForEach(group.sessions) { session in
                                 row(session)
