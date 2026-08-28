@@ -49,8 +49,6 @@ struct DebugMenu: View {
                             Text("Right now")
                                 .font(FGFont.label)
                                 .foregroundStyle(FGColor.skyDeep)
-                                .textCase(.uppercase)
-                                .tracking(1.1)
                             Text(seeder.summary())
                                 .font(FGFont.body)
                                 .foregroundStyle(FGColor.ink)
