@@ -63,8 +63,8 @@ struct FGPrimaryButton: View {
             Text(title)
                 .font(FGFont.body.weight(.medium))
                 .foregroundStyle(isEnabled ? FGColor.bg : FGColor.inkMuted)
-                .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
-                .contentShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .disabled(!isEnabled)
@@ -74,7 +74,7 @@ struct FGPrimaryButton: View {
         // came out muddy brown. Out here the fill stays opaque and only the
         // label dims, which is what a disabled control should do anyway.
         .background(
-            RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
+            Capsule()
                 .fill(isEnabled ? FGColor.ink : FGColor.line)
         )
     }
@@ -112,60 +112,92 @@ struct FGQuietButton: View {
 
 /// A selectable answer in the check-in. Two taps, ten seconds.
 ///
-/// The emoji, detail, and accent are all optional, so onboarding — which shares
-/// this component — keeps the plain title-only tile it has always had.
+/// The visual, detail, and accent are optional so each flow can keep its own
+/// expression without changing the choice's typography or selection styling.
 struct FGChoice: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     let title: String
     var emoji: String? = nil
+    var systemImage: String? = nil
     var detail: String? = nil
     var accent: FGAccent = .ink
     let isSelected: Bool
     let action: () -> Void
 
+    private var hasVisual: Bool { emoji != nil || systemImage != nil }
+    private var visualTileSize: CGFloat? {
+        hasVisual && !typeSize.isAccessibilitySize ? 110 : nil
+    }
+
     var body: some View {
         Button(action: action) {
-            VStack(spacing: FGSpace.xs) {
+            VStack(spacing: hasVisual ? FGSpace.s : FGSpace.xs) {
                 if let emoji {
                     // A text style, so it grows with Dynamic Type instead of
                     // stranding a fixed-size glyph next to huge type. Hidden
                     // from VoiceOver, which would otherwise read "cloud".
                     Text(emoji)
-                        .font(.title)
+                        .font(.title2)
+                        .frame(height: typeSize.isAccessibilitySize ? nil : 24)
+                        .foregroundStyle(FGColor.ink)
                         .accessibilityHidden(true)
                 }
 
-                Text(title)
-                    .font(FGFont.body)
-                    .multilineTextAlignment(.center)
-
-                if let detail {
-                    Text(detail)
-                        .font(FGFont.label)
-                        .multilineTextAlignment(.center)
-                        .opacity(0.7)
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.title2)
+                        .symbolRenderingMode(.monochrome)
+                        .frame(width: 32, height: typeSize.isAccessibilitySize ? nil : 24)
+                        .foregroundStyle(isSelected ? accent.text : FGColor.ink)
+                        .accessibilityHidden(true)
                 }
+
+                VStack(spacing: 2) {
+                    Text(title)
+                        .font(FGFont.body)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(typeSize.isAccessibilitySize ? nil : 2)
+                        .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.85)
+                        .foregroundStyle(FGColor.ink)
+
+                    if let detail {
+                        Text(detail)
+                            .font(FGFont.label)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+                }
+                .frame(maxWidth: .infinity)
             }
-            .foregroundStyle(isSelected ? accent.text : FGColor.ink)
-            .padding(.vertical, emoji == nil ? 0 : FGSpace.s)
-            .padding(.horizontal, FGSpace.xs)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(hasVisual ? 12 : 0)
+            .padding(.horizontal, hasVisual ? 0 : FGSpace.xs)
             // Fill the height `FlowRow` offers, so a two-line label doesn't
             // leave its neighbours in the row looking clipped short. Only the
-            // emoji tiles do this; onboarding's plain rows keep hugging.
+            // visual tiles do this; plain rows keep hugging.
             .frame(
-                maxWidth: .infinity,
-                minHeight: FGSize.minTouchTarget + 8,
-                maxHeight: emoji == nil ? nil : .infinity
+                minWidth: visualTileSize,
+                maxWidth: visualTileSize ?? .infinity,
+                minHeight: visualTileSize ?? (FGSize.minTouchTarget + 8),
+                maxHeight: visualTileSize ?? (hasVisual ? .infinity : nil)
             )
             .background(
-                RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
-                    .fill(isSelected ? accent.fill : FGColor.surface)
+                RoundedRectangle(cornerRadius: hasVisual ? 20 : FGRadius.button, style: .continuous)
+                    .fill(FGColor.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: hasVisual ? 20 : FGRadius.button, style: .continuous)
+                            .fill(isSelected ? accent.fill.opacity(0.3) : .clear)
+                    )
             )
             .overlay(
                 // Selection is never signalled by colour alone: the border
-                // doubles in weight and darkens, which survives both a
-                // greyscale screenshot and a colour-blind reader.
-                RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
-                    .strokeBorder(isSelected ? FGColor.ink : FGColor.lineStrong, lineWidth: isSelected ? 2 : 1)
+                // gains weight too, while its hue connects it to the tint.
+                RoundedRectangle(cornerRadius: hasVisual ? 20 : FGRadius.button, style: .continuous)
+                    .strokeBorder(
+                        isSelected ? accent.text.opacity(0.95) : FGColor.lineStrong,
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
             )
         }
         .buttonStyle(.plain)

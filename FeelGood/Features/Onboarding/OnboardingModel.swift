@@ -2,13 +2,10 @@
 //  OnboardingModel.swift
 //  FeelGood
 //
-//  Five cards, ninety seconds, framed around what's available to you rather than
+//  Four cards, ninety seconds, framed around what's available to you rather than
 //  around goals-as-metrics. No account, no email, no paywall — the first menu
-//  appears before anything is asked for. See PRD §7.1. (Time-of-day is asked
-//  as a second row on the time card rather than its own screen — the same
-//  move already made for cadence+moments — since it's the weakest signal of
-//  the six: the engine only reads it as a fallback when the daily check-in is
-//  skipped, and a real check-in overrides it immediately.)
+//  appears before anything is asked for. See PRD §7.1. Today's available time
+//  belongs in the daily check-in, so onboarding does not ask for it again.
 //
 
 import Foundation
@@ -18,13 +15,12 @@ import Observation
 final class OnboardingModel {
 
     enum Card: Int, CaseIterable {
-        case access, cadence, time, intent, workArounds
+        case access, cadence, intent, workArounds
 
         var title: String {
             switch self {
             case .access: "What do you have access to?"
             case .cadence: "How often do you want to move?"
-            case .time: "How much time, and when?"
             case .intent: "What are you moving toward?"
             case .workArounds: "Anything to work around?"
             }
@@ -33,8 +29,7 @@ final class OnboardingModel {
         var detail: String? {
             switch self {
             case .access: "Pick everything that's genuinely available. This shapes everything else."
-            case .cadence: "Used to keep things balanced — never to grade you."
-            case .time: nil
+            case .cadence: nil
             case .intent: "Pick one or more."
             case .workArounds: "We'll quietly leave these out. Nothing here is a diagnosis, and it never leaves your device."
             }
@@ -121,7 +116,7 @@ nonisolated extension Cadence {
         switch self {
         case .everyDay: "Every day"
         case .mostDays: "Most days"
-        case .fewTimesAWeek: "A few times a week"
+        case .fewTimesAWeek: "A few days"
         case .whenICan: "When I can"
         }
     }
@@ -153,9 +148,9 @@ nonisolated extension Place {
 nonisolated extension MovementMoments {
     var label: String {
         switch self {
-        case .once: "Once, properly"
-        case .aCouple: "A couple of times"
-        case .sprinkled: "Sprinkled through the day"
+        case .once: "Once"
+        case .aCouple: "Twice"
+        case .sprinkled: "Throughout"
         }
     }
 }
@@ -183,6 +178,109 @@ nonisolated extension WorkAround {
         case .postpartum: "Postpartum"
         case .pelvicFloor: "Pelvic floor"
         case .fatigue: "Low energy or fatigue"
+        }
+    }
+}
+
+// MARK: - Onboarding symbols
+
+nonisolated extension Activity {
+    var onboardingSymbol: String {
+        switch self {
+        case .pilates: "figure.pilates"
+        case .yoga: "figure.yoga"
+        case .qigong: "figure.mind.and.body"
+        case .strength: "dumbbell"
+        case .stretching: "figure.flexibility"
+        case .walking: "figure.walk"
+        case .biking: "bicycle"
+        case .swimming: "figure.pool.swim"
+        case .skating: "figure.skating"
+        case .dance: "figure.dance"
+        case .jumpRope: "figure.jumprope"
+        case .agility: "figure.run"
+        case .carries: "figure.strengthtraining.functional"
+        case .racquet: "tennis.racket"
+        case .climbing: "figure.climbing"
+        case .martialArts: "figure.martial.arts"
+        case .breathwork: "wind"
+        }
+    }
+}
+
+nonisolated extension Equipment {
+    var onboardingSymbol: String {
+        switch self {
+        case .none: "figure.stand"
+        case .mat: "rectangle"
+        case .weights: "dumbbell"
+        case .band: "oval.portrait"
+        case .rope: "figure.jumprope"
+        case .bike: "bicycle"
+        case .pool: "figure.pool.swim"
+        case .skates: "figure.skating"
+        case .outdoor: "tree"
+        case .gym: "building.2"
+        case .reformer: "figure.pilates"
+        }
+    }
+}
+
+nonisolated extension Place {
+    var onboardingSymbol: String {
+        switch self {
+        case .home: "house"
+        case .outdoors: "tree"
+        case .gym: "dumbbell"
+        case .studio: "person.3"
+        case .pool: "figure.pool.swim"
+        }
+    }
+}
+
+nonisolated extension Cadence {
+    var onboardingSymbol: String {
+        switch self {
+        case .everyDay: "calendar"
+        case .mostDays: "calendar.badge.checkmark"
+        case .fewTimesAWeek: "calendar.badge.clock"
+        case .whenICan: "sparkles"
+        }
+    }
+}
+
+nonisolated extension MovementMoments {
+    var onboardingSymbol: String {
+        switch self {
+        case .once: "1.circle"
+        case .aCouple: "2.circle"
+        case .sprinkled: "circle.grid.3x3"
+        }
+    }
+}
+
+nonisolated extension Intent {
+    var onboardingSymbol: String {
+        switch self {
+        case .energize: "bolt"
+        case .strengthen: "dumbbell"
+        case .calm: "leaf"
+        case .mobilize: "figure.flexibility"
+        case .joy: "heart"
+        }
+    }
+}
+
+nonisolated extension WorkAround {
+    var onboardingSymbol: String {
+        switch self {
+        case .lowBack: "figure.core.training"
+        case .knees: "figure.walk"
+        case .wrists: "hand.raised"
+        case .fatigue: "battery.25percent"
+        case .pregnancy: "figure.and.child.holdinghands"
+        case .postpartum: "figure.2.and.child.holdinghands"
+        case .pelvicFloor: "figure.core.training"
         }
     }
 }

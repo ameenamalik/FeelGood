@@ -38,7 +38,7 @@ final class FeelGoodUITests: XCTestCase {
         let pilates = app.buttons["Pilates"]
         guard pilates.waitForExistence(timeout: 5) else { return }
         pilates.tap()
-        for _ in 0..<5 {
+        for _ in 0..<3 {
             app.buttons["Next"].tap()
         }
         app.buttons["Show me today"].tap()

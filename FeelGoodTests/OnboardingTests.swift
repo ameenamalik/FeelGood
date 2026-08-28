@@ -8,11 +8,32 @@
 
 import Testing
 import Foundation
+import UIKit
 @testable import FeelGood
 
 @Suite("Onboarding")
 @MainActor
 struct OnboardingTests {
+
+    @Test("Every choice icon is an available SF Symbol")
+    func choiceSymbolsExist() {
+        var symbols = Activity.allCases.map(\.onboardingSymbol)
+        symbols += Equipment.allCases.map(\.onboardingSymbol)
+        symbols += Place.allCases.map(\.onboardingSymbol)
+        symbols += Cadence.allCases.map(\.onboardingSymbol)
+        symbols += MovementMoments.allCases.map(\.onboardingSymbol)
+        symbols += Intent.allCases.map(\.onboardingSymbol)
+        symbols += WorkAround.allCases.map(\.onboardingSymbol)
+        symbols += Energy.allCases.map(\.checkInSymbol)
+        symbols += TimeBudget.allCases.map(\.checkInSymbol)
+        symbols += PlaceIntent.allCases.map(\.checkInSymbol)
+        symbols += BodyState.allCases.map(\.checkInSymbol)
+        symbols.append("checkmark")
+
+        for symbol in symbols {
+            #expect(UIImage(systemName: symbol) != nil, "Missing SF Symbol: \(symbol)")
+        }
+    }
 
     @Test("A gym membership stands in for the room full of kit")
     func gymImpliesWhatIsInside() {

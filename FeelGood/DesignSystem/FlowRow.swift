@@ -16,7 +16,7 @@ struct FlowRow: Layout {
     /// XXXL text is three columns of words broken mid-syllable.
     var maxPerRow: Int = 3
     /// Never go below this, whatever the proposal says.
-    private let minimumItemWidth: CGFloat = 1
+    var minimumItemWidth: CGFloat = 1
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = resolvedWidth(proposal.width)
@@ -36,8 +36,14 @@ struct FlowRow: Layout {
                 // rather than wrapping, and the row keeps the taller height it
                 // was measured at, leaving a gap underneath. Offering the whole
                 // row height also squares off every tile in the row.
+                let size = subviews[index].sizeThatFits(
+                    ProposedViewSize(width: row.itemWidth, height: row.height)
+                )
                 subviews[index].place(
-                    at: CGPoint(x: x, y: y),
+                    at: CGPoint(
+                        x: x + max(0, (row.itemWidth - size.width) / 2),
+                        y: y + max(0, (row.height - size.height) / 2)
+                    ),
                     proposal: ProposedViewSize(width: row.itemWidth, height: row.height)
                 )
                 x += row.itemWidth + spacing
@@ -65,7 +71,8 @@ struct FlowRow: Layout {
     private func arrange(subviews: Subviews, width proposedWidth: CGFloat) -> [Row] {
         guard !subviews.isEmpty else { return [] }
         let width = resolvedWidth(proposedWidth)
-        let columns = width < 340 ? min(2, maxPerRow) : maxPerRow
+        let columnsThatFit = max(1, Int((width + spacing) / (minimumItemWidth + spacing)))
+        let columns = min(maxPerRow, columnsThatFit)
         let perRow = max(1, min(columns, subviews.count))
         let itemWidth = max(minimumItemWidth, (width - spacing * CGFloat(perRow - 1)) / CGFloat(perRow))
 

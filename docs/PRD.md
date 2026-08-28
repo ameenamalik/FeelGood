@@ -227,7 +227,7 @@ This does not damage the business model; it confirms the one already chosen. **W
 
 ## 7. Personalization
 
-### 7.1 Onboarding — "what's available to you?" (≤ 90 seconds, 6 cards)
+### 7.1 Onboarding — "what's available to you?" (≤ 90 seconds, 4 cards)
 
 Framed around *availability and reality*, never around goals-as-metrics.
 
@@ -235,10 +235,12 @@ Framed around *availability and reality*, never around goals-as-metrics.
 2. **How often do you want to move?** Two rows on one card, because they are different questions and both are cheap to answer:
    - *Across the week:* Every day · Most days · A few times a week · When I can. *(Cadence target — used for gentle balancing, never for grading.)*
    - ***Within a day: how many times would you like intentional movement?*** Once, properly · A couple of times · Sprinkled through the day. *(Shapes the menu, not the workload — see below.)*
-3. **On a normal day, how much time is realistic?** 10 · 20 · 30 · 45+ min.
-4. **When do you have the most in you?** Morning · Midday · Evening · It varies.
-5. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up. *(Pick one or more. A session matching any selected direction gets the `intent` weighting.)*
-6. **Anything to work around?** Free-text-lite chips: lower back, knees, wrists, pregnancy/postpartum, low iron/fatigue, none. *(Filters, never diagnoses.)*
+3. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up. *(Pick one or more. A session matching any selected direction gets the `intent` weighting.)*
+4. **Anything to work around?** Free-text-lite chips: lower back, knees, wrists, pregnancy/postpartum, low iron/fatigue, none. *(Filters, never diagnoses.)*
+
+Available time is intentionally not asked during onboarding. It changes day to
+day and already belongs to the daily check-in; asking it here would duplicate
+the stronger, more current signal.
 
 **Why "how many times a day" is a real question and not a second cadence slider.**
 It changes the *shape* of the menu rather than its size. Somebody who wants one
@@ -299,8 +301,8 @@ back after a gap) are only worth having if something feeds them. Three things do
 Recording something changes the next menu, not the one on screen. Anything else
 would mean the thing you just did vanishing as a reward for doing it.
 
-**The profile is editable, always.** The same six questions, reachable from the
-menu. Answers are stored as given and their implications derived on read, so
+**The profile is editable, always.** The same profile choices are reachable from
+the menu. Answers are stored as given and their implications derived on read, so
 unticking the gym takes the weights with it.
 
 ### 7.3 The planning engine — deterministic rules, LLM voice
@@ -370,7 +372,7 @@ and profile controls remain secondary to the reflection.
 
 | # | Screen | Purpose |
 |---|---|---|
-| 1 | **Onboarding** | 6 cards, ≤90s, ends on a real generated menu. |
+| 1 | **Onboarding** | 4 cards, ≤90s, ends on a real generated menu. |
 | 2 | **Today** *(home)* | The menu. Appetizer → hero Main → Sides → Dessert. One screen, no scroll. |
 | 3 | **Check-in sheet** | Two-tap energy/time, optional body. Regenerates in place. |
 | 4 | **Session detail** | What it is, why it was picked, what you need. Start. |
