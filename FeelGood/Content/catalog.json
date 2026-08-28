@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "sessions": [
     {
       "id": "app-box-breathing",
@@ -2803,6 +2803,492 @@
             "cue": "Slow pace back to your door."
           }
         ]
+      }
+    },
+    {
+      "id": "yt-kNbJJOJumlM",
+      "title": "Ten minutes, side abs and inner thighs",
+      "subtitle": "A quick, focused burn for the obliques and thighs",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility"
+      ],
+      "durationMin": 10,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "core"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "strengthen",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "kNbJJOJumlM",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-huL9JFjDwVI",
+      "title": "Twenty-five minutes, full body beginner mat Pilates",
+      "subtitle": "A steady, whole-body flow to build core strength",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility"
+      ],
+      "durationMin": 30,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "strengthen",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "huL9JFjDwVI",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-bE0ssPhfBfg",
+      "title": "Eleven minutes, Pilates arms with weights",
+      "subtitle": "Sculpt and strengthen your shoulders and posture",
+      "activity": "pilates",
+      "qualities": [
+        "strength"
+      ],
+      "durationMin": 15,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat",
+        "weights"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "upperBody"
+      ],
+      "contraindications": [
+        "wrists"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "bE0ssPhfBfg",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-grzqpN2bNTs",
+      "title": "Fifteen minutes, core and glutes hourglass flow",
+      "subtitle": "A quick, low-impact sequence for the waist and hips",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility"
+      ],
+      "durationMin": 15,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "strengthen",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "grzqpN2bNTs",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-UDuZNDwQrqI",
+      "title": "Twenty-five minutes, gentle stress-relief flow",
+      "subtitle": "Slow down, move mindfully, and release tension",
+      "activity": "pilates",
+      "qualities": [
+        "mobility",
+        "downRegulation"
+      ],
+      "durationMin": 30,
+      "intensity": 2,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "calm",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "UDuZNDwQrqI",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-nZaHiSEXqrg",
+      "title": "Fifteen minutes, quick full body reset",
+      "subtitle": "A fast and efficient flow to wake up the whole body",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility"
+      ],
+      "durationMin": 15,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "energize",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "nZaHiSEXqrg",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-5m-hvk7D6QI",
+      "title": "Forty-one minutes, full body sculpt with weights",
+      "subtitle": "A comprehensive, strength-focused Pilates session",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "endurance"
+      ],
+      "durationMin": 45,
+      "intensity": 4,
+      "energyFit": [
+        "strong"
+      ],
+      "equipment": [
+        "mat",
+        "weights"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor",
+        "wrists"
+      ],
+      "intents": [
+        "strengthen",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "5m-hvk7D6QI",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-en2Zs4n4yio",
+      "title": "Twenty-four minutes, legs and glutes focus",
+      "subtitle": "A mat-based burn targeting the lower body",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility"
+      ],
+      "durationMin": 30,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "lowerBody"
+      ],
+      "contraindications": [
+        "knees"
+      ],
+      "intents": [
+        "strengthen",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "en2Zs4n4yio",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-l31iSekrSPw",
+      "title": "Twelve minutes, tight core and abs",
+      "subtitle": "A focused core-strengthening mat routine",
+      "activity": "pilates",
+      "qualities": [
+        "strength"
+      ],
+      "durationMin": 15,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "core"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "l31iSekrSPw",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-K3ZQF0VFcNk",
+      "title": "Twenty minutes, core and glutes flow",
+      "subtitle": "Target the core and hips with this mat routine",
+      "activity": "pilates",
+      "qualities": [
+        "strength"
+      ],
+      "durationMin": 20,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "core"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor"
+      ],
+      "intents": [
+        "strengthen",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "K3ZQF0VFcNk",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-HTDFOwzCs4g",
+      "title": "Twenty-three minutes, low impact beginner Pilates",
+      "subtitle": "A gentle, full-body mat flow with zero jumping",
+      "activity": "pilates",
+      "qualities": [
+        "mobility",
+        "strength"
+      ],
+      "durationMin": 30,
+      "intensity": 2,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "mobilize",
+        "calm"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "HTDFOwzCs4g",
+        "channel": "SIMONE SHARICE"
+      }
+    },
+    {
+      "id": "yt-cItPBVsnIgw",
+      "title": "Eighteen minutes, high-intensity Pilates arms",
+      "subtitle": "A burn-inducing upper body sequence with no equipment",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "endurance"
+      ],
+      "durationMin": 20,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "upperBody"
+      ],
+      "contraindications": [
+        "wrists"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "youtube",
+        "videoID": "cItPBVsnIgw",
+        "channel": "SIMONE SHARICE"
       }
     }
   ],

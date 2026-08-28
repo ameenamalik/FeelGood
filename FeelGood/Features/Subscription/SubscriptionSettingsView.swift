@@ -79,7 +79,12 @@ struct SubscriptionSettingsView: View {
                 if let yearly = purchasesManager.yearlyPackage {
                     planRow(title: "Yearly", package: yearly)
                 }
-                if purchasesManager.monthlyPackage == nil, purchasesManager.yearlyPackage == nil {
+                if let lifetime = purchasesManager.lifetimePackage {
+                    planRow(title: "Lifetime", package: lifetime)
+                }
+                if purchasesManager.monthlyPackage == nil,
+                   purchasesManager.yearlyPackage == nil,
+                   purchasesManager.lifetimePackage == nil {
                     Text("No plans available right now.")
                         .foregroundStyle(.secondary)
                 }

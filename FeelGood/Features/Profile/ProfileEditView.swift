@@ -106,6 +106,7 @@ struct ProfileEditView: View {
 
                     VStack(spacing: FGSpace.s) {
                         FGPrimaryButton(title: "Save") {
+                            Analytics.capture("profile_updated")
                             onSave(answers)
                             dismiss()
                         }

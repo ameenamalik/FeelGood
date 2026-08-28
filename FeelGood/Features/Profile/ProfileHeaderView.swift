@@ -10,6 +10,7 @@
 //
 
 import AuthenticationServices
+import PostHog
 import SwiftUI
 
 struct ProfileHeaderView: View {
@@ -93,6 +94,7 @@ struct ProfileHeaderView: View {
         case .success(let authorization):
             guard let credential = AppleCredential(authorization) else { return }
             profile.applyAppleSignIn(userID: credential.userID, email: credential.email, fullName: credential.fullName)
+            identify(credential)
             Task { await purchasesManager.logIn(appUserID: credential.userID) }
 
         case .failure(let error):
@@ -105,7 +107,33 @@ struct ProfileHeaderView: View {
 
     private func signOut() {
         profile.signOutOfApple()
+        resetAnalyticsIdentity()
         Task { await purchasesManager.logOut() }
+    }
+
+    /// Uses Apple's stable, app-scoped subject identifier as the distinct ID.
+    /// Email is PII, so it is sent only as a person property.
+    private func identify(_ credential: AppleCredential) {
+        guard isPostHogConfigured else { return }
+
+        var personProperties: [String: Any] = [:]
+        if let email = credential.email {
+            personProperties["email"] = email
+        }
+        PostHogSDK.shared.identify(credential.userID, userProperties: personProperties)
+    }
+
+    private func resetAnalyticsIdentity() {
+        guard isPostHogConfigured else { return }
+        PostHogSDK.shared.reset()
+    }
+
+    private var isPostHogConfigured: Bool {
+        guard let projectToken = Bundle.main.object(forInfoDictionaryKey: "PostHogProjectToken") as? String,
+              let host = Bundle.main.object(forInfoDictionaryKey: "PostHogHost") as? String else {
+            return false
+        }
+        return !projectToken.isEmpty && !host.isEmpty
     }
 
     /// Apple ID sign-in can be revoked from the user's device settings
@@ -120,6 +148,7 @@ struct ProfileHeaderView: View {
         }
         if state == .revoked || state == .notFound {
             profile.signOutOfApple()
+            resetAnalyticsIdentity()
         }
     }
 

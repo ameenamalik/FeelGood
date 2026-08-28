@@ -166,6 +166,9 @@ struct CheckInSheet: View {
     }
 
     private func finish() {
+        Analytics.capture("check_in_completed", properties: [
+            "has_check_in": energy != nil || time != nil || place != nil || body_ != nil
+        ])
         onDone(answers)
     }
 }
