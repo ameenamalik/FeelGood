@@ -70,8 +70,6 @@ struct TodayView: View {
             Text(model.greeting())
                 .font(FGFont.caption)
                 .foregroundStyle(FGColor.inkMuted)
-                .textCase(.uppercase)
-                .tracking(1.2)
                 #if DEBUG
                 // Long-press the date to fabricate history. Debug builds only.
                 .onLongPressGesture(minimumDuration: 0.7) { isDebugging = true }
@@ -171,8 +169,6 @@ struct CourseTag: View {
         Text(course.label)
             .font(FGFont.label)
             .foregroundStyle(course.accentText)
-            .textCase(.uppercase)
-            .tracking(1.1)
             .padding(.horizontal, FGSpace.s)
             .padding(.vertical, FGSpace.xs)
             .background(

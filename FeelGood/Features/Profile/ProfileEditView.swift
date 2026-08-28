@@ -49,8 +49,6 @@ struct ProfileEditView: View {
                             Text("Within a day")
                                 .font(FGFont.label)
                                 .foregroundStyle(FGColor.inkMuted)
-                                .textCase(.uppercase)
-                                .tracking(1.1)
                             choices(MovementMoments.allCases, label: \.label, selection: $answers.moments)
                         }
                     }
