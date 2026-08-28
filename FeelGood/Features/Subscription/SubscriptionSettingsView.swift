@@ -35,7 +35,7 @@ struct SubscriptionSettingsView: View {
         }
         .presentCustomerCenter(isPresented: $isCustomerCenterPresented)
         .alert(
-            "Something went wrong",
+            purchasesManager.lastError.map { if case .purchasePending = $0 { "Almost there" } else { "Something went wrong" } } ?? "Something went wrong",
             isPresented: Binding(
                 get: { purchasesManager.lastError != nil },
                 set: { if !$0 { purchasesManager.lastError = nil } }
@@ -79,12 +79,8 @@ struct SubscriptionSettingsView: View {
                 if let yearly = purchasesManager.yearlyPackage {
                     planRow(title: "Yearly", package: yearly)
                 }
-                if let lifetime = purchasesManager.lifetimePackage {
-                    planRow(title: "Lifetime", package: lifetime)
-                }
                 if purchasesManager.monthlyPackage == nil,
-                   purchasesManager.yearlyPackage == nil,
-                   purchasesManager.lifetimePackage == nil {
+                   purchasesManager.yearlyPackage == nil {
                     Text("No plans available right now.")
                         .foregroundStyle(.secondary)
                 }

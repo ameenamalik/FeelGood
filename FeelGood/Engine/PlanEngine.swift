@@ -65,9 +65,13 @@ nonisolated struct PlanEngine: Sendable {
 
         let special = pickSpecial(input, checkIn: checkIn, stats: stats)
         var taken: Set<String> = special.map { [$0.session.id] } ?? []
+        var takenActivities: Set<Activity> = special.map { [$0.session.activity] } ?? []
 
         let main = first(from: scored, course: .main, excluding: taken)
-        if let main { taken.insert(main.session.id) }
+        if let main {
+            taken.insert(main.session.id)
+            takenActivities.insert(main.session.activity)
+        }
 
         // How many small things belong on the menu is a shape question, not a
         // workload one: the same time, arranged to fit the day being described.
@@ -76,22 +80,29 @@ nonisolated struct PlanEngine: Sendable {
         if sideCount > 0 {
             for candidate in scored where candidate.session.course == .side {
                 guard !taken.contains(candidate.session.id) else { continue }
-                // Two sides that are the same activity as the main read as one
-                // idea repeated, not as a menu.
-                if let main, candidate.session.activity == main.session.activity, !sides.isEmpty { continue }
+                if takenActivities.contains(candidate.session.activity) { continue }
                 sides.append(candidate.item)
                 taken.insert(candidate.session.id)
+                takenActivities.insert(candidate.session.activity)
                 if sides.count == sideCount { break }
             }
         }
 
-        let appetizer = first(from: scored, course: .appetizer, excluding: taken)
+        let appetizer = first(from: scored, course: .appetizer, excluding: taken, excludingActivities: takenActivities)
+            ?? first(from: scored, course: .appetizer, excluding: taken)
             ?? guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: taken)
-        if let appetizer { taken.insert(appetizer.session.id) }
+        if let appetizer {
+            taken.insert(appetizer.session.id)
+            takenActivities.insert(appetizer.session.activity)
+        }
 
-        let dessert = first(from: scored, course: .dessert, excluding: taken)
+        let dessert = first(from: scored, course: .dessert, excluding: taken, excludingActivities: takenActivities)
+            ?? first(from: scored, course: .dessert, excluding: taken)
             ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken)
-        if let dessert { taken.insert(dessert.session.id) }
+        if let dessert {
+            taken.insert(dessert.session.id)
+            takenActivities.insert(dessert.session.activity)
+        }
 
         // Trim to one screen. The appetizer and the main are the two things the
         // product promises, so they are the last to go.
@@ -431,8 +442,12 @@ nonisolated struct PlanEngine: Sendable {
 
     // MARK: - Assembly helpers
 
-    private func first(from scored: [Candidate], course: Course, excluding: Set<String>) -> MenuItem? {
-        scored.first { $0.session.course == course && !excluding.contains($0.session.id) }?.item
+    private func first(from scored: [Candidate], course: Course, excluding: Set<String>, excludingActivities: Set<Activity> = []) -> MenuItem? {
+        scored.first {
+            $0.session.course == course
+                && !excluding.contains($0.session.id)
+                && !excludingActivities.contains($0.session.activity)
+        }?.item
     }
 
     private func pickSpecial(_ input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats) -> MenuItem? {
