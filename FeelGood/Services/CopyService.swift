@@ -71,11 +71,10 @@ nonisolated struct URLSessionCopyTransport: CopyTransport {
 /// complexity here.
 ///
 /// PRD §10: this line is a Pro feature ("Warm, written-for-you coaching
-/// voice"). The Worker design would have checked this server-side before
-/// generating anything; `MLXCopyTransport` runs entirely on-device and has
-/// no server to enforce it, so the check happens here instead, fresh on
-/// every call rather than once at construction, so a purchase mid-session
-/// starts producing upgraded copy without needing a relaunch.
+/// voice"). The Worker already checks entitlement server-side before
+/// generating anything; this check is fresh on every call rather than once
+/// at construction, so a purchase mid-session starts producing upgraded
+/// copy without needing a relaunch.
 actor CopyService: CopyProviding {
     private let transport: any CopyTransport
     private let timeout: TimeInterval
@@ -83,7 +82,7 @@ actor CopyService: CopyProviding {
     private var cache: [CopyPayload: String] = [:]
 
     init(
-        transport: any CopyTransport = MLXCopyTransport(),
+        transport: any CopyTransport = URLSessionCopyTransport(),
         timeout: TimeInterval = CopyServiceConstants.requestTimeout,
         isProUnlocked: @escaping @Sendable () async -> Bool = { await PurchasesManager.shared.isProUnlocked }
     ) {
