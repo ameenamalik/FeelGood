@@ -660,7 +660,10 @@ struct PlanEngineTests {
         let appYoga = Fixture.session(id: "app-yoga", activity: .yoga, qualities: [.mobility], durationMin: 5, intensity: 1, course: .appetizer)
         let appPilates = Fixture.session(id: "app-pilates", activity: .pilates, qualities: [.strength], durationMin: 5, intensity: 1, course: .appetizer)
         
-        let desYoga = Fixture.session(id: "des-yoga", activity: .yoga, qualities: [.mobility], durationMin: 5, intensity: 1, course: .dessert)
+        // des-yoga is given the profile's own intent so it outscores des-pilates.
+        // The point of the assertion below is that it still doesn't win: the
+        // Dessert declines to echo the Main even when the echo scores higher.
+        let desYoga = Fixture.session(id: "des-yoga", activity: .yoga, qualities: [.mobility], durationMin: 5, intensity: 1, course: .dessert, intents: [.mobilize])
         let desPilates = Fixture.session(id: "des-pilates", activity: .pilates, qualities: [.strength], durationMin: 5, intensity: 1, course: .dessert)
         
         let input = PlanInput(
@@ -675,7 +678,10 @@ struct PlanEngineTests {
         
         #expect(menu.main?.session.id == "main-yoga")
         #expect(menu.appetizer?.session.id == "app-pilates")
-        #expect(menu.dessert?.session.id == "des-yoga")
+        // Two activities, three courses — something has to repeat. It repeats
+        // the Appetizer, never the Main: the Main is the day's real offer and
+        // the contrast that reads is contrast with it.
+        #expect(menu.dessert?.session.id == "des-pilates")
     }
 
     @Test("Falls back to duplicate activity if no distinct activities are available")
