@@ -33,15 +33,27 @@ struct FeelGoodApp: App {
             // Session replay is a different risk surface than events/logs: it
             // captures whatever's rendered, not an allow-listed payload. Every
             // mask stays at the SDK's own conservative default — text (inputs
-            // and plain labels alike) and images both masked, wireframe-only
-            // reconstruction rather than real screenshots — because a
+            // and plain labels alike) and images both masked — because a
             // workaround's label or a kept session's title can land on screen
             // just as easily as anything else, and none of it is worth the
             // risk of loosening this later without re-deciding it deliberately.
+            //
+            // `screenshotMode` is not optional for us. Wireframe reconstruction
+            // walks a UIKit view hierarchy, and this app has none: the root
+            // controller is a `UIHostingController`, so `PostHogReplayIntegration`
+            // bails out of every snapshot with "SwiftUI snapshot not supported,
+            // enable screenshotMode" and no initial snapshot ever leaves the
+            // device. Sessions still appear in the replay list and none of them
+            // can be played. Masking is what carries the privacy decision here,
+            // not the render mode: with `maskAllTextInputs` on, the SDK masks
+            // every `SwiftUI.CGDrawingView` / `CGDrawingLayer` — which is what
+            // `Text` and `Button` actually draw into — not just text fields.
+            // Anything the SDK's heuristics might miss gets `.postHogMask()` at
+            // the view.
             config.sessionReplay = true
             config.sessionReplayConfig.maskAllTextInputs = true
             config.sessionReplayConfig.maskAllImages = true
-            config.sessionReplayConfig.screenshotMode = false
+            config.sessionReplayConfig.screenshotMode = true
             PostHogSDK.shared.setup(config)
         } else {
             #if DEBUG
