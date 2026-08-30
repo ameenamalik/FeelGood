@@ -20,6 +20,10 @@ struct PlayerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var index = 0
     @State private var remaining = 0
+    @State private var repsDone = 0
+    /// The counter is the whole tap target, and it grows with Dynamic Type —
+    /// this is used mid-movement, often without looking straight at it.
+    @ScaledMetric(relativeTo: .largeTitle) private var counterHeight = 180.0
     @State private var isRunning = true
     @State private var isDone = false
 
@@ -39,7 +43,10 @@ struct PlayerView: View {
             }
         }
         .task(id: index) {
-            guard let step else { return }
+            repsDone = 0
+            // A counted step has no clock to run: it advances on taps, not
+            // on time, so the timer loop must not claim it.
+            guard let step, !step.isCounted else { return }
             remaining = step.seconds
             while remaining > 0 && !isDone {
                 try? await Task.sleep(for: .seconds(1))
@@ -113,9 +120,13 @@ struct PlayerView: View {
 
                 ExerciseDemoView(glossaryID: step.glossaryID)
 
-                Text(timeString)
-                    .font(.system(.largeTitle, design: .serif).monospacedDigit())
-                    .foregroundStyle(FGColor.skyDeep)
+                if step.isCounted, let total = step.reps {
+                    counter(step, total: total)
+                } else {
+                    Text(timeString)
+                        .font(.system(.largeTitle, design: .serif).monospacedDigit())
+                        .foregroundStyle(FGColor.skyDeep)
+                }
 
                 Text(step.cue)
                     .font(FGFont.body)
@@ -127,8 +138,17 @@ struct PlayerView: View {
             Spacer()
 
             VStack(spacing: FGSpace.s) {
-                FGPrimaryButton(title: isRunning ? "Pause" : "Resume") {
-                    isRunning.toggle()
+                if !step.isCounted {
+                    FGPrimaryButton(title: isRunning ? "Pause" : "Resume") {
+                        isRunning.toggle()
+                    }
+                } else if repsDone > 0 {
+                    // Counting is only trustworthy if it is reversible. A
+                    // thumb catches the card twice and the count is worse
+                    // than useless without a way back.
+                    FGQuietButton("Undo one", systemImage: "arrow.uturn.backward") {
+                        repsDone -= 1
+                    }
                 }
                 HStack {
                     if index > steps.startIndex {
@@ -183,6 +203,54 @@ struct PlayerView: View {
         // Full bleed here: this is the only screen empty enough to carry it,
         // and the only one where decoration is the point.
         .background(FGBrandWash().ignoresSafeArea())
+    }
+
+    /// Counting reps, not counting down. Deliberately not a progress bar:
+    /// the number is a place-keeper for a working memory that is busy holding
+    /// a plank, not a score to finish. Nothing here renders a percentage.
+    private func counter(_ step: Step, total: Int) -> some View {
+        Button {
+            guard repsDone < total else { return }
+            repsDone += 1
+            guard repsDone >= total else { return }
+            // Let the last rep land on screen before the step changes —
+            // advancing on the instant of the tap means never seeing it.
+            let countedStep = index
+            Task {
+                try? await Task.sleep(for: .milliseconds(450))
+                guard index == countedStep else { return }
+                advance()
+            }
+        } label: {
+            VStack(spacing: FGSpace.xs) {
+                Text("\(repsDone)/\(total)")
+                    .font(.system(.largeTitle, design: .rounded).weight(.bold).monospacedDigit())
+                    .contentTransition(.numericText())
+                    .foregroundStyle(FGColor.skyDeep)
+                Text(repsDone >= total ? "that's the set" : "tap as you go")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+            }
+            .frame(maxWidth: .infinity, minHeight: counterHeight)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .disabled(repsDone >= total)
+        .animation(FGMotion.gentle, value: repsDone)
+        // The haptic is the point: "don't lose count" means being sure a tap
+        // registered without looking down to check.
+        .sensoryFeedback(.increase, trigger: repsDone)
+        .accessibilityElement()
+        .accessibilityLabel(step.name)
+        .accessibilityValue("\(repsDone) of \(total)")
+        .accessibilityHint("Counts one rep")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: if repsDone < total { repsDone += 1 }
+            case .decrement: if repsDone > 0 { repsDone -= 1 }
+            @unknown default: break
+            }
+        }
     }
 
     private var timeString: String {
