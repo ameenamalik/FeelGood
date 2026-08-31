@@ -21,6 +21,7 @@ import OSLog
 import PostHog
 import SwiftData
 
+@MainActor
 struct Storage {
     let container: ModelContainer
 

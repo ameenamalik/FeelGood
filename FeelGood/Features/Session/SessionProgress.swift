@@ -12,6 +12,36 @@ nonisolated struct SessionProgress: Codable, Equatable, Sendable {
     let stepIndex: Int
     let remainingSeconds: Int
     let startedAt: Date
+    let repsDone: Int
+    let setsDone: Int
+
+    init(
+        stepIndex: Int,
+        remainingSeconds: Int,
+        startedAt: Date,
+        repsDone: Int = 0,
+        setsDone: Int = 0
+    ) {
+        self.stepIndex = stepIndex
+        self.remainingSeconds = remainingSeconds
+        self.startedAt = startedAt
+        self.repsDone = repsDone
+        self.setsDone = setsDone
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case stepIndex, remainingSeconds, startedAt, repsDone, setsDone
+    }
+
+    /// `decodeIfPresent` keeps progress written before rep counting compatible.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        stepIndex = try values.decode(Int.self, forKey: .stepIndex)
+        remainingSeconds = try values.decode(Int.self, forKey: .remainingSeconds)
+        startedAt = try values.decode(Date.self, forKey: .startedAt)
+        repsDone = try values.decodeIfPresent(Int.self, forKey: .repsDone) ?? 0
+        setsDone = try values.decodeIfPresent(Int.self, forKey: .setsDone) ?? 0
+    }
 }
 
 @MainActor

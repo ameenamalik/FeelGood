@@ -42,6 +42,7 @@ struct PostHogAnalyticsSink: AnalyticsSink {
     }
 }
 
+@MainActor
 enum Analytics {
     /// The swap point. MainActor-isolated like everything else in this file, so
     /// a test replaces it without synchronisation.
