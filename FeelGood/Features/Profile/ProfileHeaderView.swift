@@ -69,7 +69,7 @@ struct ProfileHeaderView: View {
                 Image(systemName: "person.crop.circle.fill")
                     .foregroundStyle(FGColor.inkMuted)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(profile.email ?? "Signed in with Apple")
+                    Text("Signed in with Apple")
                         .font(FGFont.body)
                         .foregroundStyle(FGColor.ink)
                         .postHogMask()
@@ -87,16 +87,21 @@ struct ProfileHeaderView: View {
         }
     }
 
+    /// No scopes requested. Sign in with Apple is here so a subscription
+    /// survives a reinstall or a new phone, and the app-scoped user id alone
+    /// does that. Name and email were requested before, stored, and sent to
+    /// PostHog — while the privacy policy said in five places that we collect
+    /// neither. Asking for identity the product never uses is the part that
+    /// was wrong, not the policy.
     private func configure(_ request: ASAuthorizationAppleIDRequest) {
-        request.requestedScopes = [.fullName, .email]
+        request.requestedScopes = []
     }
 
     private func handle(_ result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let authorization):
             guard let credential = AppleCredential(authorization) else { return }
-            profile.applyAppleSignIn(userID: credential.userID, email: credential.email, fullName: credential.fullName)
-            identify(credential)
+            profile.applyAppleSignIn(userID: credential.userID)
             Task { await purchasesManager.logIn(appUserID: credential.userID) }
 
         case .failure(let error):
@@ -113,18 +118,10 @@ struct ProfileHeaderView: View {
         Task { await purchasesManager.logOut() }
     }
 
-    /// Uses Apple's stable, app-scoped subject identifier as the distinct ID.
-    /// Email is PII, so it is sent only as a person property.
-    private func identify(_ credential: AppleCredential) {
-        guard isPostHogConfigured else { return }
-
-        var personProperties: [String: Any] = [:]
-        if let email = credential.email {
-            personProperties["email"] = email
-        }
-        PostHogSDK.shared.identify(credential.userID, userProperties: personProperties)
-    }
-
+    /// Analytics is never told who signed in. PostHog keeps its own
+    /// per-install distinct id, which is what the privacy policy describes;
+    /// calling `identify` with the Apple user id would tie every event to a
+    /// stable account and make that description false again.
     private func resetAnalyticsIdentity() {
         guard isPostHogConfigured else { return }
         PostHogSDK.shared.reset()
