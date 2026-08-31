@@ -804,7 +804,7 @@ iOS app                  Cloudflare Worker                 Anthropic API
    |-- POST /copy ------------->|                                |
    |   { picks, reasonCodes,    | 1. verify RevenueCat receipt   |
    |     coarseState,           |    (is this install `pro`?)    |
-   |     anonInstallID }        | 2. rate limit by install       |
+   |     subscriberID }         | 2. rate limit by subscriber    |
    |                            | 3. validate payload shape      |
    |                            |-- messages.create ------------>|
    |                            |   (key from Worker secret)     |
@@ -821,8 +821,8 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const body = await req.json();
     if (!isValidPayload(body)) return new Response("bad request", { status: 400 });
-    if (!(await hasProEntitlement(body.anonInstallID, env))) return new Response("forbidden", { status: 403 });
-    if (await isRateLimited(body.anonInstallID, env)) return new Response("slow down", { status: 429 });
+    if (!(await hasProEntitlement(body.subscriberID, env))) return new Response("forbidden", { status: 403 });
+    if (await isRateLimited(body.subscriberID, env)) return new Response("slow down", { status: 429 });
 
     const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }); // Worker secret, never in the app
     const res = await client.messages.create({
@@ -853,13 +853,17 @@ export default {
 | `picks` — session ids | `PlanCheckIn.body` (`sore` / `stiff` / `stressed` / **`cramping`**) |
 | `reasonCodes` — the ten `ReasonCode` cases, incl. `shortSleep` / `quietDay` / `busyDay` (§7.5.5) | `PlanProfile.workArounds` (**`pregnancy`**, **`postpartum`**, **`pelvicFloor`**, `knees`, `wrists`, `lowBack`, `fatigue`) |
 | coarse state — `energy`, `time`, `daysSinceLast` | name, location, device id, **HealthKit values — raw, rounded, or bucketed**, session history |
-| `anonInstallID` | anything tying the install to a name or account |
+| `subscriberID` — RevenueCat's app user id | name, email, or any identifier we mint ourselves |
 
 **Why the right-hand column is drawn where it is.** `cramping`, `pregnancy`, `postpartum`, and `pelvicFloor` are reproductive health data — the most scrutinised category there is, under both App Store review and GDPR Article 9. They are load-bearing for the engine and worthless to the copy layer, which is writing one warm sentence. There is no version of that sentence worth sending them for. A test asserts the encoded JSON keys exactly, so this stays true through a refactor.
 
 Work-arounds are applied as a *filter* — `isDisjoint(with: input.profile.workArounds)` — and never surface as a `ReasonCode`. That is deliberate and worth preserving: it means the reason channel is clean by construction rather than by redaction. (The set of picked session ids is a weak statistical proxy for what was filtered out. Noted, accepted, not worth a mitigation.)
 
-**On `anonInstallID`:** it is a random per-install identifier, required so the Worker can check entitlement and rate-limit. Because it is verified against RevenueCat it is *pseudonymous, not anonymous* — it is never linked to a name, email, or account, and the honest phrasing is that rather than "nothing that identifies a person".
+**On `subscriberID`** *(revised 2026-08-31 — supersedes the original `anonInstallID` design)***:** it is RevenueCat's own app user id, required so the Worker can check entitlement and rate-limit. It is *pseudonymous, not anonymous*, and the honest phrasing is that rather than "nothing that identifies a person".
+
+The original design minted a random per-install UUID and described it as "verified against RevenueCat". It could not be: nothing ever told RevenueCat that id existed, so every lookup 404'd and every paying user was silently refused. The identifier has to be read from the SDK, because the Worker's only way to ask "is this person entitled" is to ask RevenueCat about an id RevenueCat assigned.
+
+The cost is real and worth stating plainly. Before Apple Sign In this is RevenueCat's anonymous id and the pseudonymity is unchanged. After Sign In it is the Apple user id — an opaque Apple-issued string, never an email or a name, but stable across sessions and reinstalls in a way a per-install UUID was not. It already goes to RevenueCat; this sends it to our own Worker too. That is the price of checking entitlement server-side instead of trusting the client, and §11's rule is that the client is not trusted.
 
 **Failure is invisible.** The proxy is on a 2-second timeout. Miss it — offline, cold start, rate limit, 500, anything — and the template copy that's already on screen simply stays there. The user never sees a spinner, an error, or a retry. **The product works completely with the proxy switched off**, which is exactly why it's the last item on the cut list.
 
@@ -957,6 +961,7 @@ Called out in the submission because vision is rewarded and costs zero build tim
 | 13 *(2026-08-30)* | Apple Health — write-back | **Yes, as two separate off-by-default features:** `HKWorkout` for completed sessions and `.mindfulSession` for breathwork and recovery. Neither is bundled into the read permission. The write→read double-count in `recoveryBalance` is a named correctness risk with a required test. |
 | 14 *(2026-08-30)* | Apple Health — the off switch | **Per-signal switches plus a master off.** Turning one off purges every on-device value derived from it. Samples we wrote to Health survive by default, with an explicitly separate opt-in to delete them. In-app switches govern whether *FeelGood uses* a signal, never system access — HIG requires that distinction hold. |
 | 15 *(2026-08-30)* | Free-text check-in — where it's parsed | **On-device redaction, then parsed in the Worker.** ⚠️ This knowingly reverses §11's rule that free text never leaves the device and that reproductive terms are structurally absent rather than filtered. Accepted with eyes open; the obligations it creates (owned denylist, adversarial test suite, explicit consent, retained tap check-in) are specified in §7.5.8. Health-derived values are exempt and stay on device. |
+| 16 *(2026-08-31)* | Copy proxy — which id identifies the subscriber | **RevenueCat's app user id, read from the SDK.** Supersedes the `anonInstallID` design in §11. A locally minted UUID cannot be verified against RevenueCat because RevenueCat was never told it existed — the original wiring refused every paying user, silently, because failing closed looks identical to being misconfigured. After Apple Sign In the value is the Apple user id: opaque, never an email, but stable in a way a per-install UUID was not. Accepted as the cost of a server-side entitlement check. |
 
 ### Still open
 

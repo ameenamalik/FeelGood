@@ -41,7 +41,7 @@ Set secrets — never committed, never in `wrangler.toml`:
 
 ```bash
 wrangler secret put ANTHROPIC_API_KEY
-wrangler secret put REVENUECAT_SECRET_API_KEY   # the RevenueCat *secret* v2 REST key
+wrangler secret put REVENUECAT_SECRET_API_KEY   # the RevenueCat *secret* v1 REST key
 
 wrangler secret put ANTHROPIC_API_KEY --env production
 wrangler secret put REVENUECAT_SECRET_API_KEY --env production
@@ -76,7 +76,7 @@ The two routes degrade differently when the setting is absent or invalid:
 ```bash
 curl -i -X POST https://<your-worker>.workers.dev/copy \
   -H 'content-type: application/json' \
-  -d '{"picks":["m-pilates-30"],"reasonCodes":["lowEnergy"],"energy":"low","time":"aLittle","daysSinceLast":null,"anonInstallID":"test-install"}'
+  -d '{"picks":["m-pilates-30"],"reasonCodes":["lowEnergy"],"energy":"low","time":"aLittle","daysSinceLast":null,"subscriberID":"test-install"}'
 ```
 
 Expect `403` (not entitled) unless `test-install` is a real, pro-entitled

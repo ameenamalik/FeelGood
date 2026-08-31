@@ -26,7 +26,7 @@ export interface CopyPayload {
   energy: EnergyValue;
   time: TimeBudgetValue;
   daysSinceLast: number | null;
-  anonInstallID: string;
+  subscriberID: string;
 }
 
 export interface Env {

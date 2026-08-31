@@ -39,11 +39,11 @@ export default {
       return new Response("bad request", { status: 400 });
     }
 
-    if (!(await hasProEntitlement(body.anonInstallID, env))) {
+    if (!(await hasProEntitlement(body.subscriberID, env))) {
       return new Response("forbidden", { status: 403 });
     }
 
-    if (await isRateLimited(body.anonInstallID, env)) {
+    if (await isRateLimited(body.subscriberID, env)) {
       return new Response("slow down", { status: 429 });
     }
 

@@ -26,6 +26,12 @@ final class PurchasesManager {
     /// "still loading" from "confirmed not subscribed".
     private(set) var hasLoadedCustomerInfo = false
 
+    /// The id RevenueCat knows this subscriber by — its anonymous id before
+    /// Apple Sign In, the Apple user id after. The copy Worker looks the
+    /// subscriber up by exactly this value, so it must be read from the SDK
+    /// rather than generated alongside it.
+    var appUserID: String { Purchases.shared.appUserID }
+
     var isProUnlocked: Bool {
         #if DEBUG
         if Self.debugForceProUnlocked { return true }

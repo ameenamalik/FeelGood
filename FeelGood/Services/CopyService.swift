@@ -14,7 +14,7 @@
 import Foundation
 
 /// The copy layer, seen from `TodayModel`. Builds the payload (and threads
-/// `anonInstallID`) internally, so nothing above `Services/` ever constructs
+/// `subscriberID`) internally, so nothing above `Services/` ever constructs
 /// a `CopyPayload` or touches the install id itself.
 nonisolated protocol CopyProviding: Sendable {
     func upgradedHeadline(menu: Menu, checkIn: PlanCheckIn, stats: HistoryStats) async -> String?
@@ -79,22 +79,25 @@ actor CopyService: CopyProviding {
     private let transport: any CopyTransport
     private let timeout: TimeInterval
     private let isProUnlocked: @Sendable () async -> Bool
+    private let subscriberID: @Sendable () async -> String
     private var cache: [CopyPayload: String] = [:]
 
     init(
         transport: any CopyTransport = URLSessionCopyTransport(),
         timeout: TimeInterval = WorkerConstants.requestTimeout,
-        isProUnlocked: @escaping @Sendable () async -> Bool = { await PurchasesManager.shared.isProUnlocked }
+        isProUnlocked: @escaping @Sendable () async -> Bool = { await PurchasesManager.shared.isProUnlocked },
+        subscriberID: @escaping @Sendable () async -> String = { await PurchasesManager.shared.appUserID }
     ) {
         self.transport = transport
         self.timeout = timeout
         self.isProUnlocked = isProUnlocked
+        self.subscriberID = subscriberID
     }
 
     func upgradedHeadline(menu: Menu, checkIn: PlanCheckIn, stats: HistoryStats) async -> String? {
         guard await isProUnlocked() else { return nil }
 
-        let payload = CopyPayload(menu: menu, checkIn: checkIn, stats: stats, anonInstallID: AnonInstallID.current)
+        let payload = CopyPayload(menu: menu, checkIn: checkIn, stats: stats, subscriberID: await subscriberID())
 
         if let cached = cache[payload] {
             return cached
