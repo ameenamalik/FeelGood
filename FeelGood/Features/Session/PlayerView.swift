@@ -18,6 +18,11 @@ struct PlayerView: View {
     @Environment(\.openURL) private var openURL
     @State private var index = 0
     @State private var remaining = 0
+    /// Which step the running timer belongs to.
+    ///
+    /// Compared against `index` so a step change restarts the countdown rather
+    /// than letting the previous step's remaining seconds bleed into the next.
+    @State private var timerIndex = 0
     /// Reps tapped so far **in the current set**, never across the step.
     @State private var repsDone = 0
     /// Sets already finished in this step. `setsDone + 1` is the set someone

@@ -127,6 +127,12 @@ nonisolated extension TimeBudget {
         }
     }
 
+    /// How the answer reads inside a sentence about the day.
+    var summaryPhrase: String {
+        if isTight { return "and short on time" }
+        return maxMinutes <= 30 ? "with some time" : "with plenty of time"
+    }
+
     /// The ceiling as a bare numeral, for the tile that prints it large with
     /// "min" underneath. Reads off `maxMinutes` rather than restating it, so
     /// the number on screen is the number the engine actually caps at.
@@ -271,5 +277,18 @@ private extension String {
     var capitalisedFirst: String {
         guard let first else { return self }
         return first.uppercased() + dropFirst()
+    }
+}
+
+
+nonisolated extension PlanCheckIn {
+    /// The morning's answers as one line, for the card that shows what today's
+    /// menu was built from.
+    ///
+    /// Energy and time only. `body` is deliberately absent — it is the field
+    /// that can say `cramping`, and a summary line is read over someone's
+    /// shoulder more often than anything else on the screen.
+    var summaryLine: String {
+        "\(energy.checkInLabel), \(time.summaryPhrase)"
     }
 }
