@@ -126,8 +126,10 @@ struct FGChoice: View {
     let action: () -> Void
 
     private var hasVisual: Bool { emoji != nil || systemImage != nil }
-    private var visualTileSize: CGFloat? {
-        hasVisual && !typeSize.isAccessibilitySize ? 110 : nil
+    /// Height only. Giving this to `maxWidth` as well is what welded the tile
+    /// to 110pt and broke the grid on every phone narrower than an iPhone 17.
+    private var visualTileHeight: CGFloat? {
+        hasVisual && !typeSize.isAccessibilitySize ? FGSize.choiceTile : nil
     }
 
     var body: some View {
@@ -173,14 +175,14 @@ struct FGChoice: View {
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(hasVisual ? 12 : 0)
             .padding(.horizontal, hasVisual ? 0 : FGSpace.xs)
-            // Fill the height `FlowRow` offers, so a two-line label doesn't
-            // leave its neighbours in the row looking clipped short. Only the
-            // visual tiles do this; plain rows keep hugging.
+            // Width fills whatever slot `FlowRow` hands over — the layout owns
+            // the column arithmetic, the tile just occupies its share. Height
+            // keeps the square-ish proportion at its floor and is free to grow,
+            // so a two-line label doesn't leave its neighbours looking clipped.
             .frame(
-                minWidth: visualTileSize,
-                maxWidth: visualTileSize ?? .infinity,
-                minHeight: visualTileSize ?? (FGSize.minTouchTarget + 8),
-                maxHeight: visualTileSize ?? (hasVisual ? .infinity : nil)
+                maxWidth: .infinity,
+                minHeight: visualTileHeight ?? (FGSize.minTouchTarget + 8),
+                maxHeight: hasVisual ? .infinity : nil
             )
             .background(
                 RoundedRectangle(cornerRadius: hasVisual ? 20 : FGRadius.button, style: .continuous)
@@ -204,4 +206,60 @@ struct FGChoice: View {
         .accessibilityLabel([title, detail].compactMap(\.self).joined(separator: ", "))
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
+}
+
+// MARK: - Previews
+
+/// The choice grid at the widths that actually decide its column count. A tile
+/// pinned to a fixed width once collapsed this to two columns and an orphan on
+/// every phone narrower than an iPhone 17, and nothing here rendered it at a
+/// width small enough to show that — so these previews start at the narrow end.
+private struct ChoiceGridPreview: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    @State private var selected = "Steady"
+
+    private let options = [
+        ("Empty", "cloud"),
+        ("Steady", "cloud.sun"),
+        ("Strong", "sun.max")
+    ]
+
+    var body: some View {
+        FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
+            ForEach(options, id: \.0) { option in
+                FGChoice(
+                    title: option.0,
+                    systemImage: option.1,
+                    isSelected: selected == option.0
+                ) {
+                    selected = option.0
+                }
+            }
+        }
+        .padding(FGSpace.page)
+    }
+}
+
+/// 327pt is what a 375pt screen leaves after `FGSpace.page` either side — the
+/// narrowest phone still supported, and where the grid used to break.
+#Preview("Choice grid — smallest phone") {
+    ChoiceGridPreview()
+        .frame(width: 375)
+        .background(FGColor.bg)
+}
+
+#Preview("Choice grid — roomiest phone") {
+    ChoiceGridPreview()
+        .frame(width: 440)
+        .background(FGColor.bg)
+}
+
+/// Three columns of accessibility type is three columns of broken words, so
+/// `FlowRow.choices` drops to one. This is the preview that proves it.
+#Preview("Choice grid — accessibility type") {
+    ChoiceGridPreview()
+        .frame(width: 375)
+        .environment(\.dynamicTypeSize, .accessibility3)
+        .background(FGColor.bg)
 }

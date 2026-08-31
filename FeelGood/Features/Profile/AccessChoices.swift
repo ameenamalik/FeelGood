@@ -77,11 +77,19 @@ struct AccessChoices: View {
             Text(title)
                 .font(FGFont.body.weight(.medium))
                 .foregroundStyle(FGColor.ink)
-            FlowRow(
-                spacing: showsSymbols ? 12 : FGSpace.s,
-                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
-                minimumItemWidth: showsSymbols ? 110 : 1
-            ) { content() }
+            // Symbol groups are the tile grid; the rest are plain chips that
+            // wrap on their own width rather than on a tile's.
+            if showsSymbols {
+                FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
+                    content()
+                }
+            } else {
+                FlowRow(
+                    spacing: FGSpace.s,
+                    maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
+                    minimumItemWidth: 1
+                ) { content() }
+            }
         }
     }
 

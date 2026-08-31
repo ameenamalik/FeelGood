@@ -57,6 +57,7 @@ struct ProfileHeaderView: View {
             .onSubmit { isEditingNickname = false }
             .accessibilityLabel("Nickname")
             .accessibilityHint("A name for you, shown only on this device")
+            .postHogMask()
     }
 
     // MARK: Identity
@@ -71,6 +72,7 @@ struct ProfileHeaderView: View {
                     Text(profile.email ?? "Signed in with Apple")
                         .font(FGFont.body)
                         .foregroundStyle(FGColor.ink)
+                        .postHogMask()
                     Button("Sign out", action: signOut)
                         .font(FGFont.caption)
                         .foregroundStyle(FGColor.inkMuted)
