@@ -80,10 +80,20 @@ struct PlayerView: View {
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
 
-                YouTubeWebView(videoID: videoID)
-                    .aspectRatio(16/9, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
-                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 4)
+                Group {
+                    if let playerURL = WorkerConstants.playerURL(videoID: videoID) {
+                        YouTubeWebView(playerURL: playerURL)
+                    } else {
+                        // The embed cannot be made to work without the Worker
+                        // (see YouTubeWebView), so an unconfigured build offers
+                        // the video where it does play rather than a frame that
+                        // will sit there refusing.
+                        watchElsewhere(videoID: videoID)
+                    }
+                }
+                .aspectRatio(16/9, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
+                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 4)
 
                 if !session.subtitle.isEmpty {
                     Text(session.subtitle)
@@ -103,6 +113,27 @@ struct PlayerView: View {
             }
         }
         .padding(FGSpace.page)
+    }
+
+    /// Shown instead of the player when `WORKER_BASE_URL` is unset, so a build
+    /// without a deployed Worker still gets the person to the session rather
+    /// than to an error frame. Watching on YouTube is a supported path, not a
+    /// failure state, so it reads as an offer rather than an apology.
+    private func watchElsewhere(videoID: String) -> some View {
+        ZStack {
+            FGColor.surface
+            VStack(spacing: FGSpace.m) {
+                Image(systemName: "play.rectangle")
+                    .font(.largeTitle)
+                    .foregroundStyle(FGColor.inkMuted)
+                if let watchURL = URL(string: "https://www.youtube.com/watch?v=\(videoID)") {
+                    Link("Watch on YouTube", destination: watchURL)
+                        .font(FGFont.label)
+                        .foregroundStyle(FGColor.ink)
+                }
+            }
+            .padding(FGSpace.m)
+        }
     }
 
     private func running(_ step: Step) -> some View {

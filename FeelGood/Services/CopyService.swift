@@ -29,10 +29,10 @@ nonisolated protocol CopyTransport: Sendable {
 /// `POST`s to the Worker and decodes `{ "line": "..." }`.
 nonisolated struct URLSessionCopyTransport: CopyTransport {
     func fetchLine(payload: CopyPayload, timeout: TimeInterval) async throws -> String {
-        guard let workerBaseURL = CopyServiceConstants.workerBaseURL else {
+        guard let copyURL = WorkerConstants.copyURL else {
             throw CopyTransportError.notConfigured
         }
-        var request = URLRequest(url: workerBaseURL)
+        var request = URLRequest(url: copyURL)
         request.httpMethod = "POST"
         request.timeoutInterval = timeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -83,7 +83,7 @@ actor CopyService: CopyProviding {
 
     init(
         transport: any CopyTransport = URLSessionCopyTransport(),
-        timeout: TimeInterval = CopyServiceConstants.requestTimeout,
+        timeout: TimeInterval = WorkerConstants.requestTimeout,
         isProUnlocked: @escaping @Sendable () async -> Bool = { await PurchasesManager.shared.isProUnlocked }
     ) {
         self.transport = transport

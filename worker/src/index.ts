@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { hasProEntitlement } from "./entitlement";
+import { playerResponse } from "./player";
 import { isRateLimited } from "./rateLimit";
 import { COPY_SYSTEM_PROMPT } from "./systemPrompt";
 import { Env } from "./types";
@@ -7,6 +8,22 @@ import { isValidPayload } from "./validate";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+
+    // `/player` is public and static: it holds no secret, reads no KV, and
+    // checks no entitlement, so a Worker deployed with nothing configured
+    // still plays video. See player.ts for why it has to exist at all.
+    if (url.pathname === "/player") {
+      if (request.method !== "GET") {
+        return new Response("method not allowed", { status: 405 });
+      }
+      return playerResponse(url);
+    }
+
+    if (url.pathname !== "/copy") {
+      return new Response("not found", { status: 404 });
+    }
+
     if (request.method !== "POST") {
       return new Response("method not allowed", { status: 405 });
     }
