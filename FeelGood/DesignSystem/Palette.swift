@@ -135,26 +135,130 @@ nonisolated struct FGAccent: Equatable {
     static let pink     = FGAccent(fill: FGColor.pink,     text: FGColor.pinkDeep)
 }
 
+/// A soft three-stop wash for a check-in tile.
+///
+/// Separate from `FGAccent` because it fills the whole tile rather than tinting
+/// it. An accent is a flat wash of colour laid over a white card at 30%; an aura
+/// replaces the card. Both appear on selection — see `FGAuraTile`.
+///
+/// Like the accents and unlike `washGradient`, these do not flip with the
+/// appearance: they are pale in both, and the type on them is `inkOnAccent`,
+/// which does not flip either. A flipping aura under non-flipping type is the
+/// white-on-pastel failure the top of this file rules out.
+///
+/// Stops run core → mid → edge, and stay the light side of their hue on
+/// purpose. `inkOnAccent` measures 11.9:1 or better on every edge value below,
+/// which is the darkest point any of them reaches.
+nonisolated enum FGAura: Sendable, CaseIterable {
+    case apricot, lilac, blush, sage
+
+
+    /// What a tile looks like before it is picked: barely there.
+    ///
+    /// Straight off the artboard in light — a warm near-white only just
+    /// separable from the page, so the picked tile is the one thing on screen
+    /// carrying colour. Dark is the same idea, not the same values: a faint
+    /// lift off `bg` rather than the slab the first attempt drew at this size.
+    ///
+    /// The one aura value that flips with the appearance, because it is a
+    /// resting surface carrying `ink` rather than a wash carrying `inkOnAccent`.
+    static let resting = LinearGradient(
+        colors: [
+            Color(light: 0xF6F1E9, dark: 0x171B1F),
+            Color(light: 0xEFE7DB, dark: 0x14181C),
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    var core: Color {
+        switch self {
+        case .apricot: Color(light: 0xFFE0CC, dark: 0xFFE0CC)
+        case .lilac: Color(light: 0xECE0F6, dark: 0xECE0F6)
+        case .blush: Color(light: 0xFCE2E8, dark: 0xFCE2E8)
+        case .sage: Color(light: 0xEAF0DE, dark: 0xEAF0DE)
+        }
+    }
+
+    var mid: Color {
+        switch self {
+        case .apricot: Color(light: 0xF9B69C, dark: 0xF9B69C)
+        case .lilac: Color(light: 0xD2D8F0, dark: 0xD2D8F0)
+        case .blush: Color(light: 0xF2C4D3, dark: 0xF2C4D3)
+        case .sage: Color(light: 0xC6D8BE, dark: 0xC6D8BE)
+        }
+    }
+
+    var edge: Color {
+        switch self {
+        case .apricot: Color(light: 0xF5B2A8, dark: 0xF5B2A8)
+        case .lilac: Color(light: 0xC4CEEE, dark: 0xC4CEEE)
+        case .blush: Color(light: 0xE0AEC2, dark: 0xE0AEC2)
+        case .sage: Color(light: 0xB2C8AF, dark: 0xB2C8AF)
+        }
+    }
+}
+
 // MARK: The check-in's four questions, one colour each
 
 // Four colours rather than one so the sheet reads as four short moments
 // instead of one long form. The colour is never the only thing distinguishing
 // a selected answer — see `FGChoice`, which also thickens the border.
+//
+// `checkInAura` sits beside `checkInAccent` rather than replacing it: the
+// accent is per *question*, the aura is per *answer*, so the tiles inside one
+// question differ from each other. Which aura an answer gets carries no
+// meaning — it is spread so no two neighbours repeat, nothing more. Nobody
+// should be able to read their energy off the colour.
 
 nonisolated extension Energy {
     var checkInAccent: FGAccent { .sky }
+
+    var checkInAura: FGAura {
+        switch self {
+        case .low: .lilac
+        case .steady: .sage
+        case .strong: .apricot
+        }
+    }
 }
 
 nonisolated extension TimeBudget {
     var checkInAccent: FGAccent { .lime }
+
+    var checkInAura: FGAura {
+        switch self {
+        case .aLittle: .sage
+        case .some: .apricot
+        case .plenty: .lilac
+        }
+    }
 }
 
 nonisolated extension PlaceIntent {
     var checkInAccent: FGAccent { .lavender }
+
+    var checkInAura: FGAura {
+        switch self {
+        case .stayingIn: .lilac
+        case .happyToGoOut: .sage
+        case .atTheGym: .blush
+        }
+    }
 }
 
 nonisolated extension BodyState {
     var checkInAccent: FGAccent { .pink }
+
+    var checkInAura: FGAura {
+        switch self {
+        case .sore: .blush
+        case .stiff: .lilac
+        case .stressed: .apricot
+        case .cramping: .blush
+        case .good: .sage
+        }
+    }
 }
 
 nonisolated extension Course {

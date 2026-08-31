@@ -55,6 +55,11 @@ struct OnboardingView: View {
                             alignment: .top
                         )
                         .padding(FGSpace.page)
+                        // Room for the footer. `.safeAreaInset` is applied to
+                        // the reader rather than the scroll view, so it insets
+                        // the container without reserving any scroll content —
+                        // the last tile ended up under the Next button.
+                        .padding(.bottom, FGSize.minTouchTarget + FGSpace.xl)
                         .fgAnimation(FGMotion.gentle, value: model.card)
                     }
                     .scrollBounceBehavior(.basedOnSize)
@@ -97,21 +102,31 @@ struct OnboardingView: View {
                 equipment: $model.equipment,
                 places: $model.places,
                 showsSymbols: true,
-                accent: .sky
+                usesAura: true
             )
 
         case .cadence:
             VStack(alignment: .leading, spacing: FGSpace.l) {
                 answerGroup("Each week") {
                     ForEach(Cadence.allCases, id: \.self) { option in
-                        FGChoice(title: option.label, systemImage: option.onboardingSymbol, accent: .lime, isSelected: model.cadence == option) {
+                        FGAuraTile(
+                            title: option.label,
+                            systemImage: option.onboardingSymbol,
+                            aura: .apricot,
+                            isSelected: model.cadence == option
+                        ) {
                             withAnimation(FGMotion.gentle) { model.cadence = option }
                         }
                     }
                 }
                 answerGroup("Each day") {
                     ForEach(MovementMoments.allCases, id: \.self) { option in
-                        FGChoice(title: option.label, systemImage: option.onboardingSymbol, accent: .lime, isSelected: model.moments == option) {
+                        FGAuraTile(
+                            title: option.label,
+                            systemImage: option.onboardingSymbol,
+                            aura: .sage,
+                            isSelected: model.moments == option
+                        ) {
                             withAnimation(FGMotion.gentle) { model.moments = option }
                         }
                     }
@@ -121,10 +136,10 @@ struct OnboardingView: View {
         case .intent:
             FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
                 ForEach(Intent.allCases, id: \.self) { intent in
-                    FGChoice(
+                    FGAuraTile(
                         title: intent.label,
                         systemImage: intent.onboardingSymbol,
-                        accent: .lavender,
+                        aura: .lilac,
                         isSelected: model.intents.contains(intent)
                     ) {
                         toggle(intent, in: \.intents)
@@ -133,18 +148,20 @@ struct OnboardingView: View {
             }
 
         case .workArounds:
-            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
+            // Pills, not tiles. This question is a list of things to rule out,
+            // and the artboard makes it the quietest thing on the page —
+            // ruling something out should not feel like a bigger decision than
+            // everything asked before it.
+            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
                 ForEach(WorkAround.allCases, id: \.self) { workAround in
-                    FGChoice(
+                    FGPill(
                         title: workAround.label,
-                        systemImage: workAround.onboardingSymbol,
-                        accent: .pink,
                         isSelected: model.workArounds.contains(workAround)
                     ) {
                         toggle(workAround, in: \.workArounds)
                     }
                 }
-                FGChoice(title: "None of these", systemImage: "checkmark", accent: .pink, isSelected: model.workArounds.isEmpty) {
+                FGPill(title: "None of these", isSelected: model.workArounds.isEmpty) {
                     withAnimation(FGMotion.gentle) { model.workArounds = [] }
                 }
             }

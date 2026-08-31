@@ -25,6 +25,10 @@ nonisolated enum FGRadius {
     static let card: CGFloat = 20
     static let chip: CGFloat = 10
     static let button: CGFloat = 16
+    /// Check-in aura tiles. Softer than a card because the tile is a colour
+    /// field rather than a container — a tighter radius makes the wash read as
+    /// a swatch instead of a surface.
+    static let tile: CGFloat = 28
 }
 
 nonisolated enum FGSize {
@@ -34,6 +38,11 @@ nonisolated enum FGSize {
     /// The natural side of a choice tile carrying an icon: its height, and the
     /// width it settles at when the row has room to spare.
     static let choiceTile: CGFloat = 110
+
+    /// An aura tile. Taller than `choiceTile` because the label sits under an
+    /// icon with room to breathe rather than tight beneath it — the proportion
+    /// the check-in mockup settled on.
+    static let auraTile: CGFloat = 132
 
     /// The narrowest a choice tile may be squeezed before `FlowRow` gives up a
     /// column. Three tiles and two 12pt gutters have to fit inside the page
