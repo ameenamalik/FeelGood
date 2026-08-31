@@ -172,21 +172,11 @@ struct CheckInSheet: View {
     }
 
     private func finish() {
-        // Energy, time and place are coarse state and sit inside the analytics
-        // allow-list (see `Analytics.log`). `body_` never ships: `cramping` is
-        // reproductive health data. Only whether it was answered goes, and it
-        // goes as a bare Bool — sending the value "except when it's cramping"
-        // would make the absence itself the disclosure.
-        var properties: [String: Any] = [
-            "has_check_in": energy != nil || time != nil || place != nil || body_ != nil,
-            "has_body": body_ != nil
-        ]
-        // Skipped questions are left out rather than sent as null, so a property
-        // value in PostHog is always an answer somebody actually gave.
-        if let energy { properties["energy"] = energy.rawValue }
-        if let time { properties["time"] = time.rawValue }
-        if let place { properties["place"] = place.rawValue }
-        Analytics.capture("check_in_completed", properties: properties)
+        // `body_` is handed over and dropped: `CheckInAnalytics` has nowhere to
+        // put it. That is the whole point of the type — see its header.
+        Analytics.capture(
+            CheckInAnalytics(energy: energy, time: time, place: place, body: body_)
+        )
         onDone(answers)
     }
 }
