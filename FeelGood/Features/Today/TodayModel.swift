@@ -19,6 +19,7 @@ final class TodayModel {
     @ObservationIgnored private var engine: PlanEngine
     private let log: any SessionLogging
     private let copy: any CopyProviding
+    private let progressStore: any SessionProgressStoring
     private let calendar: Calendar
     /// In flight while the copy layer upgrades the headline. Cancelled and
     /// restarted whenever the menu changes underneath it, so a slow response
@@ -43,6 +44,10 @@ final class TodayModel {
     /// as something still waiting. Not a score and not a count — just a mark.
     private(set) var completedToday: Set<String> = []
 
+    /// Kept as observed model state as well as in the persistence store so the
+    /// Today cards redraw immediately when the player is left.
+    private(set) var inProgressSessionIDs: Set<String> = []
+
     /// Somebody's own kept workouts, scored alongside the authored catalog.
     private(set) var ownSessions: [Session]
 
@@ -51,6 +56,7 @@ final class TodayModel {
         profile: PlanProfile,
         log: any SessionLogging = InMemorySessionLog(),
         copy: any CopyProviding = InMemoryCopyService(),
+        progressStore: any SessionProgressStoring = UserDefaultsSessionProgressStore(),
         checkIn: PlanCheckIn? = nil,
         now: Date,
         calendar: Calendar = .current
@@ -67,11 +73,17 @@ final class TodayModel {
         self.engine = engine
         self.log = log
         self.copy = copy
+        self.progressStore = progressStore
         self.profile = profile
         self.ownSessions = own
         self.checkIn = todaysCheckIn
         self.history = recorded
         self.calendar = calendar
+        self.inProgressSessionIDs = Set(
+            (store.sessions + own)
+                .filter { progressStore.progress(for: $0.id) != nil }
+                .map(\.id)
+        )
 
         // The day as it was already generated and stored. Reopening the app is
         // the same day, not a fresh guess at it.
@@ -179,10 +191,27 @@ final class TodayModel {
     /// Finished. The menu deliberately does not regenerate — the day stays as
     /// it was, and what happened counts toward tomorrow.
     func complete(_ session: Session, startedAt: Date, feel: Feel?, now: Date = Date()) {
+        progressStore.clearProgress(for: session.id)
+        inProgressSessionIDs.remove(session.id)
         log.recordCompletion(of: session, startedAt: startedAt, endedAt: now, feel: feel)
         history = log.history(before: now)
         refreshCompletedToday(now: now)
         publishSnapshot(now: now)
+    }
+
+    /// Leaving the player is a pause, not a workout outcome. It changes no
+    /// history or affinity and exists only so the next tap can continue.
+    func pause(_ session: Session, at progress: SessionProgress) {
+        progressStore.save(progress, for: session.id)
+        inProgressSessionIDs.insert(session.id)
+    }
+
+    func progress(for session: Session) -> SessionProgress? {
+        progressStore.progress(for: session.id)
+    }
+
+    func isInProgress(_ item: MenuItem) -> Bool {
+        inProgressSessionIDs.contains(item.session.id) && !isCompleted(item)
     }
 
     // MARK: Somebody's own movement

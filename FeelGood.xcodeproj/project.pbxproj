@@ -10,7 +10,9 @@
 		21DCC2181839CD994036E35C /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 19EE39390C500A69431EBC30 /* RevenueCatUI */; };
 		7B7D390B64588ACDCF50AE26 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 0A32FDDC7017E56EDD5653CD /* RevenueCat */; };
 		C9A4756F90D3FAA7DF176DA5 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 378D96DFB6B72F152DA61DD7 /* Lottie */; };
+		C9EE63236D0EE3DDB0175B2F /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = F4B9B9D464255A3A34A74696 /* HuggingFace */; };
 		D58111500000000000000001 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = D58111500000000000000002 /* PostHog */; };
+		F7462400C7C85D30A540E5BE /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = 50DCD78BC0A945C5E4F54D34 /* Tokenizers */; };
 		FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FEE1DA000000000000000002 /* FeelGoodWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -833,10 +835,30 @@
 			package = 6304E39E099F54A0452D51F7 /* XCRemoteSwiftPackageReference "lottie-ios" */;
 			productName = Lottie;
 		};
+		50DCD78BC0A945C5E4F54D34 /* Tokenizers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E9F0BD562B487BCD8EE1C8A5 /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Tokenizers;
+		};
+		6714F52D1618CBB4DFFF9BB1 /* MLXLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A4140BFEE4A0848749CA06C9 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLLM;
+		};
 		D58111500000000000000002 /* PostHog */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = D58111500000000000000003 /* XCRemoteSwiftPackageReference "posthog-ios" */;
 			productName = PostHog;
+		};
+		F4B9B9D464255A3A34A74696 /* HuggingFace */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A5155531B928A295DAC6178 /* XCRemoteSwiftPackageReference "swift-huggingface" */;
+			productName = HuggingFace;
+		};
+		FBDAE7CDB97D8D69D34F4285 /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A4140BFEE4A0848749CA06C9 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLMCommon;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

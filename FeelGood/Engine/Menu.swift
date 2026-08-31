@@ -77,13 +77,13 @@ nonisolated enum MenuCopy {
         if reasons.contains(.recoveryBalance) {
             return "You've shown up a few days running — today's a lighter one on purpose."
         }
-        if checkIn.energy == .low && checkIn.time == .aLittle {
+        if checkIn.energy == .low && checkIn.time.isTight {
             return "Not much time, not much left in the tank. Here's a small one."
         }
         if checkIn.energy == .low {
             return "Low tank today. Everything here is gentle."
         }
-        if checkIn.time == .aLittle {
+        if checkIn.time.isTight {
             return "You've got a little time. This fits it."
         }
         if checkIn.energy == .strong && checkIn.time == .plenty {

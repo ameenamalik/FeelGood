@@ -93,7 +93,8 @@ struct TodayView: View {
                         MenuItemCard(
                             item: item,
                             isDone: model.isCompleted(item),
-                            canSwap: model.canSwap(item) && !model.isCompleted(item),
+                            isInProgress: model.isInProgress(item),
+                            canSwap: model.canSwap(item) && !model.isCompleted(item) && !model.isInProgress(item),
                             isReset: model.isCycleReset(item),
                             onOpen: { selected = item },
                             onSwap: {
@@ -107,7 +108,8 @@ struct TodayView: View {
                         MenuItemRow(
                             item: item,
                             isDone: model.isCompleted(item),
-                            canSwap: model.canSwap(item) && !model.isCompleted(item),
+                            isInProgress: model.isInProgress(item),
+                            canSwap: model.canSwap(item) && !model.isCompleted(item) && !model.isInProgress(item),
                             isReset: model.isCycleReset(item),
                             onOpen: { selected = item },
                             onSwap: {
@@ -186,6 +188,7 @@ struct CourseTag: View {
 private struct MenuItemCard: View {
     let item: MenuItem
     let isDone: Bool
+    let isInProgress: Bool
     let canSwap: Bool
     let isReset: Bool
     let onOpen: () -> Void
@@ -198,6 +201,7 @@ private struct MenuItemCard: View {
                 HStack(spacing: FGSpace.s) {
                     CourseTag(course: item.course)
                     if isDone { DoneMark() }
+                    else if isInProgress { ResumeMark() }
                 }
 
                 Text(item.session.title)
@@ -233,7 +237,7 @@ private struct MenuItemCard: View {
         .onTapGesture(perform: onOpen)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
-            "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : "")"
+            "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : isInProgress ? "In progress. Resume. " : "")"
             + "\(item.session.chips.joined(separator: ", ")). \(item.reasonText)"
         )
         .accessibilityAddTraits(.isButton)
@@ -257,10 +261,23 @@ private struct DoneMark: View {
     }
 }
 
+private struct ResumeMark: View {
+    var body: some View {
+        HStack(spacing: FGSpace.xs) {
+            Image(systemName: "play.circle.fill")
+            Text("Resume")
+        }
+        .font(FGFont.label)
+        .foregroundStyle(FGColor.skyDeep)
+        .accessibilityHidden(true)
+    }
+}
+
 /// Everything that isn't the Main. Same information, one glance.
 private struct MenuItemRow: View {
     let item: MenuItem
     let isDone: Bool
+    let isInProgress: Bool
     let canSwap: Bool
     let isReset: Bool
     let onOpen: () -> Void
@@ -278,6 +295,7 @@ private struct MenuItemRow: View {
                         .font(FGFont.label)
                         .foregroundStyle(FGColor.inkMuted)
                     if isDone { DoneMark() }
+                    else if isInProgress { ResumeMark() }
                 }
                 Text(item.session.title)
                     .font(FGFont.body.weight(.medium))
@@ -304,7 +322,7 @@ private struct MenuItemRow: View {
         .onTapGesture(perform: onOpen)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
-            "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : "")"
+            "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : isInProgress ? "In progress. Resume. " : "")"
             + "\(item.session.durationLabel). \(item.reasonText)"
         )
         .accessibilityAddTraits(.isButton)

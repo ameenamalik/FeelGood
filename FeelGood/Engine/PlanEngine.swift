@@ -344,7 +344,7 @@ nonisolated struct PlanEngine: Sendable {
             let closeness = 1.0 - min(1.0, abs(Double(session.durationMin - target)) / Double(target))
             score += closeness * weights.timeFit
         }
-        if checkIn.time == .aLittle && session.durationMin <= TimeBudget.aLittle.maxMinutes {
+        if checkIn.time.isTight && session.durationMin <= checkIn.time.maxMinutes {
             reasons.append(.timeConstrained)
         }
 

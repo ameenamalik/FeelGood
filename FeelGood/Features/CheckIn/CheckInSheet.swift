@@ -43,30 +43,11 @@ struct CheckInSheet: View {
                     title
 
                     question("What have you got in the tank?", accent: .sky, index: 0) {
-                        ForEach(Energy.allCases, id: \.self) { option in
-                            FGChoice(
-                                title: option.checkInLabel,
-                                systemImage: option.checkInSymbol,
-                                accent: option.checkInAccent,
-                                isSelected: energy == option
-                            ) {
-                                energy = option
-                            }
-                        }
+                        EnergyScale(selection: $energy)
                     }
 
                     question("How much time, really?", accent: .lime, index: 1) {
-                        ForEach(TimeBudget.allCases, id: \.self) { option in
-                            FGChoice(
-                                title: option.checkInLabel,
-                                systemImage: option.checkInSymbol,
-                                detail: option.checkInDetail,
-                                accent: option.checkInAccent,
-                                isSelected: time == option
-                            ) {
-                                time = option
-                            }
-                        }
+                        TimeScale(selection: $time)
                     }
 
                     question("Where are you today? (optional)", accent: .lavender, index: 2) {
@@ -174,6 +155,163 @@ struct CheckInSheet: View {
             CheckInAnalytics(energy: energy, time: time, place: place, body: body_)
         )
         onDone(answers)
+    }
+}
+
+private struct EnergyScale: View {
+    @Binding var selection: Energy?
+    @State private var sliderPosition: Double
+
+    private let levels = Energy.allCases
+
+    init(selection: Binding<Energy?>) {
+        _selection = selection
+        let initial = Energy.allCases.firstIndex(of: selection.wrappedValue ?? .steady) ?? 1
+        _sliderPosition = State(initialValue: Double(initial))
+    }
+
+    private var selectedIndex: Int {
+        min(max(Int(sliderPosition.rounded()), 0), levels.count - 1)
+    }
+
+    var body: some View {
+        VStack(spacing: FGSpace.s) {
+            Slider(
+                value: $sliderPosition,
+                in: 0...Double(levels.count - 1),
+                onEditingChanged: { isEditing in
+                    if !isEditing {
+                        withAnimation(FGMotion.gentle) {
+                            sliderPosition = Double(selectedIndex)
+                        }
+                    }
+                }
+            )
+                .tint(FGColor.sky)
+                .accessibilityLabel("Energy")
+                .accessibilityValue(selection?.checkInLabel ?? "Not selected")
+                .onChange(of: sliderPosition) { _, _ in
+                    selection = levels[selectedIndex]
+                }
+
+            HStack(spacing: 0) {
+                ForEach(levels, id: \.self) { level in
+                    Button {
+                        selection = level
+                        withAnimation(FGMotion.gentle) {
+                            sliderPosition = Double(levels.firstIndex(of: level) ?? 1)
+                        }
+                    } label: {
+                        VStack(spacing: FGSpace.xs) {
+                            Image(systemName: level.checkInSymbol)
+                                .font(.body)
+
+                            Text(level.checkInLabel)
+                                .font(FGFont.label.weight(selection == level ? .semibold : .regular))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.85)
+                        }
+                        .foregroundStyle(selection == level ? FGColor.skyDeep : FGColor.inkMuted)
+                        .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(selection == level ? .isSelected : [])
+                }
+            }
+        }
+        .padding(FGSpace.m)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+        )
+    }
+}
+
+private struct TimeScale: View {
+    @Binding var selection: TimeBudget?
+    @State private var sliderPosition: Double
+
+    private let levels = TimeBudget.allCases
+
+    init(selection: Binding<TimeBudget?>) {
+        _selection = selection
+        let initial = TimeBudget.allCases.firstIndex(of: selection.wrappedValue ?? .some) ?? 5
+        _sliderPosition = State(initialValue: Double(initial))
+    }
+
+    private var selectedIndex: Int {
+        min(max(Int(sliderPosition.rounded()), 0), levels.count - 1)
+    }
+
+    private var displayedLevel: TimeBudget { levels[selectedIndex] }
+
+    var body: some View {
+        VStack(spacing: FGSpace.s) {
+            Text(selection == nil ? "Slide to choose" : displayedLevel.checkInDetail)
+                .font(FGFont.body.weight(.medium))
+                .foregroundStyle(FGColor.ink)
+                .frame(maxWidth: .infinity)
+
+            Slider(
+                value: $sliderPosition,
+                in: 0...Double(levels.count - 1),
+                onEditingChanged: { isEditing in
+                    if !isEditing {
+                        withAnimation(FGMotion.gentle) {
+                            sliderPosition = Double(selectedIndex)
+                        }
+                    }
+                }
+            )
+            .tint(FGColor.lime)
+            .accessibilityLabel("Available time")
+            .accessibilityValue(selection?.checkInLabel ?? "Not selected")
+            .onChange(of: sliderPosition) { _, _ in
+                selection = displayedLevel
+            }
+
+            HStack(spacing: 0) {
+                ForEach(Array(levels.enumerated()), id: \.element) { index, level in
+                    Button {
+                        selection = level
+                        withAnimation(FGMotion.gentle) {
+                            sliderPosition = Double(index)
+                        }
+                    } label: {
+                        Circle()
+                            .fill(selection == level ? FGColor.limeDeep : FGColor.lineStrong)
+                            .frame(width: selection == level ? 10 : 6, height: selection == level ? 10 : 6)
+                            .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(level.checkInLabel)
+                    .accessibilityAddTraits(selection == level ? .isSelected : [])
+                }
+            }
+
+            HStack {
+                Text("5 min")
+                Spacer()
+                Text("45+ min")
+            }
+            .font(FGFont.label)
+            .foregroundStyle(FGColor.inkMuted)
+        }
+        .padding(FGSpace.m)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+        )
     }
 }
 
