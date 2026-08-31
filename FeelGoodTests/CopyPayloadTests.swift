@@ -30,7 +30,7 @@ struct CopyPayloadTests {
             menu: Fixture.engine.makeMenu(input),
             checkIn: Fixture.engine.resolvedCheckIn(input),
             stats: HistoryStats(input: input),
-            anonInstallID: "install-abc123"
+            subscriberID: "install-abc123"
         )
     }
 
@@ -50,7 +50,7 @@ struct CopyPayloadTests {
         // Written out rather than derived from CodingKeys: a test that reads
         // the same source as the thing it checks agrees with any mistake.
         #expect(
-            Set(object.keys) == ["picks", "reasonCodes", "energy", "time", "daysSinceLast", "anonInstallID"],
+            Set(object.keys) == ["picks", "reasonCodes", "energy", "time", "daysSinceLast", "subscriberID"],
             "The copy payload grew or lost a field. If this is deliberate, the PRD §11 table changes too."
         )
     }
@@ -130,7 +130,7 @@ struct CopyPayloadTests {
             menu: menu,
             checkIn: PlanCheckIn(energy: .steady, time: .some),
             stats: HistoryStats(input: sensitiveInput()),
-            anonInstallID: "install-abc123"
+            subscriberID: "install-abc123"
         ))
 
         #expect(json.contains("own-1"))

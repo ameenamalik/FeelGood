@@ -15,13 +15,16 @@ struct PlayerView: View {
     let startedAt: Date
 
     @Environment(\.dismiss) private var dismiss
-    @State private var index: Int
-    @State private var remaining: Int
-    @State private var timerIndex: Int
-    /// Reps tapped in the current set, never across the whole exercise.
-    @State private var repsDone: Int
-    /// Sets already finished in the current exercise.
-    @State private var setsDone: Int
+    @Environment(\.openURL) private var openURL
+    @State private var index = 0
+    @State private var remaining = 0
+    /// Reps tapped so far **in the current set**, never across the step.
+    @State private var repsDone = 0
+    /// Sets already finished in this step. `setsDone + 1` is the set someone
+    /// is standing in the middle of.
+    @State private var setsDone = 0
+    /// The counter is the whole tap target, and it grows with Dynamic Type —
+    /// this is used mid-movement, often without looking straight at it.
     @ScaledMetric(relativeTo: .largeTitle) private var counterHeight = 180.0
     @State private var isRunning = true
     @State private var isDone = false
@@ -104,10 +107,20 @@ struct PlayerView: View {
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
 
-                YouTubeWebView(videoID: videoID)
-                    .aspectRatio(16/9, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
-                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 4)
+                Group {
+                    if let playerURL = WorkerConstants.playerURL(videoID: videoID) {
+                        YouTubeWebView(playerURL: playerURL)
+                    } else {
+                        // The embed cannot be made to work without the Worker
+                        // (see YouTubeWebView), so an unconfigured build offers
+                        // the video where it does play rather than a frame that
+                        // will sit there refusing.
+                        watchElsewhere(videoID: videoID)
+                    }
+                }
+                .aspectRatio(16/9, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
+                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 4)
 
                 if !session.subtitle.isEmpty {
                     Text(session.subtitle)
@@ -127,6 +140,49 @@ struct PlayerView: View {
             }
         }
         .padding(FGSpace.page)
+    }
+
+    /// Shown instead of the player when `WORKER_BASE_URL` is unset, so a build
+    /// without a deployed Worker still gets the person to the session rather
+    /// than to an error frame. Watching on YouTube is a supported path, not a
+    /// failure state, so it reads as an offer rather than an apology.
+    private func watchElsewhere(videoID: String) -> some View {
+        ZStack {
+            YouTubeThumbnail(videoID: videoID)
+
+            // The poster is somebody's living room at whatever exposure they
+            // filmed it — the scrim is what makes one label legible over all
+            // of them, in either colour scheme.
+            LinearGradient(
+                colors: [.black.opacity(0.15), .black.opacity(0.65)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(spacing: FGSpace.s) {
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(.white)
+                Text("Watch on YouTube")
+                    .font(FGFont.label)
+                    .foregroundStyle(.white)
+            }
+            .padding(FGSpace.m)
+            .shadow(color: .black.opacity(0.4), radius: 6, y: 1)
+        }
+        // White-on-scrim rather than the ink tokens: this sits on a photograph,
+        // so it is the one place in the app where the palette can't do the
+        // work. Deliberately not YouTube's red play button — FGColor has no
+        // red and this shouldn't introduce one.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if let watchURL = URL(string: "https://www.youtube.com/watch?v=\(videoID)") {
+                openURL(watchURL)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("Watch \(session.title) on YouTube")
+        .accessibilityAddTraits(.isLink)
     }
 
     private func running(_ step: Step) -> some View {

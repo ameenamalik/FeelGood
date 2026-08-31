@@ -9,9 +9,9 @@ const WINDOW_SECONDS = 60;
 /// of extra requests through; that's an accepted tradeoff for staying at
 /// "one KV call" instead of reaching for Durable Objects over a risk this
 /// small.
-export async function isRateLimited(anonInstallID: string, env: Env): Promise<boolean> {
+export async function isRateLimited(subscriberID: string, env: Env): Promise<boolean> {
   const bucket = Math.floor(Date.now() / 1000 / WINDOW_SECONDS);
-  const key = `rl:${anonInstallID}:${bucket}`;
+  const key = `rl:${subscriberID}:${bucket}`;
 
   const current = Number((await env.RATE_LIMIT.get(key)) ?? "0");
   if (current >= REQUESTS_PER_MINUTE) return true;
