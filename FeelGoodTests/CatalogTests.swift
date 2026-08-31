@@ -27,6 +27,7 @@ struct CatalogTests {
         """.utf8)
         let step = try JSONDecoder().decode(Step.self, from: json)
         #expect(step.reps == nil)
+        #expect(step.sets == nil)
         #expect(step.isCounted == false)
         #expect(step.seconds == 40)
     }
@@ -39,9 +40,21 @@ struct CatalogTests {
         let step = try JSONDecoder().decode(Step.self, from: json)
         #expect(step.reps == 8)
         #expect(step.isCounted)
+        // Reps with no sets authored is one set of them, not none.
+        #expect(step.setCount == 1)
         // A counted step still costs time on the menu — the engine's time fit
         // is built from seconds, and a set nobody timed still takes a while.
         #expect(step.seconds == 40)
+    }
+
+    @Test("Reps are per set, so three sets of ten is a ten and never a thirty")
+    func repsAreCountedPerSet() throws {
+        let json = Data("""
+        {"name": "Leg press", "seconds": 240, "cue": "Feet flat.", "reps": 10, "sets": 3}
+        """.utf8)
+        let step = try JSONDecoder().decode(Step.self, from: json)
+        #expect(step.reps == 10)
+        #expect(step.setCount == 3)
     }
 
     @Test("Zero reps is authoring noise, not a step nobody can finish")
@@ -54,13 +67,25 @@ struct CatalogTests {
         #expect(step.isCounted == false)
     }
 
-    @Test("Every counted step in the bundled catalog asks for a finishable number")
+    @Test("Zero sets is one set, not a step that ends before it starts")
+    func zeroSetsIsOneSet() throws {
+        let json = Data("""
+        {"name": "Calf raises", "seconds": 120, "cue": "Slowly.", "reps": 10, "sets": 0}
+        """.utf8)
+        let step = try JSONDecoder().decode(Step.self, from: json)
+        #expect(step.setCount == 1)
+    }
+
+    @Test("Every counted step in the bundled catalog asks for a finishable set")
     func countedStepsAreFinishable() throws {
         let store = try store()
         for session in store.sessions {
             for step in session.source.steps where step.reps != nil {
                 #expect(step.reps! > 0, "\(session.id) has a step with a non-positive rep count")
-                #expect(step.reps! <= 50, "\(session.id) asks for \(step.reps!) reps in one step")
+                // Per-set, so the ceiling is what one set can plausibly be —
+                // a number past this is a sign somebody authored a total.
+                #expect(step.reps! <= 20, "\(session.id) asks for \(step.reps!) reps in one set")
+                #expect(step.setCount <= 5, "\(session.id) asks for \(step.setCount) sets in one step")
             }
         }
     }

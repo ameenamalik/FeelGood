@@ -719,25 +719,33 @@
             "name": "Goblet squats",
             "seconds": 180,
             "cue": "One weight at the chest. Sit down, stand tall.",
-            "glossaryID": "goblet-squat"
+            "glossaryID": "goblet-squat",
+            "reps": 8,
+            "sets": 3
           },
           {
             "name": "Rows",
             "seconds": 180,
             "cue": "Hinge forward, pull the elbows back past your ribs.",
-            "glossaryID": "bent-over-row"
+            "glossaryID": "bent-over-row",
+            "reps": 8,
+            "sets": 3
           },
           {
             "name": "Overhead press",
             "seconds": 180,
             "cue": "Ribs down, press straight up.",
-            "glossaryID": "overhead-press"
+            "glossaryID": "overhead-press",
+            "reps": 8,
+            "sets": 3
           },
           {
             "name": "Deadlift",
             "seconds": 180,
             "cue": "Hinge at the hips, back long, weights close to your legs.",
-            "glossaryID": "romanian-deadlift"
+            "glossaryID": "romanian-deadlift",
+            "reps": 8,
+            "sets": 3
           },
           {
             "name": "Finish",
@@ -788,25 +796,33 @@
             "name": "Squats",
             "seconds": 300,
             "cue": "Three sets. Rest properly between them.",
-            "glossaryID": "goblet-squat"
+            "glossaryID": "goblet-squat",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Deadlifts",
             "seconds": 300,
             "cue": "Hinge, not squat. Back stays long.",
-            "glossaryID": "romanian-deadlift"
+            "glossaryID": "romanian-deadlift",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Press",
             "seconds": 300,
             "cue": "Overhead or floor press, whichever your shoulders prefer.",
-            "glossaryID": "overhead-press"
+            "glossaryID": "overhead-press",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Rows",
             "seconds": 300,
             "cue": "Pull to the ribs, pause, lower slowly.",
-            "glossaryID": "bent-over-row"
+            "glossaryID": "bent-over-row",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Carries",
@@ -2063,25 +2079,33 @@
             "name": "Leg press",
             "seconds": 240,
             "cue": "Feet flat, push through your whole foot, don't lock out hard.",
-            "glossaryID": "leg-press"
+            "glossaryID": "leg-press",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Chest press",
             "seconds": 240,
             "cue": "Elbows a little below your shoulders, press away and back.",
-            "glossaryID": "chest-press"
+            "glossaryID": "chest-press",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Lat pulldown",
             "seconds": 240,
             "cue": "Sit tall, pull the bar to your collarbone, let it rise slowly.",
-            "glossaryID": "lat-pulldown"
+            "glossaryID": "lat-pulldown",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Seated row",
             "seconds": 240,
             "cue": "Pull the handle to your ribs and let your shoulder blades come together.",
-            "glossaryID": "seated-cable-row"
+            "glossaryID": "seated-cable-row",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Finish",
@@ -2130,25 +2154,33 @@
             "name": "Goblet squats",
             "seconds": 300,
             "cue": "One weight at the chest. Sit down between your feet, stand tall.",
-            "glossaryID": "goblet-squat"
+            "glossaryID": "goblet-squat",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Romanian deadlift",
             "seconds": 300,
             "cue": "Hips back, back long, weights close to your legs the whole way.",
-            "glossaryID": "romanian-deadlift"
+            "glossaryID": "romanian-deadlift",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Lat pulldown",
             "seconds": 300,
             "cue": "Sit tall and pull the bar down to your collarbone.",
-            "glossaryID": "lat-pulldown"
+            "glossaryID": "lat-pulldown",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Overhead press",
             "seconds": 300,
             "cue": "Ribs down, press straight up, let the weight come back slowly.",
-            "glossaryID": "overhead-press"
+            "glossaryID": "overhead-press",
+            "reps": 10,
+            "sets": 3
           },
           {
             "name": "Carry to finish",
@@ -2197,13 +2229,17 @@
             "name": "Seated row",
             "seconds": 180,
             "cue": "Light. Pull to your ribs, let your shoulder blades come together, release slowly.",
-            "glossaryID": "seated-cable-row"
+            "glossaryID": "seated-cable-row",
+            "reps": 8,
+            "sets": 3
           },
           {
             "name": "Lat pulldown",
             "seconds": 180,
             "cue": "Sit tall. Pull to your collarbone, and let the bar rise all the way back up.",
-            "glossaryID": "lat-pulldown"
+            "glossaryID": "lat-pulldown",
+            "reps": 8,
+            "sets": 3
           },
           {
             "name": "Doorway or rack stretch",
@@ -2625,7 +2661,9 @@
           {
             "name": "Slow calf raises",
             "seconds": 120,
-            "cue": "Rise up on toes, pause, lower slowly for 3 seconds."
+            "cue": "Rise up on toes, pause, lower slowly for 3 seconds.",
+            "reps": 10,
+            "sets": 2
           },
           {
             "name": "Single leg hold",
