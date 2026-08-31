@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 struct OnboardingView: View {
     @State private var model = OnboardingModel()
@@ -47,6 +48,7 @@ struct OnboardingView: View {
                             .accessibilityAddTraits(.isHeader)
 
                             answers
+                                .postHogMask()
                         }
                         .frame(
                             minHeight: max(0, geometry.size.height - (FGSpace.page * 2)),
@@ -117,11 +119,7 @@ struct OnboardingView: View {
             }
 
         case .intent:
-            FlowRow(
-                spacing: 12,
-                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
-                minimumItemWidth: 110
-            ) {
+            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
                 ForEach(Intent.allCases, id: \.self) { intent in
                     FGChoice(
                         title: intent.label,
@@ -135,11 +133,7 @@ struct OnboardingView: View {
             }
 
         case .workArounds:
-            FlowRow(
-                spacing: 12,
-                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
-                minimumItemWidth: 110
-            ) {
+            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
                 ForEach(WorkAround.allCases, id: \.self) { workAround in
                     FGChoice(
                         title: workAround.label,
@@ -164,11 +158,7 @@ struct OnboardingView: View {
                 .font(FGFont.body.weight(.medium))
                 .foregroundStyle(FGColor.ink)
 
-            FlowRow(
-                spacing: 12,
-                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
-                minimumItemWidth: 110
-            ) { content() }
+            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) { content() }
         }
     }
 
