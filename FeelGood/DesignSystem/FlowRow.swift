@@ -89,3 +89,27 @@ struct FlowRow: Layout {
         return rows
     }
 }
+
+extension FlowRow {
+    /// The grid every choice tile uses: three across, one per row once type
+    /// reaches an accessibility size.
+    ///
+    /// It exists so the gutter and the minimum item width are chosen together
+    /// in one place. They are a pair — three tiles and two gutters have to fit
+    /// the page inset on the smallest supported phone — and they used to be
+    /// five copies of two loose literals across `CheckInSheet`, `OnboardingView`
+    /// and `AccessChoices`. Changing one copy, or one of the two numbers,
+    /// silently dropped a column on every narrow device.
+    static func choices<Content: View>(
+        isAccessibilitySize: Bool,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        FlowRow(
+            spacing: FGSpace.choiceGutter,
+            maxPerRow: isAccessibilitySize ? 1 : 3,
+            minimumItemWidth: FGSize.choiceTileMinimum
+        ) {
+            content()
+        }
+    }
+}

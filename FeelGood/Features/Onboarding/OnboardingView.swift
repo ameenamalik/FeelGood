@@ -119,11 +119,7 @@ struct OnboardingView: View {
             }
 
         case .intent:
-            FlowRow(
-                spacing: 12,
-                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
-                minimumItemWidth: 110
-            ) {
+            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
                 ForEach(Intent.allCases, id: \.self) { intent in
                     FGChoice(
                         title: intent.label,
@@ -137,11 +133,7 @@ struct OnboardingView: View {
             }
 
         case .workArounds:
-            FlowRow(
-                spacing: 12,
-                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
-                minimumItemWidth: 110
-            ) {
+            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
                 ForEach(WorkAround.allCases, id: \.self) { workAround in
                     FGChoice(
                         title: workAround.label,
@@ -166,11 +158,7 @@ struct OnboardingView: View {
                 .font(FGFont.body.weight(.medium))
                 .foregroundStyle(FGColor.ink)
 
-            FlowRow(
-                spacing: 12,
-                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
-                minimumItemWidth: 110
-            ) { content() }
+            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) { content() }
         }
     }
 

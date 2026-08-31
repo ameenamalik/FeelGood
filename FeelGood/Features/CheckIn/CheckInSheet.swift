@@ -141,11 +141,7 @@ struct CheckInSheet: View {
             // Wraps rather than truncating when the type is large, and drops
             // to a single column once the type is large enough that three
             // would break words apart.
-            FlowRow(
-                spacing: 12,
-                maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
-                minimumItemWidth: 110
-            ) { options() }
+            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) { options() }
             .postHogMask()
         }
         .opacity(hasAppeared ? 1 : 0)
