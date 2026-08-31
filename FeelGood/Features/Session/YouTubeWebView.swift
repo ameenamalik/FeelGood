@@ -44,22 +44,41 @@ struct YouTubeWebView: UIViewRepresentable {
         }
         context.coordinator.loadedVideoID = videoID
 
-        // Navigate directly to the embed URL as the WKWebView's top-level
-        // request, rather than wrapping it in an iframe inside a
-        // loadHTMLString page. loadHTMLString never performs a real network
-        // fetch for the "page", so a nested iframe has no genuine Referer
-        // chain to inherit — the `origin` query param alone doesn't satisfy
-        // YouTube's check on the request's actual Referer/Origin headers,
-        // which is what produces Error 152-4 ("video unavailable"). Setting
-        // Referer on a real top-level load does.
-        guard let url = URL(
-            string: "\(Self.embedOrigin)/embed/\(videoID)?playsinline=1&rel=0&enablejsapi=1&origin=\(Self.embedOrigin)"
-        ) else {
+        // Error 152-4 is YouTube refusing the embed because the request
+        // carries no credible page origin. Two earlier attempts do not
+        // produce one: `loadHTMLString(_:baseURL:)` never performs a real
+        // fetch, so the nested iframe has no Referer chain to inherit; and a
+        // `Referer` header set by hand on a top-level `load(_:)` is dropped
+        // by WKWebView before the request leaves the process.
+        //
+        // `loadSimulatedRequest(_:responseHTML:)` is the one that works: the
+        // wrapper page is delivered as the genuine response to a URL on
+        // youtube.com, so the iframe inside it is same-origin with the
+        // player and sends the Referer and Origin the embed checks for.
+        guard let hostURL = URL(string: "\(Self.embedOrigin)/"),
+              let embedURL = URL(
+                  string: "\(Self.embedOrigin)/embed/\(videoID)?playsinline=1&rel=0&enablejsapi=1&origin=\(Self.embedOrigin)"
+              )
+        else {
             return
         }
 
-        var request = URLRequest(url: url)
-        request.setValue("\(Self.embedOrigin)/", forHTTPHeaderField: "Referer")
-        uiView.load(request)
+        let html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <style>
+            body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: transparent; overflow: hidden; }
+            iframe { width: 100%; height: 100%; border: none; }
+        </style>
+        </head>
+        <body>
+            <iframe id="player" type="text/html" src="\(embedURL.absoluteString)" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+        </body>
+        </html>
+        """
+
+        uiView.loadSimulatedRequest(URLRequest(url: hostURL), responseHTML: html)
     }
 }
