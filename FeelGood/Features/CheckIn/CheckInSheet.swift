@@ -2,12 +2,17 @@
 //  CheckInSheet.swift
 //  FeelGood
 //
-//  Two taps, ten seconds. The third is optional and stays optional — the app
-//  never blocks on input, and there is no way to answer this wrongly.
+//  Two taps, ten seconds. The third and fourth are optional and stay optional —
+//  the app never blocks on input, and there is no way to answer this wrongly.
 //
-//  It should also feel like being asked, not like filling in a form: each
-//  question carries its own colour, each answer its own small picture, and the
-//  four groups arrive one after the other rather than all at once.
+//  One page that grows. The first question is all there is until it is
+//  answered, then the next arrives underneath it. That keeps the "one thing at
+//  a time" feel without paging: nothing is hidden behind a Back button, every
+//  answer stays on screen where it can be changed, and the page getting longer
+//  is the only progress indicator the sheet needs.
+//
+//  Each answer is a soft wash rather than an icon on white. Which wash an
+//  answer gets means nothing — see the note above `checkInAura` in Palette.
 //
 
 import SwiftUI
@@ -21,7 +26,10 @@ struct CheckInSheet: View {
     @State private var time: TimeBudget?
     @State private var place: PlaceIntent?
     @State private var body_: BodyState?
-    @State private var hasAppeared = false
+    /// How many questions are on screen. Only ever grows within a sitting —
+    /// taking an answer back must not make a question you have already seen
+    /// disappear out from under you.
+    @State private var revealed: Int
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -32,66 +40,40 @@ struct CheckInSheet: View {
         _time = State(initialValue: current?.time)
         _place = State(initialValue: current?.place)
         _body_ = State(initialValue: current?.body)
+        // Coming back to change one answer should not re-run the reveal — the
+        // whole sheet is already yours at that point.
+        _revealed = State(initialValue: current == nil ? 1 : CheckInFlow.stepCount)
     }
 
     var body: some View {
         ZStack {
             FGColor.bg.ignoresSafeArea()
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: FGSpace.l) {
-                    title
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: FGSpace.xl) {
+                        title
 
-                    question("What have you got in the tank?", accent: .sky, index: 0) {
-                        EnergyScale(selection: $energy)
+                        energyQuestion(proxy)
+                        if revealed > 1 { timeQuestion(proxy) }
+                        if revealed > 2 { placeQuestion(proxy) }
+                        if revealed > 3 { bodyQuestion }
+
+                        footer
                     }
-
-                    question("How much time, really?", accent: .lime, index: 1) {
-                        TimeScale(selection: $time)
-                    }
-
-                    question("Where are you today? (optional)", accent: .lavender, index: 2) {
-                        ForEach(PlaceIntent.allCases, id: \.self) { option in
-                            FGChoice(
-                                title: option.checkInLabel,
-                                systemImage: option.checkInSymbol,
-                                accent: option.checkInAccent,
-                                isSelected: place == option
-                            ) {
-                                place = place == option ? nil : option
-                            }
-                        }
-                    }
-
-                    question("Anything going on in your body? (optional)", accent: .pink, index: 3) {
-                        ForEach(BodyState.allCases, id: \.self) { option in
-                            FGChoice(
-                                title: option.checkInLabel,
-                                systemImage: option.checkInSymbol,
-                                accent: option.checkInAccent,
-                                isSelected: body_ == option
-                            ) {
-                                body_ = body_ == option ? nil : option
-                            }
-                        }
-                    }
-
-                    FGPrimaryButton(title: "Show me today") { finish() }
-
-                    FGQuietButton("Skip — just show me something") { finish() }
-                        .frame(maxWidth: .infinity)
+                    .padding(FGSpace.page)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(FGSpace.page)
+                .scrollBounceBehavior(.basedOnSize)
             }
         }
-        .fgAnimation(FGMotion.gentle, value: selection)
+        .fgAnimation(FGMotion.settle, value: revealed)
         .sensoryFeedback(.selection, trigger: selection)
-        .onAppear { hasAppeared = true }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
     }
 
-    // MARK: Pieces
+    // MARK: Questions
 
     private var title: some View {
         Text("How's today?")
@@ -100,51 +82,155 @@ struct CheckInSheet: View {
             .accessibilityAddTraits(.isHeader)
     }
 
+    private func energyQuestion(_ proxy: ScrollViewProxy) -> some View {
+        question("What have you got in the tank?", index: 0) {
+            ForEach(Energy.allCases, id: \.self) { option in
+                FGAuraTile(
+                    title: option.checkInLabel,
+                    aura: option.checkInAura,
+                    isSelected: energy == option
+                ) {
+                    energy = option
+                    reveal(after: 0, didAnswer: true, using: proxy)
+                }
+            }
+        }
+    }
+
+    private func timeQuestion(_ proxy: ScrollViewProxy) -> some View {
+        question("How much time, really?", index: 1) {
+            ForEach(TimeBudget.allCases, id: \.self) { option in
+                FGAuraTile(
+                    title: option.checkInMinutes,
+                    detail: "min",
+                    titleStyle: .display,
+                    aura: option.checkInAura,
+                    isSelected: time == option
+                ) {
+                    time = option
+                    reveal(after: 1, didAnswer: true, using: proxy)
+                }
+            }
+        }
+    }
+
+    private func placeQuestion(_ proxy: ScrollViewProxy) -> some View {
+        question("Where are you today?", index: 2, isOptional: true) {
+            ForEach(PlaceIntent.allCases, id: \.self) { option in
+                FGAuraTile(
+                    title: option.checkInLabel,
+                    aura: option.checkInAura,
+                    isSelected: place == option
+                ) {
+                    // Tapping the answer you already gave takes it back.
+                    // Un-answering must not reveal the next question — see
+                    // `CheckInFlow.next`.
+                    let wasSelected = place == option
+                    place = wasSelected ? nil : option
+                    reveal(after: 2, didAnswer: !wasSelected, using: proxy)
+                }
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            // The only question that needs a way past it: the last one is
+            // already followed by the button that ends the sheet.
+            if revealed == 3 {
+                Button("Skip") { reveal(after: 2, didAnswer: true, using: proxy) }
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+            }
+        }
+    }
+
+    private var bodyQuestion: some View {
+        question("Anything going on in your body?", index: 3, isOptional: true) {
+            ForEach(BodyState.allCases, id: \.self) { option in
+                FGAuraTile(
+                    title: option.checkInLabel,
+                    aura: option.checkInAura,
+                    isSelected: body_ == option
+                ) {
+                    body_ = body_ == option ? nil : option
+                }
+            }
+        }
+    }
+
+    /// One question and its answers. `index` doubles as the scroll target, so
+    /// a newly revealed question can be brought into view.
     private func question<Options: View>(
-        _ title: String,
-        accent: FGAccent,
+        _ text: String,
         index: Int,
+        isOptional: Bool = false,
         @ViewBuilder options: () -> Options
     ) -> some View {
-        VStack(alignment: .leading, spacing: FGSpace.s) {
-            HStack(spacing: FGSpace.s) {
-                // Ties the question to the colour its answers fill with.
-                Capsule()
-                    .fill(accent.fill)
-                    .frame(width: 4, height: 18)
-                    .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: FGSpace.m) {
+            Text(text)
+                .font(FGFont.itemTitle)
+                .foregroundStyle(isOptional ? FGColor.inkMuted : FGColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
 
-                Text(title)
-                    .font(FGFont.body.weight(.medium))
-                    .foregroundStyle(FGColor.ink)
-            }
-
-            // Wraps rather than truncating when the type is large, and drops
-            // to a single column once the type is large enough that three
-            // would break words apart.
             FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) { options() }
-            .postHogMask()
+                .postHogMask()
         }
-        .opacity(hasAppeared ? 1 : 0)
-        .offset(y: hasAppeared ? 0 : 12)
-        .animation(
-            reduceMotion ? .none : FGMotion.settle.delay(FGMotion.stagger(index)),
-            value: hasAppeared
+        .id(index)
+        .transition(
+            reduceMotion
+                ? .opacity
+                : .opacity.combined(with: .offset(y: 16))
         )
     }
 
-    // MARK: Answers
+    // MARK: Footer
+
+    @ViewBuilder
+    private var footer: some View {
+        VStack(spacing: FGSpace.s) {
+            // Appears as soon as there is enough to build a menu from, rather
+            // than waiting for the optional questions to be dealt with.
+            if energy != nil, time != nil {
+                FGPrimaryButton(title: "Show me today") { finish() }
+            }
+
+            FGQuietButton("Skip — just show me something") { finish() }
+                .frame(maxWidth: .infinity)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: Behaviour
+
+    /// Brings the next question onto the page and scrolls to it.
+    ///
+    /// `didAnswer` is false when the tap cleared an answer rather than giving
+    /// one; nothing new appears in that case.
+    private func reveal(after index: Int, didAnswer: Bool, using proxy: ScrollViewProxy) {
+        guard let next = CheckInFlow.next(after: index, didAnswer: didAnswer) else { return }
+        guard next >= revealed else { return }
+
+        revealed = next + 1
+
+        guard !reduceMotion else {
+            proxy.scrollTo(next, anchor: .center)
+            return
+        }
+
+        withAnimation(FGMotion.settle) {
+            proxy.scrollTo(next, anchor: .center)
+        }
+    }
 
     /// Every answer as it actually stands, including the unanswered ones. The
-    /// defaults in `answers` would swallow the first tap on "Steady" — nothing
-    /// would appear to change — so animation and haptics key off this instead.
+    /// defaults in `plan` would swallow the first tap on "Steady" — nothing
+    /// would appear to change — so haptics key off this instead.
     private var selection: [String?] {
         [energy?.rawValue, time?.rawValue, place?.rawValue, body_?.rawValue]
     }
 
     /// What gets handed back: the unanswered questions fall back to the middle,
     /// because skipping is always allowed to produce a menu.
-    private var answers: PlanCheckIn {
+    private var plan: PlanCheckIn {
         PlanCheckIn(energy: energy ?? .steady, time: time ?? .some, place: place, body: body_)
     }
 
@@ -154,164 +240,7 @@ struct CheckInSheet: View {
         Analytics.capture(
             CheckInAnalytics(energy: energy, time: time, place: place, body: body_)
         )
-        onDone(answers)
-    }
-}
-
-private struct EnergyScale: View {
-    @Binding var selection: Energy?
-    @State private var sliderPosition: Double
-
-    private let levels = Energy.allCases
-
-    init(selection: Binding<Energy?>) {
-        _selection = selection
-        let initial = Energy.allCases.firstIndex(of: selection.wrappedValue ?? .steady) ?? 1
-        _sliderPosition = State(initialValue: Double(initial))
-    }
-
-    private var selectedIndex: Int {
-        min(max(Int(sliderPosition.rounded()), 0), levels.count - 1)
-    }
-
-    var body: some View {
-        VStack(spacing: FGSpace.s) {
-            Slider(
-                value: $sliderPosition,
-                in: 0...Double(levels.count - 1),
-                onEditingChanged: { isEditing in
-                    if !isEditing {
-                        withAnimation(FGMotion.gentle) {
-                            sliderPosition = Double(selectedIndex)
-                        }
-                    }
-                }
-            )
-                .tint(FGColor.sky)
-                .accessibilityLabel("Energy")
-                .accessibilityValue(selection?.checkInLabel ?? "Not selected")
-                .onChange(of: sliderPosition) { _, _ in
-                    selection = levels[selectedIndex]
-                }
-
-            HStack(spacing: 0) {
-                ForEach(levels, id: \.self) { level in
-                    Button {
-                        selection = level
-                        withAnimation(FGMotion.gentle) {
-                            sliderPosition = Double(levels.firstIndex(of: level) ?? 1)
-                        }
-                    } label: {
-                        VStack(spacing: FGSpace.xs) {
-                            Image(systemName: level.checkInSymbol)
-                                .font(.body)
-
-                            Text(level.checkInLabel)
-                                .font(FGFont.label.weight(selection == level ? .semibold : .regular))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.85)
-                        }
-                        .foregroundStyle(selection == level ? FGColor.skyDeep : FGColor.inkMuted)
-                        .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(selection == level ? .isSelected : [])
-                }
-            }
-        }
-        .padding(FGSpace.m)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(FGColor.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(FGColor.lineStrong, lineWidth: 1)
-        )
-    }
-}
-
-private struct TimeScale: View {
-    @Binding var selection: TimeBudget?
-    @State private var sliderPosition: Double
-
-    private let levels = TimeBudget.allCases
-
-    init(selection: Binding<TimeBudget?>) {
-        _selection = selection
-        let initial = TimeBudget.allCases.firstIndex(of: selection.wrappedValue ?? .some) ?? 5
-        _sliderPosition = State(initialValue: Double(initial))
-    }
-
-    private var selectedIndex: Int {
-        min(max(Int(sliderPosition.rounded()), 0), levels.count - 1)
-    }
-
-    private var displayedLevel: TimeBudget { levels[selectedIndex] }
-
-    var body: some View {
-        VStack(spacing: FGSpace.s) {
-            Text(selection == nil ? "Slide to choose" : displayedLevel.checkInDetail)
-                .font(FGFont.body.weight(.medium))
-                .foregroundStyle(FGColor.ink)
-                .frame(maxWidth: .infinity)
-
-            Slider(
-                value: $sliderPosition,
-                in: 0...Double(levels.count - 1),
-                onEditingChanged: { isEditing in
-                    if !isEditing {
-                        withAnimation(FGMotion.gentle) {
-                            sliderPosition = Double(selectedIndex)
-                        }
-                    }
-                }
-            )
-            .tint(FGColor.lime)
-            .accessibilityLabel("Available time")
-            .accessibilityValue(selection?.checkInLabel ?? "Not selected")
-            .onChange(of: sliderPosition) { _, _ in
-                selection = displayedLevel
-            }
-
-            HStack(spacing: 0) {
-                ForEach(Array(levels.enumerated()), id: \.element) { index, level in
-                    Button {
-                        selection = level
-                        withAnimation(FGMotion.gentle) {
-                            sliderPosition = Double(index)
-                        }
-                    } label: {
-                        Circle()
-                            .fill(selection == level ? FGColor.limeDeep : FGColor.lineStrong)
-                            .frame(width: selection == level ? 10 : 6, height: selection == level ? 10 : 6)
-                            .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(level.checkInLabel)
-                    .accessibilityAddTraits(selection == level ? .isSelected : [])
-                }
-            }
-
-            HStack {
-                Text("5 min")
-                Spacer()
-                Text("45+ min")
-            }
-            .font(FGFont.label)
-            .foregroundStyle(FGColor.inkMuted)
-        }
-        .padding(FGSpace.m)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(FGColor.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(FGColor.lineStrong, lineWidth: 1)
-        )
+        onDone(plan)
     }
 }
 
@@ -323,4 +252,14 @@ private struct TimeScale: View {
     CheckInSheet(
         current: PlanCheckIn(energy: .low, time: .aLittle, place: .stayingIn, body: .stiff)
     ) { _ in }
+}
+
+#Preview("Aura tiles") {
+    FlowRow.choices(isAccessibilitySize: false) {
+        ForEach(Array(FGAura.allCases.enumerated()), id: \.offset) { _, aura in
+            FGAuraTile(title: "Steady", detail: "20–30", aura: aura, isSelected: aura == .apricot) {}
+        }
+    }
+    .padding(FGSpace.page)
+    .background(FGColor.bg)
 }

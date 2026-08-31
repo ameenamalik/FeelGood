@@ -127,6 +127,11 @@ nonisolated extension TimeBudget {
         }
     }
 
+    /// The ceiling as a bare numeral, for the tile that prints it large with
+    /// "min" underneath. Reads off `maxMinutes` rather than restating it, so
+    /// the number on screen is the number the engine actually caps at.
+    var checkInMinutes: String { "\(maxMinutes)" }
+
     var checkInSymbol: String {
         switch self {
         case .fiveMinutes: "5.circle"

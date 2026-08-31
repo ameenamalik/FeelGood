@@ -15,6 +15,10 @@ struct AccessChoices: View {
     @Binding var places: Set<Place>
     var showsSymbols = false
     var accent: FGAccent = .ink
+    /// Draws the tiles as washes instead of white cards. Onboarding opts in;
+    /// the profile screen does not, because a settings list of sixteen colour
+    /// fields is a different thing from a first-run question.
+    var usesAura = false
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -35,10 +39,10 @@ struct AccessChoices: View {
         VStack(alignment: .leading, spacing: FGSpace.l) {
             group("Movement") {
                 ForEach(Self.movementChoices, id: \.self) { activity in
-                    FGChoice(
+                    choice(
                         title: activity.label,
-                        systemImage: showsSymbols ? activity.onboardingSymbol : nil,
-                        accent: accent,
+                        symbol: activity.onboardingSymbol,
+                        aura: .sage,
                         isSelected: activities.contains(activity)
                     ) {
                         toggle(activity, in: $activities)
@@ -47,10 +51,10 @@ struct AccessChoices: View {
             }
             group("Equipment") {
                 ForEach(Self.equipmentChoices, id: \.self) { item in
-                    FGChoice(
+                    choice(
                         title: item.label ?? "",
-                        systemImage: showsSymbols ? item.onboardingSymbol : nil,
-                        accent: accent,
+                        symbol: item.onboardingSymbol,
+                        aura: .lilac,
                         isSelected: equipment.contains(item)
                     ) {
                         toggle(item, in: $equipment)
@@ -59,16 +63,48 @@ struct AccessChoices: View {
             }
             group("Where") {
                 ForEach(Place.allCases, id: \.self) { place in
-                    FGChoice(
+                    choice(
                         title: place.label,
-                        systemImage: showsSymbols ? place.onboardingSymbol : nil,
-                        accent: accent,
+                        symbol: place.onboardingSymbol,
+                        aura: .blush,
                         isSelected: places.contains(place)
                     ) {
                         toggle(place, in: $places)
                     }
                 }
             }
+        }
+    }
+
+    /// One aura per *group*, so a picked tile also says which group it is in.
+    ///
+    /// Only picked tiles are washed at all — see `FGAuraTile`. That is what
+    /// makes a single hue per group work here: the page is mostly neutral, and
+    /// the colour is a record of what you chose rather than wallpaper.
+    @ViewBuilder
+    private func choice(
+        title: String,
+        symbol: String,
+        aura: FGAura,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        if usesAura {
+            FGAuraTile(
+                title: title,
+                systemImage: showsSymbols ? symbol : nil,
+                aura: aura,
+                isSelected: isSelected,
+                action: action
+            )
+        } else {
+            FGChoice(
+                title: title,
+                systemImage: showsSymbols ? symbol : nil,
+                accent: accent,
+                isSelected: isSelected,
+                action: action
+            )
         }
     }
 
