@@ -2,29 +2,48 @@
 //  PlayerView.swift
 //  FeelGood
 //
-//  The step timer for authored sessions. Pausable, skippable, and impossible
-//  to fail: leaving early is a perfectly good outcome.
+//  The step timer for authored sessions. Pausable, resumable, and impossible
+//  to fail: leaving early saves progress but is not a completion.
 //
 
 import SwiftUI
 
 struct PlayerView: View {
     let session: Session
-    /// Called on finishing or leaving. `feel` is nil when the session was left
-    /// early or the question was skipped — both are fine, and both still count
-    /// as having shown up.
-    let onFinish: (Feel?, Bool) -> Void
+    let onFinish: (PlayerResult) -> Void
     /// When Start was tapped, so the record reflects real elapsed time.
     let startedAt: Date
 
     @Environment(\.dismiss) private var dismiss
-    @State private var index = 0
-    @State private var remaining = 0
+    @State private var index: Int
+    @State private var remaining: Int
+    @State private var timerIndex: Int
     @State private var isRunning = true
     @State private var isDone = false
 
     private var steps: [Step] { session.source.steps }
     private var step: Step? { steps.indices.contains(index) ? steps[index] : nil }
+
+    init(
+        session: Session,
+        progress: SessionProgress? = nil,
+        onFinish: @escaping (PlayerResult) -> Void,
+        startedAt: Date
+    ) {
+        self.session = session
+        self.onFinish = onFinish
+        self.startedAt = startedAt
+
+        let validIndex = progress.map { min(max($0.stepIndex, 0), max(session.source.steps.count - 1, 0)) } ?? 0
+        let fullDuration = session.source.steps.indices.contains(validIndex)
+            ? session.source.steps[validIndex].seconds
+            : 0
+        let initialRemaining = progress.map { min(max($0.remainingSeconds, 1), max(fullDuration, 1)) }
+            ?? fullDuration
+        _index = State(initialValue: validIndex)
+        _remaining = State(initialValue: initialRemaining)
+        _timerIndex = State(initialValue: validIndex)
+    }
 
     var body: some View {
         ZStack {
@@ -40,7 +59,10 @@ struct PlayerView: View {
         }
         .task(id: index) {
             guard let step else { return }
-            remaining = step.seconds
+            if timerIndex != index {
+                remaining = step.seconds
+                timerIndex = index
+            }
             while remaining > 0 && !isDone {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
@@ -48,12 +70,15 @@ struct PlayerView: View {
             }
             if remaining <= 0 { advance() }
         }
+        // Every intentional exit goes through Leave so the current timer can
+        // be saved before this full-screen player disappears.
+        .interactiveDismissDisabled()
     }
 
     private func videoPlayer(videoID: String, channel: String) -> some View {
         VStack(spacing: FGSpace.l) {
             HStack {
-                FGQuietButton("Leave", systemImage: "xmark") { onFinish(nil, false) }
+                FGQuietButton("Leave", systemImage: "xmark") { leave() }
                 Spacer()
                 Text(channel)
                     .font(FGFont.label)
@@ -96,7 +121,7 @@ struct PlayerView: View {
     private func running(_ step: Step) -> some View {
         VStack(spacing: FGSpace.l) {
             HStack {
-                FGQuietButton("Leave", systemImage: "xmark") { onFinish(nil, false) }
+                FGQuietButton("Leave", systemImage: "xmark") { leave() }
                 Spacer()
                 Text("\(index + 1) of \(steps.count)")
                     .font(FGFont.label)
@@ -155,7 +180,7 @@ struct PlayerView: View {
             HStack(spacing: FGSpace.m) {
                 ForEach(Feel.allCases, id: \.self) { feel in
                     Button {
-                        onFinish(feel, true)
+                        onFinish(.completed(feel))
                     } label: {
                         VStack(spacing: FGSpace.xs) {
                             Image(systemName: symbol(for: feel))
@@ -176,7 +201,7 @@ struct PlayerView: View {
             FGQuietButton("Back to last exercise", systemImage: "backward.end") {
                 goBack()
             }
-            FGQuietButton("Skip") { onFinish(nil, true) }
+            FGQuietButton("Skip") { onFinish(.completed(nil)) }
             Spacer()
         }
         .padding(FGSpace.page)
@@ -202,11 +227,23 @@ struct PlayerView: View {
         }
     }
 
+    private func leave() {
+        let saved = SessionProgress(
+            stepIndex: index,
+            remainingSeconds: max(remaining, 1),
+            startedAt: startedAt
+        )
+        onFinish(.paused(saved))
+    }
+
     private func goBack() {
         guard !steps.isEmpty else { return }
         withAnimation(FGMotion.gentle) {
             if isDone {
-                index = steps.index(before: steps.endIndex)
+                let previousIndex = steps.index(before: steps.endIndex)
+                index = previousIndex
+                remaining = steps[previousIndex].seconds
+                timerIndex = previousIndex
                 isDone = false
             } else if index > steps.startIndex {
                 index -= 1
@@ -229,4 +266,9 @@ struct PlayerView: View {
         case .tooMuch: "Too much"
         }
     }
+}
+
+nonisolated enum PlayerResult: Equatable, Sendable {
+    case paused(SessionProgress)
+    case completed(Feel?)
 }

@@ -79,9 +79,9 @@ struct SessionDetailView: View {
                             }
                         }
                     } else {
-                        FGPrimaryButton(title: "Start") {
+                        FGPrimaryButton(title: savedProgress == nil ? "Start" : "Resume") {
                             Analytics.capture("workout_started", properties: workoutProperties)
-                            startedAt = Date()
+                            startedAt = savedProgress?.startedAt ?? Date()
                             isPlaying = true
                         }
                     }
@@ -92,11 +92,15 @@ struct SessionDetailView: View {
         .fullScreenCover(isPresented: $isPlaying) {
             PlayerView(
                 session: session,
-                onFinish: { feel, didComplete in
-                    if didComplete {
+                progress: savedProgress,
+                onFinish: { result in
+                    switch result {
+                    case .completed(let feel):
                         Analytics.capture("workout_completed", properties: workoutProperties)
+                        model.complete(session, startedAt: startedAt, feel: feel)
+                    case .paused(let progress):
+                        model.pause(session, at: progress)
                     }
-                    model.complete(session, startedAt: startedAt, feel: feel)
                     isPlaying = false
                     dismiss()
                 },
@@ -125,6 +129,10 @@ struct SessionDetailView: View {
             Text("It stops being offered. The times you did it still count.")
         }
         .presentationDragIndicator(.visible)
+    }
+
+    private var savedProgress: SessionProgress? {
+        model.progress(for: session)
     }
 
     private var workoutProperties: [String: Any] {

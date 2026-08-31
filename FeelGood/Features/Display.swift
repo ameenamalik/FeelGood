@@ -83,7 +83,7 @@ nonisolated extension Energy {
         switch self {
         case .low: "Empty"
         case .steady: "Steady"
-        case .strong: "Strong"
+        case .strong: "Energized"
         }
     }
 
@@ -101,24 +101,42 @@ nonisolated extension Energy {
 nonisolated extension TimeBudget {
     var checkInLabel: String {
         switch self {
-        case .aLittle: "A little"
-        case .some: "Some"
-        case .plenty: "Plenty"
+        case .fiveMinutes: "Five minutes"
+        case .aLittle: "Ten minutes"
+        case .fifteenMinutes: "Fifteen minutes"
+        case .twentyMinutes: "Twenty minutes"
+        case .twentyFiveMinutes: "Twenty-five minutes"
+        case .some: "Thirty minutes"
+        case .thirtyFiveMinutes: "Thirty-five minutes"
+        case .fortyMinutes: "Forty minutes"
+        case .plenty: "45+ minutes"
         }
     }
 
     var checkInDetail: String {
         switch self {
+        case .fiveMinutes: "5 min"
         case .aLittle: "10 min"
-        case .some: "20–30"
-        case .plenty: "45+"
+        case .fifteenMinutes: "15 min"
+        case .twentyMinutes: "20 min"
+        case .twentyFiveMinutes: "25 min"
+        case .some: "30 min"
+        case .thirtyFiveMinutes: "35 min"
+        case .fortyMinutes: "40 min"
+        case .plenty: "45+ min"
         }
     }
 
     var checkInSymbol: String {
         switch self {
+        case .fiveMinutes: "5.circle"
         case .aLittle: "10.circle"
+        case .fifteenMinutes: "15.circle"
+        case .twentyMinutes: "20.circle"
+        case .twentyFiveMinutes: "25.circle"
         case .some: "30.circle"
+        case .thirtyFiveMinutes: "35.circle"
+        case .fortyMinutes: "40.circle"
         case .plenty: "45.circle"
         }
     }

@@ -45,7 +45,7 @@ struct SessionLogTests {
         #expect(history.first?.activity == .pilates)
     }
 
-    @Test("Leaving without answering still counts as having shown up")
+    @Test("Finishing without answering the reflection still counts")
     func completionWithoutFeelStillCounts() throws {
         let (log, _) = try makeLog()
         log.recordCompletion(of: session, startedAt: Fixture.now, endedAt: Fixture.now, feel: nil)
