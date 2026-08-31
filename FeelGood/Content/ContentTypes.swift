@@ -144,12 +144,49 @@ nonisolated struct Step: Codable, Hashable, Sendable {
     let cue: String
     /// Resolves to an `ExerciseTerm`. `nil` means no "what's this?" affordance.
     let glossaryID: String?
+    /// Repetitions in **one set**, not across the step. When set, the step is
+    /// counted rather than timed: the player waits for the person to tap
+    /// through the set instead of running a clock. Keeping count is the thing
+    /// a body in the middle of a set is worst at, so the app holds the number
+    /// instead of the person.
+    ///
+    /// Per-set is the only honest unit here. Three sets of ten is never "30"
+    /// to the person doing it — they are somewhere inside a set of ten, and a
+    /// number counting to thirty answers a question nobody asked.
+    ///
+    /// `seconds` stays authored either way — it is what `durationMin` and the
+    /// engine's time fit are built from, and a counted step still has to cost
+    /// something on the menu.
+    ///
+    /// Synthesised `Codable` decodes an absent key as `nil`, so every session
+    /// authored before this existed keeps decoding untouched.
+    let reps: Int?
+    /// How many sets of `reps`. Absent means one set, which is what a single
+    /// authored block of repetitions has always meant.
+    let sets: Int?
 
-    init(name: String, seconds: Int, cue: String, glossaryID: String? = nil) {
+    /// Counted rather than timed. Zero or negative is treated as untimed
+    /// authoring noise rather than a step nobody can finish.
+    var isCounted: Bool { (reps ?? 0) > 0 }
+
+    /// Sets to work through. Authoring noise (absent, zero, negative) is one
+    /// set rather than a step that can never end.
+    var setCount: Int { max(1, sets ?? 1) }
+
+    init(
+        name: String,
+        seconds: Int,
+        cue: String,
+        glossaryID: String? = nil,
+        reps: Int? = nil,
+        sets: Int? = nil
+    ) {
         self.name = name
         self.seconds = seconds
         self.cue = cue
         self.glossaryID = glossaryID
+        self.reps = reps
+        self.sets = sets
     }
 }
 
