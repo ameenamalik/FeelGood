@@ -198,6 +198,13 @@ struct SessionDetailView: View {
         .fgAnimation(FGMotion.gentle, value: isShowingSteps)
     }
 
+    private func stepCost(_ step: Step) -> String {
+        if step.isCounted, let reps = step.reps {
+            return step.setCount > 1 ? "\(step.setCount) × \(reps)" : "\(reps) reps"
+        }
+        return "\(max(1, step.seconds / 60)) min"
+    }
+
     private var partsLabel: String {
         let count = session.source.steps.count
         return count == 1 ? "1 part" : "\(count) parts"
@@ -223,7 +230,10 @@ struct SessionDetailView: View {
                         .accessibilityLabel("What is \(step.name)?")
                     }
                     Spacer(minLength: FGSpace.s)
-                    Text("\(max(1, step.seconds / 60)) min")
+                    // A counted step is measured in reps, not minutes — the
+                    // number is what somebody is deciding about before they
+                    // start, so it is what the preview shows.
+                    Text(stepCost(step))
                         .font(FGFont.label)
                         .foregroundStyle(FGColor.inkMuted)
                 }

@@ -7,10 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		18A12CB6E79D8EBE26B82618 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 6714F52D1618CBB4DFFF9BB1 /* MLXLLM */; };
 		21DCC2181839CD994036E35C /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 19EE39390C500A69431EBC30 /* RevenueCatUI */; };
 		7B7D390B64588ACDCF50AE26 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 0A32FDDC7017E56EDD5653CD /* RevenueCat */; };
-		BE3DEE93D8AA07C049563AB2 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = FBDAE7CDB97D8D69D34F4285 /* MLXLMCommon */; };
 		C9A4756F90D3FAA7DF176DA5 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 378D96DFB6B72F152DA61DD7 /* Lottie */; };
 		C9EE63236D0EE3DDB0175B2F /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = F4B9B9D464255A3A34A74696 /* HuggingFace */; };
 		D58111500000000000000001 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = D58111500000000000000002 /* PostHog */; };
@@ -122,10 +120,6 @@
 				7B7D390B64588ACDCF50AE26 /* RevenueCat in Frameworks */,
 				21DCC2181839CD994036E35C /* RevenueCatUI in Frameworks */,
 				C9A4756F90D3FAA7DF176DA5 /* Lottie in Frameworks */,
-				18A12CB6E79D8EBE26B82618 /* MLXLLM in Frameworks */,
-				BE3DEE93D8AA07C049563AB2 /* MLXLMCommon in Frameworks */,
-				C9EE63236D0EE3DDB0175B2F /* HuggingFace in Frameworks */,
-				F7462400C7C85D30A540E5BE /* Tokenizers in Frameworks */,
 				D58111500000000000000001 /* PostHog in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -203,10 +197,6 @@
 				0A32FDDC7017E56EDD5653CD /* RevenueCat */,
 				19EE39390C500A69431EBC30 /* RevenueCatUI */,
 				378D96DFB6B72F152DA61DD7 /* Lottie */,
-				6714F52D1618CBB4DFFF9BB1 /* MLXLLM */,
-				FBDAE7CDB97D8D69D34F4285 /* MLXLMCommon */,
-				F4B9B9D464255A3A34A74696 /* HuggingFace */,
-				50DCD78BC0A945C5E4F54D34 /* Tokenizers */,
 				D58111500000000000000002 /* PostHog */,
 			);
 			productName = FeelGood;
@@ -314,9 +304,6 @@
 			packageReferences = (
 				22464333FA0C3934CAEB3E3A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				6304E39E099F54A0452D51F7 /* XCRemoteSwiftPackageReference "lottie-ios" */,
-				A4140BFEE4A0848749CA06C9 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
-				9A5155531B928A295DAC6178 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
-				E9F0BD562B487BCD8EE1C8A5 /* XCRemoteSwiftPackageReference "swift-transformers" */,
 				D58111500000000000000003 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -419,6 +406,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = FeelGood/FeelGood.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 322ZGVD4Z7;
@@ -428,8 +416,8 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -439,6 +427,7 @@
 				POSTHOG_PROJECT_TOKEN = phc_rgqb5fDVAprLkw9SoJb4XjuwP72WUgREMSYzUEQv373W;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameenamalik.FeelGood;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				REVENUECAT_API_KEY = test_MRlNrjVZAqFvmWgDydXvWCeqTbf;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -456,6 +445,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = FeelGood/FeelGood.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 322ZGVD4Z7;
@@ -465,8 +455,8 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -476,6 +466,7 @@
 				POSTHOG_PROJECT_TOKEN = phc_rgqb5fDVAprLkw9SoJb4XjuwP72WUgREMSYzUEQv373W;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ameenamalik.FeelGood;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				REVENUECAT_API_KEY = appl_AKdURUknqfyOgdWzdQfawbHTAOL;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -817,36 +808,12 @@
 				minimumVersion = 4.4.0;
 			};
 		};
-		9A5155531B928A295DAC6178 /* XCRemoteSwiftPackageReference "swift-huggingface" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/huggingface/swift-huggingface";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.9.0;
-			};
-		};
-		A4140BFEE4A0848749CA06C9 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 3.31.3;
-			};
-		};
 		D58111500000000000000003 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/PostHog/posthog-ios.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 3.59.3;
-			};
-		};
-		E9F0BD562B487BCD8EE1C8A5 /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/huggingface/swift-transformers";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.3.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

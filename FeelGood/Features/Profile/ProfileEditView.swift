@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 struct ProfileEditView: View {
     let onSave: (ProfileAnswers) -> Void
@@ -100,6 +101,12 @@ struct ProfileEditView: View {
                                 withAnimation(FGMotion.gentle) { answers.workArounds = [] }
                             }
                         }
+                        // `pregnancy`, `postpartum` and `pelvicFloor` are on this
+                        // chip list, and which ones are selected is visible in the
+                        // screenshot. Onboarding masks the same chips; this screen
+                        // is the other place they can be set. The section heading
+                        // stays legible — the question isn't sensitive, the answer is.
+                        .postHogMask()
                     }
 
                     VStack(spacing: FGSpace.s) {

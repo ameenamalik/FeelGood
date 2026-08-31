@@ -73,6 +73,17 @@ nonisolated struct PlanEngine: Sendable {
             takenActivities.insert(main.session.activity)
         }
 
+        // When every activity on the menu is already spoken for, the
+        // distinctness constraint has to relax — but relaxing it to "best
+        // score" decides by the alphabetical id tie-break, which silently
+        // flips the menu when a session is renamed. The Special and the Main
+        // are the items being offered as the day's real thing, so contrast
+        // with *those* is the contrast a person notices; quietly echoing a
+        // Side or the Appetizer is not. Relax in that order, deliberately.
+        var heroActivities: Set<Activity> = []
+        if let special { heroActivities.insert(special.session.activity) }
+        if let main { heroActivities.insert(main.session.activity) }
+
         // How many small things belong on the menu is a shape question, not a
         // workload one: the same time, arranged to fit the day being described.
         let sideCount = input.profile.moments.sideCount
@@ -89,6 +100,7 @@ nonisolated struct PlanEngine: Sendable {
         }
 
         let appetizer = first(from: scored, course: .appetizer, excluding: taken, excludingActivities: takenActivities)
+            ?? first(from: scored, course: .appetizer, excluding: taken, excludingActivities: heroActivities)
             ?? first(from: scored, course: .appetizer, excluding: taken)
             ?? guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: taken)
         if let appetizer {
@@ -97,6 +109,7 @@ nonisolated struct PlanEngine: Sendable {
         }
 
         let dessert = first(from: scored, course: .dessert, excluding: taken, excludingActivities: takenActivities)
+            ?? first(from: scored, course: .dessert, excluding: taken, excludingActivities: heroActivities)
             ?? first(from: scored, course: .dessert, excluding: taken)
             ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken)
         if let dessert {
