@@ -26,33 +26,39 @@ struct FeelGoodApp: App {
             let config = PostHogConfig(projectToken: projectToken, host: host)
             config.errorTrackingConfig.autoCapture = true
             #if DEBUG
+            // Set `config.debug = true` to diagnose replay: the capture path
+            // fails closed and silently (an unsettled `.postHogMask()` reporter,
+            // a view-controller transition, a WebP encode failure) and every one
+            // of those bails is a `hedgeLog` gated on that flag.
             config.logs.environment = "debug"
             #else
             config.logs.environment = "production"
             #endif
             // Session replay is a different risk surface than events/logs: it
-            // captures whatever's rendered, not an allow-listed payload. Every
-            // mask stays at the SDK's own conservative default — text (inputs
-            // and plain labels alike) and images both masked — because a
-            // workaround's label or a kept session's title can land on screen
-            // just as easily as anything else, and none of it is worth the
-            // risk of loosening this later without re-deciding it deliberately.
+            // captures whatever's rendered, not an allow-listed payload.
             //
             // `screenshotMode` is not optional for us. Wireframe reconstruction
             // walks a UIKit view hierarchy, and this app has none: the root
             // controller is a `UIHostingController`, so `PostHogReplayIntegration`
             // bails out of every snapshot with "SwiftUI snapshot not supported,
             // enable screenshotMode" and no initial snapshot ever leaves the
-            // device. Sessions still appear in the replay list and none of them
-            // can be played. Masking is what carries the privacy decision here,
-            // not the render mode: with `maskAllTextInputs` on, the SDK masks
-            // every `SwiftUI.CGDrawingView` / `CGDrawingLayer` — which is what
-            // `Text` and `Button` actually draw into — not just text fields.
-            // Anything the SDK's heuristics might miss gets `.postHogMask()` at
-            // the view.
+            // device.
+            //
+            // Masking is what carries the privacy decision, not the render mode.
+            // The global masks are off because they black out the whole screen:
+            // `maskAllTextInputs` redacts every `SwiftUI.CGDrawingView`, which is
+            // what all `Text` and `Button` draw into, and this UI is almost
+            // entirely text. Sensitive regions are instead named one at a time
+            // with `.postHogMask()`.
+            //
+            // That trade is only safe while the list of masked views is actually
+            // complete. It is allow-by-default: any screen that renders a
+            // work-around label, a check-in answer, or a kept session's title and
+            // is not explicitly masked ships those pixels to PostHog. See the
+            // reproductive-health rule in CLAUDE.md before adding a screen.
             config.sessionReplay = true
-            config.sessionReplayConfig.maskAllTextInputs = true
-            config.sessionReplayConfig.maskAllImages = true
+            config.sessionReplayConfig.maskAllTextInputs = false
+            config.sessionReplayConfig.maskAllImages = false
             config.sessionReplayConfig.screenshotMode = true
             PostHogSDK.shared.setup(config)
         } else {

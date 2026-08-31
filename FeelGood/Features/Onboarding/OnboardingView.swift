@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 struct OnboardingView: View {
     @State private var model = OnboardingModel()
@@ -47,6 +48,7 @@ struct OnboardingView: View {
                             .accessibilityAddTraits(.isHeader)
 
                             answers
+                                .postHogMask()
                         }
                         .frame(
                             minHeight: max(0, geometry.size.height - (FGSpace.page * 2)),
