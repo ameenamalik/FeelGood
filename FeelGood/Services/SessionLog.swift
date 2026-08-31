@@ -14,8 +14,8 @@ import SwiftData
 import os
 
 protocol SessionLogging {
-    /// A session was finished. `feel` is optional — leaving without answering
-    /// is a perfectly good outcome and is still a completion.
+    /// A session was finished. `feel` is optional — finishing without answering
+    /// the reflection question is still a completion.
     func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?)
     /// "Shuffle" on a menu item. A swap is a preference signal, never a failure.
     func recordSwap(of session: Session, at date: Date)

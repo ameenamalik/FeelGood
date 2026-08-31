@@ -20,6 +20,7 @@ struct TodayModelTests {
 
     private func model(
         log: InMemorySessionLog = InMemorySessionLog(),
+        progressStore: InMemorySessionProgressStore = InMemorySessionProgressStore(),
         profile: PlanProfile = Fixture.profile(),
         sessions: [Session] = Fixture.catalog
     ) -> TodayModel {
@@ -27,10 +28,60 @@ struct TodayModelTests {
             store: store(sessions),
             profile: profile,
             log: log,
+            progressStore: progressStore,
             checkIn: PlanCheckIn(energy: .steady, time: .some),
             now: Fixture.now,
             calendar: Fixture.utc
         )
+    }
+
+    @Test("Leaving a workout saves progress without completing it")
+    func leavingSavesProgressWithoutCompletion() {
+        let log = InMemorySessionLog()
+        let progressStore = InMemorySessionProgressStore()
+        let model = model(log: log, progressStore: progressStore)
+        let session = Fixture.catalog.first { !$0.source.steps.isEmpty }!
+        let progress = SessionProgress(stepIndex: 1, remainingSeconds: 24, startedAt: Fixture.now)
+        let item = MenuItem(session: session, course: session.course, reasons: [], reasonText: "")
+
+        model.pause(session, at: progress)
+
+        #expect(model.progress(for: session) == progress)
+        #expect(model.inProgressSessionIDs.contains(session.id))
+        #expect(model.isInProgress(item))
+        #expect(!model.isCompleted(item))
+        #expect(log.entries.isEmpty)
+    }
+
+    @Test("Finishing a resumed workout clears its saved progress")
+    func finishingClearsProgress() {
+        let progressStore = InMemorySessionProgressStore()
+        let model = model(progressStore: progressStore)
+        let session = Fixture.catalog.first { !$0.source.steps.isEmpty }!
+        model.pause(
+            session,
+            at: SessionProgress(stepIndex: 1, remainingSeconds: 24, startedAt: Fixture.now)
+        )
+
+        model.complete(session, startedAt: Fixture.now, feel: .fine, now: Fixture.now)
+
+        #expect(model.progress(for: session) == nil)
+        #expect(!model.inProgressSessionIDs.contains(session.id))
+    }
+
+    @Test("Saved progress is visible again when Today is recreated")
+    func savedProgressSurvivesRecreation() {
+        let progressStore = InMemorySessionProgressStore()
+        let session = Fixture.catalog.first { !$0.source.steps.isEmpty }!
+        progressStore.save(
+            SessionProgress(stepIndex: 1, remainingSeconds: 24, startedAt: Fixture.now),
+            for: session.id
+        )
+
+        let recreated = model(progressStore: progressStore)
+        let item = MenuItem(session: session, course: session.course, reasons: [], reasonText: "")
+
+        #expect(recreated.isInProgress(item))
     }
 
     @Test("Finishing something writes it down and moves affinity")
