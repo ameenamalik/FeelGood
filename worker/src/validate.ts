@@ -1,6 +1,6 @@
 import { CopyPayload, ENERGY_VALUES, REASON_CODES, TIME_BUDGET_VALUES } from "./types";
 
-const ALLOWED_KEYS = new Set(["picks", "reasonCodes", "energy", "time", "daysSinceLast", "anonInstallID"]);
+const ALLOWED_KEYS = new Set(["picks", "reasonCodes", "energy", "time", "daysSinceLast", "subscriberID"]);
 
 /// Defense in depth: the Swift-side `CopyPayload` struct can't produce
 /// anything outside these six keys, but the Worker doesn't get to assume the
@@ -31,7 +31,7 @@ export function isValidPayload(body: unknown): body is CopyPayload {
 
   if (record.daysSinceLast !== null && typeof record.daysSinceLast !== "number") return false;
 
-  if (typeof record.anonInstallID !== "string" || record.anonInstallID.length === 0) return false;
+  if (typeof record.subscriberID !== "string" || record.subscriberID.length === 0) return false;
 
   return true;
 }

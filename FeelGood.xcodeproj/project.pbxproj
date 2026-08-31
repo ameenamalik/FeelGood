@@ -436,6 +436,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				WORKER_BASE_URL = "https://feelgood-copy-dev.ameenazara3.workers.dev";
 			};
 			name = Debug;
 		};

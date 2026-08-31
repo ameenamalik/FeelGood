@@ -2894,7 +2894,7 @@
         "strength",
         "mobility"
       ],
-      "durationMin": 30,
+      "durationMin": 25,
       "intensity": 3,
       "energyFit": [
         "steady",
@@ -2935,7 +2935,7 @@
       "qualities": [
         "strength"
       ],
-      "durationMin": 15,
+      "durationMin": 12,
       "intensity": 3,
       "energyFit": [
         "steady",
@@ -3017,7 +3017,7 @@
         "mobility",
         "downRegulation"
       ],
-      "durationMin": 30,
+      "durationMin": 25,
       "intensity": 2,
       "energyFit": [
         "low",
@@ -3097,7 +3097,7 @@
         "strength",
         "endurance"
       ],
-      "durationMin": 45,
+      "durationMin": 41,
       "intensity": 4,
       "energyFit": [
         "strong"
@@ -3140,7 +3140,7 @@
         "strength",
         "mobility"
       ],
-      "durationMin": 30,
+      "durationMin": 24,
       "intensity": 3,
       "energyFit": [
         "steady",
@@ -3179,7 +3179,7 @@
       "qualities": [
         "strength"
       ],
-      "durationMin": 15,
+      "durationMin": 12,
       "intensity": 3,
       "energyFit": [
         "steady",
@@ -3261,7 +3261,7 @@
         "mobility",
         "strength"
       ],
-      "durationMin": 30,
+      "durationMin": 23,
       "intensity": 2,
       "energyFit": [
         "low",
@@ -3299,7 +3299,7 @@
         "strength",
         "endurance"
       ],
-      "durationMin": 20,
+      "durationMin": 18,
       "intensity": 3,
       "energyFit": [
         "steady",

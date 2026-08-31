@@ -14,7 +14,7 @@
 import Foundation
 
 /// The copy layer, seen from `TodayModel`. Builds the payload (and threads
-/// `anonInstallID`) internally, so nothing above `Services/` ever constructs
+/// `subscriberID`) internally, so nothing above `Services/` ever constructs
 /// a `CopyPayload` or touches the install id itself.
 nonisolated protocol CopyProviding: Sendable {
     func upgradedHeadline(menu: Menu, checkIn: PlanCheckIn, stats: HistoryStats) async -> String?
@@ -29,10 +29,10 @@ nonisolated protocol CopyTransport: Sendable {
 /// `POST`s to the Worker and decodes `{ "line": "..." }`.
 nonisolated struct URLSessionCopyTransport: CopyTransport {
     func fetchLine(payload: CopyPayload, timeout: TimeInterval) async throws -> String {
-        guard let workerBaseURL = CopyServiceConstants.workerBaseURL else {
+        guard let copyURL = WorkerConstants.copyURL else {
             throw CopyTransportError.notConfigured
         }
-        var request = URLRequest(url: workerBaseURL)
+        var request = URLRequest(url: copyURL)
         request.httpMethod = "POST"
         request.timeoutInterval = timeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -79,22 +79,25 @@ actor CopyService: CopyProviding {
     private let transport: any CopyTransport
     private let timeout: TimeInterval
     private let isProUnlocked: @Sendable () async -> Bool
+    private let subscriberID: @Sendable () async -> String
     private var cache: [CopyPayload: String] = [:]
 
     init(
         transport: any CopyTransport = URLSessionCopyTransport(),
-        timeout: TimeInterval = CopyServiceConstants.requestTimeout,
-        isProUnlocked: @escaping @Sendable () async -> Bool = { await PurchasesManager.shared.isProUnlocked }
+        timeout: TimeInterval = WorkerConstants.requestTimeout,
+        isProUnlocked: @escaping @Sendable () async -> Bool = { await PurchasesManager.shared.isProUnlocked },
+        subscriberID: @escaping @Sendable () async -> String = { await PurchasesManager.shared.appUserID }
     ) {
         self.transport = transport
         self.timeout = timeout
         self.isProUnlocked = isProUnlocked
+        self.subscriberID = subscriberID
     }
 
     func upgradedHeadline(menu: Menu, checkIn: PlanCheckIn, stats: HistoryStats) async -> String? {
         guard await isProUnlocked() else { return nil }
 
-        let payload = CopyPayload(menu: menu, checkIn: checkIn, stats: stats, anonInstallID: AnonInstallID.current)
+        let payload = CopyPayload(menu: menu, checkIn: checkIn, stats: stats, subscriberID: await subscriberID())
 
         if let cached = cache[payload] {
             return cached

@@ -17,10 +17,10 @@ struct CopyServiceTests {
 
     @Test("A missing Worker URL disables the upgrade instead of crashing")
     func missingWorkerURLIsDisabled() {
-        #expect(CopyServiceConstants.workerURL(from: nil) == nil)
-        #expect(CopyServiceConstants.workerURL(from: "") == nil)
-        #expect(CopyServiceConstants.workerURL(from: "$(COPY_WORKER_BASE_URL)") == nil)
-        #expect(CopyServiceConstants.workerURL(from: "https://copy.example.com/copy") != nil)
+        #expect(WorkerConstants.workerURL(from: nil) == nil)
+        #expect(WorkerConstants.workerURL(from: "") == nil)
+        #expect(WorkerConstants.workerURL(from: "$(WORKER_BASE_URL)") == nil)
+        #expect(WorkerConstants.workerURL(from: "https://copy.example.com/copy") != nil)
     }
 
     private func input() -> PlanInput {

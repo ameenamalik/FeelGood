@@ -2,20 +2,34 @@
 //  YouTubeWebView.swift
 //  FeelGood
 //
-//  A WKWebView wrapper that embeds a YouTube video iframe inline, allowing
-//  the user to watch the workout while preserving interactive features like
-//  viewing the channel, liking, and sharing.
+//  A WKWebView wrapper that loads the Worker's `/player` page, which frames the
+//  YouTube embed. The user keeps the real player's controls — captions,
+//  quality, fullscreen, and the link back to the channel.
 //
 
 import SwiftUI
 import WebKit
 
+/// Renders the Worker-hosted player page.
+///
+/// The indirection through the Worker is not incidental — it is the whole fix.
+/// YouTube refuses an embed whose request carries no credible page origin
+/// (Error 152-4), and no client-side trick produces one: `loadHTMLString`,
+/// a hand-set `Referer`, and `loadSimulatedRequest` all synthesise an origin
+/// without ever fetching a page from it. `worker/src/player.ts` serves a page
+/// that genuinely was fetched over HTTPS, so the iframe inside it sends the
+/// Referer and Origin the embed checks for.
+///
+/// `PlayerView` is responsible for never constructing this when the Worker is
+/// unconfigured — see `WorkerConstants.playerURL(videoID:)`.
 struct YouTubeWebView: UIViewRepresentable {
-    let videoID: String
+    let playerURL: URL
 
-    // Coordinator to persist state across redraw cycles and prevent reload loops.
-    class Coordinator: NSObject {
-        var loadedVideoID: String? = nil
+    /// Persists across SwiftUI redraws so a re-render doesn't restart playback.
+    /// During an async load `uiView.url` is still nil, so tracking what we
+    /// asked for is the only race-free way to tell "already loading this".
+    final class Coordinator: NSObject {
+        var loadedURL: URL?
     }
 
     func makeCoordinator() -> Coordinator {
@@ -26,7 +40,7 @@ struct YouTubeWebView: UIViewRepresentable {
         let configuration = WKWebViewConfiguration()
         configuration.allowsInlineMediaPlayback = true
         configuration.mediaTypesRequiringUserActionForPlayback = []
-        
+
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.scrollView.isScrollEnabled = false
         webView.backgroundColor = .clear
@@ -34,51 +48,9 @@ struct YouTubeWebView: UIViewRepresentable {
         return webView
     }
 
-    private static let embedOrigin = "https://www.youtube.com"
-
     func updateUIView(_ uiView: WKWebView, context: Context) {
-        // Prevent redundant reloads on SwiftUI redraws by checking the coordinator.
-        // During async loading, uiView.url is nil, so checking coordinator state is the only race-free way.
-        guard context.coordinator.loadedVideoID != videoID else {
-            return
-        }
-        context.coordinator.loadedVideoID = videoID
-
-        // Error 152-4 is YouTube refusing the embed because the request
-        // carries no credible page origin. Two earlier attempts do not
-        // produce one: `loadHTMLString(_:baseURL:)` never performs a real
-        // fetch, so the nested iframe has no Referer chain to inherit; and a
-        // `Referer` header set by hand on a top-level `load(_:)` is dropped
-        // by WKWebView before the request leaves the process.
-        //
-        // `loadSimulatedRequest(_:responseHTML:)` is the one that works: the
-        // wrapper page is delivered as the genuine response to a URL on
-        // youtube.com, so the iframe inside it is same-origin with the
-        // player and sends the Referer and Origin the embed checks for.
-        guard let hostURL = URL(string: "\(Self.embedOrigin)/"),
-              let embedURL = URL(
-                  string: "\(Self.embedOrigin)/embed/\(videoID)?playsinline=1&rel=0&enablejsapi=1&origin=\(Self.embedOrigin)"
-              )
-        else {
-            return
-        }
-
-        let html = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <style>
-            body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: transparent; overflow: hidden; }
-            iframe { width: 100%; height: 100%; border: none; }
-        </style>
-        </head>
-        <body>
-            <iframe id="player" type="text/html" src="\(embedURL.absoluteString)" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-        </body>
-        </html>
-        """
-
-        uiView.loadSimulatedRequest(URLRequest(url: hostURL), responseHTML: html)
+        guard context.coordinator.loadedURL != playerURL else { return }
+        context.coordinator.loadedURL = playerURL
+        uiView.load(URLRequest(url: playerURL))
     }
 }
