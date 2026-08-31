@@ -12,13 +12,22 @@
 import AuthenticationServices
 import Foundation
 
-/// What Sign in with Apple actually gave us, stripped of the SDK type.
-/// `email`/`fullName` are only ever populated on the first authorization for
-/// a given Apple ID and this app — Apple does not resend them later.
+/// What Sign in with Apple gave us, stripped of the SDK type — and stripped of
+/// everything the product doesn't use.
+///
+/// The app-scoped user id is the whole point: it lets a subscription survive a
+/// reinstall or a new phone. Name and email are deliberately absent rather than
+/// unused. They were requested, stored, and sent to PostHog as a person
+/// property while the privacy policy stated in five separate places that we
+/// collect neither — and an unused optional on this struct is exactly the
+/// affordance that made that easy to do by accident.
+///
+/// Same reasoning as `CopyPayload`: the guarantee is worth more as a type with
+/// nowhere to put the data than as a rule somebody has to remember. Putting
+/// `email` back here is a deliberate act, and it means the policy, the privacy
+/// manifest, and the App Store nutrition labels all change with it.
 nonisolated struct AppleCredential: Sendable {
     let userID: String
-    let email: String?
-    let fullName: PersonNameComponents?
 }
 
 extension AppleCredential {
@@ -28,7 +37,5 @@ extension AppleCredential {
     init?(_ authorization: ASAuthorization) {
         guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else { return nil }
         userID = credential.user
-        email = credential.email
-        fullName = credential.fullName
     }
 }

@@ -53,7 +53,6 @@ final class UserProfile {
     /// Apple only ever returns this on the *first* authorization for a given
     /// Apple ID + app pair — never re-sent on a later sign-in — so it is
     /// stored the moment it's seen and never overwritten with `nil`.
-    var email: String?
 
     init(answers: ProfileAnswers, reminderHour: Int? = nil, now: Date) {
         let intentValues = answers.intents.map(\.rawValue).sorted()
@@ -117,27 +116,21 @@ final class UserProfile {
     /// weights with it.
     var planProfile: PlanProfile { answers.planProfile }
 
-    /// Sign in with Apple succeeded. `email`/`fullName` are only ever
-    /// non-`nil` on the very first authorization for this Apple ID and this
-    /// app — never resent afterward — so an existing value is never
-    /// overwritten with something absent. Does not touch `updatedAt`:
-    /// identity has no bearing on the plan or the menu, and bumping it would
-    /// force `RootView`'s `.id(profile.updatedAt)` to remount `TodayScreen`
-    /// for no reason connected to the day it's showing.
-    func applyAppleSignIn(userID: String, email: String?, fullName: PersonNameComponents?) {
+    /// Sign in with Apple succeeded. The app-scoped user id is the only thing
+    /// kept: it is what lets a subscription survive a reinstall, and it is not
+    /// a name, an email, or anything that reaches analytics. `nickname` stays
+    /// whatever the person typed. Does not touch `updatedAt`: identity has no
+    /// bearing on the plan or the menu, and bumping it would force
+    /// `RootView`'s `.id(profile.updatedAt)` to remount `TodayScreen` for no
+    /// reason connected to the day it's showing.
+    func applyAppleSignIn(userID: String) {
         appleUserID = userID
-        if self.email == nil, let email { self.email = email }
-        if nickname.isEmpty, let fullName {
-            let formatted = PersonNameComponentsFormatter.localizedString(from: fullName, style: .default)
-            if !formatted.isEmpty { nickname = formatted }
-        }
     }
 
     /// Local sign-out. `nickname` survives — it's a preference somebody may
     /// have typed themselves, not a fact about the Apple account.
     func signOutOfApple() {
         appleUserID = nil
-        email = nil
     }
 }
 

@@ -20,7 +20,9 @@
 <h1>Privacy Policy</h1>
 <p class="updated">Last updated: [FILL IN DATE] · FeelGood: Dopamine Menu</p>
 
-<p>FeelGood does not have accounts or logins. There is no name, email, or profile tied to a person anywhere in this system — only a random identifier generated on your device when you install the app, which is never linked to your identity.</p>
+<p>FeelGood has no account to create and no password to remember. Sign in with Apple is offered, and is entirely optional — it exists only so a subscription follows you to a new phone. When you use it, Apple gives us a random identifier scoped to this app alone. We do not ask Apple for your name or your email address, and we could not read them if we wanted to.</p>
+
+<p>Everything else is a random identifier generated on your device. There is no name, no email address, and no profile tied to a person anywhere in this system.</p>
 
 <h2>What stays on your device and never leaves</h2>
 <p>Your check-ins, your profile (including any health-related work-arounds like pregnancy, postpartum, or pelvic floor considerations), and your workout history are stored only on your device using Apple's on-device storage (SwiftData). The engine that decides what to recommend runs entirely on your phone. None of this is ever transmitted anywhere — deleting the app deletes it.</p>
@@ -28,10 +30,10 @@
 <h2>What we collect, and why</h2>
 
 <h2>Product analytics</h2>
-<p>We use PostHog to understand how the app is used — which screens are opened, whether a workout was logged or completed, whether a subscription was purchased. Each event is tied only to the random per-install identifier described above, never to a name or account. We never send your check-in answers, your profile's health-related fields, or any free-text you enter — those fields have no path off the device by design.</p>
+<p>We use PostHog to understand how the app is used — which screens are opened, whether a workout was logged or completed, whether a subscription was purchased. Each event is tied only to a random per-install identifier, never to a name or account. Signing in with Apple does not change this: analytics is never told that a sign-in happened or who it was. We never send your check-in answers, your profile's health-related fields, or any free-text you enter — those fields have no path off the device by design.</p>
 
 <h2>Purchases and subscriptions</h2>
-<p>Subscription purchases are handled by Apple's App Store and processed through RevenueCat, which verifies and manages entitlement status. This is tied to the same random per-install identifier — never to your Apple ID, name, or email.</p>
+<p>Subscription purchases are handled by Apple's App Store and processed through RevenueCat, which verifies and manages entitlement status. Before you sign in, this is tied to a random identifier RevenueCat generates. If you do sign in with Apple, it is tied to Apple's app-scoped identifier instead — that is what lets your subscription follow you to a new phone. Neither is your name or your email address.</p>
 
 <h2>AI-generated framing copy (Pro feature)</h2>
 <p>For paying subscribers, FeelGood can generate a short line of framing text explaining today's menu. To do this, the following — and only the following — is sent to our server, which forwards it to a language model:</p>
@@ -40,7 +42,7 @@
   <li>The general reason those sessions were picked (a machine-readable code, e.g. "low energy")</li>
   <li>Your reported energy level and time budget for today</li>
   <li>How many days it's been since your last completed session (a number, never a date or the sessions themselves)</li>
-  <li>Your random per-install identifier, so we can check your subscription and prevent abuse</li>
+  <li>The subscription identifier described above, so we can confirm you're a subscriber and prevent abuse</li>
 </ul>
 <p>This is deliberately narrow. Your check-in's body-focus answer and your profile's work-arounds (cramping, pregnancy, postpartum, pelvic floor) are never included — there is no field for them to travel in, so this isn't a setting that can be misconfigured. If this feature is switched off or you're not a subscriber, the app makes no network requests related to it at all.</p>
 
@@ -56,7 +58,7 @@
 </ul>
 
 <h2>Your choices</h2>
-<p>Deleting the app removes everything stored on your device. To request deletion of analytics or purchase records tied to your per-install identifier, contact us below — note that because we never collect a name or email, we can only act on the identifier you provide us.</p>
+<p>Deleting the app removes everything stored on your device. You can also revoke this app's Sign in with Apple access at any time in iOS Settings under your Apple Account. To request deletion of analytics or purchase records, contact us below — because we never collect a name or email address, we can only act on an identifier you provide us.</p>
 
 <h2>Children</h2>
 <p>FeelGood is not directed at children under 13 and we do not knowingly collect data from them.</p>
