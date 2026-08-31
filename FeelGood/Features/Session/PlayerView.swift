@@ -18,6 +18,7 @@ struct PlayerView: View {
     let startedAt: Date
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var index = 0
     @State private var remaining = 0
     /// Reps tapped so far **in the current set**, never across the step.
@@ -121,19 +122,41 @@ struct PlayerView: View {
     /// failure state, so it reads as an offer rather than an apology.
     private func watchElsewhere(videoID: String) -> some View {
         ZStack {
-            FGColor.surface
-            VStack(spacing: FGSpace.m) {
-                Image(systemName: "play.rectangle")
-                    .font(.largeTitle)
-                    .foregroundStyle(FGColor.inkMuted)
-                if let watchURL = URL(string: "https://www.youtube.com/watch?v=\(videoID)") {
-                    Link("Watch on YouTube", destination: watchURL)
-                        .font(FGFont.label)
-                        .foregroundStyle(FGColor.ink)
-                }
+            YouTubeThumbnail(videoID: videoID)
+
+            // The poster is somebody's living room at whatever exposure they
+            // filmed it — the scrim is what makes one label legible over all
+            // of them, in either colour scheme.
+            LinearGradient(
+                colors: [.black.opacity(0.15), .black.opacity(0.65)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            VStack(spacing: FGSpace.s) {
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(.white)
+                Text("Watch on YouTube")
+                    .font(FGFont.label)
+                    .foregroundStyle(.white)
             }
             .padding(FGSpace.m)
+            .shadow(color: .black.opacity(0.4), radius: 6, y: 1)
         }
+        // White-on-scrim rather than the ink tokens: this sits on a photograph,
+        // so it is the one place in the app where the palette can't do the
+        // work. Deliberately not YouTube's red play button — FGColor has no
+        // red and this shouldn't introduce one.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if let watchURL = URL(string: "https://www.youtube.com/watch?v=\(videoID)") {
+                openURL(watchURL)
+            }
+        }
+        .accessibilityElement()
+        .accessibilityLabel("Watch \(session.title) on YouTube")
+        .accessibilityAddTraits(.isLink)
     }
 
     private func running(_ step: Step) -> some View {
