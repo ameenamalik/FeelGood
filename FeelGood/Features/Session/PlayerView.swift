@@ -18,6 +18,11 @@ struct PlayerView: View {
     @State private var index: Int
     @State private var remaining: Int
     @State private var timerIndex: Int
+    /// Reps tapped in the current set, never across the whole exercise.
+    @State private var repsDone: Int
+    /// Sets already finished in the current exercise.
+    @State private var setsDone: Int
+    @ScaledMetric(relativeTo: .largeTitle) private var counterHeight = 180.0
     @State private var isRunning = true
     @State private var isDone = false
 
@@ -43,6 +48,8 @@ struct PlayerView: View {
         _index = State(initialValue: validIndex)
         _remaining = State(initialValue: initialRemaining)
         _timerIndex = State(initialValue: validIndex)
+        _repsDone = State(initialValue: max(progress?.repsDone ?? 0, 0))
+        _setsDone = State(initialValue: max(progress?.setsDone ?? 0, 0))
     }
 
     var body: some View {
@@ -62,7 +69,11 @@ struct PlayerView: View {
             if timerIndex != index {
                 remaining = step.seconds
                 timerIndex = index
+                repsDone = 0
+                setsDone = 0
             }
+            // Counted exercises advance through taps, not a hidden timer.
+            guard !step.isCounted else { return }
             while remaining > 0 && !isDone {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
@@ -332,7 +343,9 @@ struct PlayerView: View {
         let saved = SessionProgress(
             stepIndex: index,
             remainingSeconds: max(remaining, 1),
-            startedAt: startedAt
+            startedAt: startedAt,
+            repsDone: repsDone,
+            setsDone: setsDone
         )
         onFinish(.paused(saved))
     }
@@ -345,6 +358,8 @@ struct PlayerView: View {
                 index = previousIndex
                 remaining = steps[previousIndex].seconds
                 timerIndex = previousIndex
+                repsDone = 0
+                setsDone = 0
                 isDone = false
             } else if index > steps.startIndex {
                 index -= 1
