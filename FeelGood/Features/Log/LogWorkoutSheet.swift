@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 /// What somebody says they did. `title` only matters when it is kept.
 nonisolated struct LoggedWorkout: Hashable, Sendable {
@@ -118,6 +119,7 @@ struct LogWorkoutSheet: View {
                             .fill(FGColor.surface)
                     )
                     .accessibilityLabel("Name for this workout")
+                    .postHogMask()
             }
         }
     }

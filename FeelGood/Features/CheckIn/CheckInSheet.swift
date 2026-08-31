@@ -11,6 +11,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 struct CheckInSheet: View {
     let current: PlanCheckIn?
@@ -145,6 +146,7 @@ struct CheckInSheet: View {
                 maxPerRow: typeSize.isAccessibilitySize ? 1 : 3,
                 minimumItemWidth: 110
             ) { options() }
+            .postHogMask()
         }
         .opacity(hasAppeared ? 1 : 0)
         .offset(y: hasAppeared ? 0 : 12)
@@ -170,9 +172,21 @@ struct CheckInSheet: View {
     }
 
     private func finish() {
-        Analytics.capture("check_in_completed", properties: [
-            "has_check_in": energy != nil || time != nil || place != nil || body_ != nil
-        ])
+        // Energy, time and place are coarse state and sit inside the analytics
+        // allow-list (see `Analytics.log`). `body_` never ships: `cramping` is
+        // reproductive health data. Only whether it was answered goes, and it
+        // goes as a bare Bool — sending the value "except when it's cramping"
+        // would make the absence itself the disclosure.
+        var properties: [String: Any] = [
+            "has_check_in": energy != nil || time != nil || place != nil || body_ != nil,
+            "has_body": body_ != nil
+        ]
+        // Skipped questions are left out rather than sent as null, so a property
+        // value in PostHog is always an answer somebody actually gave.
+        if let energy { properties["energy"] = energy.rawValue }
+        if let time { properties["time"] = time.rawValue }
+        if let place { properties["place"] = place.rawValue }
+        Analytics.capture("check_in_completed", properties: properties)
         onDone(answers)
     }
 }
