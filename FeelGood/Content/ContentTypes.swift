@@ -119,7 +119,7 @@ nonisolated enum WorkAround: String, Codable, CaseIterable, Sendable {
 }
 
 nonisolated enum Intent: String, Codable, CaseIterable, Sendable {
-    case energize, strengthen, calm, mobilize, joy
+    case energize, strengthen, calm, mobilize, joy, play
 }
 
 /// The menu metaphor. See PRD §3.

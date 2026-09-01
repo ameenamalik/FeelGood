@@ -119,6 +119,37 @@ struct PlanEngineTests {
         #expect(menu.main?.reasons.contains(.matchesIntent) == true)
     }
 
+    @Test("Play is a distinct direction that boosts playful sessions")
+    func playCanDriveRanking() {
+        let neutral = Fixture.session(
+            id: "a-neutral",
+            activity: .walking,
+            qualities: [.endurance],
+            durationMin: 10,
+            intensity: 2,
+            course: .main,
+            intents: [.energize]
+        )
+        let playful = Fixture.session(
+            id: "b-play",
+            activity: .dance,
+            qualities: [.coordination],
+            durationMin: 10,
+            intensity: 2,
+            course: .main,
+            intents: [.play]
+        )
+        let input = PlanInput(
+            profile: Fixture.profile(intents: [.play]),
+            checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+            context: Fixture.context()
+        )
+
+        let menu = PlanEngine(catalog: [neutral, playful]).makeMenu(input)
+        #expect(menu.main?.session.id == playful.id)
+        #expect(menu.main?.reasonText == "Because it sounds fun.")
+    }
+
     // MARK: - Hard filters
 
     @Test("Never recommends more time than the check-in said was available")

@@ -33,7 +33,7 @@ struct OnboardingView: View {
 
                             VStack(alignment: .leading, spacing: FGSpace.s) {
                                 Text(model.card.title)
-                                    .font(FGFont.title)
+                                    .font(onboardingTitleFont)
                                     .foregroundStyle(FGColor.ink)
                                     .fixedSize(horizontal: false, vertical: true)
 
@@ -78,6 +78,10 @@ struct OnboardingView: View {
 
     // MARK: Progress
 
+    private var onboardingTitleFont: Font {
+        .system(.largeTitle, design: .rounded).weight(.semibold)
+    }
+
     private var progressBar: some View {
         // A quiet position indicator, not a score.
         HStack(spacing: FGSpace.xs) {
@@ -101,18 +105,18 @@ struct OnboardingView: View {
                 activities: $model.activities,
                 equipment: $model.equipment,
                 places: $model.places,
-                showsSymbols: true,
-                usesAura: true
+                showsSymbols: false,
+                usesAura: false,
+                usesPills: true
             )
 
         case .cadence:
             VStack(alignment: .leading, spacing: FGSpace.l) {
                 answerGroup("Each week") {
                     ForEach(Cadence.allCases, id: \.self) { option in
-                        FGAuraTile(
+                        FGPill(
                             title: option.label,
-                            systemImage: option.onboardingSymbol,
-                            aura: .apricot,
+                            selectedAura: .apricot,
                             isSelected: model.cadence == option
                         ) {
                             withAnimation(FGMotion.gentle) { model.cadence = option }
@@ -121,10 +125,9 @@ struct OnboardingView: View {
                 }
                 answerGroup("Each day") {
                     ForEach(MovementMoments.allCases, id: \.self) { option in
-                        FGAuraTile(
+                        FGPill(
                             title: option.label,
-                            systemImage: option.onboardingSymbol,
-                            aura: .sage,
+                            selectedAura: .sage,
                             isSelected: model.moments == option
                         ) {
                             withAnimation(FGMotion.gentle) { model.moments = option }
@@ -134,16 +137,13 @@ struct OnboardingView: View {
             }
 
         case .intent:
-            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
+            FlowRow(
+                spacing: FGSpace.choiceGutter,
+                maxPerRow: typeSize.isAccessibilitySize ? 1 : 2,
+                minimumItemWidth: 140
+            ) {
                 ForEach(Intent.allCases, id: \.self) { intent in
-                    FGAuraTile(
-                        title: intent.label,
-                        systemImage: intent.onboardingSymbol,
-                        aura: .lilac,
-                        isSelected: model.intents.contains(intent)
-                    ) {
-                        toggle(intent, in: \.intents)
-                    }
+                    intentCard(intent)
                 }
             }
 
@@ -153,19 +153,79 @@ struct OnboardingView: View {
             // ruling something out should not feel like a bigger decision than
             // everything asked before it.
             WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
-                ForEach(WorkAround.allCases, id: \.self) { workAround in
+                ForEach(Array(WorkAround.allCases.enumerated()), id: \.element) { index, workAround in
                     FGPill(
                         title: workAround.label,
+                        selectedAura: pillAura(at: index),
                         isSelected: model.workArounds.contains(workAround)
                     ) {
                         toggle(workAround, in: \.workArounds)
                     }
                 }
-                FGPill(title: "None of these", isSelected: model.workArounds.isEmpty) {
+                FGPill(
+                    title: "None of these",
+                    selectedAura: .lilac,
+                    isSelected: model.workArounds.isEmpty
+                ) {
                     withAnimation(FGMotion.gentle) { model.workArounds = [] }
                 }
             }
         }
+    }
+
+    private func intentCard(_ intent: Intent) -> some View {
+        FGAuraTile(
+            title: intent.label,
+            detail: intentDetail(intent),
+            artworkName: intentArtworkName(intent),
+            artworkSize: intent == .joy ? 104 : 92,
+            artworkAlignment: .top,
+            contentPlacement: .bottomLeading,
+            preferredHeight: 156,
+            showsAuraAtRest: true,
+            aura: intentAura(intent),
+            isSelected: model.intents.contains(intent)
+        ) {
+            toggle(intent, in: \.intents)
+        }
+    }
+
+    private func intentDetail(_ intent: Intent) -> String {
+        switch intent {
+        case .energize: "Feel more awake"
+        case .strengthen: "Build steady power"
+        case .calm: "Settle your system"
+        case .mobilize: "Move more freely"
+        case .joy: "Keep it gentle"
+        case .play: "Move for the fun of it"
+        }
+    }
+
+    private func intentArtworkName(_ intent: Intent) -> String {
+        switch intent {
+        case .energize: "IntentEnergyClementine"
+        case .strengthen: "IntentStrengthPlum"
+        case .calm: "IntentCalmPeach"
+        case .mobilize: "IntentMobilityPear"
+        case .joy: "IntentShowingUpBanana"
+        case .play: "IntentPlayLime"
+        }
+    }
+
+    private func intentAura(_ intent: Intent) -> FGAura {
+        switch intent {
+        case .energize: .apricot
+        case .strengthen: .lilac
+        case .calm: .blush
+        case .mobilize: .sage
+        case .joy: .butter
+        case .play: .blush
+        }
+    }
+
+    private func pillAura(at index: Int) -> FGAura {
+        let palette: [FGAura] = [.apricot, .lilac, .blush, .sage]
+        return palette[index % palette.count]
     }
 
 
@@ -175,7 +235,7 @@ struct OnboardingView: View {
                 .font(FGFont.body.weight(.medium))
                 .foregroundStyle(FGColor.ink)
 
-            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) { content() }
+            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) { content() }
         }
     }
 
@@ -194,7 +254,7 @@ struct OnboardingView: View {
     private var footer: some View {
         VStack(spacing: FGSpace.s) {
             if !model.canAdvance {
-                Text("Pick at least one thing to get started.")
+                Text("Pick at least one in each section.")
                     .font(FGFont.caption)
                     .foregroundStyle(FGColor.inkMuted)
             }

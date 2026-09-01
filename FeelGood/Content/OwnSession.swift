@@ -117,7 +117,7 @@ nonisolated extension Session {
             case .strength, .grip: intents.insert(.strengthen)
             case .mobility, .balance: intents.insert(.mobilize)
             case .endurance, .impact, .agility: intents.insert(.energize)
-            case .coordination: intents.insert(.joy)
+            case .coordination: intents.insert(.play)
             case .downRegulation: intents.insert(.calm)
             }
         }

@@ -156,7 +156,7 @@ nonisolated struct FGAccent: Equatable {
 /// studio family. Nothing outside this file reads meaning into which case is
 /// which; see the spread rule below.
 nonisolated enum FGAura: Sendable, CaseIterable {
-    case apricot, lilac, blush, sage
+    case apricot, lilac, blush, sage, butter
 
 
     /// What a tile looks like before it is picked: barely there.
@@ -183,6 +183,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
         case .lilac: Color(light: 0xF1E4EB, dark: 0xF1E4EB)
         case .blush: Color(light: 0xFCE2E8, dark: 0xFCE2E8)
         case .sage: Color(light: 0xEAF0DE, dark: 0xEAF0DE)
+        case .butter: Color(light: 0xFFF8D8, dark: 0xFFF8D8)
         }
     }
 
@@ -192,6 +193,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
         case .lilac: Color(light: 0xE2CAD6, dark: 0xE2CAD6)
         case .blush: Color(light: 0xF2C4D3, dark: 0xF2C4D3)
         case .sage: Color(light: 0xC6D8BE, dark: 0xC6D8BE)
+        case .butter: Color(light: 0xF4DF91, dark: 0xF4DF91)
         }
     }
 
@@ -201,6 +203,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
         case .lilac: Color(light: 0xD7B7C7, dark: 0xD7B7C7)
         case .blush: Color(light: 0xE0AEC2, dark: 0xE0AEC2)
         case .sage: Color(light: 0xB2C8AF, dark: 0xB2C8AF)
+        case .butter: Color(light: 0xE8CC69, dark: 0xE8CC69)
         }
     }
 }
@@ -234,9 +237,10 @@ nonisolated extension TimeBudget {
 
     var checkInAura: FGAura {
         switch self {
-        case .fiveMinutes, .aLittle: .sage
-        case .fifteenMinutes, .twentyMinutes, .twentyFiveMinutes, .some: .apricot
-        case .thirtyFiveMinutes, .fortyMinutes, .plenty: .lilac
+        case .fiveMinutes, .twentyFiveMinutes, .plenty: .sage
+        case .aLittle, .some: .apricot
+        case .fifteenMinutes, .thirtyFiveMinutes: .lilac
+        case .twentyMinutes, .fortyMinutes: .blush
         }
     }
 }

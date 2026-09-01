@@ -186,7 +186,7 @@ Session
   places              [home, outdoors, gym, studio, pool]   ← where it can happen
   bodyFocus           [full, core, lowerBody, upperBody, back, hips, neckShoulders]
   contraindications   [pregnancy, postpartum, pelvicFloor, knees, wrists, lowBack]
-  intent              [energize, strengthen, calm, mobilize, joy]
+  intent              [energize, strengthen, calm, mobilize, joy, play]
   course              [appetizer, main, side, dessert, special]
   source              .authored(steps: [Step])
                     | .youtube(videoID: String, channel: String)
@@ -235,7 +235,7 @@ Framed around *availability and reality*, never around goals-as-metrics.
 2. **How often do you want to move?** Two rows on one card, because they are different questions and both are cheap to answer:
    - *Across the week:* Every day · Most days · A few times a week · When I can. *(Cadence target — used for gentle balancing, never for grading.)*
    - ***Within a day: how many times would you like intentional movement?*** Once, properly · A couple of times · Sprinkled through the day. *(Shapes the menu, not the workload — see below.)*
-3. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up. *(Pick one or more. A session matching any selected direction gets the `intent` weighting.)*
+3. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up · Play. *(Pick one or more. A session matching any selected direction gets the `intent` weighting.)*
 4. **Anything to work around?** Free-text-lite chips: lower back, knees, wrists, pregnancy/postpartum, low iron/fatigue, none. *(Filters, never diagnoses.)*
 
 Available time is intentionally not asked during onboarding. It changes day to
