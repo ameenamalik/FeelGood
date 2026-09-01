@@ -299,6 +299,24 @@ nonisolated extension Course {
         self == .special ? FGColor.bg : FGColor.inkOnAccent
     }
 
+    /// `accent`, deepened toward its own hue rather than toward `-Deep` —
+    /// `-Deep` is calibrated to carry *text*, dark enough that `inkOnAccent`
+    /// on top of it would fail contrast. This stays light enough that ink
+    /// stays readable across the whole gradient, verified at its darkest
+    /// point: 6.4:1 (clay), 8.2:1 (gold/appetizer), 5.6:1 (rose/dessert),
+    /// 7.7:1 (sage/side).
+    var accentGradient: LinearGradient {
+        let dark: Color
+        switch self {
+        case .main: dark = Color(light: 0xDD8D5F, dark: 0xDD8D5F)
+        case .appetizer: dark = Color(light: 0xDAB04E, dark: 0xDAB04E)
+        case .side: dark = Color(light: 0x8DBD6B, dark: 0x8DBD6B)
+        case .dessert: dark = Color(light: 0xD87989, dark: 0xD87989)
+        case .special: dark = FGColor.ink
+        }
+        return LinearGradient(colors: [accent, dark], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
     /// The course tag as a soft pill rather than a saturated capsule.
     ///
     /// `accent` is a full-strength fill that needs `inkOnAccent` on top and
