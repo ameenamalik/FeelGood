@@ -157,7 +157,7 @@ struct ProfileHeaderView: View {
         Button(action: onManageSubscription) {
             HStack(spacing: FGSpace.s) {
                 Image(systemName: purchasesManager.isProUnlocked ? "checkmark.seal.fill" : "sparkles")
-                    .foregroundStyle(purchasesManager.isProUnlocked ? FGColor.limeDeep : FGColor.inkMuted)
+                    .foregroundStyle(purchasesManager.isProUnlocked ? FGColor.clayDeep : FGColor.inkMuted)
                 Text(purchasesManager.isProUnlocked ? "FeelGood Pro" : "Free plan")
                     .font(FGFont.body.weight(.medium))
                     .foregroundStyle(FGColor.ink)

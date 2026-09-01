@@ -246,18 +246,70 @@ nonisolated struct PlanContext: Hashable, Sendable {
     var videoAllowed: Bool { !isOffline && !dataSaver }
 }
 
+/// Memory handed to the engine (PRD §10.1, Decision 16).
+///
+/// Free tier gets `.recencyOnly`: enough to know whether you're returning after a gap
+/// (so the return-after-a-gap warm shorter menu is available to everyone), but without
+/// multi-day history balancing or affinity carrying forward.
+///
+/// Pro tier gets `.full`: 14-day history balancing, recovery downweighting, and long-term affinity.
+nonisolated enum PlanMemory: Hashable, Sendable {
+    case recencyOnly(lastActiveDate: Date?)
+    case full(history: [HistoryEntry], affinity: [String: Double])
+
+    var lastActiveDate: Date? {
+        switch self {
+        case .recencyOnly(let date):
+            return date
+        case .full(let history, _):
+            return history.filter(\.wasCompleted).map(\.date).max()
+        }
+    }
+
+    var historyEntries: [HistoryEntry] {
+        switch self {
+        case .recencyOnly:
+            return []
+        case .full(let history, _):
+            return history
+        }
+    }
+
+    var affinityScores: [String: Double] {
+        switch self {
+        case .recencyOnly:
+            return [:]
+        case .full(_, let affinity):
+            return affinity
+        }
+    }
+}
+
 /// The complete input to `PlanEngine.makeMenu`.
 nonisolated struct PlanInput: Hashable, Sendable {
     var profile: PlanProfile
     /// `nil` when it was skipped — the app never blocks on input, so the
     /// engine infers a check-in from history and time of day instead.
     var checkIn: PlanCheckIn?
-    var history: [HistoryEntry]
+    var memory: PlanMemory
     var context: PlanContext
-    /// Persisted affinity by session id, roughly -1...1. Survives the 14-day
-    /// history window so "loved it" keeps counting quietly.
-    var affinity: [String: Double]
 
+    var history: [HistoryEntry] { memory.historyEntries }
+    var affinity: [String: Double] { memory.affinityScores }
+
+    init(
+        profile: PlanProfile,
+        checkIn: PlanCheckIn? = nil,
+        memory: PlanMemory,
+        context: PlanContext
+    ) {
+        self.profile = profile
+        self.checkIn = checkIn
+        self.memory = memory
+        self.context = context
+    }
+
+    /// Convenience initializer maintaining backwards compatibility for existing tests & callers
     init(
         profile: PlanProfile,
         checkIn: PlanCheckIn? = nil,
@@ -267,8 +319,7 @@ nonisolated struct PlanInput: Hashable, Sendable {
     ) {
         self.profile = profile
         self.checkIn = checkIn
-        self.history = history
+        self.memory = .full(history: history, affinity: affinity)
         self.context = context
-        self.affinity = affinity
     }
 }
