@@ -217,20 +217,24 @@ nonisolated enum LocalHeuristicParser {
         }
 
         var time: TimeBudget?
-        if lower.contains("5 min") || lower.contains("five") {
-            time = .fiveMinutes
-        } else if lower.contains("10 min") || lower.contains("ten") {
-            time = .aLittle
-        } else if lower.contains("15 min") || lower.contains("fifteen") {
-            time = .fifteenMinutes
-        } else if lower.contains("20 min") || lower.contains("twenty") {
-            time = .twentyMinutes
-        } else if lower.contains("25 min") {
-            time = .twentyFiveMinutes
+        if lower.contains("45") || lower.contains("hour") || lower.contains("60 min") {
+            time = .plenty
+        } else if lower.contains("40 min") || lower.contains("forty") {
+            time = .fortyMinutes
+        } else if lower.contains("35 min") {
+            time = .thirtyFiveMinutes
         } else if lower.contains("30 min") || lower.contains("thirty") {
             time = .some
-        } else if lower.contains("45") || lower.contains("hour") {
-            time = .plenty
+        } else if lower.contains("25 min") {
+            time = .twentyFiveMinutes
+        } else if lower.contains("20 min") || lower.contains("twenty") {
+            time = .twentyMinutes
+        } else if lower.contains("15 min") || lower.contains("fifteen") {
+            time = .fifteenMinutes
+        } else if lower.contains("10 min") || lower.contains("ten") {
+            time = .aLittle
+        } else if lower.contains("5 min") || lower.contains("five") {
+            time = .fiveMinutes
         }
 
         var place: PlaceIntent?

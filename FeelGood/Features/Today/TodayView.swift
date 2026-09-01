@@ -17,6 +17,7 @@ struct TodayView: View {
     @State private var isCheckingIn = false
     @State private var isLogging = false
     @State private var isShowingPaywall = false
+    @State private var isAdjusting = false
     @State private var selected: MenuItem?
     #if DEBUG
     @State private var isDebugging = false
@@ -35,7 +36,6 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     header
                     checkInPrompt
-                    quickFiltersBar
                     menuHeading
                     menuItems
                     logFooter
@@ -143,35 +143,7 @@ struct TodayView: View {
         }
     }
 
-    private var quickFiltersBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(QuickFilter.allCases, id: \.self) { filter in
-                    Button {
-                        withAnimation(FGMotion.settle) {
-                            model.applyQuickFilter(filter)
-                        }
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: filter.symbol)
-                                .font(.system(size: 11, weight: .medium))
-                            Text(filter.label)
-                                .font(.custom("SFProRounded-Medium", size: 13))
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .foregroundStyle(FGColor.ink)
-                        .background(FGColor.surface)
-                        .clipShape(Capsule())
-                        .overlay(
-                            Capsule().stroke(FGColor.line, lineWidth: 1)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
+
 
     /// Opens the session a widget tap asked for.
     ///
@@ -193,59 +165,110 @@ struct TodayView: View {
     /// see. Now the card holds the line and the action beside it changes from
     /// answering to amending.
     private var checkInPrompt: some View {
-        VStack(alignment: .leading, spacing: FGSpace.m) {
-            Text("How are you today?")
-                .font(FGFont.sectionTitle)
-                .foregroundStyle(FGColor.ink)
-                .accessibilityAddTraits(.isHeader)
+        Button { isCheckingIn = true } label: {
+            HStack(spacing: FGSpace.m - 2) {
+                AuraDot(color: FGColor.rose, size: 40)
 
-            Button { isCheckingIn = true } label: {
-                HStack(spacing: FGSpace.m - 2) {
-                    AuraDot(color: FGColor.rose, size: 40)
+                Text(model.checkIn?.summaryLine ?? "Tell me and today's menu fits it better")
+                    .font(FGFont.itemTitle)
+                    .foregroundStyle(FGColor.ink)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Text(model.checkIn?.summaryLine ?? "Tell me and today's menu fits it better")
-                        .font(FGFont.itemTitle)
-                        .foregroundStyle(FGColor.ink)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                    Text(model.checkIn == nil ? "Answer" : "Change")
-                        .font(FGFont.body.weight(.medium))
-                        .foregroundStyle(FGColor.goldDeep)
-                        .fixedSize()
-                }
-                .padding(.vertical, 14)
-                .padding(.horizontal, FGSpace.m)
-                .background(
-                    RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                        .fill(FGColor.surface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                        .strokeBorder(FGColor.lineStrong, lineWidth: 1)
-                )
-                .contentShape(Rectangle())
+                Text(model.checkIn == nil ? "Answer" : "Change")
+                    .font(FGFont.body.weight(.medium))
+                    .foregroundStyle(FGColor.goldDeep)
+                    .fixedSize()
             }
-            .buttonStyle(.plain)
+            .padding(.vertical, 14)
+            .padding(.horizontal, FGSpace.m)
+            .background(
+                RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
+                    .fill(FGColor.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
+                    .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+            )
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// "Your menu", and what the whole thing adds up to.
+    /// "Your menu", sum of duration, and collapsible quick adjust drawer.
     private var menuHeading: some View {
-        HStack(alignment: .firstTextBaseline, spacing: FGSpace.s) {
-            Text("Your menu")
-                .font(FGFont.sectionTitle)
-                .foregroundStyle(FGColor.ink)
-                .accessibilityAddTraits(.isHeader)
+        VStack(alignment: .leading, spacing: FGSpace.s) {
+            HStack(alignment: .center, spacing: FGSpace.s) {
+                Text("Your menu")
+                    .font(FGFont.sectionTitle)
+                    .foregroundStyle(FGColor.ink)
+                    .accessibilityAddTraits(.isHeader)
 
-            Spacer(minLength: FGSpace.s)
+                Text("• \(model.menu.items.reduce(0) { $0 + $1.session.durationMin }) min")
+                    .font(FGFont.label)
+                    .foregroundStyle(FGColor.inkMuted)
 
-            // A sum, not a target. Nothing here says whether it was met.
-            Text("\(model.menu.items.reduce(0) { $0 + $1.session.durationMin } ) min total")
-                .font(FGFont.label)
-                .foregroundStyle(FGColor.inkMuted)
+                Spacer(minLength: FGSpace.s)
+
+                Button {
+                    withAnimation(FGMotion.settle) {
+                        isAdjusting.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 11, weight: .medium))
+                        Text("Adjust")
+                            .font(FGFont.label.weight(.medium))
+                        Image(systemName: isAdjusting ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 9, weight: .semibold))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .foregroundStyle(isAdjusting ? FGColor.ink : FGColor.inkMuted)
+                    .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Adjust today's menu")
+            }
+
+            if isAdjusting {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(QuickFilter.allCases, id: \.self) { filter in
+                            Button {
+                                withAnimation(FGMotion.settle) {
+                                    model.applyQuickFilter(filter)
+                                }
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: filter.symbol)
+                                        .font(.system(size: 11, weight: .medium))
+                                    Text(filter.label)
+                                        .font(FGFont.label.weight(.medium))
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 7)
+                                .foregroundStyle(FGColor.ink)
+                                .background(FGColor.surface)
+                                .clipShape(Capsule())
+                                .overlay(
+                                    Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -285,14 +308,14 @@ private struct MenuItemCard: View {
     let onSwap: () -> Void
 
     var body: some View {
-        // A finished main stops being the highlighted thing to do.
+        // All courses share uniform clean styling
         MenuItemBody(
             item: item,
             isDone: isDone,
             isInProgress: isInProgress,
             canSwap: canSwap,
             isReset: isReset,
-            isHighlighted: item.course == .main && !isDone,
+            isHighlighted: false,
             onSwap: onSwap
         )
         .contentShape(Rectangle())
@@ -387,47 +410,31 @@ private struct MenuItemBody: View {
     let onSwap: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: FGSpace.m - 2) {
-            AuraDot(color: item.course.accent)
+        VStack(alignment: .leading, spacing: 8) {
+            // Top metadata row: Course tag, duration, status, and shuffle
+            HStack(alignment: .center, spacing: FGSpace.s) {
+                CourseTag(course: item.course)
 
-            VStack(alignment: .leading, spacing: 7) {
-                HStack(spacing: FGSpace.s) {
-                    CourseTag(course: item.course)
+                Text(item.session.durationLabel)
+                    .font(FGFont.label)
+                    .foregroundStyle(FGColor.inkMuted)
 
-                    Text(item.session.durationLabel)
-                        .font(FGFont.label)
-                        .foregroundStyle(FGColor.inkMuted)
-
-                    if isDone { DoneMark() }
-                    else if isInProgress { ResumeMark() }
+                if isDone {
+                    DoneMark()
+                } else if isInProgress {
+                    ResumeMark()
                 }
 
-                Text(item.session.title)
-                    .font(FGFont.itemTitle)
-                    .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
-                    // Struck through in lime, not grey: this is "ticked off",
-                    // not "cancelled" or "unavailable".
-                    .strikethrough(isDone, color: FGColor.clayDeep)
-                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: FGSpace.xs)
 
-                // Principle 4: say why. Every single time.
-                Text(item.reasonText)
-                    .font(FGFont.caption)
-                    .foregroundStyle(FGColor.inkMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            // A fixed slot, occupied or not, so the shuffle sits in the same
-            // vertical lane on every row.
-            ZStack {
                 if canSwap {
                     Button(action: onSwap) {
                         Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(FGColor.inkMuted)
-                            .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
-                            .contentShape(Rectangle())
+                            .frame(width: 28, height: 28)
+                            .background(FGColor.bg.opacity(0.7))
+                            .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(isReset ? "Start over" : "Shuffle")
@@ -438,7 +445,19 @@ private struct MenuItemBody: View {
                     )
                 }
             }
-            .frame(width: 24)
+
+            // Session Title
+            Text(item.session.title)
+                .font(FGFont.itemTitle)
+                .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
+                .strikethrough(isDone, color: FGColor.clayDeep)
+                .fixedSize(horizontal: false, vertical: true)
+
+            // Why it fits today
+            Text(item.reasonText)
+                .font(FGFont.caption)
+                .foregroundStyle(FGColor.inkMuted)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 14)
         .padding(.horizontal, FGSpace.m)
@@ -448,10 +467,7 @@ private struct MenuItemBody: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                .strokeBorder(
-                    isHighlighted ? FGColor.clayDeep : FGColor.lineStrong,
-                    lineWidth: isHighlighted ? 2 : 1
-                )
+                .strokeBorder(FGColor.lineStrong, lineWidth: 1)
         )
     }
 }
