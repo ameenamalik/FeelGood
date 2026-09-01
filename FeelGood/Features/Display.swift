@@ -127,12 +127,6 @@ nonisolated extension TimeBudget {
         }
     }
 
-    /// How the answer reads inside a sentence about the day.
-    var summaryPhrase: String {
-        if isTight { return "and short on time" }
-        return maxMinutes <= 30 ? "with some time" : "with plenty of time"
-    }
-
     /// The ceiling as a bare numeral, for the tile that prints it large with
     /// "min" underneath. Reads off `maxMinutes` rather than restating it, so
     /// the number on screen is the number the engine actually caps at.

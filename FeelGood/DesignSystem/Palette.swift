@@ -226,12 +226,12 @@ nonisolated extension Energy {
 nonisolated extension TimeBudget {
     var checkInAccent: FGAccent { .lime }
 
-    /// Bucketed off `maxMinutes` rather than matched case by case. The stops
-    /// on this enum change; how a short session should feel does not, and a
-    /// switch here would only ever be a list to forget to update.
     var checkInAura: FGAura {
-        if isTight { return .sage }
-        return maxMinutes <= 30 ? .apricot : .lilac
+        switch self {
+        case .aLittle: .sage
+        case .some: .apricot
+        case .plenty: .lilac
+        }
     }
 }
 
