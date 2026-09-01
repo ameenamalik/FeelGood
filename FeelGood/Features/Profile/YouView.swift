@@ -101,41 +101,28 @@ struct YouView: View {
         }
     }
 
+    /// A quiet mark, not a control — editing identity lives behind "..." only.
+    /// Pairing this with its own pencil button used to open the identical
+    /// "Account & privacy" sheet as the overflow menu's own entry; two ways
+    /// to the same place is the confusing kind of affordance, not the
+    /// helpful kind.
     private var profileHero: some View {
-        VStack(spacing: FGSpace.m) {
-            ZStack(alignment: .bottomTrailing) {
-                Circle()
-                    .fill(FGColor.lavender)
-                    .frame(width: 144, height: 144)
-                    .overlay {
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 46, weight: .medium))
-                            .foregroundStyle(FGColor.inkOnAccent.opacity(0.72))
-                            .accessibilityHidden(true)
-                    }
-
-                Button { isShowingAccount = true } label: {
-                    Image(systemName: "pencil")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(FGColor.bg)
-                        .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
-                        .background(Circle().fill(FGColor.ink))
-                        .overlay(Circle().stroke(FGColor.bg, lineWidth: 3))
-                        .contentShape(Circle())
+        HStack(spacing: FGSpace.s) {
+            Circle()
+                .fill(FGColor.sage)
+                .frame(width: 40, height: 40)
+                .overlay {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(FGColor.inkOnAccent.opacity(0.72))
+                        .accessibilityHidden(true)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Edit your account")
-                .offset(x: FGSpace.s, y: FGSpace.s)
-            }
 
             Text(welcomeLine)
-                .font(FGFont.body.weight(.medium))
-                .foregroundStyle(FGColor.inkMuted)
-                .multilineTextAlignment(.center)
+                .font(FGFont.body.weight(.semibold))
+                .foregroundStyle(FGColor.ink)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, FGSpace.s)
-        .accessibilityElement(children: .contain)
+        .accessibilityElement(children: .combine)
     }
 
     private var welcomeLine: String {

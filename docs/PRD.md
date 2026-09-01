@@ -763,6 +763,219 @@ $34.99 is the deliberate middle: it reads as "under $35" and prices the annual a
 
 **Shipaton requirement:** submission must include a free trial *or* a promo code for judges. The 7-day trial satisfies this; we generate promo codes as a backup.
 
+### 10.1 What Pro actually is — the split
+
+*Written 2026-08-31, and the reason it needed writing is uncomfortable:* **every
+Pro row in the §10 table is currently free.** Not by decision — by omission.
+`TodayModel` hands the engine the full history and affinity regardless of
+entitlement, no swap limit exists, Specials and custom menus were never built,
+and the widget ships to everyone. Exactly one Pro feature is genuinely gated:
+the written coaching voice. There is nothing to put on a paywall, and no amount
+of paywall copy fixes a missing build.
+
+So this is not a pricing exercise. It is the list of seams to cut, in the order
+to cut them.
+
+**The pitch, restated: Pro is not more content.** It cannot be — every video is
+free forever under YouTube's terms (§6), and the authored micro-sessions are the
+free tier's spine. Pro is three things, and the *categories* matter more than
+the features inside them, because a category is what someone can hold in their
+head in the two seconds they spend deciding:
+
+1. **Intelligence** — a menu that learns you.
+2. **Flexibility** — change the plan in seconds.
+3. **Continuity** — plan beyond today.
+
+Free is a good menu for this morning. Pro is a menu that knows you, bends when
+you push on it, and thinks past today.
+
+#### Category 1 — A menu that learns you
+
+| Capability | Tier | State today | Note |
+|---|---|---|---|
+| History-aware balancing (14-day window) | Pro | Shipped, **ungated** | The seam is which memory the engine is handed |
+| Recovery awareness | Pro | Shipped, **ungated** | Same seam |
+| Affinity — "loved it" / "too much" carrying forward | Pro | Shipped, **ungated** | Same seam |
+| **Returning after a gap** | **Free** | Shipped | Non-negotiable — see the gap problem below |
+| Health-informed *today* (short sleep → gentler) | **Free** | Spec only (§7.5) | See the Health question below |
+| Health *trends* across weeks | Pro | Spec only | Needs a past; that is the definition of Pro |
+| Plain-language patterns | Pro | Not built | See the patterns rule below |
+| Personalised weekly reflection | Pro | Not built | Distinct from the Look Back — see below |
+
+#### Category 2 — Change the plan in seconds
+
+This is the category that makes the upgrade feel useful in the first minute
+rather than on day fourteen, and it is almost entirely unbuilt.
+
+| Capability | Tier | State today | Note |
+|---|---|---|---|
+| First swap of the day | **Free** | Shipped (unlimited) | Needs a limit before it can be a Pro line |
+| Unlimited swaps | Pro | Not built | No counter exists anywhere |
+| "Make it shorter" | Pro | Not built | Re-plan against a smaller time budget |
+| "Make it gentler" | Pro | Not built | Intensity ceiling |
+| "Give me something more energizing" | Pro | Not built | Quality bias |
+| "I can't leave the house" | Pro | Not built | Place override for today only |
+| Rebuild today's menu in conversation | Pro | Not built | Depends on the conversational section (§7.6, unwritten) |
+| Save / favourite a session | Pro | Not built | |
+| Custom Appetizers / Desserts | Pro | Not built | On the §13 cut list |
+| "Surprise me" / "keep it familiar" | Pro | Not built | A variety dial over existing scoring |
+| Advanced filters, kept off the home screen | Pro | Not built | Library groups by course and nothing else today |
+| **"Why this?"** | **Free** | Shipped | §4: *every* recommendation says why. Never gate the reason. |
+
+Every row above is a *constraint applied to a re-plan*. None of them is a new
+kind of thinking — they are the engine, given one more thing to honour. That is
+why this category is cheap to build relative to how expensive it looks on a
+paywall.
+
+#### Category 3 — Plan beyond today
+
+| Capability | Tier | State today | Note |
+|---|---|---|---|
+| Weekly Specials | Pro | **Engine-ready, no UI** | `PlanContext.scheduledSpecials` is read by the engine; nothing in the app ever writes it |
+| Scheduling around your week | Pro | Not built | |
+| "Busy day tomorrow" | Pro | Not built | |
+| Travel mode | Pro | Not built | A place + equipment override with an end date |
+| Weekend planning | Pro | Not built | |
+| Reminders at your preferred movement time | Pro | Not built | Push entitlement exists; no notification code anywhere |
+| **Offline sessions** | **Free** | Already true | See below — this must not become a Pro line |
+| Home screen widget | **Free** | Shipped, ungated | §10 marked it "if time allows"; it shipped, and gating it now costs app-group work in the widget target for one row |
+| Calendar integration | — | v2 | A new permission and a new privacy surface |
+
+---
+
+#### Seven things this split gets wrong if written carelessly
+
+**⚠️ 1. The gap problem — this amends §10.** §10 states the seam mechanically:
+*"free menus are generated with `history: []` and `affinity: [:]`."* **That line
+is now wrong and must not be implemented as written.** `returningAfterGap` is a
+`ReasonCode` the engine derives *from history*. A free tier with no history
+cannot know somebody has been away, which makes "never render a gap" and the
+shorter, warmer returning menu into paid features — the exact inversion §10
+rejected when it moved the Look Back to free. Gating the antidote behind a wall
+for the people most likely to lapse is the one thing this product must not do.
+
+The fix is to make memory a *shape* rather than a flag, so the engine keeps no
+`isPro` branch and the free tier keeps its warmth:
+
+- `.recencyOnly(lastActive:)` — free. Enough to know it has been a while.
+  Not enough to balance activities or honour affinity.
+- `.full(history:affinity:)` — Pro.
+
+The engine stays a pure function of what it is handed. What Pro buys is a richer
+argument, not a different code path.
+
+**⚠️ 2. The Health question — do not ask for health data and then hold it
+hostage.** §7.5 does not make Apple Health a Pro feature, and turning it into
+one wholesale is a new decision with an ethics problem: requesting sleep and
+step permissions and then declining to act on them unless somebody pays is
+indefensible, and reads badly to a reviewer. The split that holds:
+
+- **Free:** health context shaping *today*. Slept badly → today's menu is
+  gentler. This is safety-shaped behaviour and belongs to everyone.
+- **Pro:** health context accumulated *over weeks* — trends, and recommendations
+  that reference a pattern rather than a night.
+
+Consistent with the whole line: free adapts to today, Pro remembers you.
+
+**⚠️ 3. The patterns rule.** "Shorter sessions work better for you in the
+morning" is a causal claim wearing correlational clothes. It is the identical
+construction §15 permanently bans for supplements ("your energy tends to be
+better on the days you take it"), and the ban does not get weaker because the
+subject is session length instead of iron. The rule for "Your patterns":
+
+> Describe **what happened**. Never assert **what works**.
+
+"You finished six of the eight short morning sessions" is an observation.
+"Short mornings work better for you" is a finding, and we are not in a position
+to make findings about anybody's body. Prose only — no charts, rings, or bars
+(§4), and no percentages, which are scores wearing a different hat.
+
+**⚠️ 4. The weekly reflection is not the Look Back.** The Look Back is free
+forever and this section does not touch it. Its job is making a return feel like
+resuming; it is a churn mechanic, not an engagement one. The Pro weekly
+reflection is additive and different in kind: it is about a week you were
+present for, and it says nothing about absence. If the two ever start reading
+like the same feature, the free one is the one that stays.
+
+**⚠️ 5. Voice check-ins are the free-text problem with a microphone on it.**
+Decision 15 accepted on-device redaction and Worker parsing for *typed* text,
+with named obligations (owned denylist, adversarial suite, explicit consent,
+tap check-in retained). Speech adds a second exposure that decision did not
+cover. Two hard requirements before this ships: transcription is **on-device**
+(`requiresOnDeviceRecognition`), and **no audio is ever transmitted or
+retained** — the transcript enters the same redaction path as typed text and the
+audio is discarded. A convenience feature is not worth a new class of data
+leaving the device.
+
+**⚠️ 6. Offline already works for everyone, and must keep working.** The
+authored catalog is bundled and plays with no network today. "Offline saved
+routines" as a Pro line would be gating something that currently works, which
+breaks §10's promise that the free tier is "genuinely useful and never
+crippled." If offline appears on the paywall at all it is as *offline
+**Specials***, which are Pro because planning ahead is Pro — not because the
+files stopped being local.
+
+**⚠️ 7. The paywall may only name features that exist in the binary.**
+Advertising Specials, custom menus, or voice check-ins before they ship is a
+Guideline 2.3.1 rejection and a refund liability, and it costs a review cycle
+we do not have. Paywall copy is generated from the shipped list, and the list is
+verified at submission — not from this section, which is a plan.
+
+---
+
+#### The paywall itself
+
+Three rows. Not ten. The product is simple and the wall should read that way.
+
+> **A menu that learns you**
+> Remembers what works, what doesn't, and what fits different kinds of days.
+>
+> **Change the plan in seconds**
+> Make it shorter, gentler, more energizing, or swap anything — without starting
+> over.
+>
+> **Plan beyond today**
+> Weekly Specials, smarter recovery, and recommendations that get better with
+> your history.
+
+Then one quiet line beneath, naming only what has shipped:
+
+> *Plus Apple Health personalisation, weekly reflections, voice check-ins, and
+> unlimited swaps.*
+
+Built with RevenueCat Paywalls (remote config), so the rows and the plus-line
+move as features land without a resubmission — which is also the honest answer
+to "smartest use of RevenueCat."
+
+#### Build order
+
+Each phase leaves a coherent product, and the paywall copy is trimmed to match
+whatever has actually shipped.
+
+| Phase | Scope | Why this order |
+|---|---|---|
+| **1 — the seam** | `PlanMemory` shapes, `.recencyOnly` for free, swap limit, paywall moments 1 and 2 | Without this there is no paid tier at all. Everything else is decoration on an empty wall. |
+| **2 — flexibility** | Shorter / gentler / more energizing / can't leave the house, as constraint chips under the menu | Cheapest visible value per hour of work; all four are re-plans. The free versions of these chips are also the honest test of whether anyone wants them. |
+| **3 — continuity** | Specials UI over the engine support that already exists, reminders | Turns "daily recommender" into "plans with you" |
+| **4 — memory made visible** | Weekly reflection, patterns in prose | Needs weeks of real history before it says anything true |
+| **5 — conversation** | Voice and free-text refinement | Blocked on §7.6, which is unwritten |
+
+**Cut line for 1.0: phase 1 only.** Phases 2–5 are each independently cuttable,
+and shipping phase 1 alone still gives an honest paywall — a menu that learns
+you, and unlimited swaps — because both are true of the binary.
+
+#### Anti-goals for Pro
+
+Restating §4 where a paywall creates specific temptation:
+
+- No feature is gated by making the free version *worse* than it is today.
+- No countdown, no fake scarcity, no pre-selected plan.
+- The reason a session was chosen is never paid. Neither is the check-in, the
+  Look Back, the video library, or a session that plays offline.
+- Pro does not buy more content. It buys intelligence, flexibility and
+  continuity — and if a proposed feature is not one of those three, it does not
+  belong behind the wall.
+
 ---
 
 ## 11. Technical architecture
@@ -961,6 +1174,7 @@ Called out in the submission because vision is rewarded and costs zero build tim
 | 13 *(2026-08-30)* | Apple Health — write-back | **Yes, as two separate off-by-default features:** `HKWorkout` for completed sessions and `.mindfulSession` for breathwork and recovery. Neither is bundled into the read permission. The write→read double-count in `recoveryBalance` is a named correctness risk with a required test. |
 | 14 *(2026-08-30)* | Apple Health — the off switch | **Per-signal switches plus a master off.** Turning one off purges every on-device value derived from it. Samples we wrote to Health survive by default, with an explicitly separate opt-in to delete them. In-app switches govern whether *FeelGood uses* a signal, never system access — HIG requires that distinction hold. |
 | 15 *(2026-08-30)* | Free-text check-in — where it's parsed | **On-device redaction, then parsed in the Worker.** ⚠️ This knowingly reverses §11's rule that free text never leaves the device and that reproductive terms are structurally absent rather than filtered. Accepted with eyes open; the obligations it creates (owned denylist, adversarial test suite, explicit consent, retained tap check-in) are specified in §7.5.8. Health-derived values are exempt and stay on device. |
+| 16 *(2026-08-31)* | What Pro actually is | **Three categories — intelligence, flexibility, continuity — specced in §10.1.** Written because every Pro row in §10 was still free in the binary: the entitlement seam was never built, so there was nothing to sell. §10.1 also **amends §10's mechanical claim** that free menus use `history: []` — that would make returning-after-a-gap a paid feature. Free gets recency-only memory; Pro gets full history and affinity. Health shaping *today* stays free; Health *trends* are Pro. |
 | 16 *(2026-08-31)* | Copy proxy — which id identifies the subscriber | **RevenueCat's app user id, read from the SDK.** Supersedes the `anonInstallID` design in §11. A locally minted UUID cannot be verified against RevenueCat because RevenueCat was never told it existed — the original wiring refused every paying user, silently, because failing closed looks identical to being misconfigured. After Apple Sign In the value is the Apple user id: opaque, never an email, but stable in a way a per-install UUID was not. Accepted as the cost of a server-side entitlement check. |
 
 ### Still open

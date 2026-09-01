@@ -224,7 +224,7 @@ struct SessionDetailView: View {
                             explaining = term
                         } label: {
                             Image(systemName: "questionmark.circle")
-                                .foregroundStyle(FGColor.skyDeep)
+                                .foregroundStyle(FGColor.goldDeep)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("What is \(step.name)?")

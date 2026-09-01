@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import RevenueCatUI
 
 struct TodayView: View {
     @State var model: TodayModel
@@ -15,6 +16,7 @@ struct TodayView: View {
     var requestedSessionID: Binding<String?> = .constant(nil)
     @State private var isCheckingIn = false
     @State private var isLogging = false
+    @State private var isShowingPaywall = false
     @State private var selected: MenuItem?
     #if DEBUG
     @State private var isDebugging = false
@@ -33,6 +35,7 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     header
                     checkInPrompt
+                    quickFiltersBar
                     menuHeading
                     menuItems
                     logFooter
@@ -53,6 +56,9 @@ struct TodayView: View {
             LogWorkoutSheet { workout in
                 model.log(workout)
             }
+        }
+        .sheet(isPresented: $isShowingPaywall) {
+            RevenueCatUI.PaywallView(displayCloseButton: true)
         }
         .sheet(item: $selected) { item in
             SessionDetailView(item: item, model: model)
@@ -96,13 +102,17 @@ struct TodayView: View {
                             item: item,
                             isDone: model.isCompleted(item),
                             isInProgress: model.isInProgress(item),
-                            canSwap: model.canSwap(item) && !model.isCompleted(item) && !model.isInProgress(item),
+                            canSwap: (model.canSwap(item) || !model.hasRemainingSwaps) && !model.isCompleted(item) && !model.isInProgress(item),
                             isReset: model.isCycleReset(item),
                             onOpen: { selected = item },
                             onSwap: {
-                                withAnimation(FGMotion.swap) { model.swap(item) }
-                                if let updated = model.menu.items.first(where: { $0.course == item.course }) {
-                                    AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
+                                if model.hasRemainingSwaps {
+                                    withAnimation(FGMotion.swap) { model.swap(item) }
+                                    if let updated = model.menu.items.first(where: { $0.course == item.course }) {
+                                        AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
+                                    }
+                                } else {
+                                    isShowingPaywall = true
                                 }
                             }
                         )
@@ -111,13 +121,17 @@ struct TodayView: View {
                             item: item,
                             isDone: model.isCompleted(item),
                             isInProgress: model.isInProgress(item),
-                            canSwap: model.canSwap(item) && !model.isCompleted(item) && !model.isInProgress(item),
+                            canSwap: (model.canSwap(item) || !model.hasRemainingSwaps) && !model.isCompleted(item) && !model.isInProgress(item),
                             isReset: model.isCycleReset(item),
                             onOpen: { selected = item },
                             onSwap: {
-                                withAnimation(FGMotion.swap) { model.swap(item) }
-                                if let updated = model.menu.items.first(where: { $0.course == item.course }) {
-                                    AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
+                                if model.hasRemainingSwaps {
+                                    withAnimation(FGMotion.swap) { model.swap(item) }
+                                    if let updated = model.menu.items.first(where: { $0.course == item.course }) {
+                                        AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
+                                    }
+                                } else {
+                                    isShowingPaywall = true
                                 }
                             }
                         )
@@ -125,6 +139,36 @@ struct TodayView: View {
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
                 .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: item.id)
+            }
+        }
+    }
+
+    private var quickFiltersBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(QuickFilter.allCases, id: \.self) { filter in
+                    Button {
+                        withAnimation(FGMotion.settle) {
+                            model.applyQuickFilter(filter)
+                        }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: filter.symbol)
+                                .font(.system(size: 11, weight: .medium))
+                            Text(filter.label)
+                                .font(.custom("SFProRounded-Medium", size: 13))
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .foregroundStyle(FGColor.ink)
+                        .background(FGColor.surface)
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule().stroke(FGColor.line, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
         }
     }
@@ -157,7 +201,7 @@ struct TodayView: View {
 
             Button { isCheckingIn = true } label: {
                 HStack(spacing: FGSpace.m - 2) {
-                    AuraDot(color: FGColor.pink, size: 40)
+                    AuraDot(color: FGColor.rose, size: 40)
 
                     Text(model.checkIn?.summaryLine ?? "Tell me and today's menu fits it better")
                         .font(FGFont.itemTitle)
@@ -168,7 +212,7 @@ struct TodayView: View {
 
                     Text(model.checkIn == nil ? "Answer" : "Change")
                         .font(FGFont.body.weight(.medium))
-                        .foregroundStyle(FGColor.skyDeep)
+                        .foregroundStyle(FGColor.goldDeep)
                         .fixedSize()
                 }
                 .padding(.vertical, 14)
@@ -274,7 +318,7 @@ private struct DoneMark: View {
             Text("Done")
         }
         .font(FGFont.label)
-        .foregroundStyle(FGColor.limeDeep)
+        .foregroundStyle(FGColor.clayDeep)
         .accessibilityHidden(true)
     }
 }
@@ -286,7 +330,7 @@ private struct ResumeMark: View {
             Text("Resume")
         }
         .font(FGFont.label)
-        .foregroundStyle(FGColor.skyDeep)
+        .foregroundStyle(FGColor.goldDeep)
         .accessibilityHidden(true)
     }
 }
@@ -363,7 +407,7 @@ private struct MenuItemBody: View {
                     .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
                     // Struck through in lime, not grey: this is "ticked off",
                     // not "cancelled" or "unavailable".
-                    .strikethrough(isDone, color: FGColor.limeDeep)
+                    .strikethrough(isDone, color: FGColor.clayDeep)
                     .fixedSize(horizontal: false, vertical: true)
 
                 // Principle 4: say why. Every single time.
@@ -405,7 +449,7 @@ private struct MenuItemBody: View {
         .overlay(
             RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
                 .strokeBorder(
-                    isHighlighted ? FGColor.limeDeep : FGColor.lineStrong,
+                    isHighlighted ? FGColor.clayDeep : FGColor.lineStrong,
                     lineWidth: isHighlighted ? 2 : 1
                 )
         )
