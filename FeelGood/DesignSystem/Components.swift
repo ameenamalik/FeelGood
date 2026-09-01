@@ -24,7 +24,7 @@ struct FGCard<Content: View>: View {
             .overlay(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
                     .strokeBorder(
-                        isHighlighted ? FGColor.limeDeep : FGColor.lineStrong,
+                        isHighlighted ? FGColor.clayDeep : FGColor.lineStrong,
                         lineWidth: isHighlighted ? 2 : 1
                     )
             )

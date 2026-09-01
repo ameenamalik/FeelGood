@@ -47,7 +47,7 @@ struct ExerciseDemoView: View {
                     .resizable()
                     .playing(loopMode: reduceMotion ? .playOnce : .autoReverse)
                     .valueProvider(
-                        ColorValueProvider(FGColor.skyDeep.resolve(in: environment).lottieColor),
+                        ColorValueProvider(FGColor.goldDeep.resolve(in: environment).lottieColor),
                         for: AnimationKeypath(keys: ["**", "Color"])
                     )
                     .padding(FGSpace.m)
@@ -62,7 +62,7 @@ struct ExerciseDemoView: View {
                     .renderingMode(.template)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .foregroundStyle(FGColor.skyDeep)
+                    .foregroundStyle(FGColor.goldDeep)
                     .padding(FGSpace.m)
                     .accessibilityHidden(true)
                     .id(frameIndex)

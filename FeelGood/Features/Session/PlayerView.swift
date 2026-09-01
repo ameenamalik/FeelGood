@@ -215,7 +215,7 @@ struct PlayerView: View {
                 } else {
                     Text(timeString)
                         .font(.system(.largeTitle, design: .serif).monospacedDigit())
-                        .foregroundStyle(FGColor.skyDeep)
+                        .foregroundStyle(FGColor.goldDeep)
                 }
 
                 Text(step.cue)
@@ -334,7 +334,7 @@ struct PlayerView: View {
                 Text("\(repsDone)/\(perSet)")
                     .font(.system(.largeTitle, design: .rounded).weight(.bold).monospacedDigit())
                     .contentTransition(.numericText())
-                    .foregroundStyle(FGColor.skyDeep)
+                    .foregroundStyle(FGColor.goldDeep)
                 Text(setLabel(step, perSet: perSet))
                     .font(FGFont.caption)
                     .foregroundStyle(FGColor.inkMuted)

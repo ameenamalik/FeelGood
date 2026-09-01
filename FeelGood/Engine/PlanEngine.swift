@@ -538,9 +538,10 @@ nonisolated struct HistoryStats: Sendable {
         let window = input.history.filter { daysAgo($0.date) < PlanEngine.historyWindowDays && daysAgo($0.date) >= 0 }
         let completed = window.filter(\.wasCompleted)
 
-        hasNoHistory = completed.isEmpty
+        let lastActiveDaysAgo = input.memory.lastActiveDate.map { daysAgo($0) }
+        hasNoHistory = completed.isEmpty && lastActiveDaysAgo == nil
         completedThisWeek = completed.filter { daysAgo($0.date) < 7 }.count
-        daysSinceLastCompleted = completed.map { daysAgo($0.date) }.min()
+        daysSinceLastCompleted = completed.map { daysAgo($0.date) }.min() ?? lastActiveDaysAgo
 
         // Variety.
         var counts: [Activity: Int] = [:]

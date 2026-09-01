@@ -2,14 +2,15 @@
 //  Palette.swift
 //  FeelGood
 //
-//  Cloudy sky blue. Bright, but not loud: white cards on a soft grey page, ink
-//  type, and lime/sky/pink used as small accents rather than as surfaces.
+//  Clay studio. Warm terracotta and botanical sage on a near-white page: white
+//  cards lift off warm cream, ink type, and clay/gold/rose/sage used as small
+//  accents rather than as surfaces.
 //
-//  The accessibility rule that shapes every use below: all three accents are
-//  light. Against ink they are 8.6:1 or better; against white they are 1.4–2.1:1.
-//  So an accent is always a *fill behind ink text*, never a text colour and
-//  never a fill behind white text. Where a colour has to carry text on a light
-//  background, use the -Deep variants.
+//  The accessibility rule that shapes every use below: all four accents are
+//  light. Against ink they are 9.0:1 or better; against white they are
+//  1.5–1.9:1. So an accent is always a *fill behind ink text*, never a text
+//  colour and never a fill behind white text. Where a colour has to carry
+//  text on a light background, use the -Deep variants.
 //
 //  No red anywhere — red is the colour of being behind.
 //
@@ -33,91 +34,91 @@ nonisolated extension Color {
 nonisolated enum FGColor {
     // MARK: Surfaces
 
-    /// The page. Soft grey, so white cards lift off it.
-    static let bg = Color(light: 0xF7F8FA, dark: 0x101316)
+    /// The page. Warm near-white, so white cards still lift off it.
+    static let bg = Color(light: 0xFAF8F5, dark: 0x14100D)
     /// Cards and sheets.
-    static let surface = Color(light: 0xFFFFFF, dark: 0x181C20)
+    static let surface = Color(light: 0xFFFFFF, dark: 0x1C1712)
     /// Decorative hairlines — chip outlines, the progress track. Nothing is
     /// identified by these alone, so they stay quiet at ~1.2:1.
-    static let line = Color(light: 0xE4E7EB, dark: 0x262B31)
+    static let line = Color(light: 0xF0ECE5, dark: 0x2A241E)
 
     /// The boundary of anything you can tap.
     ///
     /// A white tile on the page is 1.06:1, so the border *is* the control's
-    /// edge — WCAG 1.4.11 wants 3:1 for that. These are the lightest greys that
-    /// clear it against both the card fill and the page, so the outline is as
-    /// quiet as it is allowed to be: 3.20:1 and 3.01:1 in light, 3.01:1 and
-    /// 3.28:1 in dark.
-    static let lineStrong = Color(light: 0x8D9095, dark: 0x63676D)
+    /// edge — WCAG 1.4.11 wants 3:1 for that. These are the lightest warm
+    /// greys that clear it against both the card fill and the page: 3.63:1
+    /// and 3.42:1 in light, 3.02:1 and 3.21:1 in dark.
+    static let lineStrong = Color(light: 0x8E857B, dark: 0x6B635B)
 
     // MARK: Type
 
-    /// Primary type. 17.99:1 on white, 16.9:1 on the page.
-    static let ink = Color(light: 0x14171A, dark: 0xF7F8FA)
-    /// Secondary type. 6.5:1 on white — still comfortable at footnote sizes.
-    static let inkMuted = Color(light: 0x565E6B, dark: 0xA8B0BC)
+    /// Primary type. 16.8:1 on white, 15.8:1 on the page.
+    static let ink = Color(light: 0x241C15, dark: 0xF7F3EC)
+    /// Secondary type. 6.1:1 on white — still comfortable at footnote sizes.
+    static let inkMuted = Color(light: 0x6B6155, dark: 0xB8AC9C)
 
     // MARK: Accents — fills only, always behind ink text
 
-    /// The one thing on the screen worth doing. 13.1:1 behind ink.
-    static let lime = Color(light: 0xC7EA4E, dark: 0xC7EA4E)
-    /// 8.6:1 behind ink.
-    static let sky = Color(light: 0x5FBEE8, dark: 0x5FBEE8)
-    /// 9.7:1 behind ink.
-    static let pink = Color(light: 0xF0A9D0, dark: 0xF0A9D0)
-    /// The soft middle of the cloud gradient.
-    static let lavender = Color(light: 0xB9C9F2, dark: 0xB9C9F2)
+    /// The one thing on the screen worth doing. 9.4:1 behind ink.
+    static let clay = Color(light: 0xEAB79A, dark: 0xEAB79A)
+    /// 10.5:1 behind ink.
+    static let gold = Color(light: 0xE6CA89, dark: 0xE6CA89)
+    /// 9.1:1 behind ink.
+    static let rose = Color(light: 0xE8B0B9, dark: 0xE8B0B9)
+    /// 10.2:1 behind ink. The soft middle of the cloud gradient.
+    static let sage = Color(light: 0xB3D39C, dark: 0xB3D39C)
 
     /// Type sitting *on* one of the accents above.
     ///
     /// Not `ink`. The accents are the same colour in both appearances, but
-    /// `ink` flips to near-white in the dark — so `ink` on `lime` silently
-    /// becomes white-on-lime at night, which is the one thing the rule at the
+    /// `ink` flips to near-white in the dark — so `ink` on `clay` silently
+    /// becomes white-on-clay at night, which is the one thing the rule at the
     /// top of this file forbids. This one does not flip, because the surface
     /// underneath it doesn't either.
-    static let inkOnAccent = Color(light: 0x14171A, dark: 0x14171A)
+    static let inkOnAccent = Color(light: 0x241C15, dark: 0x241C15)
 
     // MARK: Accents darkened enough to carry text or an icon on a light page
 
-    /// 5.7:1 on white.
-    static let skyDeep = Color(light: 0x075173, dark: 0x8FD3F2)
-    /// 6.3:1 on white.
-    static let limeDeep = Color(light: 0x344707, dark: 0xD7F07E)
-    /// 6.1:1 on white.
-    static let lavenderDeep = Color(light: 0x314477, dark: 0xD7DEFA)
-    /// 7.6:1 on white.
-    static let pinkDeep = Color(light: 0x6E1F4D, dark: 0xF6C3DF)
+    /// 7.3:1 on white, 6.9:1 on the page.
+    static let clayDeep = Color(light: 0x8B4218, dark: 0xEACAB8)
+    /// 6.8:1 on white, 6.4:1 on the page.
+    static let goldDeep = Color(light: 0x745611, dark: 0xE8D7B0)
+    /// 8.0:1 on white, 7.5:1 on the page.
+    static let sageDeep = Color(light: 0x395922, dark: 0xCEE1C1)
+    /// 10.2:1 on white, 9.6:1 on the page.
+    static let roseDeep = Color(light: 0x772230, dark: 0xE9C4CA)
 
     /// The cloud mark. Used once per screen at most, never as a background.
     static let cloud = LinearGradient(
-        colors: [Color(light: 0xF0A9D0, dark: 0xF0A9D0), Color(light: 0x5FBEE8, dark: 0x5FBEE8)],
+        colors: [Color(light: 0xE8B0B9, dark: 0xE8B0B9), Color(light: 0xE6CA89, dark: 0xE6CA89)],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     /// The wash's colours — see `FGBrandWash`, which blooms them out from the
-    /// bottom of the screen. Warm at the core, cool at the edge.
+    /// bottom of the screen. Warm at the core, warm at the edge — clay studio
+    /// doesn't have a cool colour to route around, so this stays in-family
+    /// rather than needing a routed middle stop.
     ///
     /// Unlike the accents, these *do* change with the appearance, and they have
     /// to. A wash is a background, so `ink` is drawn over it; if the wash
     /// stayed pastel at night, `ink` would have flipped to near-white and the
-    /// result would be white-on-pink. Light pastels, dark jewel tones, `ink`
+    /// result would be white-on-rose. Light pastels, dark jewel tones, `ink`
     /// legible on both.
     ///
     /// A bare `Gradient` rather than a `RadialGradient` because the radius has
     /// to come from the frame it is drawn into, not from a constant here.
-    /// Rose at the core, a warm near-neutral in the middle, sky at the edge.
-    /// The middle stop is what keeps this out of purple: interpolating pink
-    /// straight to blue runs through lavender, so the ramp is routed around it.
+    /// Rose at the core, warm cream in the middle, gold at the edge.
     ///
     /// The light values are pale on purpose. `inkMuted` captions sit on this
-    /// wash, and at full saturation they measured 4.3:1 — under the 4.5:1 floor
-    /// before the grain was even counted. These clear it with the grain's
-    /// darkest trough included.
+    /// wash, and at full saturation they measured under the 4.5:1 floor before
+    /// the grain was even counted. These clear it with the grain's darkest
+    /// trough included: 4.78:1 at the core, 5.31:1 at the middle, 4.98:1 at
+    /// the edge.
     static let washGradient = Gradient(colors: [
-        Color(light: 0xFBDDE5, dark: 0x3D2530),
-        Color(light: 0xF9EAE2, dark: 0x2B2A31),
-        Color(light: 0xCFE8F7, dark: 0x11293A),
+        Color(light: 0xF9DEE0, dark: 0x3A2226),
+        Color(light: 0xF7EFE4, dark: 0x241E17),
+        Color(light: 0xF3E8CE, dark: 0x332A14),
     ])
 }
 
@@ -128,11 +129,11 @@ nonisolated struct FGAccent: Equatable {
     let fill: Color
     let text: Color
 
-    static let ink      = FGAccent(fill: FGColor.ink,      text: FGColor.bg)
-    static let sky      = FGAccent(fill: FGColor.sky,      text: FGColor.skyDeep)
-    static let lime     = FGAccent(fill: FGColor.lime,     text: FGColor.limeDeep)
-    static let lavender = FGAccent(fill: FGColor.lavender, text: FGColor.lavenderDeep)
-    static let pink     = FGAccent(fill: FGColor.pink,     text: FGColor.pinkDeep)
+    static let ink  = FGAccent(fill: FGColor.ink,  text: FGColor.bg)
+    static let gold = FGAccent(fill: FGColor.gold, text: FGColor.goldDeep)
+    static let clay = FGAccent(fill: FGColor.clay, text: FGColor.clayDeep)
+    static let sage = FGAccent(fill: FGColor.sage, text: FGColor.sageDeep)
+    static let rose = FGAccent(fill: FGColor.rose, text: FGColor.roseDeep)
 }
 
 /// A soft three-stop wash for a check-in tile.
@@ -147,8 +148,13 @@ nonisolated struct FGAccent: Equatable {
 /// white-on-pastel failure the top of this file rules out.
 ///
 /// Stops run core → mid → edge, and stay the light side of their hue on
-/// purpose. `inkOnAccent` measures 11.9:1 or better on every edge value below,
+/// purpose. `inkOnAccent` clears 8:1 or better on every edge value below,
 /// which is the darkest point any of them reaches.
+///
+/// Case names are colour words, not roles — `lilac` keeps its name here even
+/// though its hue moved warmer (toward a dusty mauve) to stay in the clay
+/// studio family. Nothing outside this file reads meaning into which case is
+/// which; see the spread rule below.
 nonisolated enum FGAura: Sendable, CaseIterable {
     case apricot, lilac, blush, sage
 
@@ -164,8 +170,8 @@ nonisolated enum FGAura: Sendable, CaseIterable {
     /// resting surface carrying `ink` rather than a wash carrying `inkOnAccent`.
     static let resting = LinearGradient(
         colors: [
-            Color(light: 0xF6F1E9, dark: 0x171B1F),
-            Color(light: 0xEFE7DB, dark: 0x14181C),
+            Color(light: 0xF6F1E9, dark: 0x1F1912),
+            Color(light: 0xEFE7DB, dark: 0x1B160F),
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -173,8 +179,8 @@ nonisolated enum FGAura: Sendable, CaseIterable {
 
     var core: Color {
         switch self {
-        case .apricot: Color(light: 0xFFE0CC, dark: 0xFFE0CC)
-        case .lilac: Color(light: 0xECE0F6, dark: 0xECE0F6)
+        case .apricot: Color(light: 0xFCE3D2, dark: 0xFCE3D2)
+        case .lilac: Color(light: 0xF1E4EB, dark: 0xF1E4EB)
         case .blush: Color(light: 0xFCE2E8, dark: 0xFCE2E8)
         case .sage: Color(light: 0xEAF0DE, dark: 0xEAF0DE)
         }
@@ -182,8 +188,8 @@ nonisolated enum FGAura: Sendable, CaseIterable {
 
     var mid: Color {
         switch self {
-        case .apricot: Color(light: 0xF9B69C, dark: 0xF9B69C)
-        case .lilac: Color(light: 0xD2D8F0, dark: 0xD2D8F0)
+        case .apricot: Color(light: 0xF7C8A8, dark: 0xF7C8A8)
+        case .lilac: Color(light: 0xE2CAD6, dark: 0xE2CAD6)
         case .blush: Color(light: 0xF2C4D3, dark: 0xF2C4D3)
         case .sage: Color(light: 0xC6D8BE, dark: 0xC6D8BE)
         }
@@ -191,8 +197,8 @@ nonisolated enum FGAura: Sendable, CaseIterable {
 
     var edge: Color {
         switch self {
-        case .apricot: Color(light: 0xF5B2A8, dark: 0xF5B2A8)
-        case .lilac: Color(light: 0xC4CEEE, dark: 0xC4CEEE)
+        case .apricot: Color(light: 0xF0B090, dark: 0xF0B090)
+        case .lilac: Color(light: 0xD7B7C7, dark: 0xD7B7C7)
         case .blush: Color(light: 0xE0AEC2, dark: 0xE0AEC2)
         case .sage: Color(light: 0xB2C8AF, dark: 0xB2C8AF)
         }
@@ -212,7 +218,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
 // should be able to read their energy off the colour.
 
 nonisolated extension Energy {
-    var checkInAccent: FGAccent { .sky }
+    var checkInAccent: FGAccent { .gold }
 
     var checkInAura: FGAura {
         switch self {
@@ -224,19 +230,19 @@ nonisolated extension Energy {
 }
 
 nonisolated extension TimeBudget {
-    var checkInAccent: FGAccent { .lime }
+    var checkInAccent: FGAccent { .clay }
 
     var checkInAura: FGAura {
         switch self {
-        case .aLittle: .sage
-        case .some: .apricot
-        case .plenty: .lilac
+        case .fiveMinutes, .aLittle: .sage
+        case .fifteenMinutes, .twentyMinutes, .twentyFiveMinutes, .some: .apricot
+        case .thirtyFiveMinutes, .fortyMinutes, .plenty: .lilac
         }
     }
 }
 
 nonisolated extension PlaceIntent {
-    var checkInAccent: FGAccent { .lavender }
+    var checkInAccent: FGAccent { .sage }
 
     var checkInAura: FGAura {
         switch self {
@@ -248,7 +254,7 @@ nonisolated extension PlaceIntent {
 }
 
 nonisolated extension BodyState {
-    var checkInAccent: FGAccent { .pink }
+    var checkInAccent: FGAccent { .rose }
 
     var checkInAura: FGAura {
         switch self {
@@ -266,10 +272,10 @@ nonisolated extension Course {
     /// way a course is identified — its name is written next to it.
     var accent: Color {
         switch self {
-        case .main: FGColor.lime
-        case .appetizer: FGColor.sky
-        case .side: FGColor.lavender
-        case .dessert: FGColor.pink
+        case .main: FGColor.clay
+        case .appetizer: FGColor.gold
+        case .side: FGColor.sage
+        case .dessert: FGColor.rose
         case .special: FGColor.ink
         }
     }
@@ -278,11 +284,11 @@ nonisolated extension Course {
     /// `accent` so the two cannot drift apart unnoticed.
     var accentHex: UInt32 {
         switch self {
-        case .main: 0xC7EA4E
-        case .appetizer: 0x5FBEE8
-        case .side: 0xB9C9F2
-        case .dessert: 0xF0A9D0
-        case .special: 0x14171A
+        case .main: 0xEAB79A
+        case .appetizer: 0xE6CA89
+        case .side: 0xB3D39C
+        case .dessert: 0xE8B0B9
+        case .special: 0x241C15
         }
     }
 
@@ -301,23 +307,24 @@ nonisolated extension Course {
     /// four of them down a menu read as labels rather than as stickers.
     ///
     /// Unlike `accent`, these flip: the tint has to stay behind the -Deep
-    /// colour, and that colour lightens at night.
+    /// colour, and that colour lightens at night. Every fill/text pair below
+    /// clears 6:1 or better.
     var tagFill: Color {
         switch self {
-        case .appetizer: Color(light: 0xDFF0FA, dark: 0x0E2E3D)
-        case .main: Color(light: 0xEDF8D2, dark: 0x22300A)
-        case .side: Color(light: 0xE8EDFB, dark: 0x1B2440)
-        case .dessert: Color(light: 0xFBE7F1, dark: 0x331127)
+        case .appetizer: Color(light: 0xFAF1DA, dark: 0x332812)
+        case .main: Color(light: 0xFBE9DD, dark: 0x3A2415)
+        case .side: Color(light: 0xE7F0DD, dark: 0x22301A)
+        case .dessert: Color(light: 0xFAE5E8, dark: 0x33161C)
         case .special: FGColor.line
         }
     }
 
     var tagText: Color {
         switch self {
-        case .appetizer: FGColor.skyDeep
-        case .main: FGColor.limeDeep
-        case .side: FGColor.lavenderDeep
-        case .dessert: FGColor.pinkDeep
+        case .appetizer: FGColor.goldDeep
+        case .main: FGColor.clayDeep
+        case .side: FGColor.sageDeep
+        case .dessert: FGColor.roseDeep
         case .special: FGColor.ink
         }
     }
