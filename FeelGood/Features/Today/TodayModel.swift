@@ -94,13 +94,19 @@ final class TodayModel {
         if let stored = log.day(today, resolving: { sessions[$0] }) {
             self.menu = stored
         } else {
+            // Same `.full` / `.recencyOnly` gate as `input(now:)` below — this
+            // is the app's very first menu, generated before `self` exists to
+            // call that method on, so it stayed on the old unwrapped
+            // initializer and every cold start got Pro's memory for free.
+            let memory: PlanMemory = PurchasesManager.shared.isProUnlocked
+                ? .full(history: recorded, affinity: log.affinity())
+                : .recencyOnly(lastActiveDate: recorded.filter(\.wasCompleted).map(\.date).max())
             let generated = engine.makeMenu(
                 PlanInput(
                     profile: profile,
                     checkIn: todaysCheckIn,
-                    history: recorded,
-                    context: PlanContext(now: now, calendar: calendar),
-                    affinity: log.affinity()
+                    memory: memory,
+                    context: PlanContext(now: now, calendar: calendar)
                 )
             )
             self.menu = generated

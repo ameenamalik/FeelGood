@@ -309,7 +309,10 @@ nonisolated struct PlanInput: Hashable, Sendable {
         self.context = context
     }
 
-    /// Convenience initializer maintaining backwards compatibility for existing tests & callers
+    /// Test-only. Always builds `.full` memory, so a production call site
+    /// using this instead of the primary initializer silently hands every
+    /// install Pro's history and affinity regardless of entitlement — this
+    /// already happened once, at `TodayModel`'s cold-start menu.
     init(
         profile: PlanProfile,
         checkIn: PlanCheckIn? = nil,
