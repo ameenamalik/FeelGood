@@ -296,6 +296,35 @@ nonisolated extension Course {
     var accentText: Color {
         self == .special ? FGColor.bg : FGColor.inkOnAccent
     }
+
+    /// The course tag as a soft pill rather than a saturated capsule.
+    ///
+    /// `accent` is a full-strength fill that needs `inkOnAccent` on top and
+    /// shouts on a white card next to three siblings. These are the same hues
+    /// held right back, carrying the -Deep variant as text — quiet enough that
+    /// four of them down a menu read as labels rather than as stickers.
+    ///
+    /// Unlike `accent`, these flip: the tint has to stay behind the -Deep
+    /// colour, and that colour lightens at night.
+    var tagFill: Color {
+        switch self {
+        case .appetizer: Color(light: 0xDFF0FA, dark: 0x0E2E3D)
+        case .main: Color(light: 0xEDF8D2, dark: 0x22300A)
+        case .side: Color(light: 0xE8EDFB, dark: 0x1B2440)
+        case .dessert: Color(light: 0xFBE7F1, dark: 0x331127)
+        case .special: FGColor.line
+        }
+    }
+
+    var tagText: Color {
+        switch self {
+        case .appetizer: FGColor.skyDeep
+        case .main: FGColor.limeDeep
+        case .side: FGColor.lavenderDeep
+        case .dessert: FGColor.pinkDeep
+        case .special: FGColor.ink
+        }
+    }
 }
 
 nonisolated private extension UIColor {
