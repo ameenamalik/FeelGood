@@ -363,7 +363,7 @@ nonisolated struct PlanEngine: Sendable {
         }
 
         // Intent.
-        if !Set(session.intents).isDisjoint(with: input.profile.intents) {
+        if input.profile.intents.contains(where: { sessionMatches($0, session: session) }) {
             score += weights.intentMatch
             reasons.append(.matchesIntent)
         }
@@ -418,9 +418,19 @@ nonisolated struct PlanEngine: Sendable {
     }
 
     private func matchingIntent(for session: Session, from intents: Set<Intent>) -> Intent {
-        Intent.allCases.first { intents.contains($0) && session.intents.contains($0) }
+        Intent.allCases.first { intents.contains($0) && sessionMatches($0, session: session) }
             ?? Intent.allCases.first(where: intents.contains)
             ?? .energize
+    }
+
+    /// "Just showing up" describes the size of the ask, not a content genre.
+    /// Play remains a normal authored tag; showing up matches any short,
+    /// gentle session so it can influence the menu without duplicating tags.
+    private func sessionMatches(_ intent: Intent, session: Session) -> Bool {
+        if intent == .joy {
+            return session.intensity <= 2 && session.durationMin <= 15
+        }
+        return session.intents.contains(intent)
     }
 
     private func bodyScore(_ session: Session, body: BodyState) -> Double {

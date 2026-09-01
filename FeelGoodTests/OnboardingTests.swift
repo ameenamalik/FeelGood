@@ -15,6 +15,14 @@ import UIKit
 @MainActor
 struct OnboardingTests {
 
+    @Test("Home is available to the engine but is not preselected")
+    func homeIsNotPreselected() {
+        let model = OnboardingModel()
+
+        #expect(model.places.isEmpty)
+        #expect(model.makeProfile().places.contains(.home))
+    }
+
     @Test("Every choice icon is an available SF Symbol")
     func choiceSymbolsExist() {
         var symbols = Activity.allCases.map(\.onboardingSymbol)
@@ -54,13 +62,45 @@ struct OnboardingTests {
         model.places = [.home, .gym]
 
         #expect(model.makeProfile().availableActivities.contains(.strength))
-        // ...and it is enough on its own to leave the first card.
+        // It still does not answer the separate Movement and Equipment
+        // sections on the first slide.
+        #expect(!model.canAdvance)
+    }
+
+    @Test("Every section on the first slide needs an explicit answer")
+    func everyAccessSectionIsRequired() {
+        let model = OnboardingModel()
+        #expect(!model.canAdvance)
+
+        model.activities = [.walking]
+        #expect(!model.canAdvance)
+
+        model.equipment = [.none]
+        #expect(!model.canAdvance)
+
+        model.places = [.home]
         #expect(model.canAdvance)
     }
 
-    @Test("The first card still has to be answered with something")
-    func nothingPickedCannotAdvance() {
-        #expect(!OnboardingModel().canAdvance)
+    @Test("Weekly cadence and daily moments start empty and are both required")
+    func cadenceHasNoDefaults() {
+        let model = OnboardingModel()
+        model.activities = [.walking]
+        model.equipment = [.none]
+        model.places = [.home]
+        model.advance()
+
+        #expect(model.cadence == nil)
+        #expect(model.moments == nil)
+        #expect(!model.canAdvance)
+
+        model.cadence = .fewTimesAWeek
+        #expect(!model.canAdvance)
+
+        model.moments = .once
+        #expect(model.canAdvance)
+        #expect(model.makeProfile().cadence == .fewTimesAWeek)
+        #expect(model.makeProfile().moments == .once)
     }
 
     @Test("Movement the card never asks about is never recorded as a preference")

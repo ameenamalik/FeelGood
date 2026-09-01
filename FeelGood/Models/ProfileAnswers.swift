@@ -11,8 +11,12 @@ import Foundation
 
 nonisolated struct ProfileAnswers: Hashable, Sendable {
     var activities: Set<Activity> = []
-    var equipment: Set<Equipment> = [.none]
-    var places: Set<Place> = [.home]
+    /// Empty until the person explicitly picks equipment or "No equipment".
+    /// `availableEquipment` still adds `.none` as the engine's safe baseline.
+    var equipment: Set<Equipment> = []
+    /// Starts empty so onboarding reflects an actual choice. `availablePlaces`
+    /// still adds home as the engine's safe floor-only fallback.
+    var places: Set<Place> = []
     var cadence: Cadence = .mostDays
     var moments: MovementMoments = .aCouple
     var realisticMinutes: Int = 20

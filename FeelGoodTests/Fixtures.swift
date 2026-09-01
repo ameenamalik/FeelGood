@@ -169,7 +169,7 @@ enum Fixture {
 
         // Dessert.
         session(id: "d-dance", activity: .dance, qualities: [.coordination],
-                durationMin: 10, intensity: 2, course: .dessert, intents: [.joy]),
+                durationMin: 10, intensity: 2, course: .dessert, intents: [.play]),
         session(id: "d-legs-up", activity: .breathwork, qualities: [.downRegulation],
                 durationMin: 10, intensity: 1, course: .dessert, intents: [.calm]),
 
