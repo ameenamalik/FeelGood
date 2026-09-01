@@ -1070,7 +1070,7 @@
         "full"
       ],
       "intents": [
-        "joy",
+        "play",
         "energize"
       ],
       "course": "main",
@@ -1601,7 +1601,7 @@
         "full"
       ],
       "intents": [
-        "joy"
+        "play"
       ],
       "course": "dessert",
       "source": {
@@ -1748,7 +1748,7 @@
         "lowerBody"
       ],
       "intents": [
-        "joy"
+        "play"
       ],
       "course": "dessert",
       "source": {
@@ -1902,7 +1902,7 @@
         "full"
       ],
       "intents": [
-        "joy",
+        "play",
         "energize"
       ],
       "course": "special",
@@ -1958,7 +1958,7 @@
       ],
       "intents": [
         "strengthen",
-        "joy"
+        "play"
       ],
       "course": "special",
       "source": {
@@ -2334,7 +2334,7 @@
       ],
       "intents": [
         "calm",
-        "joy"
+        "play"
       ],
       "course": "dessert",
       "source": {
@@ -2390,7 +2390,7 @@
       ],
       "intents": [
         "calm",
-        "joy"
+        "play"
       ],
       "course": "dessert",
       "source": {
@@ -2440,7 +2440,7 @@
         "full"
       ],
       "intents": [
-        "joy",
+        "play",
         "energize"
       ],
       "course": "dessert",
@@ -2543,7 +2543,7 @@
       ],
       "intents": [
         "calm",
-        "joy"
+        "play"
       ],
       "course": "dessert",
       "source": {

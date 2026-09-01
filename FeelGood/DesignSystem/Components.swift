@@ -232,16 +232,24 @@ struct FGAuraTile: View {
     let title: String
     var detail: String? = nil
     var systemImage: String? = nil
+    /// Optional decorative artwork that lives inside the card without adding
+    /// another VoiceOver stop. Hidden when Dynamic Type needs the full tile.
+    var artworkName: String? = nil
+    var artworkSize: CGFloat = 92
+    var artworkAlignment: Alignment = .top
     /// `.display` puts the title in the 40pt light numeral the artboard uses
     /// for the time question, with its unit small underneath. `.standard` is
     /// the headline every other answer gets.
     var titleStyle: TitleStyle = .standard
+    var contentPlacement: ContentPlacement = .center
+    var preferredHeight: CGFloat? = nil
+    var showsAuraAtRest = false
     let aura: FGAura
     let isSelected: Bool
     let action: () -> Void
 
     private var tileHeight: CGFloat? {
-        typeSize.isAccessibilitySize ? nil : FGSize.auraTile
+        typeSize.isAccessibilitySize ? nil : (preferredHeight ?? FGSize.auraTile)
     }
 
     /// One line for a single word, two for a phrase.
@@ -265,38 +273,59 @@ struct FGAuraTile: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 2) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.title2)
-                        .symbolRenderingMode(.monochrome)
-                        .frame(height: typeSize.isAccessibilitySize ? nil : 26)
-                        .foregroundStyle(foreground)
+            ZStack(alignment: .bottomLeading) {
+                if let artworkName, !typeSize.isAccessibilitySize {
+                    Image(artworkName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: artworkSize, height: artworkSize)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: artworkAlignment)
+                        .padding(.top, FGSpace.xs)
                         .accessibilityHidden(true)
-                        .padding(.bottom, FGSpace.xs)
+                        .allowsHitTesting(false)
                 }
 
-                Text(title)
-                    .font(titleFont)
-                    .tracking(titleStyle == .display ? -1.8 : 0)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(titleLineLimit)
-                    .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.75)
-                    .foregroundStyle(foreground)
+                VStack(
+                    alignment: contentPlacement == .bottomLeading ? .leading : .center,
+                    spacing: FGSpace.xs
+                ) {
+                    if let systemImage {
+                        Image(systemName: systemImage)
+                            .font(.title2)
+                            .symbolRenderingMode(.monochrome)
+                            .frame(height: typeSize.isAccessibilitySize ? nil : 26)
+                            .foregroundStyle(foreground)
+                            .accessibilityHidden(true)
+                            .padding(.bottom, FGSpace.xs)
+                    }
 
-                if let detail {
-                    Text(detail)
-                        .font(FGFont.label)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(foreground.opacity(0.7))
+                    Text(title)
+                        .font(titleFont)
+                        .tracking(titleStyle == .display ? -1.8 : 0)
+                        .multilineTextAlignment(contentPlacement == .bottomLeading ? .leading : .center)
+                        .lineLimit(titleLineLimit)
+                        .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.75)
+                        .foregroundStyle(foreground)
+
+                    if let detail {
+                        Text(detail)
+                            .font(FGFont.label)
+                            .multilineTextAlignment(contentPlacement == .bottomLeading ? .leading : .center)
+                            .foregroundStyle(foreground.opacity(0.7))
+                    }
                 }
+                .padding(contentPlacement == .bottomLeading ? FGSpace.m : 12)
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity,
+                    alignment: contentPlacement == .bottomLeading ? .bottomLeading : .center
+                )
             }
-            .padding(12)
             .frame(
                 maxWidth: .infinity,
                 minHeight: tileHeight ?? (FGSize.minTouchTarget + 8),
                 maxHeight: hasFixedHeight ? tileHeight : nil,
-                alignment: .center
+                alignment: contentPlacement == .bottomLeading ? .bottomLeading : .center
             )
             .background(surface)
             .overlay(
@@ -325,6 +354,7 @@ struct FGAuraTile: View {
     private var hasFixedHeight: Bool { !typeSize.isAccessibilitySize }
 
     enum TitleStyle { case standard, display }
+    enum ContentPlacement { case center, bottomLeading }
 
     private var titleFont: Font {
         switch titleStyle {
@@ -337,8 +367,8 @@ struct FGAuraTile: View {
 
     @ViewBuilder
     private var surface: some View {
-        if isSelected {
-            wash
+        if isSelected || showsAuraAtRest {
+            wash.opacity(isSelected ? 1 : 0.58)
         } else {
             RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
                 .fill(FGAura.resting)
@@ -389,6 +419,7 @@ struct FGAuraTile: View {
 /// feel weightier than it is.
 struct FGPill: View {
     let title: String
+    var selectedAura: FGAura? = nil
     let isSelected: Bool
     let action: () -> Void
 
@@ -396,21 +427,34 @@ struct FGPill: View {
         Button(action: action) {
             Text(title)
                 .font(FGFont.body.weight(.medium))
-                .foregroundStyle(isSelected ? FGColor.surface : FGColor.ink)
+                .foregroundStyle(isSelected && selectedAura == nil ? FGColor.surface : FGColor.inkOnAccent)
                 .padding(.vertical, 11)
                 .padding(.horizontal, 17)
                 .frame(minHeight: FGSize.minTouchTarget)
-                .background(Capsule().fill(isSelected ? FGColor.ink : FGColor.surface))
+                .background(Capsule().fill(pillFill))
                 .overlay(
                     Capsule().strokeBorder(
-                        isSelected ? .clear : FGColor.lineStrong,
-                        lineWidth: isSelected ? 0 : 1
+                        isSelected ? FGColor.inkOnAccent.opacity(0.72) : FGColor.lineStrong,
+                        lineWidth: isSelected ? 1.5 : 1
                     )
                 )
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    private var pillFill: AnyShapeStyle {
+        if isSelected, let selectedAura {
+            return AnyShapeStyle(
+                LinearGradient(
+                    colors: [selectedAura.core, selectedAura.mid, selectedAura.edge],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+        }
+        return AnyShapeStyle(isSelected ? FGColor.ink : FGColor.surface)
     }
 }
 

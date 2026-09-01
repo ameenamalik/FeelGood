@@ -19,6 +19,9 @@ struct AccessChoices: View {
     /// the profile screen does not, because a settings list of sixteen colour
     /// fields is a different thing from a first-run question.
     var usesAura = false
+    /// Onboarding presents these as quick text choices rather than a wall of
+    /// illustrated tiles. Profile editing keeps its existing compact controls.
+    var usesPills = false
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
@@ -26,7 +29,7 @@ struct AccessChoices: View {
     /// that — see `Place.impliedEquipment`. Asking again under Equipment would
     /// be the same question twice with two ways to answer it wrong.
     private static let equipmentChoices = Equipment.allCases.filter {
-        $0 != .none && $0 != .gym && $0 != .outdoor
+        $0 != .gym && $0 != .outdoor
     }
 
     /// Only movement that genuinely depends on owning something or going
@@ -52,12 +55,12 @@ struct AccessChoices: View {
             group("Equipment") {
                 ForEach(Self.equipmentChoices, id: \.self) { item in
                     choice(
-                        title: item.label ?? "",
+                        title: item.label ?? "No equipment",
                         symbol: item.onboardingSymbol,
                         aura: .lilac,
                         isSelected: equipment.contains(item)
                     ) {
-                        toggle(item, in: $equipment)
+                        toggleEquipment(item)
                     }
                 }
             }
@@ -89,7 +92,9 @@ struct AccessChoices: View {
         isSelected: Bool,
         action: @escaping () -> Void
     ) -> some View {
-        if usesAura {
+        if usesPills {
+            FGPill(title: title, selectedAura: aura, isSelected: isSelected, action: action)
+        } else if usesAura {
             FGAuraTile(
                 title: title,
                 systemImage: showsSymbols ? symbol : nil,
@@ -115,7 +120,11 @@ struct AccessChoices: View {
                 .foregroundStyle(FGColor.ink)
             // Symbol groups are the tile grid; the rest are plain chips that
             // wrap on their own width rather than on a tile's.
-            if showsSymbols {
+            if usesPills {
+                WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
+                    content()
+                }
+            } else if showsSymbols {
                 FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
                     content()
                 }
@@ -135,6 +144,23 @@ struct AccessChoices: View {
                 binding.wrappedValue.remove(value)
             } else {
                 binding.wrappedValue.insert(value)
+            }
+        }
+    }
+
+    /// "No equipment" is an answer, not equipment that can coexist with a
+    /// mat or weights. Choosing either side clears the contradictory side.
+    private func toggleEquipment(_ item: Equipment) {
+        withAnimation(FGMotion.gentle) {
+            if item == .none {
+                equipment = equipment == [.none] ? [] : [.none]
+            } else {
+                equipment.remove(.none)
+                if equipment.contains(item) {
+                    equipment.remove(item)
+                } else {
+                    equipment.insert(item)
+                }
             }
         }
     }

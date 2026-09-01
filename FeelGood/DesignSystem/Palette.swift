@@ -150,7 +150,7 @@ nonisolated struct FGAccent: Equatable {
 /// purpose. `inkOnAccent` measures 11.9:1 or better on every edge value below,
 /// which is the darkest point any of them reaches.
 nonisolated enum FGAura: Sendable, CaseIterable {
-    case apricot, lilac, blush, sage
+    case apricot, lilac, blush, sage, butter
 
 
     /// What a tile looks like before it is picked: barely there.
@@ -177,6 +177,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
         case .lilac: Color(light: 0xECE0F6, dark: 0xECE0F6)
         case .blush: Color(light: 0xFCE2E8, dark: 0xFCE2E8)
         case .sage: Color(light: 0xEAF0DE, dark: 0xEAF0DE)
+        case .butter: Color(light: 0xFFF8D8, dark: 0xFFF8D8)
         }
     }
 
@@ -186,6 +187,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
         case .lilac: Color(light: 0xD2D8F0, dark: 0xD2D8F0)
         case .blush: Color(light: 0xF2C4D3, dark: 0xF2C4D3)
         case .sage: Color(light: 0xC6D8BE, dark: 0xC6D8BE)
+        case .butter: Color(light: 0xF4DF91, dark: 0xF4DF91)
         }
     }
 
@@ -195,6 +197,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
         case .lilac: Color(light: 0xC4CEEE, dark: 0xC4CEEE)
         case .blush: Color(light: 0xE0AEC2, dark: 0xE0AEC2)
         case .sage: Color(light: 0xB2C8AF, dark: 0xB2C8AF)
+        case .butter: Color(light: 0xE8CC69, dark: 0xE8CC69)
         }
     }
 }
@@ -228,9 +231,10 @@ nonisolated extension TimeBudget {
 
     var checkInAura: FGAura {
         switch self {
-        case .aLittle: .sage
-        case .some: .apricot
-        case .plenty: .lilac
+        case .fiveMinutes, .twentyFiveMinutes, .plenty: .sage
+        case .aLittle, .some: .apricot
+        case .fifteenMinutes, .thirtyFiveMinutes: .lilac
+        case .twentyMinutes, .fortyMinutes: .blush
         }
     }
 }

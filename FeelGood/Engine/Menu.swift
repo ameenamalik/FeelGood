@@ -137,7 +137,8 @@ nonisolated enum MenuCopy {
         case .strengthen: "Toward the strength you're building."
         case .calm: "Toward the calm you're after."
         case .mobilize: "Toward moving more easily."
-        case .joy: "Because it's a good time."
+        case .joy: "Showing up is enough today."
+        case .play: "Because it sounds fun."
         }
     }
 

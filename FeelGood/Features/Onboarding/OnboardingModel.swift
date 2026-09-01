@@ -28,16 +28,13 @@ final class OnboardingModel {
 
         var detail: String? {
             switch self {
-            case .access: "Pick everything that's genuinely available. This shapes everything else."
+            case .access: nil
             case .cadence: nil
             case .intent: "Pick one or more."
-            case .workArounds: "We'll quietly leave these out. Nothing here is a diagnosis, and it never leaves your device."
+            case .workArounds: nil
             }
         }
 
-        /// Only the first card must be answered — everything else has a sane
-        /// default, because a menu is better than an interrogation.
-        var isRequired: Bool { self == .access }
     }
 
     private(set) var card: Card = .access
@@ -58,13 +55,24 @@ final class OnboardingModel {
         get { answers.places }
         set { answers.places = newValue }
     }
-    var cadence: Cadence {
-        get { answers.cadence }
-        set { answers.cadence = newValue }
+    /// Selection state is separate from the persisted fallback so onboarding
+    /// can begin visually unanswered without making existing profiles optional.
+    private var selectedCadence: Cadence?
+    private var selectedMoments: MovementMoments?
+
+    var cadence: Cadence? {
+        get { selectedCadence }
+        set {
+            selectedCadence = newValue
+            if let newValue { answers.cadence = newValue }
+        }
     }
-    var moments: MovementMoments {
-        get { answers.moments }
-        set { answers.moments = newValue }
+    var moments: MovementMoments? {
+        get { selectedMoments }
+        set {
+            selectedMoments = newValue
+            if let newValue { answers.moments = newValue }
+        }
     }
     var realisticMinutes: Int {
         get { answers.realisticMinutes }
@@ -86,8 +94,21 @@ final class OnboardingModel {
     var isFirstCard: Bool { card == .access }
     var isLastCard: Bool { card == .workArounds }
 
+    /// Slide one has three distinct inputs. Each needs an explicit answer so
+    /// the menu does not infer access from a choice made in another section.
+    var accessSectionsAreComplete: Bool {
+        !activities.isEmpty && !equipment.isEmpty && !places.isEmpty
+    }
+
     var canAdvance: Bool {
-        card.isRequired ? answers.isAnswered : true
+        switch card {
+        case .access:
+            accessSectionsAreComplete
+        case .cadence:
+            cadence != nil && moments != nil
+        case .intent, .workArounds:
+            true
+        }
     }
 
     var progress: Double {
@@ -163,6 +184,7 @@ nonisolated extension Intent {
         case .calm: "Calm"
         case .mobilize: "Mobility"
         case .joy: "Just showing up"
+        case .play: "Play"
         }
     }
 }
@@ -267,6 +289,7 @@ nonisolated extension Intent {
         case .calm: "leaf"
         case .mobilize: "figure.flexibility"
         case .joy: "heart"
+        case .play: "figure.dance"
         }
     }
 }
