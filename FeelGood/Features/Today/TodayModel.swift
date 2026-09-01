@@ -122,13 +122,20 @@ final class TodayModel {
         )
     }
 
+    private(set) var dailySwapsCount: Int = 0
+    var isProUser: Bool { PurchasesManager.shared.isProUnlocked }
+    var hasRemainingSwaps: Bool { isProUser || dailySwapsCount < 1 }
+
     private func input(now: Date) -> PlanInput {
-        PlanInput(
+        let memory: PlanMemory = isProUser
+            ? .full(history: history, affinity: log.affinity())
+            : .recencyOnly(lastActiveDate: history.filter(\.wasCompleted).map(\.date).max())
+
+        return PlanInput(
             profile: profile,
             checkIn: checkIn,
-            history: history,
-            context: PlanContext(now: now, calendar: calendar),
-            affinity: log.affinity()
+            memory: memory,
+            context: PlanContext(now: now, calendar: calendar)
         )
     }
 
@@ -155,9 +162,38 @@ final class TodayModel {
         requestCopyUpgrade(now: now)
     }
 
+    /// Applies structured conversational check-in and overrides.
+    func applyConversationalCheckIn(_ response: ChatResponse, now: Date = Date()) {
+        let newCheckIn = response.overrides.toPlanCheckIn(fallback: checkIn ?? menu.assumedCheckIn)
+        apply(newCheckIn, now: now)
+        if !response.message.isEmpty {
+            upgradedHeadline = response.message
+        }
+    }
+
+    /// Quick-pivot constraint chips (PRD §10.1 Category 2: Change the plan in seconds).
+    func applyQuickFilter(_ filter: QuickFilter, now: Date = Date()) {
+        var newCheckIn = checkIn ?? menu.assumedCheckIn
+        switch filter {
+        case .shorter:
+            newCheckIn.time = .fiveMinutes
+        case .gentler:
+            newCheckIn.energy = .low
+            if newCheckIn.body == nil { newCheckIn.body = .stiff }
+        case .moreEnergizing:
+            newCheckIn.energy = .strong
+        case .canNotLeave:
+            newCheckIn.place = .stayingIn
+        }
+        apply(newCheckIn, now: now)
+    }
+
     /// "Shuffle". A swap is engagement, not rejection — it is a choice being made,
     /// which is the whole point of the screen.
     func swap(_ item: MenuItem, now: Date = Date()) {
+        guard hasRemainingSwaps else { return }
+        dailySwapsCount += 1
+
         let currentInput = input(now: now)
         if let replacement = engine.alternative(
             for: item,

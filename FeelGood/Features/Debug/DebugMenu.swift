@@ -48,7 +48,7 @@ struct DebugMenu: View {
                         VStack(alignment: .leading, spacing: FGSpace.xs) {
                             Text("Right now")
                                 .font(FGFont.label)
-                                .foregroundStyle(FGColor.skyDeep)
+                                .foregroundStyle(FGColor.goldDeep)
                             Text(seeder.summary())
                                 .font(FGFont.body)
                                 .foregroundStyle(FGColor.ink)

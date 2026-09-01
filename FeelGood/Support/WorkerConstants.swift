@@ -38,6 +38,9 @@ nonisolated enum WorkerConstants {
     /// prevent the app (or a tab) from opening.
     static var copyURL: URL? { baseURL?.appending(path: "copy") }
 
+    /// Endpoint for conversational check-in parsing and assistant responses.
+    static var chatURL: URL? { baseURL?.appending(path: "chat") }
+
     /// Unlike `copyURL`, a missing player URL is user-visible: the embed cannot
     /// be made to work from the client alone (see `worker/src/player.ts`), so
     /// `PlayerView` falls back to opening the video in YouTube rather than

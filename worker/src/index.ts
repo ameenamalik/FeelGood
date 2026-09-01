@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { handleChat, isValidChatPayload } from "./chat";
 import { hasProEntitlement } from "./entitlement";
 import { playerResponse } from "./player";
 import { isRateLimited } from "./rateLimit";
@@ -18,6 +19,33 @@ export default {
         return new Response("method not allowed", { status: 405 });
       }
       return playerResponse(url);
+    }
+
+    if (url.pathname === "/chat") {
+      if (request.method !== "POST") {
+        return new Response("method not allowed", { status: 405 });
+      }
+
+      let body: unknown;
+      try {
+        body = await request.json();
+      } catch {
+        return new Response("bad request", { status: 400 });
+      }
+
+      if (!isValidChatPayload(body)) {
+        return new Response("bad request", { status: 400 });
+      }
+
+      if (!(await hasProEntitlement(body.subscriberID, env))) {
+        return new Response("forbidden", { status: 403 });
+      }
+
+      if (await isRateLimited(body.subscriberID, env)) {
+        return new Response("slow down", { status: 429 });
+      }
+
+      return handleChat(body, env);
     }
 
     if (url.pathname !== "/copy") {
