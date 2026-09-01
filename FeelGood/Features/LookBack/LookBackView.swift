@@ -119,11 +119,11 @@ private extension Reflection.Note {
 
     var accent: Color {
         switch self {
-        case .moved: FGColor.sky
-        case .mostly: FGColor.lavender
-        case .activities: FGColor.lime
-        case .keepsReturningTo: FGColor.pink
-        case .madeRoomForRest: FGColor.lavender
+        case .moved: FGColor.gold
+        case .mostly: FGColor.sage
+        case .activities: FGColor.clay
+        case .keepsReturningTo: FGColor.rose
+        case .madeRoomForRest: FGColor.sage
         }
     }
 }

@@ -150,17 +150,23 @@ private struct TodayScreen: View {
 
     /// Named `Destination` rather than `Tab`: a nested type called `Tab`
     /// shadows SwiftUI's `Tab` view and the TabView stops compiling.
-    private enum Destination: Hashable { case today, you }
+    private enum Destination: Hashable { case today, explore, you }
 
     var body: some View {
-        // Two tabs, and only two. The PRD's "no tab, no browse" (§6) is aimed
-        // at the glossary — 873 browsable exercises is the overwhelm the app
-        // exists to remove — not at the app's own shell. Today stays the
-        // default and stays uncluttered; this is just how the peers to it
-        // become reachable. Library and Settings land here too.
+        // Three tabs now, not two — a deliberate, explicit exception to the
+        // PRD's "no tab, no browse" (§6). That rule is aimed at the glossary:
+        // 873 browsable exercises is the overwhelm the app exists to remove.
+        // Explore isn't a browsable list; it's the same redact-on-device →
+        // Worker pipeline as the check-in sheet's "Describe Day" mode, given
+        // its own persistent thread instead of a one-shot drawer. Today
+        // stays the default and stays uncluttered; this is just how the
+        // peers to it become reachable. Library and Settings land here too.
         TabView(selection: $tab) {
             Tab("Today", systemImage: "sun.max", value: Destination.today) {
                 TodayView(model: model, requestedSessionID: $requestedSessionID)
+            }
+            Tab("Chat", systemImage: "bubble.left.and.bubble.right", value: Destination.explore) {
+                ExploreView(model: model)
             }
             Tab("You", systemImage: "person", value: Destination.you) {
                 YouView(model: model, profile: profile) { answers in
