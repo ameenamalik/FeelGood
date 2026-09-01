@@ -16,6 +16,8 @@ nonisolated enum FGFont {
     // Headlines and the menu itself.
     static let display = Font.system(.largeTitle, design: .rounded).weight(.bold)
     static let title = Font.system(.title2, design: .rounded).weight(.bold)
+    /// "How are you today?", "Your menu" — the label on a block of the page.
+    static let sectionTitle = Font.system(.title3, design: .rounded).weight(.semibold)
     static let itemTitle = Font.system(.headline, design: .rounded).weight(.semibold)
     /// Course tags and durations — small, so the rounded face keeps them friendly.
     static let label = Font.system(.caption, design: .rounded).weight(.medium)

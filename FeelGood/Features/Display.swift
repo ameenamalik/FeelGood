@@ -273,3 +273,16 @@ private extension String {
         return first.uppercased() + dropFirst()
     }
 }
+
+
+nonisolated extension PlanCheckIn {
+    /// The morning's answers as one line, for the card that shows what today's
+    /// menu was built from.
+    ///
+    /// Energy and time only. `body` is deliberately absent — it is the field
+    /// that can say `cramping`, and a summary line is read over someone's
+    /// shoulder more often than anything else on the screen.
+    var summaryLine: String {
+        "\(energy.checkInLabel), \(time.summaryPhrase)"
+    }
+}
