@@ -1,6 +1,7 @@
 name = "feelgood-copy-dev"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
+compatibility_flags = [ "nodejs_compat" ]
 
 # Free tier covers 100,000 requests/day, which is far beyond anything this
 # app does during Shipaton (PRD §11).

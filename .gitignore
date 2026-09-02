@@ -34,11 +34,13 @@ worker/node_modules/
 worker/.wrangler/
 worker/dist/
 
-# Secrets — the Anthropic key lives in the Cloudflare Worker, never here
+# Secrets — the Anthropic/Gemini keys live in the Cloudflare Worker, never here
 *.xcconfig.local
 .env
 .env.*
 !.env.example
+worker/.dev.vars
+worker/.dev.vars.*
 
 # Claude Code tooling — skills cache and worktrees, not app content
 .agents/
