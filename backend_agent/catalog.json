@@ -2881,315 +2881,213 @@
       }
     },
     {
-      "id": "yt-kNbJJOJumlM",
-      "title": "Ten minutes, side abs and inner thighs",
-      "subtitle": "A quick, focused burn for the obliques and thighs",
-      "activity": "pilates",
+      "id": "app-desk-chair-squats",
+      "title": "Desk chair squat breaks",
+      "subtitle": "Wake up sleepy glutes and hips right at your office chair",
+      "activity": "strength",
       "qualities": [
         "strength",
         "mobility"
       ],
-      "durationMin": 10,
-      "intensity": 3,
+      "durationMin": 3,
+      "intensity": 2,
       "energyFit": [
+        "low",
         "steady",
         "strong"
       ],
       "equipment": [
-        "mat"
+        "none"
       ],
       "places": [
         "home",
-        "gym",
-        "studio"
+        "gym"
       ],
       "bodyFocus": [
-        "core"
+        "lowerBody",
+        "hips"
       ],
       "contraindications": [
-        "pregnancy",
-        "postpartum",
-        "pelvicFloor"
+        "knees"
       ],
       "intents": [
-        "strengthen",
+        "mobilize",
         "energize"
       ],
-      "course": "main",
+      "course": "appetizer",
       "source": {
-        "type": "youtube",
-        "videoID": "kNbJJOJumlM",
-        "channel": "SIMONE SHARICE"
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Stand in front of your chair",
+            "seconds": 20,
+            "cue": "Feet hip-width apart, toes slightly turned out. Roll shoulders back."
+          },
+          {
+            "name": "Hover squats (10 reps)",
+            "seconds": 60,
+            "cue": "Hinge hips back, tap glutes lightly to the seat without sitting, and drive up through heels."
+          },
+          {
+            "name": "Standing glute squeeze holds",
+            "seconds": 40,
+            "cue": "Stand tall, tuck your pelvis slightly, and squeeze glutes firmly for 3 seconds per rep."
+          },
+          {
+            "name": "Second round hover squats (10 reps)",
+            "seconds": 60,
+            "cue": "Keep chest proud and knees tracking over toes. Feel blood flow returning to your legs."
+          }
+        ]
       }
     },
     {
-      "id": "yt-huL9JFjDwVI",
-      "title": "Twenty-five minutes, full body beginner mat Pilates",
-      "subtitle": "A steady, whole-body flow to build core strength",
-      "activity": "pilates",
-      "qualities": [
-        "strength",
-        "mobility"
-      ],
-      "durationMin": 25,
-      "intensity": 3,
-      "energyFit": [
-        "steady",
-        "strong"
-      ],
-      "equipment": [
-        "mat"
-      ],
-      "places": [
-        "home",
-        "gym",
-        "studio"
-      ],
-      "bodyFocus": [
-        "full"
-      ],
-      "contraindications": [
-        "pregnancy",
-        "postpartum",
-        "pelvicFloor"
-      ],
-      "intents": [
-        "strengthen",
-        "mobilize"
-      ],
-      "course": "main",
-      "source": {
-        "type": "youtube",
-        "videoID": "huL9JFjDwVI",
-        "channel": "SIMONE SHARICE"
-      }
-    },
-    {
-      "id": "yt-bE0ssPhfBfg",
-      "title": "Eleven minutes, Pilates arms with weights",
-      "subtitle": "Sculpt and strengthen your shoulders and posture",
-      "activity": "pilates",
-      "qualities": [
-        "strength"
-      ],
-      "durationMin": 12,
-      "intensity": 3,
-      "energyFit": [
-        "steady",
-        "strong"
-      ],
-      "equipment": [
-        "mat",
-        "weights"
-      ],
-      "places": [
-        "home",
-        "gym",
-        "studio"
-      ],
-      "bodyFocus": [
-        "upperBody"
-      ],
-      "contraindications": [
-        "wrists"
-      ],
-      "intents": [
-        "strengthen"
-      ],
-      "course": "main",
-      "source": {
-        "type": "youtube",
-        "videoID": "bE0ssPhfBfg",
-        "channel": "SIMONE SHARICE"
-      }
-    },
-    {
-      "id": "yt-grzqpN2bNTs",
-      "title": "Fifteen minutes, core and glutes hourglass flow",
-      "subtitle": "A quick, low-impact sequence for the waist and hips",
-      "activity": "pilates",
-      "qualities": [
-        "strength",
-        "mobility"
-      ],
-      "durationMin": 15,
-      "intensity": 3,
-      "energyFit": [
-        "steady",
-        "strong"
-      ],
-      "equipment": [
-        "mat"
-      ],
-      "places": [
-        "home",
-        "gym",
-        "studio"
-      ],
-      "bodyFocus": [
-        "full"
-      ],
-      "contraindications": [
-        "pregnancy",
-        "postpartum",
-        "pelvicFloor"
-      ],
-      "intents": [
-        "strengthen",
-        "energize"
-      ],
-      "course": "main",
-      "source": {
-        "type": "youtube",
-        "videoID": "grzqpN2bNTs",
-        "channel": "SIMONE SHARICE"
-      }
-    },
-    {
-      "id": "yt-UDuZNDwQrqI",
-      "title": "Twenty-five minutes, gentle stress-relief flow",
-      "subtitle": "Slow down, move mindfully, and release tension",
-      "activity": "pilates",
+      "id": "app-desk-hip-glute-reset",
+      "title": "Hip flexor & glute reset",
+      "subtitle": "Decompress tight hip flexors and open the lower back after hours of sitting",
+      "activity": "stretching",
       "qualities": [
         "mobility",
         "downRegulation"
       ],
-      "durationMin": 25,
-      "intensity": 2,
+      "durationMin": 4,
+      "intensity": 1,
       "energyFit": [
         "low",
         "steady"
       ],
       "equipment": [
-        "mat"
+        "none"
       ],
       "places": [
         "home",
-        "gym",
-        "studio"
+        "gym"
       ],
       "bodyFocus": [
-        "full"
+        "hips",
+        "back",
+        "lowerBody"
       ],
       "contraindications": [],
       "intents": [
-        "calm",
-        "mobilize"
+        "mobilize",
+        "calm"
       ],
-      "course": "main",
+      "course": "appetizer",
       "source": {
-        "type": "youtube",
-        "videoID": "UDuZNDwQrqI",
-        "channel": "SIMONE SHARICE"
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Standing hip flexor reach (Right)",
+            "seconds": 60,
+            "cue": "Step right foot back, tuck tailbone slightly, and reach right arm up and over to feel the front hip open."
+          },
+          {
+            "name": "Standing hip flexor reach (Left)",
+            "seconds": 60,
+            "cue": "Step left foot back, tuck tailbone, and reach left arm high. Breathe into the front hip crease."
+          },
+          {
+            "name": "Seated figure-4 hip stretch",
+            "seconds": 80,
+            "cue": "Sit on the edge of your chair, cross right ankle over left knee, and gently lean forward with a flat back. Switch sides halfway."
+          },
+          {
+            "name": "Standing wide hip circles",
+            "seconds": 40,
+            "cue": "Hands on your hips, make big slow circles clockwise and counter-clockwise to lubricate hip joints."
+          }
+        ]
       }
     },
     {
-      "id": "yt-nZaHiSEXqrg",
-      "title": "Fifteen minutes, quick full body reset",
-      "subtitle": "A fast and efficient flow to wake up the whole body",
-      "activity": "pilates",
+      "id": "main-desk-worker-posture-flow",
+      "title": "All-day desk worker reset",
+      "subtitle": "Complete 15-minute anti-sitting routine: deep squat holds, wall angels, thoracic openers, and lunge pulses",
+      "activity": "stretching",
       "qualities": [
-        "strength",
-        "mobility"
+        "mobility",
+        "strength"
       ],
       "durationMin": 15,
-      "intensity": 3,
+      "intensity": 2,
       "energyFit": [
+        "low",
         "steady",
         "strong"
       ],
       "equipment": [
-        "mat"
+        "none"
       ],
       "places": [
         "home",
-        "gym",
-        "studio"
+        "gym"
       ],
       "bodyFocus": [
-        "full"
+        "full",
+        "back",
+        "hips",
+        "neckShoulders"
       ],
-      "contraindications": [
-        "pregnancy",
-        "postpartum",
-        "pelvicFloor"
-      ],
+      "contraindications": [],
       "intents": [
-        "energize",
-        "mobilize"
-      ],
-      "course": "main",
-      "source": {
-        "type": "youtube",
-        "videoID": "nZaHiSEXqrg",
-        "channel": "SIMONE SHARICE"
-      }
-    },
-    {
-      "id": "yt-5m-hvk7D6QI",
-      "title": "Forty-one minutes, full body sculpt with weights",
-      "subtitle": "A comprehensive, strength-focused Pilates session",
-      "activity": "pilates",
-      "qualities": [
-        "strength",
-        "endurance"
-      ],
-      "durationMin": 41,
-      "intensity": 4,
-      "energyFit": [
-        "strong"
-      ],
-      "equipment": [
-        "mat",
-        "weights"
-      ],
-      "places": [
-        "home",
-        "gym",
-        "studio"
-      ],
-      "bodyFocus": [
-        "full"
-      ],
-      "contraindications": [
-        "pregnancy",
-        "postpartum",
-        "pelvicFloor",
-        "wrists"
-      ],
-      "intents": [
+        "mobilize",
         "strengthen",
         "energize"
       ],
       "course": "main",
       "source": {
-        "type": "youtube",
-        "videoID": "5m-hvk7D6QI",
-        "channel": "SIMONE SHARICE"
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Chest opener & wall angels",
+            "seconds": 180,
+            "cue": "Back flat against the wall, elbows bent at 90 degrees. Slide arms overhead while keeping ribcage down to undo rounded shoulders."
+          },
+          {
+            "name": "Supported deep squat hold & hip pry",
+            "seconds": 180,
+            "cue": "Hold onto a desk or doorframe, sink into a deep squat, and shift weight side to side to open ankles and hips."
+          },
+          {
+            "name": "Low lunge pulses & thoracic twists",
+            "seconds": 240,
+            "cue": "Step into a runner's lunge, drop back knee, reach same-side arm toward ceiling for a gentle twist. Switch sides after 2 minutes."
+          },
+          {
+            "name": "Glute bridge holds & pelvic tilts",
+            "seconds": 180,
+            "cue": "Lie on the floor or mat, drive through heels to lift hips into bridge, and hold for 5 seconds at the top to wake up dormant glutes.",
+            "glossaryID": "glute-bridge"
+          },
+          {
+            "name": "Standing quad stretch & side body reach",
+            "seconds": 120,
+            "cue": "Hold onto desk for balance, draw heel to glute, and tuck tailbone. Switch sides."
+          }
+        ]
       }
     },
     {
-      "id": "yt-en2Zs4n4yio",
-      "title": "Twenty-four minutes, legs and glutes focus",
-      "subtitle": "A mat-based burn targeting the lower body",
-      "activity": "pilates",
+      "id": "side-desk-micro-squats",
+      "title": "Coffee break counter squats",
+      "subtitle": "Turn waiting for the kettle or microwave into an effortless lower-body circulation boost",
+      "activity": "strength",
       "qualities": [
-        "strength",
-        "mobility"
+        "strength"
       ],
-      "durationMin": 24,
-      "intensity": 3,
+      "durationMin": 2,
+      "intensity": 2,
       "energyFit": [
         "steady",
         "strong"
       ],
       "equipment": [
-        "mat"
+        "none"
       ],
       "places": [
         "home",
-        "gym",
-        "studio"
+        "gym"
       ],
       "bodyFocus": [
         "lowerBody"
@@ -3198,79 +3096,654 @@
         "knees"
       ],
       "intents": [
-        "strengthen",
-        "mobilize"
+        "energize",
+        "play"
       ],
-      "course": "main",
+      "course": "side",
       "source": {
-        "type": "youtube",
-        "videoID": "en2Zs4n4yio",
-        "channel": "SIMONE SHARICE"
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Kettle start & stance set",
+            "seconds": 15,
+            "cue": "Start your coffee or microwave, face the kitchen counter, and place feet shoulder-width apart."
+          },
+          {
+            "name": "Counter-tap tempo squats (15 reps)",
+            "seconds": 60,
+            "cue": "Smoothly squat down and stand tall, lightly touching the counter for rhythm. Keep your weight distributed across the whole foot."
+          },
+          {
+            "name": "Calf raise pumps",
+            "seconds": 30,
+            "cue": "Rise up high onto toes, hold for 1 second, and lower down to pump blood back up the legs."
+          },
+          {
+            "name": "Take your fresh cup & walk",
+            "seconds": 15,
+            "cue": "Grab your drink feeling energized and refreshed."
+          }
+        ]
       }
     },
     {
-      "id": "yt-l31iSekrSPw",
-      "title": "Twelve minutes, tight core and abs",
-      "subtitle": "A focused core-strengthening mat routine",
-      "activity": "pilates",
+      "id": "app-single-song-dance",
+      "title": "The single-song dance party",
+      "subtitle": "Blast your favorite track and dance completely uninhibited for 3 minutes",
+      "activity": "dance",
       "qualities": [
-        "strength"
+        "coordination",
+        "downRegulation"
       ],
-      "durationMin": 12,
+      "durationMin": 3,
       "intensity": 3,
       "energyFit": [
         "steady",
         "strong"
       ],
       "equipment": [
-        "mat"
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "joy",
+        "play",
+        "energize"
+      ],
+      "course": "appetizer",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Queue your song",
+            "seconds": 15,
+            "cue": "Pick the highest-energy, zero-judgment song on your playlist and turn the volume up."
+          },
+          {
+            "name": "Shake out hands & shoulders",
+            "seconds": 15,
+            "cue": "Loosen your wrists, drop your shoulders, and let the bass take over."
+          },
+          {
+            "name": "Dance uninhibited",
+            "seconds": 120,
+            "cue": "No choreography, no performance. Jump, spin, flail, or groove however your body wants."
+          },
+          {
+            "name": "Final breath & stillness",
+            "seconds": 30,
+            "cue": "Song fades. Hands on your chest, feel your heartbeat and breathe in deep."
+          }
+        ]
+      }
+    },
+    {
+      "id": "app-sunlight-strut",
+      "title": "Sunlight strut",
+      "subtitle": "Step outside barefoot onto the grass or porch for a 5-minute deep-breathing session",
+      "activity": "walking",
+      "qualities": [
+        "downRegulation",
+        "mobility"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "calm",
+        "energize"
+      ],
+      "course": "appetizer",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Step outside barefoot",
+            "seconds": 30,
+            "cue": "Kick off your shoes and step onto the grass, deck, or patio. Feel the ground beneath you."
+          },
+          {
+            "name": "Ground your feet",
+            "seconds": 60,
+            "cue": "Spread your toes into the earth. Turn your face toward the natural light."
+          },
+          {
+            "name": "Deep rhythmic breathing",
+            "seconds": 150,
+            "cue": "Inhale crisp open air for 4 seconds, exhale slowly for 6. Let your shoulders soften."
+          },
+          {
+            "name": "Slow grounding strut",
+            "seconds": 60,
+            "cue": "Take slow, deliberate barefoot steps. Notice the temperature and texture underfoot."
+          }
+        ]
+      }
+    },
+    {
+      "id": "app-desk-escape-stretch",
+      "title": "Desk escape stretch",
+      "subtitle": "Quick neck, shoulder, and wrist decompression routine",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "gym"
+      ],
+      "bodyFocus": [
+        "neckShoulders",
+        "upperBody"
+      ],
+      "contraindications": [],
+      "intents": [
+        "mobilize",
+        "calm"
+      ],
+      "course": "appetizer",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Stand & step back",
+            "seconds": 20,
+            "cue": "Push your chair away from the desk and stand tall with feet hip-width apart."
+          },
+          {
+            "name": "Neck side stretch & rolls",
+            "seconds": 70,
+            "cue": "Tilt right ear to right shoulder, breathe into the left side. Gently switch to the other side.",
+            "glossaryID": "neck-side-stretch"
+          },
+          {
+            "name": "Shoulder shrugs & chest opener",
+            "seconds": 90,
+            "cue": "Roll shoulders up, back, and down. Clasp hands behind your back and open the collarbones."
+          },
+          {
+            "name": "Wrist circles & forearm stretch",
+            "seconds": 90,
+            "cue": "Circle your wrists both ways. Extend one arm forward and gently draw fingertips back."
+          },
+          {
+            "name": "Full upper body shakeout",
+            "seconds": 30,
+            "cue": "Shake out arms, bounce lightly on your heels, and reset for the rest of your day."
+          }
+        ]
+      }
+    },
+    {
+      "id": "app-power-explosions",
+      "title": "Power explosions",
+      "subtitle": "Fire up your nervous system with fast jumping jacks or bodyweight squats",
+      "activity": "strength",
+      "qualities": [
+        "impact",
+        "strength"
+      ],
+      "durationMin": 3,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
       ],
       "places": [
         "home",
         "gym",
-        "studio"
+        "outdoors"
       ],
       "bodyFocus": [
-        "core"
+        "full",
+        "lowerBody"
       ],
       "contraindications": [
         "pregnancy",
         "postpartum",
-        "pelvicFloor"
+        "pelvicFloor",
+        "knees"
       ],
       "intents": [
-        "strengthen"
+        "energize",
+        "play"
       ],
-      "course": "main",
+      "course": "appetizer",
       "source": {
-        "type": "youtube",
-        "videoID": "l31iSekrSPw",
-        "channel": "SIMONE SHARICE"
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Set your stance & shake it out",
+            "seconds": 20,
+            "cue": "Stand with feet ready. Take one big breath to summon quick power."
+          },
+          {
+            "name": "First explosion: 15 rapid reps",
+            "seconds": 50,
+            "cue": "Power through 15 fast jumping jacks or snappy bodyweight squats. Quick, sharp, alive."
+          },
+          {
+            "name": "Active recovery breath",
+            "seconds": 30,
+            "cue": "Hands on hips. Deep inhale, slow exhale while pacing in place."
+          },
+          {
+            "name": "Second explosion: 15 rapid reps",
+            "seconds": 50,
+            "cue": "Match the speed or go slightly faster. Light on your feet, full extension at the top."
+          },
+          {
+            "name": "Grounding breath",
+            "seconds": 30,
+            "cue": "Stand tall, palms forward. Feel the energetic pulse humming through your body."
+          }
+        ]
       }
     },
     {
-      "id": "yt-K3ZQF0VFcNk",
-      "title": "Twenty minutes, core and glutes flow",
-      "subtitle": "Target the core and hips with this mat routine",
-      "activity": "pilates",
+      "id": "side-audio-tracking",
+      "title": "Audio tracking",
+      "subtitle": "Pair a gripping narrative podcast exclusively with laundry or kitchen chores",
+      "activity": "walking",
       "qualities": [
-        "strength"
+        "endurance"
       ],
-      "durationMin": 20,
-      "intensity": 3,
+      "durationMin": 15,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "play",
+        "calm"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Cue your story",
+            "seconds": 60,
+            "cue": "Slip headphones on and press play on a story podcast you only allow yourself to hear while moving."
+          },
+          {
+            "name": "Active chore flow",
+            "seconds": 780,
+            "cue": "Fold, wipe, sort, or tidy with steady, continuous physical momentum while your mind gets lost in the narrative."
+          },
+          {
+            "name": "Pause & appreciate",
+            "seconds": 60,
+            "cue": "Hit pause on a cliffhanger, take off headphones, and admire the clean space you just created."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-aromatherapy-reset",
+      "title": "Aromatherapy movement reset",
+      "subtitle": "Mist your space with citrus or eucalyptus spray before physical tasks",
+      "activity": "stretching",
+      "qualities": [
+        "downRegulation"
+      ],
+      "durationMin": 5,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "energize",
+        "calm"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Mist the room",
+            "seconds": 30,
+            "cue": "Spritz an energizing citrus, mint, or eucalyptus spray generously into your workspace."
+          },
+          {
+            "name": "Three clearing breaths",
+            "seconds": 60,
+            "cue": "Close your eyes, breathe the scent all the way into the lower ribs, and exhale fully."
+          },
+          {
+            "name": "Gentle standing twists",
+            "seconds": 150,
+            "cue": "Let your arms swing loosely around your torso in rhythm with the fresh scent."
+          },
+          {
+            "name": "Step into motion",
+            "seconds": 60,
+            "cue": "Open your eyes, take a sip of water, and carry that sensory clarity straight into your task."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-sonic-focus",
+      "title": "Sonic focus",
+      "subtitle": "High-tempo lo-fi, synthwave, or game soundtracks to turn chores into a game",
+      "activity": "walking",
+      "qualities": [
+        "coordination"
+      ],
+      "durationMin": 15,
+      "intensity": 2,
       "energyFit": [
         "steady",
         "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "energize",
+        "play"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Drop the needle",
+            "seconds": 45,
+            "cue": "Queue up driving synthwave, racing game soundtracks, or high-tempo lo-fi beats."
+          },
+          {
+            "name": "Define your arena",
+            "seconds": 15,
+            "cue": "Pick one room or one surface to conquer before the track ends."
+          },
+          {
+            "name": "Speed clearing quest",
+            "seconds": 720,
+            "cue": "Move to the beat. Treat every item returned to its place like a quest checkpoint."
+          },
+          {
+            "name": "Victory pose & stretch",
+            "seconds": 120,
+            "cue": "Throw your hands up in victory, take a long stretch upward, and celebrate the completed run."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-active-posture-shift",
+      "title": "Active posture shift",
+      "subtitle": "Trade your desk chair for a stability ball or under-desk walking pad during calls",
+      "activity": "walking",
+      "qualities": [
+        "balance",
+        "endurance"
+      ],
+      "durationMin": 20,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "core",
+        "lowerBody"
+      ],
+      "contraindications": [],
+      "intents": [
+        "mobilize",
+        "energize"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Swap your seat",
+            "seconds": 60,
+            "cue": "Roll in your stability ball or power on your under-desk pad at low walking speed."
+          },
+          {
+            "name": "Align your spine",
+            "seconds": 60,
+            "cue": "Stack your ribcage over your pelvis. Keep your chin level and shoulders relaxed."
+          },
+          {
+            "name": "Continuous micro-movement",
+            "seconds": 1020,
+            "cue": "Maintain a gentle pelvic rhythm on the ball or a steady easy stride during your casual meeting."
+          },
+          {
+            "name": "Step off & calf stretch",
+            "seconds": 60,
+            "cue": "Step off, place hands on desk, and press one heel back into the floor to release calf tension."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-discovery-walk",
+      "title": "The discovery walk",
+      "subtitle": "Map out a brand new neighborhood route or trail for a novelty boost",
+      "activity": "walking",
+      "qualities": [
+        "endurance"
+      ],
+      "durationMin": 25,
+      "intensity": 2,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "outdoor"
+      ],
+      "places": [
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full",
+        "lowerBody"
+      ],
+      "contraindications": [],
+      "intents": [
+        "joy",
+        "play",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Lace up & pick the unknown turn",
+            "seconds": 60,
+            "cue": "Shoes on. Decide right now to take the street, alley, or fork you've never walked down before."
+          },
+          {
+            "name": "Novelty outward march",
+            "seconds": 720,
+            "cue": "Walk at a brisk, comfortable pace. Spot 5 architectural details or plants you never noticed."
+          },
+          {
+            "name": "Deep loop exploration",
+            "seconds": 600,
+            "cue": "Follow the trail or side street where it leads. Keep your gaze up and off the phone screen."
+          },
+          {
+            "name": "Relaxed return stride",
+            "seconds": 120,
+            "cue": "Ease your pace as you head back home. Let your arms swing freely and breathe deeply."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-mindful-yoga-flow",
+      "title": "Mindful yoga flow",
+      "subtitle": "Unroll your mat for a structured 30-minute Vinyasa & deep Yin breathing session",
+      "activity": "yoga",
+      "qualities": [
+        "mobility",
+        "downRegulation"
+      ],
+      "durationMin": 30,
+      "intensity": 2,
+      "energyFit": [
+        "low",
+        "steady"
       ],
       "equipment": [
         "mat"
       ],
       "places": [
         "home",
-        "gym",
         "studio"
       ],
       "bodyFocus": [
+        "full",
+        "hips",
+        "back"
+      ],
+      "contraindications": [],
+      "intents": [
+        "calm",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Centering & belly breathing",
+            "seconds": 180,
+            "cue": "Sit cross-legged or kneel on your mat. Place hands on lower belly and match breath to 4-in, 4-out."
+          },
+          {
+            "name": "Cat-cow & gentle spinal waves",
+            "seconds": 240,
+            "cue": "Move between arched back on the inhale and rounded spine on the exhale. Flow with your rhythm."
+          },
+          {
+            "name": "Vinyasa flow & standing warriors",
+            "seconds": 600,
+            "cue": "Downward dog to lunges, Warrior II pulses, and open heart openers. Move smoothly without rushing."
+          },
+          {
+            "name": "Deep Yin hip openers",
+            "seconds": 480,
+            "cue": "Settle into Pigeon or Lizard pose on both sides. Surrender into the stretch and breathe into tightness."
+          },
+          {
+            "name": "Reclined spinal twists",
+            "seconds": 180,
+            "cue": "Lie on your back, draw knees to chest, and drop them gently to each side."
+          },
+          {
+            "name": "Savasana still integration",
+            "seconds": 120,
+            "cue": "Extend arms and legs wide on your mat. Total release into the floor."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-sweat-investment",
+      "title": "Sweat investment circuit",
+      "subtitle": "30-minute targeted kettlebell circuit or high-intensity bodyweight strength",
+      "activity": "strength",
+      "qualities": [
+        "strength",
+        "endurance",
+        "impact"
+      ],
+      "durationMin": 30,
+      "intensity": 4,
+      "energyFit": [
+        "strong"
+      ],
+      "equipment": [
+        "weights",
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym"
+      ],
+      "bodyFocus": [
+        "full",
+        "lowerBody",
         "core"
       ],
       "contraindications": [
@@ -3284,22 +3757,104 @@
       ],
       "course": "main",
       "source": {
-        "type": "youtube",
-        "videoID": "K3ZQF0VFcNk",
-        "channel": "SIMONE SHARICE"
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Dynamic joint warm-up",
+            "seconds": 240,
+            "cue": "Arm circles, hip hinges, world's greatest stretch, and light bodyweight squats to prime the engine."
+          },
+          {
+            "name": "Block 1: Power & legs",
+            "seconds": 480,
+            "cue": "Alternate between 10 kettlebell / dumbbell goblet squats and 15 explosive hip swings. 3 rounds."
+          },
+          {
+            "name": "Block 2: Upper body push-pull",
+            "seconds": 480,
+            "cue": "Push-ups or dumbbell overhead presses paired with bent-over rows. Smooth control on every rep."
+          },
+          {
+            "name": "Block 3: Core & lunge burn",
+            "seconds": 420,
+            "cue": "Alternating reverse lunges into 45-second hollow body or forearm plank holds."
+          },
+          {
+            "name": "Cool-down & deep recovery",
+            "seconds": 180,
+            "cue": "Child's pose and standing quad stretches. Let your heart rate glide back down to baseline."
+          }
+        ]
       }
     },
     {
-      "id": "yt-HTDFOwzCs4g",
-      "title": "Twenty-three minutes, low impact beginner Pilates",
-      "subtitle": "A gentle, full-body mat flow with zero jumping",
-      "activity": "pilates",
+      "id": "main-local-studio-session",
+      "title": "Local studio session",
+      "subtitle": "Book an intro movement class or group fitness session for community energy",
+      "activity": "dance",
       "qualities": [
-        "mobility",
+        "coordination",
         "strength"
       ],
-      "durationMin": 23,
-      "intensity": 2,
+      "durationMin": 45,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "joy",
+        "energize",
+        "play"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Arrive & settle in",
+            "seconds": 300,
+            "cue": "Step into the studio, sign in, kick off your coat, and soak in the buzzing community energy."
+          },
+          {
+            "name": "Instructor guided warm-up",
+            "seconds": 300,
+            "cue": "Follow along with the group warm-up. Match the collective rhythm in the room."
+          },
+          {
+            "name": "Main class block",
+            "seconds": 1800,
+            "cue": "Ride the group momentum through the main choreography, intervals, or guided sequences."
+          },
+          {
+            "name": "Group cool-down & connection",
+            "seconds": 300,
+            "cue": "Group stretches, breath together, and a shared round of applause with your fellow movers."
+          }
+        ]
+      }
+    },
+    {
+      "id": "des-guided-foam-rolling",
+      "title": "Guided foam rolling",
+      "subtitle": "Roll out sore muscles while catching up on a single 15-minute video",
+      "activity": "stretching",
+      "qualities": [
+        "mobility",
+        "downRegulation"
+      ],
+      "durationMin": 15,
+      "intensity": 1,
       "energyFit": [
         "low",
         "steady"
@@ -3308,7 +3863,245 @@
         "mat"
       ],
       "places": [
-        "home",
+        "home"
+      ],
+      "bodyFocus": [
+        "lowerBody",
+        "back",
+        "hips"
+      ],
+      "contraindications": [],
+      "intents": [
+        "mobilize",
+        "calm"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Queue your video & mat setup",
+            "seconds": 60,
+            "cue": "Pick exactly one 15-minute video reward, prop your screen up, and place your foam roller on the mat."
+          },
+          {
+            "name": "Calves & hamstrings rolling",
+            "seconds": 240,
+            "cue": "Slow passes along the lower legs. Pause and breathe gently over any tender trigger points."
+          },
+          {
+            "name": "Glutes & piriformis release",
+            "seconds": 240,
+            "cue": "Cross one ankle over the opposite knee on the roller. Lean slightly into the outer hip."
+          },
+          {
+            "name": "Upper back & thoracic roll",
+            "seconds": 240,
+            "cue": "Support your head with your hands, roller across mid-back. Gently arch and roll upper ribs."
+          },
+          {
+            "name": "Lying flat integration",
+            "seconds": 120,
+            "cue": "Move roller aside, lay completely flat on the mat, and let your muscles soak in the blood flow."
+          }
+        ]
+      }
+    },
+    {
+      "id": "des-luxury-recovery-soak",
+      "title": "Luxury recovery soak",
+      "subtitle": "A hot bath infused with Epsom salts immediately following movement",
+      "activity": "stretching",
+      "qualities": [
+        "downRegulation"
+      ],
+      "durationMin": 20,
+      "intensity": 1,
+      "energyFit": [
+        "low"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "calm"
+      ],
+      "course": "dessert",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Draw the bath & Epsom salt prep",
+            "seconds": 120,
+            "cue": "Run hot water, pour in 2 cups of Epsom salts, and dim the bathroom lights."
+          },
+          {
+            "name": "Submerge & settle",
+            "seconds": 60,
+            "cue": "Step in slowly, ease shoulders beneath the waterline, and let the warm mineral water hold you."
+          },
+          {
+            "name": "Deep muscular relaxation soak",
+            "seconds": 900,
+            "cue": "Close your eyes. Feel magnesium soothing tired tissue with every long, unhurried exhale."
+          },
+          {
+            "name": "Gentle seated neck & shoulder stretches",
+            "seconds": 120,
+            "cue": "Slowly roll your neck and stretch shoulders in the steam before stepping out into a towel."
+          }
+        ]
+      }
+    },
+    {
+      "id": "spec-nature-immersion",
+      "title": "Nature immersion hike",
+      "subtitle": "Hike a scenic trail or explore a provincial/national park for a mental reset",
+      "activity": "walking",
+      "qualities": [
+        "endurance",
+        "downRegulation"
+      ],
+      "durationMin": 90,
+      "intensity": 2,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "outdoor"
+      ],
+      "places": [
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full",
+        "lowerBody"
+      ],
+      "contraindications": [],
+      "intents": [
+        "calm",
+        "joy",
+        "energize"
+      ],
+      "course": "special",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Pack water & trail prep",
+            "seconds": 300,
+            "cue": "Pack a water bottle, trail snack, and lace up your hiking boots at the trailhead."
+          },
+          {
+            "name": "Trailhead start & steady uphill cadence",
+            "seconds": 2400,
+            "cue": "Set a steady, unhurried uphill stride. Tune into the sound of leaves, wind, and your footsteps."
+          },
+          {
+            "name": "Lookout rest & mindful grounding",
+            "seconds": 1200,
+            "cue": "Reach the summit or scenic viewpoint. Sit down, sip water, and gaze into the open horizon."
+          },
+          {
+            "name": "Forest descent & deep breathing",
+            "seconds": 1500,
+            "cue": "Navigate the descent with soft knees, inhaling forest air and soaking in the calm vitality."
+          }
+        ]
+      }
+    },
+    {
+      "id": "spec-spa-sauna-cycles",
+      "title": "Spa & sauna thermal cycles",
+      "subtitle": "Infrared sauna sessions, cold plunges, or massage therapy for deep restoration",
+      "activity": "stretching",
+      "qualities": [
+        "downRegulation"
+      ],
+      "durationMin": 60,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [],
+      "intents": [
+        "calm"
+      ],
+      "course": "special",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Warm shower & hydration prep",
+            "seconds": 300,
+            "cue": "Rinse off with a warm shower, drink a large glass of electrolyte water, and enter the quiet thermal space."
+          },
+          {
+            "name": "Thermal heat soak / sauna cycle 1",
+            "seconds": 900,
+            "cue": "Sit or lie in the sauna or hot bath. Let heat penetrate joints and induce full-body sweating."
+          },
+          {
+            "name": "Cold plunge or cool rinse reset",
+            "seconds": 180,
+            "cue": "Step into the cold plunge or cool shower for 1 to 3 minutes. Focus on controlled, steady exhales."
+          },
+          {
+            "name": "Rest & hydration lounge",
+            "seconds": 420,
+            "cue": "Wrap in a warm robe and recline in the lounge. Feel the vascular flush and deep tranquility."
+          },
+          {
+            "name": "Second sauna & cool cycle",
+            "seconds": 1200,
+            "cue": "Return to the heat for round two, followed by a final refreshing cool rinse."
+          },
+          {
+            "name": "Integration & light mobility",
+            "seconds": 600,
+            "cue": "Gentle seated spinal twists and hip openers in the relaxation lounge before heading out."
+          }
+        ]
+      }
+    },
+    {
+      "id": "spec-performance-coaching",
+      "title": "1-on-1 performance coaching",
+      "subtitle": "Personalized guided training or physical rehab session to break past plateaus",
+      "activity": "strength",
+      "qualities": [
+        "strength",
+        "mobility",
+        "coordination"
+      ],
+      "durationMin": 60,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "gym"
+      ],
+      "places": [
         "gym",
         "studio"
       ],
@@ -3317,53 +4110,39 @@
       ],
       "contraindications": [],
       "intents": [
-        "mobilize",
-        "calm"
+        "strengthen",
+        "mobilize"
       ],
-      "course": "main",
+      "course": "special",
       "source": {
-        "type": "youtube",
-        "videoID": "HTDFOwzCs4g",
-        "channel": "SIMONE SHARICE"
-      }
-    },
-    {
-      "id": "yt-cItPBVsnIgw",
-      "title": "Eighteen minutes, high-intensity Pilates arms",
-      "subtitle": "A burn-inducing upper body sequence with no equipment",
-      "activity": "pilates",
-      "qualities": [
-        "strength",
-        "endurance"
-      ],
-      "durationMin": 18,
-      "intensity": 3,
-      "energyFit": [
-        "steady",
-        "strong"
-      ],
-      "equipment": [
-        "mat"
-      ],
-      "places": [
-        "home",
-        "gym",
-        "studio"
-      ],
-      "bodyFocus": [
-        "upperBody"
-      ],
-      "contraindications": [
-        "wrists"
-      ],
-      "intents": [
-        "strengthen"
-      ],
-      "course": "main",
-      "source": {
-        "type": "youtube",
-        "videoID": "cItPBVsnIgw",
-        "channel": "SIMONE SHARICE"
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Movement screen & check-in",
+            "seconds": 600,
+            "cue": "Assess range of motion, review recent training fatigue, and calibrate the day's focus with your coach."
+          },
+          {
+            "name": "Targeted activation & joint prep",
+            "seconds": 600,
+            "cue": "Band-resisted activation, scapular glides, and hip stabilization to prepare for complex loads."
+          },
+          {
+            "name": "Primary lift / skill progression",
+            "seconds": 1800,
+            "cue": "Coached technique execution under appropriate load with real-time cues and biomechanical feedback."
+          },
+          {
+            "name": "Accessory & stability circuits",
+            "seconds": 420,
+            "cue": "High-yield unilateral stability, core bracing, or tempo exercises to fix movement asymmetries."
+          },
+          {
+            "name": "Post-session debrief & recovery plan",
+            "seconds": 180,
+            "cue": "Review wins, document form takeaways, and map out mobility homework for the week."
+          }
+        ]
       }
     }
   ],

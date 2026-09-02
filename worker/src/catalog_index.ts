@@ -1062,116 +1062,328 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     ]
   },
   {
-    "id": "yt-kNbJJOJumlM",
-    "title": "Ten minutes, side abs and inner thighs",
-    "subtitle": "A quick, focused burn for the obliques and thighs",
-    "durationMin": 10,
+    "id": "app-desk-chair-squats",
+    "title": "Desk chair squat breaks",
+    "subtitle": "Wake up sleepy glutes and hips right at your office chair",
+    "durationMin": 3,
     "intensity": "moderate",
-    "course": "main",
-    "activity": "pilates",
+    "course": "appetizer",
+    "activity": "strength",
     "places": [
       "home",
-      "gym",
-      "studio"
+      "gym"
     ],
     "bodyFocus": [
-      "core"
+      "lowerBody",
+      "hips"
     ],
     "intents": [
-      "strengthen",
+      "mobilize",
       "energize"
     ],
     "equipment": [
-      "mat"
+      "none"
     ]
   },
   {
-    "id": "yt-huL9JFjDwVI",
-    "title": "Twenty-five minutes, full body beginner mat Pilates",
-    "subtitle": "A steady, whole-body flow to build core strength",
-    "durationMin": 25,
-    "intensity": "moderate",
-    "course": "main",
-    "activity": "pilates",
+    "id": "app-desk-hip-glute-reset",
+    "title": "Hip flexor & glute reset",
+    "subtitle": "Decompress tight hip flexors and open the lower back after hours of sitting",
+    "durationMin": 4,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "stretching",
     "places": [
       "home",
-      "gym",
-      "studio"
+      "gym"
     ],
     "bodyFocus": [
-      "full"
+      "hips",
+      "back",
+      "lowerBody"
     ],
     "intents": [
-      "strengthen",
-      "mobilize"
+      "mobilize",
+      "calm"
     ],
     "equipment": [
-      "mat"
+      "none"
     ]
   },
   {
-    "id": "yt-bE0ssPhfBfg",
-    "title": "Eleven minutes, Pilates arms with weights",
-    "subtitle": "Sculpt and strengthen your shoulders and posture",
-    "durationMin": 12,
-    "intensity": "moderate",
-    "course": "main",
-    "activity": "pilates",
-    "places": [
-      "home",
-      "gym",
-      "studio"
-    ],
-    "bodyFocus": [
-      "upperBody"
-    ],
-    "intents": [
-      "strengthen"
-    ],
-    "equipment": [
-      "mat",
-      "weights"
-    ]
-  },
-  {
-    "id": "yt-grzqpN2bNTs",
-    "title": "Fifteen minutes, core and glutes hourglass flow",
-    "subtitle": "A quick, low-impact sequence for the waist and hips",
+    "id": "main-desk-worker-posture-flow",
+    "title": "All-day desk worker reset",
+    "subtitle": "Complete 15-minute anti-sitting routine: deep squat holds, wall angels, thoracic openers, and lunge pulses",
     "durationMin": 15,
     "intensity": "moderate",
     "course": "main",
-    "activity": "pilates",
+    "activity": "stretching",
     "places": [
       "home",
-      "gym",
-      "studio"
+      "gym"
+    ],
+    "bodyFocus": [
+      "full",
+      "back",
+      "hips",
+      "neckShoulders"
+    ],
+    "intents": [
+      "mobilize",
+      "strengthen",
+      "energize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-desk-micro-squats",
+    "title": "Coffee break counter squats",
+    "subtitle": "Turn waiting for the kettle or microwave into an effortless lower-body circulation boost",
+    "durationMin": 2,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody"
+    ],
+    "intents": [
+      "energize",
+      "play"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "app-single-song-dance",
+    "title": "The single-song dance party",
+    "subtitle": "Blast your favorite track and dance completely uninhibited for 3 minutes",
+    "durationMin": 3,
+    "intensity": "moderate",
+    "course": "appetizer",
+    "activity": "dance",
+    "places": [
+      "home"
     ],
     "bodyFocus": [
       "full"
     ],
     "intents": [
-      "strengthen",
+      "joy",
+      "play",
       "energize"
     ],
     "equipment": [
-      "mat"
+      "none"
     ]
   },
   {
-    "id": "yt-UDuZNDwQrqI",
-    "title": "Twenty-five minutes, gentle stress-relief flow",
-    "subtitle": "Slow down, move mindfully, and release tension",
-    "durationMin": 25,
+    "id": "app-sunlight-strut",
+    "title": "Sunlight strut",
+    "subtitle": "Step outside barefoot onto the grass or porch for a 5-minute deep-breathing session",
+    "durationMin": 5,
     "intensity": "gentle",
-    "course": "main",
-    "activity": "pilates",
+    "course": "appetizer",
+    "activity": "walking",
     "places": [
       "home",
-      "gym",
-      "studio"
+      "outdoors"
     ],
     "bodyFocus": [
       "full"
+    ],
+    "intents": [
+      "calm",
+      "energize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "app-desk-escape-stretch",
+    "title": "Desk escape stretch",
+    "subtitle": "Quick neck, shoulder, and wrist decompression routine",
+    "durationMin": 5,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "neckShoulders",
+      "upperBody"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "app-power-explosions",
+    "title": "Power explosions",
+    "subtitle": "Fire up your nervous system with fast jumping jacks or bodyweight squats",
+    "durationMin": 3,
+    "intensity": "moderate",
+    "course": "appetizer",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym",
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full",
+      "lowerBody"
+    ],
+    "intents": [
+      "energize",
+      "play"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-audio-tracking",
+    "title": "Audio tracking",
+    "subtitle": "Pair a gripping narrative podcast exclusively with laundry or kitchen chores",
+    "durationMin": 15,
+    "intensity": "gentle",
+    "course": "side",
+    "activity": "walking",
+    "places": [
+      "home"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "play",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-aromatherapy-reset",
+    "title": "Aromatherapy movement reset",
+    "subtitle": "Mist your space with citrus or eucalyptus spray before physical tasks",
+    "durationMin": 5,
+    "intensity": "gentle",
+    "course": "side",
+    "activity": "stretching",
+    "places": [
+      "home"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-sonic-focus",
+    "title": "Sonic focus",
+    "subtitle": "High-tempo lo-fi, synthwave, or game soundtracks to turn chores into a game",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "walking",
+    "places": [
+      "home"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "play"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-active-posture-shift",
+    "title": "Active posture shift",
+    "subtitle": "Trade your desk chair for a stability ball or under-desk walking pad during calls",
+    "durationMin": 20,
+    "intensity": "gentle",
+    "course": "side",
+    "activity": "walking",
+    "places": [
+      "home"
+    ],
+    "bodyFocus": [
+      "core",
+      "lowerBody"
+    ],
+    "intents": [
+      "mobilize",
+      "energize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-discovery-walk",
+    "title": "The discovery walk",
+    "subtitle": "Map out a brand new neighborhood route or trail for a novelty boost",
+    "durationMin": 25,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "walking",
+    "places": [
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full",
+      "lowerBody"
+    ],
+    "intents": [
+      "joy",
+      "play",
+      "energize"
+    ],
+    "equipment": [
+      "outdoor"
+    ]
+  },
+  {
+    "id": "main-mindful-yoga-flow",
+    "title": "Mindful yoga flow",
+    "subtitle": "Unroll your mat for a structured 30-minute Vinyasa & deep Yin breathing session",
+    "durationMin": 30,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "yoga",
+    "places": [
+      "home",
+      "studio"
+    ],
+    "bodyFocus": [
+      "full",
+      "hips",
+      "back"
     ],
     "intents": [
       "calm",
@@ -1182,140 +1394,69 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     ]
   },
   {
-    "id": "yt-nZaHiSEXqrg",
-    "title": "Fifteen minutes, quick full body reset",
-    "subtitle": "A fast and efficient flow to wake up the whole body",
-    "durationMin": 15,
-    "intensity": "moderate",
-    "course": "main",
-    "activity": "pilates",
-    "places": [
-      "home",
-      "gym",
-      "studio"
-    ],
-    "bodyFocus": [
-      "full"
-    ],
-    "intents": [
-      "energize",
-      "mobilize"
-    ],
-    "equipment": [
-      "mat"
-    ]
-  },
-  {
-    "id": "yt-5m-hvk7D6QI",
-    "title": "Forty-one minutes, full body sculpt with weights",
-    "subtitle": "A comprehensive, strength-focused Pilates session",
-    "durationMin": 41,
+    "id": "main-sweat-investment",
+    "title": "Sweat investment circuit",
+    "subtitle": "30-minute targeted kettlebell circuit or high-intensity bodyweight strength",
+    "durationMin": 30,
     "intensity": "dynamic",
     "course": "main",
-    "activity": "pilates",
+    "activity": "strength",
     "places": [
       "home",
-      "gym",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full",
+      "lowerBody",
+      "core"
+    ],
+    "intents": [
+      "strengthen",
+      "energize"
+    ],
+    "equipment": [
+      "weights",
+      "mat"
+    ]
+  },
+  {
+    "id": "main-local-studio-session",
+    "title": "Local studio session",
+    "subtitle": "Book an intro movement class or group fitness session for community energy",
+    "durationMin": 45,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "dance",
+    "places": [
       "studio"
     ],
     "bodyFocus": [
       "full"
     ],
     "intents": [
-      "strengthen",
-      "energize"
+      "joy",
+      "energize",
+      "play"
     ],
     "equipment": [
-      "mat",
-      "weights"
+      "none"
     ]
   },
   {
-    "id": "yt-en2Zs4n4yio",
-    "title": "Twenty-four minutes, legs and glutes focus",
-    "subtitle": "A mat-based burn targeting the lower body",
-    "durationMin": 24,
-    "intensity": "moderate",
-    "course": "main",
-    "activity": "pilates",
-    "places": [
-      "home",
-      "gym",
-      "studio"
-    ],
-    "bodyFocus": [
-      "lowerBody"
-    ],
-    "intents": [
-      "strengthen",
-      "mobilize"
-    ],
-    "equipment": [
-      "mat"
-    ]
-  },
-  {
-    "id": "yt-l31iSekrSPw",
-    "title": "Twelve minutes, tight core and abs",
-    "subtitle": "A focused core-strengthening mat routine",
-    "durationMin": 12,
-    "intensity": "moderate",
-    "course": "main",
-    "activity": "pilates",
-    "places": [
-      "home",
-      "gym",
-      "studio"
-    ],
-    "bodyFocus": [
-      "core"
-    ],
-    "intents": [
-      "strengthen"
-    ],
-    "equipment": [
-      "mat"
-    ]
-  },
-  {
-    "id": "yt-K3ZQF0VFcNk",
-    "title": "Twenty minutes, core and glutes flow",
-    "subtitle": "Target the core and hips with this mat routine",
-    "durationMin": 20,
-    "intensity": "moderate",
-    "course": "main",
-    "activity": "pilates",
-    "places": [
-      "home",
-      "gym",
-      "studio"
-    ],
-    "bodyFocus": [
-      "core"
-    ],
-    "intents": [
-      "strengthen",
-      "energize"
-    ],
-    "equipment": [
-      "mat"
-    ]
-  },
-  {
-    "id": "yt-HTDFOwzCs4g",
-    "title": "Twenty-three minutes, low impact beginner Pilates",
-    "subtitle": "A gentle, full-body mat flow with zero jumping",
-    "durationMin": 23,
+    "id": "des-guided-foam-rolling",
+    "title": "Guided foam rolling",
+    "subtitle": "Roll out sore muscles while catching up on a single 15-minute video",
+    "durationMin": 15,
     "intensity": "gentle",
-    "course": "main",
-    "activity": "pilates",
+    "course": "dessert",
+    "activity": "stretching",
     "places": [
-      "home",
-      "gym",
-      "studio"
+      "home"
     ],
     "bodyFocus": [
-      "full"
+      "lowerBody",
+      "back",
+      "hips"
     ],
     "intents": [
       "mobilize",
@@ -1326,26 +1467,92 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     ]
   },
   {
-    "id": "yt-cItPBVsnIgw",
-    "title": "Eighteen minutes, high-intensity Pilates arms",
-    "subtitle": "A burn-inducing upper body sequence with no equipment",
-    "durationMin": 18,
-    "intensity": "moderate",
-    "course": "main",
-    "activity": "pilates",
+    "id": "des-luxury-recovery-soak",
+    "title": "Luxury recovery soak",
+    "subtitle": "A hot bath infused with Epsom salts immediately following movement",
+    "durationMin": 20,
+    "intensity": "gentle",
+    "course": "dessert",
+    "activity": "stretching",
     "places": [
-      "home",
+      "home"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "spec-nature-immersion",
+    "title": "Nature immersion hike",
+    "subtitle": "Hike a scenic trail or explore a provincial/national park for a mental reset",
+    "durationMin": 90,
+    "intensity": "moderate",
+    "course": "special",
+    "activity": "walking",
+    "places": [
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full",
+      "lowerBody"
+    ],
+    "intents": [
+      "calm",
+      "joy",
+      "energize"
+    ],
+    "equipment": [
+      "outdoor"
+    ]
+  },
+  {
+    "id": "spec-spa-sauna-cycles",
+    "title": "Spa & sauna thermal cycles",
+    "subtitle": "Infrared sauna sessions, cold plunges, or massage therapy for deep restoration",
+    "durationMin": 60,
+    "intensity": "gentle",
+    "course": "special",
+    "activity": "stretching",
+    "places": [
+      "studio"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "spec-performance-coaching",
+    "title": "1-on-1 performance coaching",
+    "subtitle": "Personalized guided training or physical rehab session to break past plateaus",
+    "durationMin": 60,
+    "intensity": "moderate",
+    "course": "special",
+    "activity": "strength",
+    "places": [
       "gym",
       "studio"
     ],
     "bodyFocus": [
-      "upperBody"
+      "full"
     ],
     "intents": [
-      "strengthen"
+      "strengthen",
+      "mobilize"
     ],
     "equipment": [
-      "mat"
+      "gym"
     ]
   }
 ];
