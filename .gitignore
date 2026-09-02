@@ -46,3 +46,9 @@ worker/.dev.vars.*
 .agents/
 .claude/
 skills-lock.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+

@@ -223,6 +223,19 @@ This does not damage the business model; it confirms the one already chosen. **W
 
 **Attribution guardrail.** Simone said in her brief that her library *might* be included one day. Until that is confirmed in writing, v1 content is **authored by us, attributed to no one, and worded generically.** The `attribution` field stays `nil`. Nowhere in the app, the store listing, or the demo video do we state or imply that Simone wrote, taught, endorsed, or reviewed a session — that would be a false endorsement claim about a real, named professional and an App Store metadata violation. The app is built *for* her audience and *from* her brief; that is the honest framing and it is a strong one. The moment she signs off, `attribution` and `video` populate and the app gets meaningfully better with zero code changes.
 
+### Accessibility, Adaptive Movement & Global Diversity Roadmap (Post-Hackathon)
+
+While the v1 catalog provides non-clinical contraindication filtering (`lowBack`, `knees`, `wrists`, `pregnancy`, `postpartum`, `pelvicFloor`, `fatigue`) and low-barrier equipment/location accessibility, broader physical disability suites and global movement traditions are planned for subsequent milestones:
+
+1. **Adaptive & Seated Movement Taxonomy (v2)**
+   - **Seated & Chair-Only Flows:** Dedicated authored session tracks for users with limited standing tolerance, wheelchair users, and post-surgery rehabilitation.
+   - **Upper-Body & Core Isolation:** Explicit tags for non-weight-bearing lower limbs, eliminating floor-transfer friction.
+   - **Audio-Only & High-Contrast Mode:** Enhanced voice cues and screen-reader accessibility for visually impaired users without requiring screen glance during movement.
+
+2. **Global & Cross-Cultural Movement Traditions (v2+)**
+   - Expanding beyond Western fitness and contemporary Pilates to embrace traditional mind-body systems (e.g., expanded Qi Gong, Tai Chi, Ayurveda-inspired mobility, traditional African dance, and folkloric somatic recovery).
+   - Multi-generational pacing: specialized low-impact flows crafted for older adults and postnatal recovery that never use clinical, patronizing, or "modified" labels.
+
 ---
 
 ## 7. Personalization

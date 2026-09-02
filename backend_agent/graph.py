@@ -1,13 +1,23 @@
 import os
 from typing import Dict, Any, List, Optional
-from .models import (
-    ChatPayload,
-    StructuredChatResponse,
-    StructuredRecommendation,
-    QuickReplyAction,
-    ExtractedCheckIn,
-)
-from .catalog import retrieve_best_session, load_catalog
+try:
+    from .models import (
+        ChatPayload,
+        StructuredChatResponse,
+        StructuredRecommendation,
+        QuickReplyAction,
+        ExtractedCheckIn,
+    )
+    from .catalog import retrieve_best_session, load_catalog
+except (ImportError, ValueError):
+    from models import (
+        ChatPayload,
+        StructuredChatResponse,
+        StructuredRecommendation,
+        QuickReplyAction,
+        ExtractedCheckIn,
+    )
+    from catalog import retrieve_best_session, load_catalog
 
 def classify_intent_and_state(prompt: str, history_len: int) -> tuple[str, str]:
     text = prompt.lower().strip()

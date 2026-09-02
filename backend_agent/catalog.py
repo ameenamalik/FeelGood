@@ -2,22 +2,23 @@ import json
 import os
 from typing import List, Dict, Any, Optional
 
-CATALOG_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "..",
-    "FeelGood",
-    "Content",
-    "catalog.json"
-)
+POSSIBLE_PATHS = [
+    os.path.join(os.path.dirname(__file__), "catalog.json"),
+    os.path.join(os.path.dirname(__file__), "..", "FeelGood", "Content", "catalog.json"),
+    os.path.join(os.path.dirname(__file__), "FeelGood", "Content", "catalog.json")
+]
 
 def load_catalog() -> List[Dict[str, Any]]:
-    if os.path.exists(CATALOG_PATH):
-        try:
-            with open(CATALOG_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("sessions", [])
-        except Exception:
-            pass
+    for path in POSSIBLE_PATHS:
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    sessions = data.get("sessions", [])
+                    if sessions:
+                        return sessions
+            except Exception:
+                continue
     # Bundled fallback sessions if catalog path is unavailable
     return [
         {

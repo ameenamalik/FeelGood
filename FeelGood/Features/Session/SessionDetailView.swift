@@ -56,7 +56,19 @@ struct SessionDetailView: View {
                     }
 
                     if !session.source.steps.isEmpty {
-                        lineup
+                        VStack(alignment: .leading, spacing: FGSpace.m) {
+                            Divider()
+                                .overlay(FGColor.line)
+
+                            lineup
+
+                            Divider()
+                                .overlay(FGColor.line)
+
+                            if let firstStep = session.source.steps.first {
+                                firstUpSection(firstStep)
+                            }
+                        }
                     }
 
                     // Somebody's own workout has no steps to play, because
@@ -78,12 +90,14 @@ struct SessionDetailView: View {
                                 }
                             }
                         }
+                        .padding(.top, FGSpace.s)
                     } else {
                         FGPrimaryButton(title: savedProgress == nil ? "Start" : "Resume") {
                             Analytics.capture("workout_started", properties: workoutProperties)
                             startedAt = savedProgress?.startedAt ?? Date()
                             isPlaying = true
                         }
+                        .padding(.top, FGSpace.s)
                     }
                 }
                 .padding(FGSpace.page)
@@ -147,18 +161,12 @@ struct SessionDetailView: View {
 
     /// The title is the screen. Display weight, and everything under it quiet.
     private var heading: some View {
-        VStack(alignment: .leading, spacing: FGSpace.s) {
+        VStack(alignment: .leading, spacing: FGSpace.m) {
             CourseTag(course: course)
             Text(session.title)
                 .font(FGFont.display)
                 .foregroundStyle(FGColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
-            if !session.subtitle.isEmpty {
-                Text(session.subtitle)
-                    .font(FGFont.body)
-                    .foregroundStyle(FGColor.inkMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
@@ -178,12 +186,12 @@ struct SessionDetailView: View {
                         .foregroundStyle(FGColor.ink)
                     Spacer(minLength: FGSpace.s)
                     Text(partsLabel)
-                        .font(FGFont.label)
+                        .font(FGFont.body)
                         .foregroundStyle(FGColor.inkMuted)
-                    Image(systemName: "chevron.down")
-                        .font(FGFont.label)
+                    Image(systemName: "chevron.right")
+                        .font(FGFont.body.weight(.semibold))
                         .foregroundStyle(FGColor.inkMuted)
-                        .rotationEffect(.degrees(isShowingSteps ? 0 : -90))
+                        .rotationEffect(.degrees(isShowingSteps ? 90 : 0))
                 }
                 .frame(minHeight: FGSize.minTouchTarget)
                 .contentShape(Rectangle())
@@ -193,9 +201,51 @@ struct SessionDetailView: View {
             .accessibilityValue(isShowingSteps ? "Expanded" : "Collapsed")
             .accessibilityHint(isShowingSteps ? "Hides the steps" : "Shows the steps")
 
-            if isShowingSteps { steps }
+            if isShowingSteps {
+                steps
+                    .padding(.top, FGSpace.xs)
+            }
         }
         .fgAnimation(FGMotion.gentle, value: isShowingSteps)
+    }
+
+    private func firstUpSection(_ firstStep: Step) -> some View {
+        HStack(alignment: .center, spacing: FGSpace.m) {
+            ZStack {
+                Circle()
+                    .fill(Color(light: 0xE5EFE0, dark: 0x24301E))
+                    .frame(width: 40, height: 40)
+                Image(systemName: "record.circle")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(FGColor.sageDeep)
+            }
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("FIRST UP")
+                    .font(FGFont.label.weight(.bold))
+                    .tracking(0.5)
+                    .foregroundStyle(FGColor.clayDeep)
+
+                Text(firstUpDescription(for: firstStep))
+                    .font(FGFont.body)
+                    .foregroundStyle(FGColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, FGSpace.xs)
+    }
+
+    private func firstUpDescription(for step: Step) -> String {
+        let cost = stepCost(step)
+        let name = step.name.lowercased()
+        let cue = step.cue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cue.isEmpty {
+            return "\(cost) \(name)"
+        }
+        let firstClause = cue.components(separatedBy: CharacterSet(charactersIn: ".!?;")).first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? cue
+        let formattedCue = firstClause.prefix(1).lowercased() + firstClause.dropFirst()
+        return "\(cost) \(name), \(formattedCue)"
     }
 
     private func stepCost(_ step: Step) -> String {

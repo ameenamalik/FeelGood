@@ -1,6 +1,11 @@
-from backend_agent.models import ChatPayload
-from backend_agent.graph import orchestrate_chat_turn
-from backend_agent.catalog import load_catalog, retrieve_best_session
+try:
+    from backend_agent.models import ChatPayload
+    from backend_agent.graph import orchestrate_chat_turn
+    from backend_agent.catalog import load_catalog, retrieve_best_session
+except (ImportError, ValueError, ModuleNotFoundError):
+    from models import ChatPayload
+    from graph import orchestrate_chat_turn
+    from catalog import load_catalog, retrieve_best_session
 
 def test_catalog_loads():
     sessions = load_catalog()
