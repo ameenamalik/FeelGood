@@ -23,6 +23,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "agent": "FeelGood LangGraph Agent",
+        "version": "2.0.0",
+        "endpoints": ["/health", "/catalog", "/chat", "/docs"]
+    }
+
+@app.get("/main.py")
+def main_py_alias():
+    return root()
+
 @app.get("/health")
 def health():
     return {"status": "ok", "agent": "FeelGood LangGraph Agent", "version": "2.0.0"}
