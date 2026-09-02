@@ -34,4 +34,7 @@ export interface Env {
   ANTHROPIC_API_KEY?: string;
   GEMINI_API_KEY?: string;
   REVENUECAT_SECRET_API_KEY?: string;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  CLOUDFLARE_API_TOKEN?: string;
+  AI_SEARCH_INSTANCE_NAME?: string;
 }

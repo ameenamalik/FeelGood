@@ -52,8 +52,18 @@ struct ChatCheckInView: View {
                         .foregroundStyle(FGColor.ink)
                         .lineLimit(2...4)
                         .focused($isFieldFocused)
+                        .submitLabel(.send)
                         .onSubmit {
                             submitText()
+                        }
+                        .onChange(of: text) { _, newValue in
+                            if newValue.contains("\n") {
+                                let cleanText = newValue.replacingOccurrences(of: "\n", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                                text = cleanText
+                                if !cleanText.isEmpty && !isProcessing {
+                                    submitText(explicitText: cleanText)
+                                }
+                            }
                         }
                 }
                 .padding(14)
@@ -168,8 +178,9 @@ struct ChatCheckInView: View {
         .padding(.vertical, 16)
     }
 
-    private func submitText() {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    private func submitText(explicitText: String? = nil) {
+        let textToSend = explicitText ?? text
+        let trimmed = textToSend.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
         isFieldFocused = false

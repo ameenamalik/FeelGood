@@ -10,6 +10,7 @@ This document provides a comprehensive technical reference for the FeelGood chat
 | :--- | :--- | :--- |
 | **iOS Client** | **Swift 6 / SwiftUI** | Modern Observation framework, pure-state views, on-device offline fallback engine (`LocalStatefulChatEngine`), and on-device input sanitization (`RedactionService`). |
 | **Edge Backend** | **Cloudflare Workers (TypeScript / V8)** | Serverless edge proxy at `/chat` handling LLM orchestration, catalog grounding, intent routing, and fallback. |
+| **Knowledge / RAG** | **Cloudflare AI Search (`feelgood-knowledge`)** | Sub-second semantic search over Dopamine Menu exercises, FAQs, safety, and subscription guidelines. |
 | **Primary LLM** | **Google Gemini 1.5 Flash** | Sub-second latency response generation with structured JSON schema enforcement. |
 | **Failover LLM** | **Anthropic Claude 3.5 Haiku** | Low-latency tool-calling fallback if Gemini hits rate limits or latency ceilings. |
 | **Local Fallback** | **Swift Heuristic Engine** | Complete zero-network offline companion matching backend state transitions & catalog rules. |
@@ -26,7 +27,8 @@ flowchart TD
     Context --> NetworkCheck{"Network Available?"}
     
     NetworkCheck -- "Yes" --> Worker["Cloudflare Worker (/chat)"]
-    Worker --> LLM{"Gemini 1.5 Flash (Fallback: Claude 3.5 Haiku)"}
+    Worker --> AISearch["Cloudflare AI Search (feelgood-knowledge RAG)"]
+    AISearch --> LLM{"Gemini 1.5 Flash (Fallback: Claude 3.5 Haiku)"}
     LLM --> CatalogResolver["Catalog Grounding & Resolver (59 Canonical Sessions)"]
     CatalogResolver --> JsonResponse["Structured ChatResponse (Message + Card + Quick Replies)"]
     

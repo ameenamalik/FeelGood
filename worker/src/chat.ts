@@ -1,6 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { Env } from "./types";
 import { CATALOG_SESSIONS, findSessionById, matchBestSession, CatalogSessionItem } from "./catalog_index";
+import { queryAISearch } from "./ai_search";
+import { traceAgentTurn, traceChatModel, traceToolExecution } from "./tracing";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -240,21 +242,39 @@ export function isValidChatPayload(body: unknown): body is ChatPayload {
 }
 
 export async function handleChat(payload: ChatPayload, env: Env): Promise<Response> {
-  try {
-    if (env.GEMINI_API_KEY) {
-      return await handleGeminiChat(payload, env.GEMINI_API_KEY);
+  return traceAgentTurn(
+    {
+      agentName: "feelgood-chat-agent",
+      agentId: "feelgood-companion",
+      conversationId: payload.subscriberID,
+    },
+    async () => {
+      try {
+        const knowledgeContext = await traceToolExecution(
+          "ai_search",
+          { query: payload.prompt },
+          async () => queryAISearch(payload.prompt, env)
+        );
+
+        if (env.GEMINI_API_KEY) {
+          return await handleGeminiChat(payload, env.GEMINI_API_KEY, knowledgeContext);
+        }
+        if (env.ANTHROPIC_API_KEY) {
+          return await handleAnthropicChat(payload, env.ANTHROPIC_API_KEY, knowledgeContext);
+        }
+        return new Response("upstream error: Neither GEMINI_API_KEY nor ANTHROPIC_API_KEY is configured", { status: 500 });
+      } catch (error) {
+        console.error("handleChat error:", error);
+        return new Response(`upstream error: ${error instanceof Error ? error.message : "unknown"}`, { status: 500 });
+      }
     }
-    if (env.ANTHROPIC_API_KEY) {
-      return await handleAnthropicChat(payload, env.ANTHROPIC_API_KEY);
-    }
-    return new Response("upstream error: Neither GEMINI_API_KEY nor ANTHROPIC_API_KEY is configured", { status: 500 });
-  } catch (error) {
-    console.error("handleChat error:", error);
-    return new Response(`upstream error: ${error instanceof Error ? error.message : "unknown"}`, { status: 500 });
-  }
+  );
 }
 
-function buildSystemPrompt(userContext?: UserPreferencesContext): string {
+function buildSystemPrompt(
+  userContext?: UserPreferencesContext,
+  knowledgeContext?: string | null
+): string {
   let prompt = CHAT_SYSTEM_PROMPT;
   if (userContext) {
     if (userContext.lastFeel === "tooMuch" || userContext.recoveryOwed) {
@@ -265,6 +285,9 @@ function buildSystemPrompt(userContext?: UserPreferencesContext): string {
     if (userContext.likedActivities && userContext.likedActivities.length > 0) {
       prompt += `\nUSER PREFERENCES: Activities they especially love: ${userContext.likedActivities.join(", ")}. Prioritize these when appropriate.`;
     }
+  }
+  if (knowledgeContext) {
+    prompt += `\n\n${knowledgeContext}\n\nKNOWLEDGE USAGE: If the user asks about app FAQs, subscription, pricing, exercises (e.g. box breathing, shake out, power pose, gratitude scan), or science/voice guidelines, use the relevant knowledge context above to answer accurately and warmly.`;
   }
   return prompt;
 }
@@ -374,7 +397,11 @@ function resolveCanonicalRecommendation(
   };
 }
 
-async function handleGeminiChat(payload: ChatPayload, apiKey: string): Promise<Response> {
+async function handleGeminiChat(
+  payload: ChatPayload,
+  apiKey: string,
+  knowledgeContext?: string | null
+): Promise<Response> {
   const contents = [];
   if (payload.history && payload.history.length > 0) {
     for (const item of payload.history.slice(-8)) {
@@ -389,7 +416,7 @@ async function handleGeminiChat(payload: ChatPayload, apiKey: string): Promise<R
     parts: [{ text: payload.prompt }],
   });
 
-  const systemPrompt = buildSystemPrompt(payload.userContext);
+  const systemPrompt = buildSystemPrompt(payload.userContext, knowledgeContext);
 
   const body = {
     contents,
@@ -477,23 +504,47 @@ async function handleGeminiChat(payload: ChatPayload, apiKey: string): Promise<R
     },
   };
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+  const { res, candidateText } = await traceChatModel(
     {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      agentName: "feelgood-chat-agent",
+      agentId: "feelgood-companion",
+      conversationId: payload.subscriberID,
+    },
+    {
+      system: "gemini",
+      model: "gemini-1.5-flash",
+      systemPrompt,
+      inputMessages: contents,
+    },
+    async (setResponse) => {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Gemini API error:", response.status, errText);
+        return { res: response, candidateText: null };
+      }
+
+      const json = (await response.json()) as any;
+      const text = json.candidates?.[0]?.content?.parts?.[0]?.text || null;
+      if (text) {
+        setResponse([{ role: "model", content: text }]);
+      }
+      return { res: response, candidateText: text };
     }
   );
 
   if (!res.ok) {
-    const errText = await res.text();
-    console.error("Gemini API error:", res.status, errText);
     return new Response(`upstream error: gemini ${res.status}`, { status: 500 });
   }
 
-  const json = (await res.json()) as any;
-  const candidateText = json.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!candidateText) {
     return new Response("empty response from gemini", { status: 500 });
   }
@@ -547,7 +598,11 @@ async function handleGeminiChat(payload: ChatPayload, apiKey: string): Promise<R
   return Response.json(data);
 }
 
-async function handleAnthropicChat(payload: ChatPayload, apiKey: string): Promise<Response> {
+async function handleAnthropicChat(
+  payload: ChatPayload,
+  apiKey: string,
+  knowledgeContext?: string | null
+): Promise<Response> {
   const client = new Anthropic({ apiKey });
 
   const messages: Anthropic.MessageParam[] = [];
@@ -564,16 +619,33 @@ async function handleAnthropicChat(payload: ChatPayload, apiKey: string): Promis
     content: payload.prompt,
   });
 
-  const systemPrompt = buildSystemPrompt(payload.userContext);
+  const systemPrompt = buildSystemPrompt(payload.userContext, knowledgeContext);
 
-  const response = await client.messages.create({
-    model: "claude-3-5-haiku-20241022",
-    max_tokens: 600,
-    system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
-    tools: [ORCHESTRATE_TOOL],
-    tool_choice: { type: "auto" },
-    messages,
-  });
+  const response = await traceChatModel(
+    {
+      agentName: "feelgood-chat-agent",
+      agentId: "feelgood-companion",
+      conversationId: payload.subscriberID,
+    },
+    {
+      system: "anthropic",
+      model: "claude-3-5-haiku-20241022",
+      systemPrompt,
+      inputMessages: messages,
+    },
+    async (setResponse) => {
+      const res = await client.messages.create({
+        model: "claude-3-5-haiku-20241022",
+        max_tokens: 600,
+        system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
+        tools: [ORCHESTRATE_TOOL],
+        tool_choice: { type: "auto" },
+        messages,
+      });
+      setResponse(res.content);
+      return res;
+    }
+  );
 
   let messageText = "";
   let intent: ChatResponseData["intent"] = "general_check_in";
@@ -586,20 +658,35 @@ async function handleAnthropicChat(payload: ChatPayload, apiKey: string): Promis
   for (const block of response.content) {
     if (block.type === "tool_use" && block.name === "orchestrate_conversation_state") {
       const input = block.input as Record<string, unknown>;
-      if (typeof input.message === "string") messageText = input.message.trim();
-      if (typeof input.intent === "string") intent = input.intent as ChatResponseData["intent"];
-      if (typeof input.phase === "string") phase = input.phase as ChatResponseData["phase"];
-      if (typeof input.session_id === "string") sessionId = input.session_id;
-      if (typeof input.reason === "string") reason = input.reason;
-      if (Array.isArray(input.quick_replies)) {
-        quick_replies = input.quick_replies as QuickReplyAction[];
-      }
-      if (typeof input.energy === "string") extractedCheckIn.energy = input.energy as ExtractedCheckIn["energy"];
-      if (typeof input.timeBudget === "string") extractedCheckIn.timeBudget = input.timeBudget as ExtractedCheckIn["timeBudget"];
-      if (typeof input.place === "string") extractedCheckIn.place = input.place as ExtractedCheckIn["place"];
-      if (typeof input.body === "string") extractedCheckIn.body = input.body as ExtractedCheckIn["body"];
-      if (typeof input.intentField === "string") extractedCheckIn.intent = input.intentField as ExtractedCheckIn["intent"];
-      if (typeof input.quickFilter === "string") extractedCheckIn.quickFilter = input.quickFilter as ExtractedCheckIn["quickFilter"];
+      const parsedTool = await traceToolExecution("orchestrate_conversation_state", input, async () => {
+        return {
+          message: typeof input.message === "string" ? input.message.trim() : undefined,
+          intent: typeof input.intent === "string" ? (input.intent as ChatResponseData["intent"]) : undefined,
+          phase: typeof input.phase === "string" ? (input.phase as ChatResponseData["phase"]) : undefined,
+          sessionId: typeof input.session_id === "string" ? input.session_id : undefined,
+          reason: typeof input.reason === "string" ? input.reason : undefined,
+          quick_replies: Array.isArray(input.quick_replies) ? (input.quick_replies as QuickReplyAction[]) : undefined,
+          energy: typeof input.energy === "string" ? (input.energy as ExtractedCheckIn["energy"]) : undefined,
+          timeBudget: typeof input.timeBudget === "string" ? (input.timeBudget as ExtractedCheckIn["timeBudget"]) : undefined,
+          place: typeof input.place === "string" ? (input.place as ExtractedCheckIn["place"]) : undefined,
+          body: typeof input.body === "string" ? (input.body as ExtractedCheckIn["body"]) : undefined,
+          intentField: typeof input.intentField === "string" ? (input.intentField as ExtractedCheckIn["intent"]) : undefined,
+          quickFilter: typeof input.quickFilter === "string" ? (input.quickFilter as ExtractedCheckIn["quickFilter"]) : undefined,
+        };
+      });
+
+      if (parsedTool.message) messageText = parsedTool.message;
+      if (parsedTool.intent) intent = parsedTool.intent;
+      if (parsedTool.phase) phase = parsedTool.phase;
+      if (parsedTool.sessionId) sessionId = parsedTool.sessionId;
+      if (parsedTool.reason) reason = parsedTool.reason;
+      if (parsedTool.quick_replies) quick_replies = parsedTool.quick_replies;
+      if (parsedTool.energy) extractedCheckIn.energy = parsedTool.energy;
+      if (parsedTool.timeBudget) extractedCheckIn.timeBudget = parsedTool.timeBudget;
+      if (parsedTool.place) extractedCheckIn.place = parsedTool.place;
+      if (parsedTool.body) extractedCheckIn.body = parsedTool.body;
+      if (parsedTool.intentField) extractedCheckIn.intent = parsedTool.intentField;
+      if (parsedTool.quickFilter) extractedCheckIn.quickFilter = parsedTool.quickFilter;
     } else if (block.type === "text" && !messageText) {
       messageText = block.text.trim();
     }

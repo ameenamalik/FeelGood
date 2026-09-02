@@ -502,13 +502,26 @@ struct ExploreView: View {
                 .lineLimit(1...4)
                 .focused($isFieldFocused)
                 .submitLabel(.send)
-                .onSubmit(submitText)
+                .onSubmit {
+                    submitText()
+                }
+                .onChange(of: inputText) { _, newValue in
+                    if newValue.contains("\n") {
+                        let cleanText = newValue.replacingOccurrences(of: "\n", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                        inputText = ""
+                        if !cleanText.isEmpty && !isProcessing {
+                            submitText(explicitText: cleanText)
+                        }
+                    }
+                }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
                 .background(Color(light: 0xEEEBE4, dark: 0x262320))
                 .clipShape(Capsule())
 
-            Button(action: submitText) {
+            Button {
+                submitText()
+            } label: {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(Color(red: 0.22, green: 0.12, blue: 0.08))
@@ -533,8 +546,9 @@ struct ExploreView: View {
 
     // MARK: - Actions
 
-    private func submitText() {
-        let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+    private func submitText(explicitText: String? = nil) {
+        let textToSend = explicitText ?? inputText
+        let trimmed = textToSend.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isProcessing else { return }
 
         let userMsg = ConversationMessage(role: .user, text: trimmed)

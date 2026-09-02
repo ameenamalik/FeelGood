@@ -308,4 +308,44 @@ struct CatalogTests {
             #expect(Set(item.session.contraindications).isDisjoint(with: input.profile.workArounds))
         }
     }
+
+    @Test("All authored steps have descriptive names and avoid bare placeholders")
+    func stepNamesAreDescriptive() throws {
+        let store = try store()
+        let placeholderNames: Set<String> = ["other side", "rest", "switch", "side"]
+        for session in store.sessions {
+            for step in session.source.steps {
+                let trimmed = step.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                #expect(!placeholderNames.contains(trimmed), "\(session.id) has generic step name: \(step.name)")
+                #expect(!step.name.isEmpty, "\(session.id) has an empty step name")
+            }
+        }
+    }
+
+    @Test("Glossary terms are uniquely identified with non-empty metadata")
+    func glossaryEntriesAreUniqueAndValid() throws {
+        let store = try store()
+        var seenIDs = Set<String>()
+        var seenNames = Set<String>()
+        for term in store.glossary {
+            #expect(!seenIDs.contains(term.id), "Duplicate glossary ID: \(term.id)")
+            seenIDs.insert(term.id)
+            #expect(!seenNames.contains(term.name), "Duplicate glossary name: \(term.name)")
+            seenNames.insert(term.name)
+            #expect(!term.name.isEmpty, "Glossary term \(term.id) has empty name")
+            #expect(!term.instructions.isEmpty, "Glossary term \(term.id) has no instructions")
+        }
+    }
+
+    @Test("Session computed properties report sets and counted status accurately")
+    func sessionComputedPropertiesWork() throws {
+        let store = try store()
+        for session in store.sessions {
+            if session.hasCountedSteps {
+                #expect(session.source.steps.contains { $0.isCounted })
+            }
+            #expect(session.totalSets >= session.source.steps.count)
+        }
+    }
 }
+

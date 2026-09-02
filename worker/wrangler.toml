@@ -16,9 +16,27 @@ compatibility_flags = [ "nodejs_compat" ]
 binding = "RATE_LIMIT"
 id = "b78d072d88f142bfbaafe5aa915b846b"
 
+[vars]
+AI_SEARCH_INSTANCE_NAME = "nameless-feather-c645"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 [env.production]
 name = "feelgood-copy-production"
 
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT"
 id = "REPLACE_WITH_PRODUCTION_KV_NAMESPACE_ID"
+
+[env.production.vars]
+AI_SEARCH_INSTANCE_NAME = "nameless-feather-c645"
+
+[env.production.observability]
+enabled = true
+head_sampling_rate = 1
+
+
+
+

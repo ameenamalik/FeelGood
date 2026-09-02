@@ -1,8 +1,13 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .models import ChatPayload, StructuredChatResponse
-from .graph import orchestrate_chat_turn
-from .catalog import load_catalog
+try:
+    from .models import ChatPayload, StructuredChatResponse
+    from .graph import orchestrate_chat_turn
+    from .catalog import load_catalog
+except (ImportError, ValueError):
+    from models import ChatPayload, StructuredChatResponse
+    from graph import orchestrate_chat_turn
+    from catalog import load_catalog
 
 app = FastAPI(
     title="FeelGood Agent API",

@@ -40,7 +40,9 @@ nonisolated enum Quality: String, Codable, CaseIterable, Sendable {
     case balance, downRegulation
 }
 
-/// Used both for a session's fit and for today's check-in answer.
+/// Used both for a session's starting energy fit and for today's check-in answer.
+/// Answers: "What energy state does the user need to be in to enjoy or comfortably perform this session?"
+/// (Contrasts with `Intent`, which describes the desired psychological/physical outcome or effect).
 nonisolated enum Energy: String, Codable, CaseIterable, Sendable {
     case low, steady, strong
 }
@@ -118,6 +120,8 @@ nonisolated enum WorkAround: String, Codable, CaseIterable, Sendable {
     case lowBack, knees, wrists, fatigue, pregnancy, postpartum, pelvicFloor
 }
 
+/// The emotional or physiological feeling/shift the user wants out of the movement.
+/// Answers: "What outcome or state change is this session designed to produce?"
 nonisolated enum Intent: String, Codable, CaseIterable, Sendable {
     case energize, strengthen, calm, mobilize, joy, play
 }
@@ -296,6 +300,16 @@ nonisolated struct Session: Codable, Hashable, Sendable, Identifiable {
     /// Doable without leaving wherever you already are.
     var worksAtHome: Bool {
         places.isEmpty || places.contains(.home)
+    }
+
+    /// Whether any authored step inside this session uses counted repetitions.
+    var hasCountedSteps: Bool {
+        source.steps.contains { $0.isCounted }
+    }
+
+    /// Total number of sets across all authored steps (defaults to 1 per untimed/timed step, or sum of `setCount`).
+    var totalSets: Int {
+        source.steps.reduce(0) { $0 + $1.setCount }
     }
 
     init(
