@@ -11,6 +11,20 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    // Root / Health check for browser and monitoring verification
+    if (url.pathname === "/" || url.pathname === "/health") {
+      return Response.json({
+        status: "healthy",
+        service: "FeelGood Edge Worker",
+        version: "1.0.0",
+        endpoints: {
+          chat: "POST /chat",
+          copy: "POST /copy",
+          player: "GET /player?v=<id>",
+        },
+      });
+    }
+
     // `/player` is public and static: it holds no secret, reads no KV, and
     // checks no entitlement, so a Worker deployed with nothing configured
     // still plays video. See player.ts for why it has to exist at all.
