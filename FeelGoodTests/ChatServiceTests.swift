@@ -10,11 +10,12 @@ import Foundation
 @Suite("Chat Service")
 struct ChatServiceTests {
 
-    @Test("Local heuristic parser extracts time, energy, and body state")
-    func localHeuristicParserExtraction() {
+    @Test("Local stateful engine classifies intents and extracts check-in state")
+    func localStatefulEngineExtraction() {
         let text = "I am exhausted and my lower back is sore. Only have 15 min at home."
-        let response = LocalHeuristicParser.parse(text)
+        let response = LocalStatefulChatEngine.orchestrate(prompt: text)
 
+        #expect(response.intent == .newRoutineRequest)
         #expect(response.overrides.energy == .low)
         #expect(response.overrides.time == .fifteenMinutes)
         #expect(response.overrides.body == .sore)
@@ -25,16 +26,43 @@ struct ChatServiceTests {
         #expect(checkIn.time == .fifteenMinutes)
         #expect(checkIn.place == .stayingIn)
         #expect(checkIn.body == .sore)
+
+        // Recommendation card is populated
+        #expect(response.recommendation != nil)
+        #expect(!response.quickReplies.isEmpty)
     }
 
-    @Test("Local heuristic parser handles energized gym prompts")
-    func localHeuristicParserGym() {
-        let text = "Feeling energized and strong, 30 min at the gym"
-        let response = LocalHeuristicParser.parse(text)
+    @Test("Local stateful engine handles inquiries and adjustments")
+    func localStatefulEngineInquiry() {
+        let text = "what if I can't sit still"
+        let response = LocalStatefulChatEngine.orchestrate(prompt: text)
 
-        #expect(response.overrides.energy == .strong)
-        #expect(response.overrides.time == .some)
-        #expect(response.overrides.place == .atTheGym)
+        #expect(response.intent == .inquiry)
+        #expect(response.phase == .inquiryActive)
+        #expect(response.recommendation?.sessionID == "app-jump-rope-ninety")
+        #expect(response.recommendation?.course == "appetizer")
+        #expect(response.message.contains("Then move first"))
+    }
+
+    @Test("Local stateful engine handles acknowledgments")
+    func localStatefulEngineAcknowledgment() {
+        let text = "sounds good"
+        let response = LocalStatefulChatEngine.orchestrate(prompt: text)
+
+        #expect(response.intent == .acknowledgment)
+        #expect(response.phase == .routineCommitted)
+        #expect(response.message.contains("all set"))
+    }
+
+    @Test("Local stateful engine asks clarifying questions on vague inputs without returning exercise card")
+    func localStatefulEngineVagueInputDiscovery() {
+        let text = "it feels okay"
+        let response = LocalStatefulChatEngine.orchestrate(prompt: text)
+
+        #expect(response.phase == .needsDiscovery)
+        #expect(response.recommendation == nil)
+        #expect(response.message.contains("prefer a short breath reset") || response.message.contains("Got it"))
+        #expect(!response.quickReplies.isEmpty)
     }
 
     @Test("ConversationalOverrides converts with fallback defaults")
@@ -55,6 +83,18 @@ struct ChatServiceTests {
         let transport = FakeChatTransport(
             response: ChatResponse(
                 message: "Here's a gentle mat plan.",
+                intent: .newRoutineRequest,
+                phase: .recommendationActive,
+                recommendation: StructuredRecommendation(
+                    sessionID: "test-1",
+                    title: "Test Routine",
+                    subtitle: "Test Subtitle",
+                    durationMin: 15,
+                    course: "main",
+                    reason: "Test Reason",
+                    tags: ["Main", "15 min"]
+                ),
+                quickReplies: [QuickReplyAction(id: "why", label: "Why this?", actionType: .askWhy)],
                 overrides: ConversationalOverrides(energy: .low, time: .fifteenMinutes)
             )
         )
@@ -63,8 +103,41 @@ struct ChatServiceTests {
         let response = await service.describeDay(prompt: "User at test@example.com with 15 min")
 
         #expect(response?.message == "Here's a gentle mat plan.")
+        #expect(response?.recommendation?.title == "Test Routine")
+        #expect(response?.quickReplies.first?.actionType == .askWhy)
         #expect(await transport.lastPromptReceived?.contains("[email]") == true)
         #expect(await transport.lastPromptReceived?.contains("test@example.com") == false)
+    }
+
+    @Test("TodayModel commits recommended session directly to Today menu")
+    @MainActor
+    func commitSessionToTodayMenu() {
+        let store = ContentStore(catalog: ContentCatalog(version: 1, sessions: Fixture.catalog, glossary: []))
+        let profile = PlanProfile(availableActivities: [.pilates, .stretching, .yoga])
+        let model = TodayModel(store: store, profile: profile, now: Date())
+
+        let chosenSession = Session(
+            id: "test-chosen-session",
+            title: "Chosen Flow",
+            subtitle: "Custom from chat",
+            activity: .yoga,
+            qualities: [.mobility],
+            durationMin: 15,
+            intensity: 2,
+            energyFit: [.low, .steady],
+            equipment: [.none],
+            places: [.home],
+            bodyFocus: [.back],
+            intents: [.calm],
+            course: .main,
+            source: .authored(steps: [])
+        )
+
+        model.commitSessionToToday(chosenSession)
+
+        #expect(model.menu.main?.session.id == "test-chosen-session")
+        #expect(model.menu.main?.session.title == "Chosen Flow")
+        #expect(model.menu.main?.reasonText == "Chosen in conversation with you")
     }
 }
 
@@ -76,7 +149,14 @@ private actor FakeChatTransport: ChatTransport {
         self.response = response
     }
 
-    func sendChat(prompt: String, subscriberID: String, timeout: TimeInterval) async throws -> ChatResponse {
+    func sendChat(
+        prompt: String,
+        subscriberID: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?,
+        timeout: TimeInterval
+    ) async throws -> ChatResponse {
         lastPromptReceived = prompt
         return response
     }
