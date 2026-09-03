@@ -41,6 +41,13 @@ struct YouView: View {
                         }
 
                         LookBackView(reflection: model.lookBack(now: .now))
+
+                        Text("FeelGood provides general wellness recommendations and is not a substitute for medical advice or physical therapy.")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, FGSpace.m)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(FGSpace.page)

@@ -139,11 +139,72 @@ struct ChatServiceTests {
         #expect(model.menu.main?.session.title == "Chosen Flow")
         #expect(model.menu.main?.reasonText == "Chosen in conversation with you")
     }
+
+    @Test("Local stateful engine adheres to lean ChatMode enum")
+    func localStatefulEngineModes() {
+        // Clarifying mode on vague input
+        let clarifyingResp = LocalStatefulChatEngine.orchestrate(prompt: "nah")
+        #expect(clarifyingResp.mode == .clarifying)
+        #expect(clarifyingResp.recommendation == nil)
+
+        // Banter mode on acknowledgment
+        let banterResp = LocalStatefulChatEngine.orchestrate(prompt: "sounds good")
+        #expect(banterResp.mode == .banter)
+        #expect(banterResp.recommendation == nil)
+
+        // Recommendation mode on specific routine query
+        let recResp = LocalStatefulChatEngine.orchestrate(prompt: "15 min gentle floor stretch")
+        #expect(recResp.mode == .recommendation)
+        #expect(recResp.recommendation != nil)
+    }
+
+    @Test("ChatTurnPayload encodes and decodes role and text")
+    func chatTurnPayloadCoding() throws {
+        let turn = ChatTurnPayload(role: "model", text: "Got it, how does 15 min sound?")
+        let data = try JSONEncoder().encode(turn)
+        let decoded = try JSONDecoder().decode(ChatTurnPayload.self, from: data)
+
+        #expect(decoded.role == "model")
+        #expect(decoded.text == "Got it, how does 15 min sound?")
+
+        // Backwards compatibility decoding from content field
+        let jsonString = "{\"role\":\"user\",\"content\":\"5 mins\"}"
+        let legacyDecoded = try JSONDecoder().decode(ChatTurnPayload.self, from: jsonString.data(using: .utf8)!)
+        #expect(legacyDecoded.role == "user")
+        #expect(legacyDecoded.text == "5 mins")
+    }
+
+    @Test("ChatService forwards multi-turn ChatTurnPayload history to transport")
+    func chatServiceForwardsHistory() async {
+        let transport = FakeChatTransport(
+            response: ChatResponse(
+                message: "Got it.",
+                mode: .banter,
+                intent: .acknowledgment,
+                phase: .routineCommitted
+            )
+        )
+        let service = ChatService(transport: transport, isProUnlocked: { true })
+        let history = [
+            ChatTurnPayload(role: "user", text: "I'm feeling stiff"),
+            ChatTurnPayload(role: "model", text: "Would you like a gentle stretch or a breath reset?")
+        ]
+
+        _ = await service.describeDay(prompt: "gentle stretch", history: history)
+
+        let received = await transport.lastHistoryReceived
+        #expect(received?.count == 2)
+        #expect(received?.first?.role == "user")
+        #expect(received?.first?.text == "I'm feeling stiff")
+        #expect(received?.last?.role == "model")
+        #expect(received?.last?.text == "Would you like a gentle stretch or a breath reset?")
+    }
 }
 
 private actor FakeChatTransport: ChatTransport {
     let response: ChatResponse
     private(set) var lastPromptReceived: String?
+    private(set) var lastHistoryReceived: [WireChatMessage]?
 
     init(response: ChatResponse) {
         self.response = response
@@ -158,6 +219,7 @@ private actor FakeChatTransport: ChatTransport {
         timeout: TimeInterval
     ) async throws -> ChatResponse {
         lastPromptReceived = prompt
+        lastHistoryReceived = history
         return response
     }
 }

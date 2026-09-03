@@ -55,6 +55,32 @@ final class PurchasesManager {
     var monthlyPackage: Package? { offerings?.current?.monthly }
     var yearlyPackage: Package? { offerings?.current?.annual }
 
+    // MARK: - Daily AI Chat Interaction Quota
+
+    /// Maximum free AI interactions per day before paywall is required for edge LLM calls.
+    static let maxDailyFreeEdgeChats = 1
+
+    private var todayDateKey: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return "edge_chat_count_\(formatter.string(from: Date()))"
+    }
+
+    var dailyEdgeChatCount: Int {
+        UserDefaults.standard.integer(forKey: todayDateKey)
+    }
+
+    func canPerformEdgeChat() -> Bool {
+        if isProUnlocked { return true }
+        return dailyEdgeChatCount < Self.maxDailyFreeEdgeChats
+    }
+
+    func recordEdgeChatPerformed() {
+        guard !isProUnlocked else { return }
+        let current = dailyEdgeChatCount
+        UserDefaults.standard.set(current + 1, forKey: todayDateKey)
+    }
+
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.feelgood.app", category: "Purchases")
     private var customerInfoObservationTask: Task<Void, Never>?
 

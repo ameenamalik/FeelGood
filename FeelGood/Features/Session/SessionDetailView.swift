@@ -49,9 +49,9 @@ struct SessionDetailView: View {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     heading
 
-                    // The chips say what they are — "Mat", "20 min" — so the
-                    // "What you need" label above them was a word about words.
-                    HStack(spacing: FGSpace.s) {
+                    // Visual pills: equipment, duration, target area, impact level.
+                    // e.g. [ Mat ] [ 30 min ] [ Spine & Hips ] [ Low Impact ]
+                    WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
                         ForEach(session.chips, id: \.self) { FGChip(text: $0) }
                     }
 
