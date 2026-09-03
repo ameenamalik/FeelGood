@@ -18,6 +18,9 @@ struct YouView: View {
     @State private var isBrowsing = false
     @State private var isShowingSubscription = false
     @State private var isShowingAccount = false
+    #if DEBUG
+    @State private var isDebugging = false
+    #endif
 
     var body: some View {
         NavigationStack {
@@ -60,6 +63,12 @@ struct YouView: View {
                     // `SwiftUI.Menu` spelled out: `Menu` is this app's own
                     // word for the day's plan, and that type wins here.
                     SwiftUI.Menu {
+                        #if DEBUG
+                        Button("User journeys (Time travel)", systemImage: "clock.arrow.circlepath") {
+                            isDebugging = true
+                        }
+                        Divider()
+                        #endif
                         Button("Everything", systemImage: "square.stack") { isBrowsing = true }
                         Button("What's true now", systemImage: "slider.horizontal.3") { isEditingProfile = true }
                         Button("Account & privacy", systemImage: "person.crop.circle") { isShowingAccount = true }
@@ -106,6 +115,11 @@ struct YouView: View {
             }
             .presentationDragIndicator(.visible)
         }
+        #if DEBUG
+        .sheet(isPresented: $isDebugging) {
+            DebugMenu(content: model.store) { model.reload() }
+        }
+        #endif
     }
 
     /// A quiet mark, not a control — editing identity lives behind "..." only.

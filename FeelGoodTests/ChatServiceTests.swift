@@ -199,6 +199,56 @@ struct ChatServiceTests {
         #expect(received?.last?.role == "model")
         #expect(received?.last?.text == "Would you like a gentle stretch or a breath reset?")
     }
+
+    @Test("Local stateful engine recommends Dopamine Menu routines from keywords")
+    func localStatefulEngineDopamineRoutines() {
+        let shake = LocalStatefulChatEngine.orchestrate(prompt: "I'm overwhelmed and restless, need a shake out")
+        #expect(shake.recommendation?.sessionID == "app-shake-out-five")
+
+        let powerPose = LocalStatefulChatEngine.orchestrate(prompt: "Need a quick power pose for confidence")
+        #expect(powerPose.recommendation?.sessionID == "app-power-pose-two")
+
+        let walk = LocalStatefulChatEngine.orchestrate(prompt: "I have brain fog, want a brisk walk")
+        #expect(walk.recommendation?.sessionID == "main-brisk-walk-ten")
+
+        let dance = LocalStatefulChatEngine.orchestrate(prompt: "I want to dance it out to music")
+        #expect(dance.recommendation?.sessionID == "side-dance-it-out-five")
+
+        let pmr = LocalStatefulChatEngine.orchestrate(prompt: "Too tense to sleep, need progressive muscle relaxation")
+        #expect(pmr.recommendation?.sessionID == "dessert-pmr-ten")
+
+        let cold = LocalStatefulChatEngine.orchestrate(prompt: "Panicked, need a cold water splash reset")
+        #expect(cold.recommendation?.sessionID == "app-cold-water-splash")
+
+        let gratitude = LocalStatefulChatEngine.orchestrate(prompt: "Feeling down on myself, want a gratitude body scan")
+        #expect(gratitude.recommendation?.sessionID == "dessert-gratitude-scan-five")
+
+        let jacks = LocalStatefulChatEngine.orchestrate(prompt: "Procrastinating, need a 2 min jumping jacks burst")
+        #expect(jacks.recommendation?.sessionID == "app-jumping-jacks-two")
+    }
+
+    @Test("Local stateful engine dynamically matches catalog across durations")
+    func localStatefulEngineCatalogMatching() {
+        let response45 = LocalStatefulChatEngine.orchestrate(prompt: "I have 45 min and feeling strong")
+        #expect(response45.recommendation != nil)
+        #expect(response45.recommendation?.durationMin ?? 0 >= 30)
+
+        let response5 = LocalStatefulChatEngine.orchestrate(prompt: "Just 5 min for a quick reset")
+        #expect(response5.recommendation != nil)
+        #expect(response5.recommendation?.durationMin ?? 0 <= 5)
+    }
+
+    @Test("Local stateful engine handles back inquiry and hip negation")
+    func localStatefulEngineBackAndHipNegation() {
+        let inquiry = LocalStatefulChatEngine.orchestrate(prompt: "will this help with my back problem")
+        #expect(inquiry.intent == .inquiry)
+        #expect(inquiry.message.contains("Yes") || inquiry.message.contains("spine"))
+
+        let negation = LocalStatefulChatEngine.orchestrate(prompt: "i don't need hips", activeSessionID: "app-hip-openers")
+        #expect(negation.intent == .refinement)
+        #expect(negation.recommendation?.sessionID != "app-hip-openers")
+        #expect(negation.message.contains("skipping hips") || negation.message.contains("no hips"))
+    }
 }
 
 private actor FakeChatTransport: ChatTransport {
