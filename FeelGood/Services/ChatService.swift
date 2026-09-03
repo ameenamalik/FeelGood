@@ -202,9 +202,17 @@ nonisolated struct ConversationalOverrides: Hashable, Sendable {
     }
 }
 
+/// Lean 3-mode conversation state (PRD §10.1 & Week 2 Core Loop)
+nonisolated enum ChatMode: String, Codable, Sendable {
+    case clarifying
+    case banter
+    case recommendation
+}
+
 /// Full structured response from the agent
 nonisolated struct ChatResponse: Sendable {
     let message: String
+    let mode: ChatMode
     let intent: ChatIntent
     let phase: ConversationPhase
     let recommendation: StructuredRecommendation?
@@ -213,6 +221,7 @@ nonisolated struct ChatResponse: Sendable {
 
     init(
         message: String,
+        mode: ChatMode? = nil,
         intent: ChatIntent = .generalCheckIn,
         phase: ConversationPhase = .recommendationActive,
         recommendation: StructuredRecommendation? = nil,
@@ -220,19 +229,60 @@ nonisolated struct ChatResponse: Sendable {
         overrides: ConversationalOverrides = ConversationalOverrides()
     ) {
         self.message = message
+        if let mode {
+            self.mode = mode
+        } else if phase == .needsDiscovery {
+            self.mode = .clarifying
+        } else if recommendation != nil {
+            self.mode = .recommendation
+        } else {
+            self.mode = .banter
+        }
         self.intent = intent
         self.phase = phase
-        self.recommendation = recommendation
+        self.recommendation = (self.mode == .recommendation) ? recommendation : nil
         self.quickReplies = quickReplies
         self.overrides = overrides
     }
 }
 
 /// Historical message turn sent to backend
-nonisolated struct WireChatMessage: Codable, Sendable {
-    let role: String
-    let content: String
+nonisolated struct ChatTurnPayload: Codable, Sendable {
+    let role: String // "user" | "model"
+    let text: String
+
+    enum CodingKeys: String, CodingKey {
+        case role
+        case text
+        case content
+    }
+
+    init(role: String, text: String) {
+        self.role = role
+        self.text = text
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.role = try container.decode(String.self, forKey: .role)
+        if let text = try? container.decode(String.self, forKey: .text) {
+            self.text = text
+        } else if let content = try? container.decode(String.self, forKey: .content) {
+            self.text = content
+        } else {
+            self.text = ""
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(role, forKey: .role)
+        try container.encode(text, forKey: .text)
+    }
 }
+
+/// Backwards compatibility alias
+typealias WireChatMessage = ChatTurnPayload
 
 /// User feedback and habit context influencing recommendations
 nonisolated struct ChatUserContext: Codable, Sendable {
@@ -333,6 +383,7 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
 
         return ChatResponse(
             message: decoded.message,
+            mode: decoded.mode,
             intent: intent,
             phase: phase,
             recommendation: decoded.recommendation,
@@ -359,6 +410,7 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
 
     private struct WireChatResponse: Decodable {
         let message: String
+        let mode: ChatMode?
         let intent: ChatIntent?
         let phase: ConversationPhase?
         let recommendation: StructuredRecommendation?
@@ -367,6 +419,7 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
 
         enum CodingKeys: String, CodingKey {
             case message
+            case mode
             case intent
             case phase
             case recommendation
@@ -453,6 +506,15 @@ actor ChatService: ChatProviding {
 
         let subID = await subscriberID()
 
+        // Pre-edge paywall check: free users with exhausted daily quota are routed to on-device engine
+        let allowed = await MainActor.run {
+            PurchasesManager.shared.canPerformEdgeChat()
+        }
+
+        guard allowed else {
+            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, userContext: userContext)
+        }
+
         guard let response = try? await transport.sendChat(
             prompt: sanitized,
             subscriberID: subID,
@@ -463,6 +525,10 @@ actor ChatService: ChatProviding {
         ) else {
             // Fall back to on-device stateful heuristic engine if offline / network fails
             return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, userContext: userContext)
+        }
+
+        await MainActor.run {
+            PurchasesManager.shared.recordEdgeChatPerformed()
         }
 
         return response
@@ -486,6 +552,7 @@ nonisolated enum LocalStatefulChatEngine {
         if vaguePhrases.contains(trimmedLower) {
             return ChatResponse(
                 message: "Got it. Would you prefer a short breath reset, a gentle floor stretch, or something to build a little energy?",
+                mode: .clarifying,
                 intent: .generalCheckIn,
                 phase: .needsDiscovery,
                 recommendation: nil,
@@ -784,8 +851,18 @@ nonisolated enum LocalStatefulChatEngine {
             ]
         }
 
+        let mode: ChatMode
+        if recommendation != nil {
+            mode = .recommendation
+        } else if phase == .needsDiscovery {
+            mode = .clarifying
+        } else {
+            mode = .banter
+        }
+
         return ChatResponse(
             message: message,
+            mode: mode,
             intent: intent,
             phase: phase,
             recommendation: recommendation,

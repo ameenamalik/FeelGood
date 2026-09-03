@@ -411,13 +411,9 @@ private struct MenuItemBody: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Top metadata row: Course tag, duration, status, and shuffle
+            // Top metadata row: Course tag, status, and shuffle
             HStack(alignment: .center, spacing: FGSpace.s) {
                 CourseTag(course: item.course)
-
-                Text(item.session.durationLabel)
-                    .font(FGFont.label)
-                    .foregroundStyle(FGColor.inkMuted)
 
                 if isDone {
                     DoneMark()
@@ -452,6 +448,13 @@ private struct MenuItemBody: View {
                 .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
                 .strikethrough(isDone, color: FGColor.clayDeep)
                 .fixedSize(horizontal: false, vertical: true)
+
+            // Visual target & context pills
+            WrapRow(spacing: FGSpace.xs, lineSpacing: FGSpace.xs) {
+                ForEach(item.session.chips, id: \.self) { chip in
+                    FGChip(text: chip)
+                }
+            }
 
             // Why it fits today
             Text(item.reasonText)

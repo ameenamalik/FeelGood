@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 struct ChatCheckInView: View {
     @Binding var text: String
@@ -16,6 +17,7 @@ struct ChatCheckInView: View {
 
     @State private var isProcessing: Bool = false
     @State private var assistantMessage: String?
+    @State private var turns: [ChatTurnPayload] = []
     @State private var service: any ChatProviding = ChatService()
     @FocusState private var isFieldFocused: Bool
 
@@ -52,6 +54,7 @@ struct ChatCheckInView: View {
                         .foregroundStyle(FGColor.ink)
                         .lineLimit(2...4)
                         .focused($isFieldFocused)
+                        .postHogMask()
                         .submitLabel(.send)
                         .onSubmit {
                             submitText()
@@ -118,6 +121,7 @@ struct ChatCheckInView: View {
                         .padding(12)
                         .background(Color(light: 0xF2F7EB, dark: 0x1B2615))
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .postHogMask()
 
                     // Extracted pills
                     if overrides.hasAnyOverrides {
@@ -186,13 +190,18 @@ struct ChatCheckInView: View {
         isFieldFocused = false
         isProcessing = true
 
+        let userTurn = ChatTurnPayload(role: "user", text: trimmed)
+        turns.append(userTurn)
+        let historyToSend = Array(turns.dropLast().suffix(4))
+
         Task {
-            let response = await service.describeDay(prompt: trimmed)
+            let response = await service.describeDay(prompt: trimmed, history: historyToSend)
             await MainActor.run {
                 isProcessing = false
                 if let response {
                     assistantMessage = response.message
                     overrides = response.overrides
+                    turns.append(ChatTurnPayload(role: "model", text: response.message))
                 }
             }
         }

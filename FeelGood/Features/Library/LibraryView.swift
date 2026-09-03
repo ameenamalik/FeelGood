@@ -70,7 +70,7 @@ struct LibraryView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                HStack(spacing: FGSpace.s) {
+                WrapRow(spacing: FGSpace.xs, lineSpacing: FGSpace.xs) {
                     ForEach(session.chips, id: \.self) { FGChip(text: $0) }
                     if session.isOwn {
                         FGChip(text: "Yours")

@@ -1,4 +1,5 @@
 // Auto-generated catalog index from FeelGood/Content/catalog.json
+// DO NOT EDIT DIRECTLY. Run 'npm run sync:catalog' to regenerate.
 
 export interface CatalogSessionItem {
   id: string;
@@ -179,7 +180,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "title": "Ten gentle minutes on the mat",
     "subtitle": "Small, doable, still counts",
     "durationMin": 10,
-    "intensity": "gentle",
+    "intensity": "moderate",
     "course": "main",
     "activity": "pilates",
     "places": [
@@ -294,7 +295,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "title": "Twenty minutes of qi gong",
     "subtitle": "Standing, slow, and quietly restorative",
     "durationMin": 20,
-    "intensity": "gentle",
+    "intensity": "moderate",
     "course": "main",
     "activity": "qigong",
     "places": [
@@ -341,7 +342,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "title": "A thirty minute walk",
     "subtitle": "Outside, phone in your pocket",
     "durationMin": 30,
-    "intensity": "gentle",
+    "intensity": "moderate",
     "course": "main",
     "activity": "walking",
     "places": [
@@ -385,7 +386,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "title": "Twenty minutes of flow",
     "subtitle": "Warm, steady, breath-led",
     "durationMin": 20,
-    "intensity": "gentle",
+    "intensity": "moderate",
     "course": "main",
     "activity": "yoga",
     "places": [
@@ -452,7 +453,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "title": "Walk your next call",
     "subtitle": "Same call, different body",
     "durationMin": 10,
-    "intensity": "gentle",
+    "intensity": "moderate",
     "course": "side",
     "activity": "walking",
     "places": [
@@ -541,7 +542,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "title": "Carry the shopping in one trip",
     "subtitle": "Grip work that was happening anyway",
     "durationMin": 5,
-    "intensity": "gentle",
+    "intensity": "moderate",
     "course": "side",
     "activity": "carries",
     "places": [
@@ -563,7 +564,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "title": "Dance to three songs",
     "subtitle": "That's it. That's the session.",
     "durationMin": 10,
-    "intensity": "gentle",
+    "intensity": "moderate",
     "course": "dessert",
     "activity": "dance",
     "places": [
@@ -737,7 +738,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "title": "Two heavy things, one lap",
     "subtitle": "The simplest thing in the building",
     "durationMin": 5,
-    "intensity": "gentle",
+    "intensity": "moderate",
     "course": "side",
     "activity": "carries",
     "places": [
@@ -800,7 +801,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "title": "Eight minutes of pulling",
     "subtitle": "For a back that spent the day at a desk",
     "durationMin": 8,
-    "intensity": "gentle",
+    "intensity": "moderate",
     "course": "side",
     "activity": "strength",
     "places": [
@@ -1020,7 +1021,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "title": "Five minutes of stairs",
     "subtitle": "Quick leg drive on the bottom step",
     "durationMin": 5,
-    "intensity": "gentle",
+    "intensity": "moderate",
     "course": "side",
     "activity": "agility",
     "places": [

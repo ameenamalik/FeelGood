@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import PostHog
 
 private struct ConversationMessage: Identifiable, Codable, Sendable {
     enum Role: String, Codable, Sendable {
@@ -93,6 +94,7 @@ struct ExploreView: View {
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 14)
+                            .postHogMask()
                         }
                         .scrollDismissesKeyboard(.interactively)
                         .onChange(of: messages.count) { _, _ in
@@ -201,7 +203,7 @@ struct ExploreView: View {
                         intensity: main.session.intensity <= 2 ? "gentle" : "moderate",
                         course: main.session.course.rawValue,
                         reason: "Curated for your daily routine.",
-                        tags: [main.session.course.rawValue.capitalized, "\(main.session.durationMin) min", main.session.activity.rawValue.capitalized]
+                        tags: main.session.chips
                     ),
                     messageID: nil
                 )
@@ -279,7 +281,7 @@ struct ExploreView: View {
 
         return VStack(alignment: .leading, spacing: 14) {
             // Frosted Tags Row
-            HStack(spacing: 6) {
+            WrapRow(spacing: 6, lineSpacing: 6) {
                 ForEach(recommendation.tags, id: \.self) { tag in
                     Text(tag)
                         .font(.system(size: 13, weight: .medium))
@@ -289,7 +291,6 @@ struct ExploreView: View {
                         .background(Color.white.opacity(0.65))
                         .clipShape(Capsule())
                 }
-                Spacer()
             }
 
             // Title
@@ -501,6 +502,7 @@ struct ExploreView: View {
                 .foregroundStyle(FGColor.ink)
                 .lineLimit(1...4)
                 .focused($isFieldFocused)
+                .postHogMask()
                 .submitLabel(.send)
                 .onSubmit {
                     submitText()
@@ -582,7 +584,9 @@ struct ExploreView: View {
             recentCompletions: completedEntries.count,
             recoveryOwed: recoveryOwed
         )
-        let wireHistory = messages.map { WireChatMessage(role: $0.role == .user ? "user" : "assistant", content: $0.text) }
+        let wireHistory = messages.suffix(4).map {
+            ChatTurnPayload(role: $0.role == .user ? "user" : "model", text: $0.text)
+        }
 
         Task {
             let response = await service.describeDay(

@@ -4,9 +4,17 @@ import { CATALOG_SESSIONS, findSessionById, matchBestSession, CatalogSessionItem
 import { queryAISearch } from "./ai_search";
 import { traceAgentTurn, traceChatModel, traceToolExecution } from "./tracing";
 
+export type ChatRole = "user" | "assistant" | "model";
+
 export interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
+  role: ChatRole;
+  content?: string;
+  text?: string;
+}
+
+export interface ChatTurnPayload {
+  role: ChatRole;
+  text: string;
 }
 
 export interface UserPreferencesContext {
@@ -73,8 +81,11 @@ export interface StructuredRecommendation {
   target_area?: string;
 }
 
+export type ChatMode = "clarifying" | "banter" | "recommendation";
+
 export interface ChatResponseData {
   message: string;
+  mode: ChatMode;
   intent:
     | "new_routine_request"
     | "inquiry"
@@ -126,6 +137,11 @@ const ORCHESTRATE_TOOL: Anthropic.Tool = {
       message: {
         type: "string",
         description: "Warm, calm, empathetic 1-2 sentence response.",
+      },
+      mode: {
+        type: "string",
+        enum: ["clarifying", "banter", "recommendation"],
+        description: "Conversation mode: clarifying (vague/needs info, no card), banter (affirmation/inquiry, no card), recommendation (specific routine suggested with card).",
       },
       intent: {
         type: "string",
@@ -234,8 +250,9 @@ export function isValidChatPayload(body: unknown): body is ChatPayload {
     for (const msg of record.history) {
       if (typeof msg !== "object" || msg === null) return false;
       const m = msg as Record<string, unknown>;
-      if (m.role !== "user" && m.role !== "assistant") return false;
-      if (typeof m.content !== "string") return false;
+      if (m.role !== "user" && m.role !== "assistant" && m.role !== "model") return false;
+      const textVal = typeof m.text === "string" ? m.text : typeof m.content === "string" ? m.content : undefined;
+      if (textVal === undefined) return false;
     }
   }
   return true;
@@ -405,10 +422,13 @@ async function handleGeminiChat(
   const contents = [];
   if (payload.history && payload.history.length > 0) {
     for (const item of payload.history.slice(-8)) {
-      contents.push({
-        role: item.role === "user" ? "user" : "model",
-        parts: [{ text: item.content }],
-      });
+      const text = item.text || item.content || "";
+      if (text) {
+        contents.push({
+          role: item.role === "model" || item.role === "assistant" ? "model" : "user",
+          parts: [{ text }],
+        });
+      }
     }
   }
   contents.push({
@@ -429,6 +449,11 @@ async function handleGeminiChat(
         type: "OBJECT",
         properties: {
           message: { type: "STRING", description: "Warm, calm, empathetic 1-2 sentence response." },
+          mode: {
+            type: "STRING",
+            enum: ["clarifying", "banter", "recommendation"],
+            description: "Lean 3-mode conversation state: clarifying (vague/clarifying question, no card), banter (greeting/inquiry, no card), recommendation (specific routine suggested with card).",
+          },
           intent: {
             type: "STRING",
             enum: [
@@ -499,7 +524,7 @@ async function handleGeminiChat(
           intentField: { type: "STRING", enum: ["energize", "strengthen", "calm", "mobilize", "joy"] },
           quickFilter: { type: "STRING", enum: ["shorter", "gentler", "moreEnergizing", "canNotLeave"] },
         },
-        required: ["message", "intent", "phase", "quick_replies"],
+        required: ["message", "mode", "quick_replies"],
       },
     },
   };
@@ -586,11 +611,26 @@ async function handleGeminiChat(
     }
   }
 
+  let mode: ChatMode = parsed.mode;
+  if (!mode || (mode !== "clarifying" && mode !== "banter" && mode !== "recommendation")) {
+    if (parsed.phase === "needs_discovery" || isVagueInput(payload.prompt)) {
+      mode = "clarifying";
+    } else if (recommendation) {
+      mode = "recommendation";
+    } else {
+      mode = "banter";
+    }
+  }
+
+  // Enforce lean schema invariant: clarifying and banter MUST have null recommendation
+  const finalRecommendation = mode === "recommendation" ? recommendation : null;
+
   const data: ChatResponseData = {
     message: parsed.message || (isVagueInput(payload.prompt) ? "Got it. What kind of support would feel best right now?" : "Here is a gentle plan tailored for your day."),
+    mode,
     intent: parsed.intent || "general_check_in",
-    phase: parsed.phase || (isVagueInput(payload.prompt) ? "needs_discovery" : "recommendation_active"),
-    recommendation,
+    phase: parsed.phase || (mode === "clarifying" ? "needs_discovery" : "recommendation_active"),
+    recommendation: finalRecommendation,
     quick_replies: quickReplies,
     extracted_check_in: Object.keys(extractedCheckIn).length > 0 ? extractedCheckIn : null,
   };
@@ -608,10 +648,13 @@ async function handleAnthropicChat(
   const messages: Anthropic.MessageParam[] = [];
   if (payload.history && payload.history.length > 0) {
     for (const item of payload.history.slice(-8)) {
-      messages.push({
-        role: item.role,
-        content: item.content,
-      });
+      const text = item.text || item.content || "";
+      if (text) {
+        messages.push({
+          role: item.role === "model" || item.role === "assistant" ? "assistant" : "user",
+          content: text,
+        });
+      }
     }
   }
   messages.push({
@@ -648,6 +691,7 @@ async function handleAnthropicChat(
   );
 
   let messageText = "";
+  let mode: ChatMode | undefined;
   let intent: ChatResponseData["intent"] = "general_check_in";
   let phase: ChatResponseData["phase"] = "recommendation_active";
   let sessionId: string | undefined;
@@ -661,6 +705,7 @@ async function handleAnthropicChat(
       const parsedTool = await traceToolExecution("orchestrate_conversation_state", input, async () => {
         return {
           message: typeof input.message === "string" ? input.message.trim() : undefined,
+          mode: typeof input.mode === "string" ? (input.mode as ChatMode) : undefined,
           intent: typeof input.intent === "string" ? (input.intent as ChatResponseData["intent"]) : undefined,
           phase: typeof input.phase === "string" ? (input.phase as ChatResponseData["phase"]) : undefined,
           sessionId: typeof input.session_id === "string" ? input.session_id : undefined,
@@ -676,6 +721,7 @@ async function handleAnthropicChat(
       });
 
       if (parsedTool.message) messageText = parsedTool.message;
+      if (parsedTool.mode) mode = parsedTool.mode;
       if (parsedTool.intent) intent = parsedTool.intent;
       if (parsedTool.phase) phase = parsedTool.phase;
       if (parsedTool.sessionId) sessionId = parsedTool.sessionId;
@@ -725,11 +771,25 @@ async function handleAnthropicChat(
     }
   }
 
+  let finalMode: ChatMode = mode || "banter";
+  if (!mode || (mode !== "clarifying" && mode !== "banter" && mode !== "recommendation")) {
+    if (phase === "needs_discovery" || isVagueInput(payload.prompt)) {
+      finalMode = "clarifying";
+    } else if (recommendation) {
+      finalMode = "recommendation";
+    } else {
+      finalMode = "banter";
+    }
+  }
+
+  const finalRecommendation = finalMode === "recommendation" ? recommendation : null;
+
   const data: ChatResponseData = {
     message: messageText,
+    mode: finalMode,
     intent,
-    phase,
-    recommendation,
+    phase: phase || (finalMode === "clarifying" ? "needs_discovery" : "recommendation_active"),
+    recommendation: finalRecommendation,
     quick_replies,
     extracted_check_in: Object.keys(extractedCheckIn).length > 0 ? extractedCheckIn : null,
   };

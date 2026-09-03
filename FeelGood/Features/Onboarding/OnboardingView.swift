@@ -152,23 +152,30 @@ struct OnboardingView: View {
             // and the artboard makes it the quietest thing on the page —
             // ruling something out should not feel like a bigger decision than
             // everything asked before it.
-            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
-                ForEach(Array(WorkAround.allCases.enumerated()), id: \.element) { index, workAround in
+            VStack(alignment: .leading, spacing: FGSpace.m) {
+                WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
+                    ForEach(Array(WorkAround.allCases.enumerated()), id: \.element) { index, workAround in
+                        FGPill(
+                            title: workAround.label,
+                            selectedAura: pillAura(at: index),
+                            isSelected: model.workArounds.contains(workAround)
+                        ) {
+                            toggle(workAround, in: \.workArounds)
+                        }
+                    }
                     FGPill(
-                        title: workAround.label,
-                        selectedAura: pillAura(at: index),
-                        isSelected: model.workArounds.contains(workAround)
+                        title: "None of these",
+                        selectedAura: .lilac,
+                        isSelected: model.workArounds.isEmpty
                     ) {
-                        toggle(workAround, in: \.workArounds)
+                        withAnimation(FGMotion.gentle) { model.workArounds = [] }
                     }
                 }
-                FGPill(
-                    title: "None of these",
-                    selectedAura: .lilac,
-                    isSelected: model.workArounds.isEmpty
-                ) {
-                    withAnimation(FGMotion.gentle) { model.workArounds = [] }
-                }
+
+                Text("FeelGood provides general wellness recommendations and is not a substitute for medical advice or physical therapy.")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .padding(.top, FGSpace.s)
             }
         }
     }
