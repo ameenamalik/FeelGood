@@ -4647,6 +4647,12 @@
         "play"
       ],
       "course": "appetizer",
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor",
+        "knees"
+      ],
       "source": {
         "type": "authored",
         "steps": [
