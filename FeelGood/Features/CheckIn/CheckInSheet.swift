@@ -20,26 +20,53 @@ import PostHog
 
 struct CheckInSheet: View {
     let current: PlanCheckIn?
-    let onDone: (PlanCheckIn) -> Void
+    let currentCalendarOpening: CalendarOpening?
+    let isProUser: Bool
+    let preferredTime: TimeOfDay
+    let realisticMinutes: Int
+    private let calendarProvider: any CalendarAvailabilityProviding
+    let onDone: (PlanCheckIn, CalendarOpening?) -> Void
 
     @State private var energy: Energy?
     @State private var time: TimeBudget?
     @State private var place: PlaceIntent?
     @State private var body_: BodyState?
+    @State private var calendarOpening: CalendarOpening?
+    @State private var selectedCalendarOpening: CalendarOpening?
+    @State private var calendarConnectionState: CalendarConnectionState
+    @State private var isLoadingCalendar = false
+    @State private var calendarLoadFailed = false
     /// How many questions are on screen. Only ever grows within a sitting —
     /// taking an answer back must not make a question you have already seen
     /// disappear out from under you.
     @State private var revealed: Int
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(PurchasesManager.self) private var purchasesManager
 
-    init(current: PlanCheckIn?, onDone: @escaping (PlanCheckIn) -> Void) {
+    init(
+        current: PlanCheckIn?,
+        currentCalendarOpening: CalendarOpening? = nil,
+        isProUser: Bool = false,
+        preferredTime: TimeOfDay = .varies,
+        realisticMinutes: Int = 20,
+        calendarProvider: any CalendarAvailabilityProviding = EventKitCalendarAvailabilityService.shared,
+        onDone: @escaping (PlanCheckIn, CalendarOpening?) -> Void
+    ) {
         self.current = current
+        self.currentCalendarOpening = currentCalendarOpening
+        self.isProUser = isProUser
+        self.preferredTime = preferredTime
+        self.realisticMinutes = realisticMinutes
+        self.calendarProvider = calendarProvider
         self.onDone = onDone
         _energy = State(initialValue: current?.energy)
         _time = State(initialValue: current?.time)
         _place = State(initialValue: current?.place)
         _body_ = State(initialValue: current?.body)
+        _calendarOpening = State(initialValue: currentCalendarOpening)
+        _selectedCalendarOpening = State(initialValue: currentCalendarOpening)
+        _calendarConnectionState = State(initialValue: calendarProvider.connectionState)
         // Coming back to change one answer should not re-run the reveal — the
         // whole sheet is already yours at that point.
         _revealed = State(initialValue: current == nil ? 1 : CheckInFlow.stepCount)
@@ -96,7 +123,7 @@ struct CheckInSheet: View {
                             text: $chatText,
                             overrides: $chatOverrides,
                             onCommit: { checkIn in
-                                onDone(checkIn)
+                                onDone(checkIn, nil)
                             }
                         )
                     }
@@ -125,6 +152,7 @@ struct CheckInSheet: View {
         .sensoryFeedback(.selection, trigger: selection)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .task { await loadCalendarOpeningIfConnected() }
     }
 
     // MARK: Questions
@@ -139,9 +167,9 @@ struct CheckInSheet: View {
     private func energyQuestion(_ proxy: ScrollViewProxy) -> some View {
         question("What have you got in the tank?", index: 0) {
             ForEach(Energy.allCases, id: \.self) { option in
-                FGAuraTile(
+                FGPill(
                     title: option.checkInLabel,
-                    aura: option.checkInAura,
+                    selectedAura: option.checkInAura,
                     isSelected: energy == option
                 ) {
                     energy = option
@@ -152,28 +180,145 @@ struct CheckInSheet: View {
     }
 
     private func timeQuestion(_ proxy: ScrollViewProxy) -> some View {
-        question("How much time, really?", index: 1) {
-            ForEach(TimeBudget.allCases, id: \.self) { option in
-                FGAuraTile(
-                    title: option.checkInMinutes,
-                    detail: "min",
-                    titleStyle: .display,
-                    aura: option.checkInAura,
-                    isSelected: time == option
-                ) {
-                    time = option
-                    reveal(after: 1, didAnswer: true, using: proxy)
+        VStack(alignment: .leading, spacing: FGSpace.m) {
+            Text("How much time, really?")
+                .font(FGFont.itemTitle)
+                .foregroundStyle(FGColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+
+            calendarContext(using: proxy)
+                .postHogMask()
+
+            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
+                ForEach(TimeBudget.allCases, id: \.self) { option in
+                    FGAuraTile(
+                        title: option.checkInMinutes,
+                        detail: "min",
+                        titleStyle: .display,
+                        preferredHeight: 112,
+                        aura: option.checkInAura,
+                        isSelected: time == option
+                    ) {
+                        time = option
+                        selectedCalendarOpening = nil
+                        reveal(after: 1, didAnswer: true, using: proxy)
+                    }
                 }
             }
+            .postHogMask()
         }
+        .id(1)
+        .transition(
+            reduceMotion
+                ? .opacity
+                : .opacity.combined(with: .offset(y: 16))
+        )
+    }
+
+    @ViewBuilder
+    private func calendarContext(using proxy: ScrollViewProxy) -> some View {
+        if hasProAccess {
+            switch calendarConnectionState {
+            case .notRequested:
+                calendarCard(
+                    title: "Work around your day",
+                    detail: "Use today's event times on this device to find a realistic opening.",
+                    buttonTitle: "Connect Calendar"
+                ) {
+                    Task { await connectCalendar() }
+                }
+
+            case .connected:
+                if isLoadingCalendar {
+                    HStack(spacing: FGSpace.s) {
+                        ProgressView()
+                        Text("Looking for an opening in today…")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+                    .padding(.horizontal, FGSpace.s)
+                } else if let calendarOpening {
+                    let message = calendarMessage(for: calendarOpening)
+                    calendarCard(
+                        title: message.title,
+                        detail: message.detail,
+                        buttonTitle: "Choose \(calendarOpening.budget.maxMinutes) minutes",
+                        isSelected: selectedCalendarOpening == calendarOpening
+                    ) {
+                        time = calendarOpening.budget
+                        selectedCalendarOpening = calendarOpening
+                        reveal(after: 1, didAnswer: true, using: proxy)
+                    }
+                } else if calendarLoadFailed {
+                    calendarStatus("Calendar couldn't be checked. Choose a time below.")
+                } else {
+                    calendarStatus("No clear opening left today. Choose what feels realistic below.")
+                }
+
+            case .denied:
+                calendarStatus("Calendar access is off. You can still choose a time below.")
+            }
+        }
+    }
+
+    private func calendarCard(
+        title: String,
+        detail: String,
+        buttonTitle: String,
+        isSelected: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        VStack(alignment: .leading, spacing: FGSpace.s) {
+            HStack(spacing: FGSpace.xs) {
+                Image(systemName: "calendar")
+                Text(title)
+            }
+            .font(FGFont.body.weight(.semibold))
+            .foregroundStyle(FGColor.ink)
+
+            Text(detail)
+                .font(FGFont.caption)
+                .foregroundStyle(FGColor.inkMuted)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button(buttonTitle, action: action)
+                .font(FGFont.caption.weight(.semibold))
+                .foregroundStyle(FGColor.inkOnAccent)
+                .padding(.horizontal, FGSpace.m)
+                .frame(minHeight: FGSize.minTouchTarget)
+                .background(Capsule().fill(FGColor.gold))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(FGSpace.m)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                .strokeBorder(isSelected ? FGColor.ink : FGColor.lineStrong, lineWidth: isSelected ? 1.5 : 1)
+        )
+        .accessibilityElement(children: .contain)
+    }
+
+    private func calendarStatus(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: FGSpace.s) {
+            Image(systemName: "calendar")
+                .accessibilityHidden(true)
+            Text(text)
+                .font(FGFont.caption)
+        }
+        .foregroundStyle(FGColor.inkMuted)
+        .padding(.horizontal, FGSpace.s)
     }
 
     private func placeQuestion(_ proxy: ScrollViewProxy) -> some View {
         question("Where are you today?", index: 2, isOptional: true) {
             ForEach(PlaceIntent.allCases, id: \.self) { option in
-                FGAuraTile(
+                FGPill(
                     title: option.checkInLabel,
-                    aura: option.checkInAura,
+                    selectedAura: option.checkInAura,
                     isSelected: place == option
                 ) {
                     // Tapping the answer you already gave takes it back.
@@ -199,9 +344,9 @@ struct CheckInSheet: View {
     private var bodyQuestion: some View {
         question("Anything going on in your body?", index: 3, isOptional: true) {
             ForEach(BodyState.allCases, id: \.self) { option in
-                FGAuraTile(
+                FGPill(
                     title: option.checkInLabel,
-                    aura: option.checkInAura,
+                    selectedAura: option.checkInAura,
                     isSelected: body_ == option
                 ) {
                     body_ = body_ == option ? nil : option
@@ -225,7 +370,7 @@ struct CheckInSheet: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
 
-            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) { options() }
+            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) { options() }
                 .postHogMask()
         }
         .id(index)
@@ -294,18 +439,68 @@ struct CheckInSheet: View {
         Analytics.capture(
             CheckInAnalytics(energy: energy, time: time, place: place, body: body_)
         )
-        onDone(plan)
+        onDone(plan, selectedCalendarOpening)
+    }
+
+    private func connectCalendar() async {
+        calendarConnectionState = await calendarProvider.requestAccess()
+        await loadCalendarOpeningIfConnected()
+    }
+
+    private func loadCalendarOpeningIfConnected() async {
+        guard hasProAccess, calendarConnectionState == .connected else { return }
+        isLoadingCalendar = true
+        calendarLoadFailed = false
+        defer { isLoadingCalendar = false }
+
+        do {
+            calendarOpening = try await calendarProvider.suggestedOpening(
+                on: Date(),
+                preferredTime: preferredTime,
+                realisticMinutes: realisticMinutes,
+                calendar: .current
+            )
+        } catch {
+            calendarOpening = nil
+            calendarLoadFailed = true
+        }
+    }
+
+    private func openingPhrase(_ opening: CalendarOpening) -> String {
+        let hour = Calendar.current.component(.hour, from: opening.start)
+        if (11..<14).contains(hour) { return "around lunch" }
+        return "around \(opening.start.formatted(date: .omitted, time: .shortened))"
+    }
+
+    private func calendarMessage(for opening: CalendarOpening) -> (title: String, detail: String) {
+        let suggestion = "Plans change—would \(opening.budget.maxMinutes) minutes feel realistic?"
+        switch opening.context {
+        case .beforeNextEvent:
+            return ("Some space before your next event", suggestion)
+        case .openForRestOfDay:
+            return ("Your calendar looks open for the rest of today", suggestion)
+        case .openToday:
+            return ("Your calendar looks open today", suggestion)
+        case .uncertain:
+            return ("A possible opening \(openingPhrase(opening))", suggestion)
+        }
+    }
+
+    private var hasProAccess: Bool {
+        isProUser || purchasesManager.isProUnlocked
     }
 }
 
 #Preview("Empty") {
-    CheckInSheet(current: nil) { _ in }
+    CheckInSheet(current: nil) { _, _ in }
+        .environment(PurchasesManager.shared)
 }
 
 #Preview("Answered") {
     CheckInSheet(
         current: PlanCheckIn(energy: .low, time: .aLittle, place: .stayingIn, body: .stiff)
-    ) { _ in }
+    ) { _, _ in }
+    .environment(PurchasesManager.shared)
 }
 
 #Preview("Aura tiles") {

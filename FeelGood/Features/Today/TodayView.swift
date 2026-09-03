@@ -8,6 +8,7 @@
 
 import SwiftUI
 import RevenueCatUI
+import PostHog
 
 struct TodayView: View {
     @State var model: TodayModel
@@ -37,6 +38,7 @@ struct TodayView: View {
                     checkInPrompt
                     quickFiltersBar
                     menuHeading
+                    calendarFitCard
                     menuItems
                     logFooter
                 }
@@ -47,8 +49,14 @@ struct TodayView: View {
             .scrollBounceBehavior(.basedOnSize)
         }
         .sheet(isPresented: $isCheckingIn) {
-            CheckInSheet(current: model.checkIn) { checkIn in
-                model.apply(checkIn)
+            CheckInSheet(
+                current: model.checkIn,
+                currentCalendarOpening: model.calendarOpening,
+                isProUser: model.isProUser,
+                preferredTime: model.profile.bestTimeOfDay,
+                realisticMinutes: model.profile.realisticMinutes
+            ) { checkIn, calendarOpening in
+                model.apply(checkIn, calendarOpening: calendarOpening)
                 isCheckingIn = false
             }
         }
@@ -248,6 +256,34 @@ struct TodayView: View {
                 .foregroundStyle(FGColor.inkMuted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var calendarFitCard: some View {
+        if let opening = model.calendarOpening, let main = model.menu.main {
+            HStack(alignment: .top, spacing: FGSpace.s) {
+                Image(systemName: "calendar.badge.clock")
+                    .foregroundStyle(FGColor.goldDeep)
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("A good opening today")
+                        .font(FGFont.label.weight(.semibold))
+                        .foregroundStyle(FGColor.ink)
+                    Text("Try \(main.session.title) around \(opening.start.formatted(date: .omitted, time: .shortened)).")
+                        .font(FGFont.caption)
+                        .foregroundStyle(FGColor.inkMuted)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(FGSpace.m)
+            .background(
+                RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
+                    .fill(FGColor.surface.opacity(0.92))
+            )
+            .postHogMask()
+            .accessibilityElement(children: .combine)
+        }
     }
 
     private var logFooter: some View {

@@ -35,6 +35,26 @@ struct TodayModelTests {
         )
     }
 
+    @Test("An accepted Calendar opening stays with today's generated menu")
+    func acceptedCalendarOpeningStaysWithMenu() {
+        let model = model()
+        let opening = CalendarOpening(
+            start: Fixture.now.addingTimeInterval(60 * 60),
+            end: Fixture.now.addingTimeInterval(90 * 60),
+            budget: .twentyMinutes
+        )
+
+        model.apply(
+            PlanCheckIn(energy: .steady, time: opening.budget),
+            calendarOpening: opening,
+            now: Fixture.now
+        )
+
+        #expect(model.calendarOpening == opening)
+        #expect(model.checkIn?.time == .twentyMinutes)
+        #expect(model.menu.main?.session.durationMin ?? 0 <= opening.budget.maxMinutes)
+    }
+
     @Test("Leaving a workout saves progress without completing it")
     func leavingSavesProgressWithoutCompletion() {
         let log = InMemorySessionLog()

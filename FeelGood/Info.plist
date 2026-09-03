@@ -23,6 +23,8 @@
 	<string>$(POSTHOG_PROJECT_TOKEN)</string>
 	<key>RevenueCatAPIKey</key>
 	<string>$(REVENUECAT_API_KEY)</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>FeelGood uses today’s event times on this device to suggest movement that fits around your day.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
