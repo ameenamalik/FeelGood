@@ -166,26 +166,35 @@ export default {
 
 async function generateGeminiCopy(body: unknown, apiKey: string): Promise<string | null> {
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    const resp = await fetch(url, {
+    const payload = JSON.stringify({
+      systemInstruction: {
+        parts: [{ text: COPY_SYSTEM_PROMPT }],
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: `Here is the user context and today's picks payload: ${JSON.stringify(body)}. Write a single warm, grounded headline line.` }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 150,
+      },
+    });
+
+    let resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: COPY_SYSTEM_PROMPT }],
-        },
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: `Here is the user context and today's picks payload: ${JSON.stringify(body)}. Write a single warm, grounded headline line.` }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 150,
-        },
-      }),
+      body: payload,
     });
+
+    if (resp.status === 404) {
+      resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      });
+    }
 
     if (!resp.ok) return null;
     const data = (await resp.json()) as {

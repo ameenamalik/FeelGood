@@ -537,13 +537,13 @@ async function handleGeminiChat(
     },
     {
       system: "gemini",
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       systemPrompt,
       inputMessages: contents,
     },
     async (setResponse) => {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      let response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -551,10 +551,21 @@ async function handleGeminiChat(
         }
       );
 
+      if (response.status === 404) {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }
+        );
+      }
+
       if (!response.ok) {
         const errText = await response.text();
         console.error("Gemini API error:", response.status, errText);
-        return { res: response, candidateText: null };
+        return { res: response, candidateText: null, errorDetail: errText };
       }
 
       const json = (await response.json()) as any;
@@ -562,12 +573,13 @@ async function handleGeminiChat(
       if (text) {
         setResponse([{ role: "model", content: text }]);
       }
-      return { res: response, candidateText: text };
+      return { res: response, candidateText: text, errorDetail: null };
     }
   );
 
   if (!res.ok) {
-    return new Response(`upstream error: gemini ${res.status}`, { status: 500 });
+    const detail = (res as any).errorDetail || "";
+    return new Response(`upstream error: gemini ${res.status} - ${detail}`, { status: 500 });
   }
 
   if (!candidateText) {
