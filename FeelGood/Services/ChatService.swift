@@ -567,11 +567,15 @@ nonisolated enum LocalStatefulChatEngine {
             var score = 0
 
             if let targetDuration {
-                let diff = abs(s.durationMin - targetDuration)
-                if diff == 0 { score += 30 }
-                else if diff <= 3 { score += 18 }
-                else if diff <= 6 { score += 10 }
-                else { score -= min(diff * 2, 25) }
+                if s.durationMin > targetDuration {
+                    score -= (s.durationMin - targetDuration) * 10
+                } else {
+                    let diff = targetDuration - s.durationMin
+                    if diff == 0 { score += 30 }
+                    else if diff <= 3 { score += 18 }
+                    else if diff <= 6 { score += 10 }
+                    else { score -= diff }
+                }
             }
 
             if let intensity {
