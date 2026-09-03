@@ -4,12 +4,27 @@ import { hasProEntitlement } from "./entitlement";
 import { playerResponse } from "./player";
 import { isRateLimited } from "./rateLimit";
 import { COPY_SYSTEM_PROMPT } from "./systemPrompt";
+import { traceAgentTurn, traceChatModel } from "./tracing";
 import { Env } from "./types";
 import { isValidPayload } from "./validate";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // Root / Health check for browser and monitoring verification
+    if (url.pathname === "/" || url.pathname === "/health") {
+      return Response.json({
+        status: "healthy",
+        service: "FeelGood Edge Worker",
+        version: "1.0.0",
+        endpoints: {
+          chat: "POST /chat",
+          copy: "POST /copy",
+          player: "GET /player?v=<id>",
+        },
+      });
+    }
 
     // `/player` is public and static: it holds no secret, reads no KV, and
     // checks no entitlement, so a Worker deployed with nothing configured
@@ -75,24 +90,52 @@ export default {
       return new Response("slow down", { status: 429 });
     }
 
-    try {
-      const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-      const response = await client.messages.create({
-        model: "claude-opus-5",
-        max_tokens: 300,
-        system: [{ type: "text", text: COPY_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-        messages: [{ role: "user", content: JSON.stringify(body) }],
-      });
+    return traceAgentTurn(
+      {
+        agentName: "feelgood-copy-agent",
+        agentId: "feelgood-copywriter",
+        conversationId: body.subscriberID || "anonymous",
+      },
+      async () => {
+        try {
+          const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+          const messages = [{ role: "user" as const, content: JSON.stringify(body) }];
 
-      const line = firstText(response);
-      if (!line) return new Response("empty response", { status: 500 });
+          const response = await traceChatModel(
+            {
+              agentName: "feelgood-copy-agent",
+              agentId: "feelgood-copywriter",
+              conversationId: body.subscriberID || "anonymous",
+            },
+            {
+              system: "anthropic",
+              model: "claude-opus-5",
+              systemPrompt: COPY_SYSTEM_PROMPT,
+              inputMessages: messages,
+            },
+            async (setResponse) => {
+              const res = await client.messages.create({
+                model: "claude-opus-5",
+                max_tokens: 300,
+                system: [{ type: "text", text: COPY_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+                messages,
+              });
+              setResponse(res.content);
+              return res;
+            }
+          );
 
-      return Response.json({ line });
-    } catch {
-      // No detail leaked — the client's only reaction to any failure here is
-      // to fall back to the deterministic template headline.
-      return new Response("upstream error", { status: 500 });
-    }
+          const line = firstText(response);
+          if (!line) return new Response("empty response", { status: 500 });
+
+          return Response.json({ line });
+        } catch {
+          // No detail leaked — the client's only reaction to any failure here is
+          // to fall back to the deterministic template headline.
+          return new Response("upstream error", { status: 500 });
+        }
+      }
+    );
   },
 };
 

@@ -100,13 +100,19 @@ final class TodayModel {
         if let stored = log.day(today, resolving: { sessions[$0] }) {
             self.menu = stored
         } else {
+            // Same `.full` / `.recencyOnly` gate as `input(now:)` below — this
+            // is the app's very first menu, generated before `self` exists to
+            // call that method on, so it stayed on the old unwrapped
+            // initializer and every cold start got Pro's memory for free.
+            let memory: PlanMemory = PurchasesManager.shared.isProUnlocked
+                ? .full(history: recorded, affinity: log.affinity())
+                : .recencyOnly(lastActiveDate: recorded.filter(\.wasCompleted).map(\.date).max())
             let generated = engine.makeMenu(
                 PlanInput(
                     profile: profile,
                     checkIn: todaysCheckIn,
-                    history: recorded,
-                    context: PlanContext(now: now, calendar: calendar),
-                    affinity: log.affinity()
+                    memory: memory,
+                    context: PlanContext(now: now, calendar: calendar)
                 )
             )
             self.menu = generated
@@ -180,6 +186,97 @@ final class TodayModel {
         if !response.message.isEmpty {
             upgradedHeadline = response.message
         }
+    }
+
+    /// Explicitly pins or places a chosen session onto today's menu (e.g. from chat exploration).
+    func commitSessionToToday(_ session: Session, now: Date = Date()) {
+        let item = MenuItem(
+            session: session,
+            course: session.course,
+            reasons: [.matchesIntent],
+            reasonText: "Chosen in conversation with you"
+        )
+
+        switch session.course {
+        case .main:
+            if let existingMain = menu.main {
+                menu = menu.replacing(existingMain, with: item)
+            } else {
+                menu = Menu(
+                    dayStart: menu.dayStart,
+                    appetizer: menu.appetizer,
+                    main: item,
+                    sides: menu.sides,
+                    dessert: menu.dessert,
+                    special: menu.special,
+                    headline: menu.headline,
+                    assumedCheckIn: menu.assumedCheckIn
+                )
+            }
+        case .appetizer:
+            if let existingApp = menu.appetizer {
+                menu = menu.replacing(existingApp, with: item)
+            } else {
+                menu = Menu(
+                    dayStart: menu.dayStart,
+                    appetizer: item,
+                    main: menu.main,
+                    sides: menu.sides,
+                    dessert: menu.dessert,
+                    special: menu.special,
+                    headline: menu.headline,
+                    assumedCheckIn: menu.assumedCheckIn
+                )
+            }
+        case .side:
+            if let firstSide = menu.sides.first {
+                menu = menu.replacing(firstSide, with: item)
+            } else {
+                menu = Menu(
+                    dayStart: menu.dayStart,
+                    appetizer: menu.appetizer,
+                    main: menu.main,
+                    sides: [item],
+                    dessert: menu.dessert,
+                    special: menu.special,
+                    headline: menu.headline,
+                    assumedCheckIn: menu.assumedCheckIn
+                )
+            }
+        case .dessert:
+            if let existingDessert = menu.dessert {
+                menu = menu.replacing(existingDessert, with: item)
+            } else {
+                menu = Menu(
+                    dayStart: menu.dayStart,
+                    appetizer: menu.appetizer,
+                    main: menu.main,
+                    sides: menu.sides,
+                    dessert: item,
+                    special: menu.special,
+                    headline: menu.headline,
+                    assumedCheckIn: menu.assumedCheckIn
+                )
+            }
+        case .special:
+            if let existingSpecial = menu.special {
+                menu = menu.replacing(existingSpecial, with: item)
+            } else {
+                menu = Menu(
+                    dayStart: menu.dayStart,
+                    appetizer: menu.appetizer,
+                    main: menu.main,
+                    sides: menu.sides,
+                    dessert: menu.dessert,
+                    special: item,
+                    headline: menu.headline,
+                    assumedCheckIn: menu.assumedCheckIn
+                )
+            }
+        }
+
+        log.save(menu, generatedAt: now)
+        publishSnapshot(now: now)
     }
 
     /// Quick-pivot constraint chips (PRD §10.1 Category 2: Change the plan in seconds).
