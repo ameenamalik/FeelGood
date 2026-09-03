@@ -588,11 +588,13 @@ struct ExploreView: View {
             ChatTurnPayload(role: $0.role == .user ? "user" : "model", text: $0.text)
         }
 
+        let currentActiveID = messages.reversed().compactMap(\.recommendation?.sessionID).first ?? model.menu.main?.session.id
+
         Task {
             let response = await service.describeDay(
                 prompt: trimmed,
                 history: wireHistory,
-                activeSessionID: model.menu.main?.session.id,
+                activeSessionID: currentActiveID,
                 userContext: userContext
             )
 

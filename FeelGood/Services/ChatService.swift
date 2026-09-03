@@ -506,13 +506,15 @@ actor ChatService: ChatProviding {
 
         let subID = await subscriberID()
 
-        // Pre-edge paywall check: free users with exhausted daily quota are routed to on-device engine
-        let allowed = await MainActor.run {
+        // Pre-edge paywall check: Pro users or free users with daily quota remaining
+        let pro = await isProUnlocked()
+        let canPerform = await MainActor.run {
             PurchasesManager.shared.canPerformEdgeChat()
         }
+        let allowed = pro || canPerform
 
         guard allowed else {
-            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, userContext: userContext)
+            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext)
         }
 
         guard let response = try? await transport.sendChat(
@@ -524,7 +526,7 @@ actor ChatService: ChatProviding {
             timeout: timeout
         ) else {
             // Fall back to on-device stateful heuristic engine if offline / network fails
-            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, userContext: userContext)
+            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext)
         }
 
         await MainActor.run {
@@ -537,9 +539,104 @@ actor ChatService: ChatProviding {
 
 /// On-device local stateful heuristic engine matching the state machine & schema offline
 nonisolated enum LocalStatefulChatEngine {
+    private static let catalogSessions: [Session] = {
+        (try? ContentStore.bundled().sessions) ?? []
+    }()
+
+    static func sessionById(_ id: String) -> Session? {
+        catalogSessions.first { $0.id == id }
+    }
+
+    static func matchBestSession(
+        targetDuration: Int? = nil,
+        intensity: String? = nil,
+        bodyFocus: BodyFocus? = nil,
+        excludedFocus: BodyFocus? = nil,
+        intent: Intent? = nil,
+        activity: Activity? = nil,
+        excludeID: String? = nil,
+        userContext: ChatUserContext? = nil
+    ) -> Session? {
+        guard !catalogSessions.isEmpty else { return nil }
+
+        var candidates: [(session: Session, score: Int)] = []
+
+        for s in catalogSessions {
+            if let excludeID, s.id == excludeID { continue }
+            if let excludedFocus, s.bodyFocus.contains(excludedFocus) { continue }
+            var score = 0
+
+            if let targetDuration {
+                let diff = abs(s.durationMin - targetDuration)
+                if diff == 0 { score += 30 }
+                else if diff <= 3 { score += 18 }
+                else if diff <= 6 { score += 10 }
+                else { score -= min(diff * 2, 25) }
+            }
+
+            if let intensity {
+                let sIntensityStr = s.intensity <= 2 ? "gentle" : (s.intensity == 3 ? "moderate" : "dynamic")
+                if sIntensityStr == intensity { score += 15 }
+            }
+
+            if let bodyFocus, s.bodyFocus.contains(bodyFocus) {
+                score += 20
+            }
+
+            if let intent, s.intents.contains(intent) {
+                score += 15
+            }
+
+            if let activity, s.activity == activity {
+                score += 25
+            }
+
+            if s.course == .main {
+                score += 2
+            }
+
+            if let userContext {
+                if let liked = userContext.likedActivities, liked.contains(s.activity.rawValue) {
+                    score += 12
+                }
+                if userContext.recoveryOwed == true || userContext.lastFeel == "tooMuch" {
+                    if s.intensity <= 2 { score += 15 }
+                    else if s.intensity >= 4 { score -= 25 }
+                }
+            }
+
+            candidates.append((s, score))
+        }
+
+        candidates.sort { $0.score > $1.score }
+        guard let topScore = candidates.first?.score else { return nil }
+
+        // Sample among top tier (within 6 points of top score) to provide natural variety
+        let topTier = candidates.filter { $0.score >= topScore - 6 }
+        return topTier.randomElement()?.session ?? candidates.first?.session
+    }
+
+    static func structuredRecommendation(for s: Session, reason: String? = nil) -> StructuredRecommendation {
+        let intensityLabel = s.intensity <= 2 ? "gentle" : (s.intensity == 3 ? "moderate" : "dynamic")
+        let courseLabel = s.course.rawValue.capitalized
+        let tags = [courseLabel, "\(s.durationMin) min", intensityLabel.capitalized]
+        return StructuredRecommendation(
+            sessionID: s.id,
+            title: s.title,
+            subtitle: s.subtitle,
+            durationMin: s.durationMin,
+            intensity: intensityLabel,
+            course: s.course.rawValue,
+            reason: reason ?? "Curated to fit your \(s.durationMin)-minute window and match how your body feels.",
+            tags: tags,
+            targetArea: s.bodyFocus.first?.rawValue
+        )
+    }
+
     static func orchestrate(
         prompt: String,
         history: [WireChatMessage] = [],
+        activeSessionID: String? = nil,
         userContext: ChatUserContext? = nil
     ) -> ChatResponse {
         let trimmedLower = prompt.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -575,16 +672,16 @@ nonisolated enum LocalStatefulChatEngine {
         if ["k", "ok", "okay", "yes", "sounds good", "perfect", "let's do it", "looks good", "great"].contains(lower) {
             intent = .acknowledgment
             phase = .routineCommitted
-        } else if lower.contains("why") || lower.contains("what is") || lower.contains("how does") || lower.contains("what if") {
+        } else if lower.contains("why") || lower.contains("what is") || lower.contains("how does") || lower.contains("what if") || lower.contains("will this help") || lower.contains("will it help") || lower.contains("does this help") || lower.contains("is this good") || lower.contains("can this help") {
             intent = .inquiry
             phase = .inquiryActive
-        } else if lower.contains("shorter") || lower.contains("gentler") || lower.contains("energiz") || lower.contains("not today") || lower.contains("something else") {
+        } else if lower.contains("shorter") || lower.contains("gentler") || lower.contains("energiz") || lower.contains("not today") || lower.contains("something else") || lower.contains("don't need") || lower.contains("dont need") || lower.contains("don't want") || lower.contains("dont want") || lower.contains("no hips") || lower.contains("not hips") {
             intent = .refinement
             phase = .recommendationActive
         } else if lower.contains("add to today") || lower.contains("swap") || lower.contains("start") {
             intent = .actionTrigger
             phase = .routineCommitted
-        } else if lower.contains("min") || lower.contains("tired") || lower.contains("back") || lower.contains("sore") || lower.contains("stiff") || lower.contains("breath") || lower.contains("wired") {
+        } else if lower.contains("min") || lower.contains("tired") || lower.contains("back") || lower.contains("sore") || lower.contains("stiff") || lower.contains("breath") || lower.contains("wired") || lower.contains("shake") || lower.contains("walk") || lower.contains("dance") {
             intent = .newRoutineRequest
             phase = .recommendationActive
         }
@@ -631,6 +728,9 @@ nonisolated enum LocalStatefulChatEngine {
         } else if lower.contains("2 min") || lower.contains("2min") || lower.contains("two") {
             time = .fiveMinutes
             durMin = 2
+        } else if lower.contains("1 min") || lower.contains("1min") || lower.contains("one min") {
+            time = .fiveMinutes
+            durMin = 1
         }
 
         var place: PlaceIntent?
@@ -659,6 +759,43 @@ nonisolated enum LocalStatefulChatEngine {
         else if lower.contains("energiz") { filter = .moreEnergizing }
         else if lower.contains("staying in") || lower.contains("stay in") { filter = .canNotLeave }
 
+        var requestedActivity: Activity?
+        if lower.contains("yoga") { requestedActivity = .yoga }
+        else if lower.contains("pilates") { requestedActivity = .pilates }
+        else if lower.contains("strength") || lower.contains("weight") || lower.contains("lift") { requestedActivity = .strength }
+        else if lower.contains("stretch") { requestedActivity = .stretching }
+        else if lower.contains("walk") || lower.contains("walking") { requestedActivity = .walking }
+        else if lower.contains("dance") { requestedActivity = .dance }
+        else if lower.contains("qigong") || lower.contains("qi gong") { requestedActivity = .qigong }
+        else if lower.contains("breath") || lower.contains("box breathing") { requestedActivity = .breathwork }
+        else if lower.contains("jump rope") || lower.contains("shake") || lower.contains("jumping jack") { requestedActivity = .agility }
+
+        var targetFocus: BodyFocus?
+        var excludedFocus: BodyFocus?
+
+        if lower.contains("hip") {
+            if lower.contains("don't need hip") || lower.contains("dont need hip") || lower.contains("don't want hip") || lower.contains("dont want hip") || lower.contains("no hip") || lower.contains("not hip") || lower.contains("no hips") || lower.contains("not hips") {
+                excludedFocus = .hips
+            } else {
+                targetFocus = .hips
+            }
+        }
+        if lower.contains("back") {
+            if lower.contains("no back") || lower.contains("not back") {
+                excludedFocus = .back
+            } else {
+                targetFocus = .back
+            }
+        }
+        if lower.contains("neck") || lower.contains("shoulder") { targetFocus = .neckShoulders }
+        else if lower.contains("core") { targetFocus = .core }
+
+        var targetIntent: Intent?
+        if lower.contains("energiz") || lower.contains("wake") { targetIntent = .energize }
+        else if lower.contains("calm") || lower.contains("stress") || lower.contains("anxious") || lower.contains("relax") || lower.contains("sleep") { targetIntent = .calm }
+        else if lower.contains("mobil") || lower.contains("stiff") { targetIntent = .mobilize }
+        else if lower.contains("joy") || lower.contains("play") { targetIntent = .joy }
+
         let overrides = ConversationalOverrides(energy: energy, time: time, place: place, body: body, quickFilter: filter)
 
         // 3. Response copy & structured recommendation
@@ -669,16 +806,11 @@ nonisolated enum LocalStatefulChatEngine {
         case .inquiry:
             if lower.contains("can't sit still") || lower.contains("can not sit") || lower.contains("sitting") {
                 message = "Then move first. This one's standing."
-                recommendation = StructuredRecommendation(
-                    sessionID: "app-jump-rope-ninety",
-                    title: "Ninety seconds of jump rope",
-                    subtitle: "No rope required if you don't have one",
-                    durationMin: 2,
-                    intensity: "dynamic",
-                    course: "appetizer",
-                    reason: "Standing reset to dissipate restless energy before settling down.",
-                    tags: ["Appetizer", "2 min", "Standing"]
-                )
+                if let s = sessionById("app-jump-rope-ninety") {
+                    recommendation = structuredRecommendation(for: s, reason: "Standing reset to dissipate restless energy before settling down.")
+                }
+            } else if lower.contains("back") {
+                message = "Yes — releasing tight hip flexors and pelvis tension takes direct pulling pressure off your lumbar spine."
             } else if lower.contains("why") {
                 message = "This sequence unloads spinal tension and opens tight hips without straining your joints."
             } else {
@@ -688,145 +820,116 @@ nonisolated enum LocalStatefulChatEngine {
         case .acknowledgment:
             message = "You're all set. Take your time, breathe deeply, and enjoy moving."
 
-        case .refinement:
-            if lower.contains("shorter") || lower.contains("5 min") || lower.contains("3 min") {
-                message = "Adjusted. Here is a quick 3-minute neck and shoulder release."
-                recommendation = StructuredRecommendation(
-                    sessionID: "app-neck-shoulder-release",
-                    title: "Neck and shoulder release",
-                    subtitle: "For the hours you spent looking at a screen",
-                    durationMin: 3,
-                    intensity: "gentle",
-                    course: "appetizer",
-                    reason: "A 3-minute targeted reset for screen fatigue and tight traps.",
-                    tags: ["Appetizer", "3 min", "Gentle"]
-                )
-            } else if lower.contains("energiz") || lower.contains("strong") {
-                message = "Picked up the pace with an uplifting strength reset."
-                recommendation = StructuredRecommendation(
-                    sessionID: "main-strength-express-15",
-                    title: "Fifteen minutes with weights",
-                    subtitle: "Move something heavy enough that the rest of the day feels lighter",
-                    durationMin: 15,
-                    intensity: "moderate",
-                    course: "main",
-                    reason: "Builds gentle strength and warmth without depleting energy.",
-                    tags: ["Main", "15 min", "Strength"]
-                )
-            } else {
-                message = "Swapped to a softer, supported floor sequence."
-                recommendation = StructuredRecommendation(
-                    sessionID: "main-pilates-gentle-10",
-                    title: "Ten gentle minutes on the mat",
-                    subtitle: "Slow, low to the ground, no standing up",
-                    durationMin: 10,
-                    intensity: "gentle",
-                    course: "main",
-                    reason: "Zero standing, fully supported floor flow for restorative rest.",
-                    tags: ["Main", "10 min", "Gentle"]
-                )
-            }
-
         case .actionTrigger:
             message = "Added to today's menu. Tap Start whenever you're ready."
 
-        case .newRoutineRequest, .generalCheckIn:
-            if lower.contains("neck") || lower.contains("shoulder") || lower.contains("desk") {
-                message = "Focused release for upper back and neck tension."
-                recommendation = StructuredRecommendation(
-                    sessionID: "side-desk-shoulder-reset",
-                    title: "Shoulder reset between meetings",
-                    subtitle: "Done in a chair. Nobody on the call will notice.",
-                    durationMin: 5,
-                    intensity: "gentle",
-                    course: "side",
-                    reason: "Releases upper trap tightness and opens thoracic posture.",
-                    tags: ["Side", "5 min", "Gentle"]
-                )
-            } else if lower.contains("wrist") || lower.contains("forearm") || lower.contains("typing") {
-                message = "Gentle release for wrists and hands from typing."
-                recommendation = StructuredRecommendation(
-                    sessionID: "side-desk-wrist-reset",
-                    title: "Desk wrist and forearm reset",
-                    subtitle: "For tight forearms, stiff fingers, and mouse hands.",
-                    durationMin: 5,
-                    intensity: "gentle",
-                    course: "side",
-                    reason: "Decompresses carpal and wrist flexor tightness.",
-                    tags: ["Side", "5 min", "Gentle"]
-                )
-            } else if lower.contains("hip") || lower.contains("back") || lower.contains("stiff") {
-                message = "Gentle mat support to open tight hips and release lower back tension."
-                recommendation = StructuredRecommendation(
-                    sessionID: "app-hip-openers",
-                    title: "Three minutes for your hips",
-                    subtitle: "On the floor. Low to the ground.",
-                    durationMin: 4,
-                    intensity: "gentle",
-                    course: "appetizer",
-                    reason: "Unloads lumbar spine pressure and releases hip flexor tightness.",
-                    tags: ["Appetizer", "4 min", "Gentle"]
-                )
-            } else if lower.contains("morning") || lower.contains("wake") || lower.contains("qigong") {
-                message = "A light, uplifting morning flow to awaken circulation."
-                recommendation = StructuredRecommendation(
-                    sessionID: "app-morning-qigong",
-                    title: "Five minutes of qi gong",
-                    subtitle: "Easy breath and gentle circles to start the day",
-                    durationMin: 5,
-                    intensity: "gentle",
-                    course: "appetizer",
-                    reason: "Gentle morning circulation without strain.",
-                    tags: ["Appetizer", "5 min", "Gentle"]
-                )
-            } else if lower.contains("evening") || lower.contains("night") || lower.contains("sleep") || lower.contains("unwind") {
-                message = "Grounding evening floor relaxation to ease down before sleep."
-                recommendation = StructuredRecommendation(
-                    sessionID: "dessert-tea-and-quiet-stretch",
-                    title: "Tea and quiet floor stretch",
-                    subtitle: "Sip first, or stretch while the mug cools",
-                    durationMin: 10,
-                    intensity: "gentle",
-                    course: "dessert",
-                    reason: "Prepares your nervous system for deep, restorative sleep.",
-                    tags: ["Dessert", "10 min", "Gentle"]
-                )
-            } else if lower.contains("wired") || lower.contains("stress") || lower.contains("anxious") {
-                message = "Down-regulating breath and floor grounding to settle the mind."
-                recommendation = StructuredRecommendation(
-                    sessionID: "app-box-breathing",
-                    title: "Four rounds of box breathing",
-                    subtitle: "Two minutes, anywhere, eyes open or closed",
-                    durationMin: 2,
-                    intensity: "gentle",
-                    course: "appetizer",
-                    reason: "Calming vagal down-regulation before physical movement.",
-                    tags: ["Appetizer", "2 min", "Gentle"]
-                )
-            } else if durMin <= 10 {
-                message = "Calibrated for your \(durMin)-minute window today."
-                recommendation = StructuredRecommendation(
-                    sessionID: "main-pilates-gentle-10",
-                    title: "Ten gentle minutes on the mat",
-                    subtitle: "Slow, low to the ground, no standing up",
-                    durationMin: 10,
-                    intensity: "gentle",
-                    course: "main",
-                    reason: "A balanced 10-minute floor sequence fitting your time.",
-                    tags: ["Main", "10 min", "Gentle"]
-                )
+        case .refinement:
+            if excludedFocus == .hips || lower.contains("don't need hip") || lower.contains("dont need hip") {
+                if let s = matchBestSession(targetDuration: durMin, bodyFocus: .back, excludedFocus: .hips, excludeID: activeSessionID, userContext: userContext) ?? matchBestSession(targetDuration: durMin, excludedFocus: .hips, excludeID: activeSessionID, userContext: userContext) {
+                    message = "Understood, skipping hips. Here is dedicated lower back and spine support."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("shorter") || lower.contains("5 min") || lower.contains("3 min") || lower.contains("2 min") {
+                let targetMin = durMin <= 5 ? durMin : 5
+                if let s = matchBestSession(targetDuration: targetMin, intensity: "gentle", excludeID: activeSessionID, userContext: userContext) {
+                    message = "Adjusted. Here is a \(s.durationMin)-minute targeted reset."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("energiz") || lower.contains("strong") {
+                if let s = matchBestSession(targetDuration: durMin, intensity: "dynamic", intent: .energize, excludeID: activeSessionID, userContext: userContext) {
+                    message = "Picked up the pace with an uplifting energizing reset."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("gentler") || lower.contains("softer") {
+                if let s = matchBestSession(targetDuration: durMin, intensity: "gentle", intent: .calm, excludeID: activeSessionID, userContext: userContext) {
+                    message = "Swapped to a softer, fully supported sequence."
+                    recommendation = structuredRecommendation(for: s)
+                }
             } else {
-                message = "Calibrated for your \(durMin)-minute window today."
-                recommendation = StructuredRecommendation(
-                    sessionID: "main-yoga-flow-20",
-                    title: "Twenty minutes of flow",
-                    subtitle: "A complete practice that leaves you feeling lighter",
-                    durationMin: 20,
-                    intensity: "moderate",
-                    course: "main",
-                    reason: "Complete, balanced practice matching your day.",
-                    tags: ["Main", "20 min", "Moderate"]
-                )
+                if let s = matchBestSession(targetDuration: durMin, excludeID: activeSessionID, userContext: userContext) {
+                    message = "Here is a fresh alternative for your day."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            }
+
+        case .newRoutineRequest, .generalCheckIn:
+            // Explicit Dopamine Menu & targeted micro-action triggers
+            if lower.contains("shake") || lower.contains("restless") || lower.contains("overwhelm") {
+                if let s = sessionById("app-shake-out-five") {
+                    message = "A physical shake-out to release tension and reset your nervous system."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("power pose") || lower.contains("confidence") {
+                if let s = sessionById("app-power-pose-two") {
+                    message = "An expansive standing posture to restore quiet confidence."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("cold water") || lower.contains("splash") || lower.contains("panic") {
+                if let s = sessionById("app-cold-water-splash") {
+                    message = "Quick dive-reflex reset to immediately slow a racing heart."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("progressive muscle") || lower.contains("pmr") {
+                if let s = sessionById("dessert-pmr-ten") {
+                    message = "Full-body progressive relaxation to release holding from toes to crown."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("gratitude") {
+                if let s = sessionById("dessert-gratitude-scan-five") {
+                    message = "A gentle body scan appreciating everything your body did today."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("jumping jack") {
+                if let s = sessionById("app-jumping-jacks-two") {
+                    message = "Quick cardio intervals to break through inertia and awaken motivation."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("dance") {
+                if let s = sessionById("side-dance-it-out-five") {
+                    message = "Free freestyle movement to your favorite track."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("walk") || lower.contains("brisk") {
+                if let s = sessionById("main-brisk-walk-ten") {
+                    message = "A brisk 10-minute walk to clear brain fog and elevate blood flow."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("desk") && (lower.contains("shoulder") || lower.contains("neck")) {
+                if let s = sessionById("side-desk-shoulder-reset") {
+                    message = "Chair-safe shoulder release between meetings."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("wrist") || lower.contains("forearm") || lower.contains("typing") {
+                if let s = sessionById("side-desk-wrist-reset") {
+                    message = "Gentle release for wrists and hands from typing."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("box breathing") || lower.contains("box breath") {
+                if let s = sessionById("app-box-breathing") {
+                    message = "Four rounds of calming box breathing."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("evening") || lower.contains("night") || lower.contains("sleep") || lower.contains("unwind") {
+                if let s = sessionById("dessert-tea-and-quiet-stretch") {
+                    message = "Grounding evening floor relaxation to ease down before sleep."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            }
+
+            // If not caught by specific trigger, dynamically query catalog
+            if recommendation == nil {
+                if let matched = matchBestSession(
+                    targetDuration: durMin,
+                    intensity: energy == .strong ? "dynamic" : (energy == .low ? "gentle" : nil),
+                    bodyFocus: targetFocus,
+                    intent: targetIntent,
+                    activity: requestedActivity,
+                    excludeID: activeSessionID,
+                    userContext: userContext
+                ) {
+                    message = "Calibrated for your \(matched.durationMin)-minute window today."
+                    recommendation = structuredRecommendation(for: matched)
+                }
             }
         }
 
@@ -885,6 +988,6 @@ nonisolated struct InMemoryChatService: ChatProviding {
         activeSessionID: String? = nil,
         userContext: ChatUserContext? = nil
     ) async -> ChatResponse? {
-        response ?? LocalStatefulChatEngine.orchestrate(prompt: prompt, history: history, userContext: userContext)
+        response ?? LocalStatefulChatEngine.orchestrate(prompt: prompt, history: history, activeSessionID: activeSessionID, userContext: userContext)
     }
 }

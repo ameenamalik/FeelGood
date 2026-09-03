@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 import RevenueCatUI
 
 struct TodayView: View {
@@ -78,10 +79,6 @@ struct TodayView: View {
             Text(model.greeting())
                 .font(FGFont.label)
                 .foregroundStyle(FGColor.inkMuted)
-                #if DEBUG
-                // Long-press the date to fabricate history. Debug builds only.
-                .onLongPressGesture(minimumDuration: 0.7) { isDebugging = true }
-                #endif
 
             Text(model.upgradedHeadline ?? model.menu.headline)
                 .font(FGFont.display)
@@ -90,6 +87,14 @@ struct TodayView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        #if DEBUG
+        // Long-press anywhere on the header to fabricate history / switch user journeys.
+        .onLongPressGesture(minimumDuration: 0.4) {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            isDebugging = true
+        }
+        #endif
         .accessibilityElement(children: .combine)
     }
 

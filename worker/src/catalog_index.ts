@@ -1555,6 +1555,215 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "equipment": [
       "gym"
     ]
+  },
+  {
+    "id": "app-shake-out-five",
+    "title": "Five-minute shake-out",
+    "subtitle": "Release physical tension and reset your nervous system",
+    "durationMin": 5,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "agility",
+    "places": [
+      "home",
+      "outdoors",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm",
+      "energize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "app-power-pose-two",
+    "title": "Two-minute power pose",
+    "subtitle": "Stand tall, open your chest, and restore quiet confidence",
+    "durationMin": 2,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "outdoors",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-brisk-walk-ten",
+    "title": "Ten-minute brisk walk",
+    "subtitle": "Clear brain fog, elevate heart rate, and trigger natural dopamine",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "walking",
+    "places": [
+      "home",
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "mobilize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-dance-it-out-five",
+    "title": "Five-minute dance it out",
+    "subtitle": "Put on your favorite track and let your body move freely",
+    "durationMin": 5,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "dance",
+    "places": [
+      "home"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "joy",
+      "energize",
+      "play"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "dessert-pmr-ten",
+    "title": "Progressive muscle relaxation",
+    "subtitle": "Systematically tense and release from toes to crown to unwind deeply",
+    "durationMin": 10,
+    "intensity": "gentle",
+    "course": "dessert",
+    "activity": "breathwork",
+    "places": [
+      "home"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm"
+    ],
+    "equipment": [
+      "none",
+      "mat"
+    ]
+  },
+  {
+    "id": "app-cold-water-splash",
+    "title": "Cold water splash reset",
+    "subtitle": "Activate the dive reflex to instantly calm a racing heart",
+    "durationMin": 1,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "breathwork",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-stretch-and-breathe",
+    "title": "Stretch and breathe",
+    "subtitle": "Five gentle physical resets for when you have been sitting too long",
+    "durationMin": 5,
+    "intensity": "gentle",
+    "course": "side",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "neckShoulders",
+      "back"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "dessert-gratitude-scan-five",
+    "title": "Gratitude body scan",
+    "subtitle": "Five peaceful minutes appreciating everything your body carried today",
+    "durationMin": 5,
+    "intensity": "gentle",
+    "course": "dessert",
+    "activity": "breathwork",
+    "places": [
+      "home"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm",
+      "joy"
+    ],
+    "equipment": [
+      "none",
+      "mat"
+    ]
+  },
+  {
+    "id": "app-jumping-jacks-two",
+    "title": "Two-minute jumping jacks burst",
+    "subtitle": "Quick cardio intervals to break through inertia and kickstart motivation",
+    "durationMin": 2,
+    "intensity": "moderate",
+    "course": "appetizer",
+    "activity": "agility",
+    "places": [
+      "home",
+      "gym",
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "play"
+    ],
+    "equipment": [
+      "none"
+    ]
   }
 ];
 
