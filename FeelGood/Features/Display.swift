@@ -211,6 +211,9 @@ nonisolated extension TimeBudget {
         }
     }
 
+    /// Sentence-case form used after the energy label in today's summary.
+    var summaryPhrase: String { checkInDetail }
+
     /// The ceiling as a bare numeral, for the tile that prints it large with
     /// "min" underneath. Reads off `maxMinutes` rather than restating it, so
     /// the number on screen is the number the engine actually caps at.
