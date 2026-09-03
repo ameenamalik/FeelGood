@@ -784,10 +784,10 @@ head in the two seconds they spend deciding:
 
 1. **Intelligence** — a menu that learns you.
 2. **Flexibility** — change the plan in seconds.
-3. **Continuity** — plan beyond today.
+3. **Real-life context** — works around your day.
 
 Free is a good menu for this morning. Pro is a menu that knows you, bends when
-you push on it, and thinks past today.
+you push on it, and accounts for the day already around you.
 
 #### Category 1 — A menu that learns you
 
@@ -827,11 +827,12 @@ kind of thinking — they are the engine, given one more thing to honour. That i
 why this category is cheap to build relative to how expensive it looks on a
 paywall.
 
-#### Category 3 — Plan beyond today
+#### Category 3 — Works around your day
 
 | Capability | Tier | State today | Note |
 |---|---|---|---|
 | Weekly Specials | Pro | **Engine-ready, no UI** | `PlanContext.scheduledSpecials` is read by the engine; nothing in the app ever writes it |
+| Calendar-aware daily check-in | Pro | **Shipped** | Reads only today's event times on-device, reduces them to anonymous busy intervals, and suggests a duration the person must confirm |
 | Scheduling around your week | Pro | Not built | |
 | "Busy day tomorrow" | Pro | Not built | |
 | Travel mode | Pro | Not built | A place + equipment override with an end date |
@@ -839,7 +840,7 @@ paywall.
 | Reminders at your preferred movement time | Pro | Not built | Push entitlement exists; no notification code anywhere |
 | **Offline sessions** | **Free** | Already true | See below — this must not become a Pro line |
 | Home screen widget | **Free** | Shipped, ungated | §10 marked it "if time allows"; it shipped, and gating it now costs app-group work in the widget target for one row |
-| Calendar integration | — | v2 | A new permission and a new privacy surface |
+| Writing or moving Calendar events | — | Not built | The first version never changes a calendar |
 
 ---
 
@@ -934,9 +935,9 @@ Three rows. Not ten. The product is simple and the wall should read that way.
 > Make it shorter, gentler, more energizing, or swap anything — without starting
 > over.
 >
-> **Plan beyond today**
-> Weekly Specials, smarter recovery, and recommendations that get better with
-> your history.
+> **Works around your day**
+> Optionally considers today's Calendar openings before you choose how much
+> time you really have.
 
 Then one quiet line beneath, naming only what has shipped:
 
@@ -956,7 +957,7 @@ whatever has actually shipped.
 |---|---|---|
 | **1 — the seam** | `PlanMemory` shapes, `.recencyOnly` for free, swap limit, paywall moments 1 and 2 | Without this there is no paid tier at all. Everything else is decoration on an empty wall. |
 | **2 — flexibility** | Shorter / gentler / more energizing / can't leave the house, as constraint chips under the menu | Cheapest visible value per hour of work; all four are re-plans. The free versions of these chips are also the honest test of whether anyone wants them. |
-| **3 — continuity** | Specials UI over the engine support that already exists, reminders | Turns "daily recommender" into "plans with you" |
+| **3 — real-life context** | Calendar-aware daily check-in first; Specials and reminders later | Makes the daily recommendation fit the day that already exists |
 | **4 — memory made visible** | Weekly reflection, patterns in prose | Needs weeks of real history before it says anything true |
 | **5 — conversation** | Voice and free-text refinement | Blocked on §7.6, which is unwritten |
 
@@ -973,7 +974,7 @@ Restating §4 where a paywall creates specific temptation:
 - The reason a session was chosen is never paid. Neither is the check-in, the
   Look Back, the video library, or a session that plays offline.
 - Pro does not buy more content. It buys intelligence, flexibility and
-  continuity — and if a proposed feature is not one of those three, it does not
+  real-life context — and if a proposed feature is not one of those three, it does not
   belong behind the wall.
 
 ---

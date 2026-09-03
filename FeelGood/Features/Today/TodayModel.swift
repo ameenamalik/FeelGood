@@ -28,6 +28,10 @@ final class TodayModel {
 
     var profile: PlanProfile
     private(set) var checkIn: PlanCheckIn?
+    /// A calendar-derived opening the person explicitly accepted. It is UI
+    /// context only: the engine receives the confirmed time budget, not their
+    /// calendar, and nothing here is written back to Calendar.
+    private(set) var calendarOpening: CalendarOpening?
     private(set) var history: [HistoryEntry]
     private(set) var menu: Menu
     /// `Menu.headline` upgraded by the copy layer, PRD §7.3 — a sibling
@@ -58,6 +62,7 @@ final class TodayModel {
         copy: any CopyProviding = InMemoryCopyService(),
         progressStore: any SessionProgressStoring = UserDefaultsSessionProgressStore(),
         checkIn: PlanCheckIn? = nil,
+        calendarOpening: CalendarOpening? = nil,
         now: Date,
         calendar: Calendar = .current
     ) {
@@ -77,6 +82,7 @@ final class TodayModel {
         self.profile = profile
         self.ownSessions = own
         self.checkIn = todaysCheckIn
+        self.calendarOpening = calendarOpening
         self.history = recorded
         self.calendar = calendar
         self.inProgressSessionIDs = Set(
@@ -152,8 +158,13 @@ final class TodayModel {
     }
 
     /// The check-in regenerates the menu in place.
-    func apply(_ checkIn: PlanCheckIn, now: Date = Date()) {
+    func apply(
+        _ checkIn: PlanCheckIn,
+        calendarOpening: CalendarOpening? = nil,
+        now: Date = Date()
+    ) {
         self.checkIn = checkIn
+        self.calendarOpening = calendarOpening
         swappedAway = []
         menu = engine.makeMenu(input(now: now))
         log.record(checkIn, at: now, dayStart: calendar.startOfDay(for: now))
