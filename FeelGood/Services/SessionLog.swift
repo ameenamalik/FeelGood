@@ -13,7 +13,8 @@ import Foundation
 import SwiftData
 import os
 
-protocol SessionLogging {
+@MainActor
+protocol SessionLogging: AnyObject, Sendable {
     /// A session was finished. `feel` is optional — finishing without answering
     /// the reflection question is still a completion.
     func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?)
@@ -51,6 +52,7 @@ protocol SessionLogging {
 // MARK: - SwiftData
 
 @Observable
+@MainActor
 final class SessionLog: SessionLogging {
     private let context: ModelContext
     private let calendar: Calendar
@@ -223,6 +225,7 @@ final class SessionLog: SessionLogging {
 
 /// In-memory log for previews and tests.
 @Observable
+@MainActor
 final class InMemorySessionLog: SessionLogging {
     private(set) var entries: [HistoryEntry] = []
     private(set) var affinityScores: [String: Double] = [:]

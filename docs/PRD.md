@@ -223,6 +223,19 @@ This does not damage the business model; it confirms the one already chosen. **W
 
 **Attribution guardrail.** Simone said in her brief that her library *might* be included one day. Until that is confirmed in writing, v1 content is **authored by us, attributed to no one, and worded generically.** The `attribution` field stays `nil`. Nowhere in the app, the store listing, or the demo video do we state or imply that Simone wrote, taught, endorsed, or reviewed a session — that would be a false endorsement claim about a real, named professional and an App Store metadata violation. The app is built *for* her audience and *from* her brief; that is the honest framing and it is a strong one. The moment she signs off, `attribution` and `video` populate and the app gets meaningfully better with zero code changes.
 
+### Accessibility, Adaptive Movement & Global Diversity Roadmap (Post-Hackathon)
+
+While the v1 catalog provides non-clinical contraindication filtering (`lowBack`, `knees`, `wrists`, `pregnancy`, `postpartum`, `pelvicFloor`, `fatigue`) and low-barrier equipment/location accessibility, broader physical disability suites and global movement traditions are planned for subsequent milestones:
+
+1. **Adaptive & Seated Movement Taxonomy (v2)**
+   - **Seated & Chair-Only Flows:** Dedicated authored session tracks for users with limited standing tolerance, wheelchair users, and post-surgery rehabilitation.
+   - **Upper-Body & Core Isolation:** Explicit tags for non-weight-bearing lower limbs, eliminating floor-transfer friction.
+   - **Audio-Only & High-Contrast Mode:** Enhanced voice cues and screen-reader accessibility for visually impaired users without requiring screen glance during movement.
+
+2. **Global & Cross-Cultural Movement Traditions (v2+)**
+   - Expanding beyond Western fitness and contemporary Pilates to embrace traditional mind-body systems (e.g., expanded Qi Gong, Tai Chi, Ayurveda-inspired mobility, traditional African dance, and folkloric somatic recovery).
+   - Multi-generational pacing: specialized low-impact flows crafted for older adults and postnatal recovery that never use clinical, patronizing, or "modified" labels.
+
 ---
 
 ## 7. Personalization
@@ -333,7 +346,7 @@ unticking the gym takes the weights with it.
 | Cadence nudge | Below her own stated cadence → prefer shorter, easier entry points. *Never a penalty, only a gentler suggestion.* |
 | Connectivity | Offline or on cellular with data saver → authored sessions only; YouTube Mains are filtered out silently. |
 
-**Outputs:** one Main, one Appetizer, one–two Sides, one Dessert, plus any Special — each with a machine-readable **reason code** (`recoveryBalance`, `lowEnergy`, `timeConstrained`, `varietyBreak`, `returningAfterGap`, `matchesIntent`, `qualityGap`, and — when Health is connected — `shortSleep`, `quietDay`, `busyDay`; see §7.5).
+**Outputs:** one Main, one Appetizer, one–two Sides, one Dessert, plus any Special — each with a machine-readable **reason code** (`recoveryBalance`, `lowEnergy`, `timeConstrained`, `varietyBreak`, `returningAfterGap`, `matchesIntent`, `qualityGap`).
 
 **Swapping is a first-class action, not a rejection.** "Not today" on any item returns the next-best candidate instantly and feeds affinity. A swap is a *success signal* — she's engaging with the decision instead of closing the app.
 
@@ -368,306 +381,20 @@ and profile controls remain secondary to the reflection.
 
 ---
 
-## 7.5 Health data as quiet context
-
-*Decided 2026-08-30. Supersedes the v2 deferral in §15.*
-
-Apple Health is **context, not a screen.** There is no Health tab, no metrics
-list, no readiness score, no number rendered anywhere in the product. The whole
-feature is one sentence of behaviour: *if the phone already knows something
-about your night or your day, the menu should quietly account for it, and say
-that it did.*
-
-It answers three small questions and refuses the rest:
-
-- *You slept less than usual — would a low-effort reset help today?*
-- *You already rode 40km this morning — today's menu is a lighter one on purpose.*
-- *Quieter day than usual — here's something that gets you outside.*
-
-It never answers *are you deficient*, *are you overtrained*, *are you sleeping
-enough*, *is your heart rate elevated*, or *did you hit your goal.* Those are
-diagnoses, targets, and scores. This app does not have them.
-
-**The rule that keeps this honest: we only read a type the engine can act on.**
-Reading something we don't use is data minimisation failure — the one thing
-App Review is unambiguous about — and it is also exactly how a wellness app
-quietly becomes a dashboard. Every signal below terminates in a scoring
-behaviour and a `ReasonCode`. If a signal ever loses its behaviour, we stop
-requesting it.
-
-### 7.5.1 The three signals
-
-| Signal | What we read | What it becomes | Engine effect | Who actually has it |
-|---|---|---|---|---|
-| **Sleep** | `HKCategoryType(.sleepAnalysis)`, asleep-stage samples only, for the night window ending this morning | total asleep minutes vs. **this person's own** rolling median | new `shortSleep` reason code; nudges effort down, promotes the Appetizer and floor-based Mains | Watch, third-party tracker, or manual Health entry. Absent for roughly half of users — design for that as the normal case |
-| **Workouts** | `HKWorkoutType` — activity type, duration, start date. **Never** route, heart rate, or energy burned | an inferred `Session.own`-shaped record, exactly like the manual "I did something else" log in §7.2a | feeds the **existing** `recoveryBalance` signal; two hard days recorded elsewhere still downweight a third here | anyone using any fitness app on any iPhone. Best coverage of the three |
-| **Steps** | `HKQuantityType(.stepCount)`, daily sum via a statistics query | today's steps so far vs. own median **for the same weekday and the same hour** | `quietDay` promotes a walk or an outdoors Dessert; `busyDay` nudges toward floor work and recovery | every iPhone with motion tracking. The only signal most users definitely have |
-
-**Two implementation facts that shape the spec, not footnotes:**
-
-- **`inBed` is dead.** iOS 18 / watchOS 11 stopped recording `inBed` samples and
-  Apple shipped no replacement. Sleep duration must be summed from
-  `asleepCore` + `asleepDeep` + `asleepREM` + `asleepUnspecified`. Any code that
-  reads `inBed` returns nothing on modern devices and will look like "no data".
-- **The same-hour comparison is load-bearing for steps.** 2,000 steps at 08:00
-  and 2,000 steps at 20:00 mean opposite things. Comparing today-so-far against
-  the median for this weekday *at this hour* is the difference between a useful
-  signal and noise.
-
-**Baselines are personal, never population.** There is no 10,000 steps, no eight
-hours, no normal range, no comparison to anyone else. A 28-day rolling
-per-person baseline, held on device, is the only reference point that exists.
-**A signal stays silent until it has at least 7 days of its own samples** — an
-untrained baseline produces confident nonsense, and a confident wrong reason is
-worse than no reason.
-
-**The `ReasonCode` enum grows from seven cases to ten:** `shortSleep`,
-`quietDay`, `busyDay`. They behave exactly like the existing seven — machine
-readable, rendered as plain language, never a score.
-
-### 7.5.2 What this feature is structurally incapable of doing
-
-Not a copy guideline — a list of things that must have no code path:
-
-- ❌ No number from Health is ever rendered. Not minutes, not steps, not a count.
-- ❌ No chart, ring, bar, or trend line (§9 already forbids these; Health data is where that rule is most likely to erode).
-- ❌ No readiness, recovery, or sleep score.
-- ❌ **No output on a low reading that suggests you should have done more.** `quietDay` may only ever promote a gentler or outdoors option — it can never scold, and there is no code path from "you didn't move" to a smaller menu as a consequence.
-- ❌ No notification is ever triggered by health data. Notifications remain the one opt-in daily invitation in §8.
-- ❌ No claim that any signal caused any outcome. We say *"shorter night than usual, so this one's gentler"* — a statement about our own choice. We never say *"you feel low because you slept badly."*
-- ❌ No medical, diagnostic, or treatment language, in copy, metadata, or the permission strings.
-
-### 7.5.3 The picker, and the permission moment — two different moments
-
-**Onboarding gains a fifth card, and the ≤90 second budget becomes ≤100.** That
-is a real cost against §7.1 and worth paying only because the card is genuinely
-one tap and genuinely skippable.
-
-> **Anything you'd like the menu to take into account?**
-> ☐ How you slept — so a short night gets you a gentler day
-> ☐ Workouts from other apps — so a hard session elsewhere still counts here
-> ☐ How much you've been on your feet
-> *[ Not now ]* — equal visual weight to continuing. Nothing is preselected.
-
-**This card presents no system permission sheet.** It records *intent only*. The
-PRD's promise that the first menu appears before any ask (§7.1) stays intact.
-
-**The iOS sheet appears at the first moment the signal would change something** —
-typically the next morning's check-in — framed against the benefit already
-chosen:
-
-> *"You asked us to factor in how you slept. This needs your permission to read
-> last night from Health."*
-
-We request **only the types ticked**, never the full set. `requestAuthorization`
-may be called again later for a type added afterwards; iOS will not re-prompt
-for types already presented, so a later ask is cheap and safe.
-
-**If nothing is ticked, we never ask — ever.** No later prompt, no nudge card,
-no reconsideration flow. The feature is reachable from Settings for anyone who
-changes their mind, and that is the only path back in.
-
-**Required project configuration** (all three, or the app crashes on request):
-
-| Key | Value |
-|---|---|
-| HealthKit capability | added in Signing & Capabilities; sets `com.apple.developer.healthkit` |
-| `NSHealthShareUsageDescription` | *"FeelGood reads the signals you choose — sleep, workouts, or steps — to make each day's menu fit the day you're actually having. It stays on your phone."* |
-| `NSHealthUpdateUsageDescription` | *"So the sessions you do here can appear in Health alongside everything else."* Only if write-back (§7.5.6) is enabled. |
-| `PrivacyInfo.xcprivacy` | updated for the health data category and required-reason APIs |
-
-`UIRequiredDeviceCapabilities` must **not** list `healthkit` — that would make
-the app uninstallable on iPad and any device without it, and the entire feature
-is optional.
-
-**Where this sits against Apple's HIG, stated plainly.** The HIG says to manage
-health-data sharing through the system's privacy settings and not to build
-in-app screens that confuse people about the flow of health data. Our in-app
-switches (§7.5.7) therefore control **whether FeelGood uses a signal**, which is
-an app feature, not whether iOS grants access. Every one of them carries a link
-to Health › Data Access & Devices, and none of them ever claims to grant or
-revoke system access. That distinction has to survive the copy pass; it is the
-line between compliant and confusing.
-
-### 7.5.4 "No data" is ambiguous, and we treat it that way
-
-HealthKit deliberately never tells an app whether *read* access was denied —
-`authorizationStatus(for:)` reports share/write intent only. A denial is
-indistinguishable from an empty store. That is a privacy feature, not a gap, and
-we design to it rather than around it.
-
-Each signal holds a tri-state:
-
-| State | Menu behaviour | You tab |
-|---|---|---|
-| **not connected** | as if the feature didn't exist | "Sleep — off" |
-| **connected, nothing read** | **identical to not connected.** No empty state, no placeholder, no "no data" card, no reason code | *"Sleep — on. We haven't been able to read any sleep yet. That's normal if nothing records it. You can check access in the Health app."* |
-| **connected, data present** | reason code fires when the baseline is trained | *"Sleep — on."* |
-
-**We never write, say, or imply that the user denied access.** The copy above is
-the ceiling of what we can honestly claim. This applies to support articles and
-the store listing too.
-
-The menu itself stays silent because §7.4's rule — *"there is no visual language
-in this app for you weren't here"* — applies to missing data exactly as it does
-to missing days.
-
-### 7.5.5 The network boundary
-
-**Values derived from Health never leave the device. Not raw, not rounded, not
-bucketed.** Minutes asleep, step counts, and workout durations are on-device
-inputs to a pure function and nothing more.
-
-What may cross: the three new `ReasonCode` cases, in the existing `reasonCodes`
-array, exactly like the seven that travel today.
-
-This requires one honest amendment to §11, made in the table itself rather than
-quietly: the never-sent cell changes from *"HealthKit data"* to **"HealthKit
-values — raw, rounded, or bucketed"**, because a reason code *is* a coarse
-health inference and pretending otherwise would be the kind of vague privacy
-claim §11 explicitly rejects. The claim that survives the follow-up question is:
-*the numbers never leave; one coarse conclusion about today does, and only for
-paying users.*
-
-`CopyPayload` remains an allow-list struct with no field capable of carrying a
-value, and the existing encoded-JSON-keys test is extended to assert the new
-enum cases and the continued absence of any numeric health field.
-
-### 7.5.6 Writing back — workouts and mindful minutes
-
-Both are **separate, explicitly user-controlled features**, each with its own
-switch, each **off by default**, and neither ever bundled into the read
-permission.
-
-| Write | Type | What we author |
-|---|---|---|
-| Completed sessions | `HKWorkout` via `HKWorkoutBuilder` | activity type mapped from the session's taxonomy, start, duration. No energy estimate — we don't measure it and inventing one is a fabricated health record |
-| Breathwork, qi gong, recovery Appetizers | `HKCategoryType(.mindfulSession)` | duration only. This is the type Apple built for exactly this, and a two-minute breathing practice is not a workout |
-
-**The read/write loop is the real hazard here, and it is a correctness bug, not
-a polish item.** We read workouts *and* write workouts. A session written by
-FeelGood and then read back as "movement that happened without us" would
-double-count into `recoveryBalance` and make tomorrow's menu wrongly lighter.
-**Every workout read must be filtered by `HKSource` and by our own metadata key
-before it reaches the engine**, and a test must cover write-then-read on the
-same day.
-
-Session titles and metadata carry no medical, diagnostic, or reproductive
-framing — these samples persist in the user's health store, readable by any app
-they later authorise, long after FeelGood is deleted.
-
-### 7.5.7 Turning it off — per signal
-
-**Each signal turns off independently, and each purge is scoped to itself.**
-This mirrors the picker exactly: chosen one at a time, revoked one at a time.
-
-Turning one off:
-1. stops reading that type immediately;
-2. **deletes every on-device value derived from it** — its rolling baseline, its cached daily summaries, its tri-state history. "Off" means we hold nothing;
-3. takes effect from the *next* menu, never the one on screen (§7.2a — today's menu does not rearrange itself underneath the person looking at it);
-4. leaves samples FeelGood wrote to Health in place, with a plain line saying so and a link to the Health app. Those are the user's records now.
-
-**A master "turn all of this off" sits alongside the individual switches** and
-does all of the above for every signal at once. Granular control that can only
-be exercised granularly is not control.
-
-**Deleting what we wrote** is offered as a second, clearly separated action
-defaulting to *no*: *"Also remove the sessions FeelGood added to Health?"* —
-HealthKit only permits an app to delete samples it authored, so the scope is
-naturally bounded, and the copy must make clear it touches nothing else.
-
-**Cost to be explicit about:** per-signal switches multiply the engine test
-matrix. Each of three signals is independently off / on-no-data / on-with-data,
-against the existing present/absent cases. The engine tests must cover the
-combinations, not sample them, and the fixture builders should make that cheap.
-
-### 7.5.8 Where the signal enters the check-in
-
-The check-in is moving to free text parsed into structure — *"knackered, maybe
-20 minutes, back's tight"* becomes a `PlanCheckIn`. **The engine still picks.**
-The model parses and narrates; it never chooses what anyone does with their
-body, and §7.3's non-negotiable stands unchanged.
-
-Health context enters **before** the model sees anything: sleep and steps
-pre-seed the structured check-in, and the parsed sentence overrides them where
-the person says something different. If they say they slept fine, they slept
-fine — self-report always wins over a sensor.
-
-> ⚠️ **The redaction decision, recorded as an explicit reversal.** Parsing runs
-> in the Worker, which means the user's sentence leaves the device after an
-> on-device redaction pass. **This reverses §11's rule that free text never
-> leaves and that reproductive terms are structurally absent rather than
-> filtered.** It is logged as decision 15 in §16 rather than absorbed silently,
-> because the honest description of a denylist is that it will miss phrasings
-> nobody anticipated — *"day one"*, *"the usual monthly thing"*, *"since the
-> baby"* — and each miss is a privacy incident rather than a bug. What this
-> obliges us to build: a named redaction list with an owner and a review
-> cadence, a test suite of adversarial phrasings that fails loudly, explicit
-> consent before the free-text check-in is enabled at all, and the tap check-in
-> retained as the offline and opt-out path. **Health-derived values are exempt
-> from this and stay on device regardless (§7.5.5)** — the redactor is not
-> trusted with them, because it never sees them.
-
-The conversational check-in is a larger change than this feature and needs its
-own PRD section covering latency, offline behaviour, parse failure, and the
-Worker route. **§7.5 specifies only where health context enters it.**
-
-### 7.5.9 The app without Health is not a lesser app
-
-Non-negotiable, and the reason the whole feature can stay quiet: **every
-adaptive behaviour here is reachable from FeelGood's own inputs.** Energy and
-time come from the check-in. Recovery balance comes from what was logged in the
-app. "Quieter day than usual" is a nicety, not a foundation.
-
-What Health actually buys is narrower and more honest than the pitch usually
-is: **it works on the mornings someone doesn't feel like typing.** That is worth
-building. It is not worth anyone feeling that the app needs a Watch to be good,
-and no screen, empty state, or upsell may ever imply it does.
-
-### 7.5.10 Unhappy paths — mandatory, per §11
-
-Health data denied silently · connected with zero samples for 30 days · sleep
-recorded but zero-length · a 14-hour sleep sample from a device left on
-overnight · workout from another app overlapping a FeelGood session on the same
-clock minutes · a session we wrote read back as somebody else's · steps queried
-at 00:05 with a two-minute-old baseline · baseline with 6 days of data (must
-stay silent) · timezone change mid-window and DST transitions · user revokes
-access in Health while the app is backgrounded · every signal on with only one
-returning data · every signal off · redaction pass encountering a phrasing the
-denylist misses.
-
-### 7.5.11 Build order
-
-Each phase ships something coherent and is independently revertable.
-
-| Phase | Scope | Gate before moving on |
-|---|---|---|
-| **1 — read one signal, engine only** | HealthKit capability, sleep read, on-device baseline, `shortSleep`, engine tests for present/absent | engine tests pass with every combination; no UI yet |
-| **2 — surface it** | onboarding card 5, deferred permission request, tri-state, You tab rows, per-signal switches with scoped purge | HIG check: no in-app screen claims to grant or revoke system access |
-| **3 — the other two reads** | workouts (with `HKSource` filtering and de-duplication against `SessionRecord`), steps with weekday-and-hour baselines, `quietDay` / `busyDay` | write-then-read double-count test passes |
-| **4 — copy layer** | three new `ReasonCode` cases, amended §11 table, extended payload test | encoded-JSON test asserts no numeric health field can exist |
-| **5 — write-back** | `HKWorkout` and `.mindfulSession` writes, separate off-by-default toggles, `NSHealthUpdateUsageDescription`, delete-our-own-samples action | full unhappy-path pass from §7.5.10 |
-
-Phases 1–2 are the feature. **Phases 3–5 are each independently cuttable if the
-six-week window tightens**, and cutting any of them leaves a coherent product —
-which is the test that this was scoped correctly.
-
----
-
 ## 8. Screens (v1)
 
 | # | Screen | Purpose |
 |---|---|---|
-| 1 | **Onboarding** | 5 cards, ≤100s, ends on a real generated menu. Card 5 (Health signals) is skippable and asks for no system permission (§7.5.3). |
+| 1 | **Onboarding** | 4 cards, ≤90s, ends on a real generated menu (§7.1). |
 | 2 | **Today** *(home)* | The menu. Appetizer → hero Main → Sides → Dessert. One screen, no scroll. |
 | 3 | **Check-in sheet** | Two-tap energy/time, optional body. Regenerates in place. |
 | 4 | **Session detail** | What it is, why it was picked, what you need. Start. |
 | 5 | **Player** | Step timer with cues, or video player when `video != nil`. Pausable, backgroundable. |
 | 6 | **Complete** | "How did that feel?" — three faces. Feeds affinity. No score. |
-| 7 | **You / Look Back** | Quiet profile header and gentle recent-pattern cards (§7.4). Health rows show the tri-state per signal, never a metric (§7.5.4). |
+| 7 | **You / Look Back** | Quiet profile header and gentle recent-pattern cards (§7.4). |
 | 8 | **Library** | Browse everything, free. Deliberately *not* the home screen. |
 | 9 | **Paywall** | RevenueCat remote-configured. |
-| 10 | **Settings** | "What's available to you" (editable anytime), cadence, reminder time, restore purchases, privacy, per-signal Health switches plus a master off (§7.5.7). |
+| 10 | **Settings** | "What's available to you" (editable anytime), cadence, reminder time, restore purchases, privacy. |
 
 **Notifications:** one optional daily invitation at a chosen time. Opt-in, phrased as an offer (*"Your menu's ready when you are"*), never a reprimand. No re-engagement guilt pushes, ever.
 
@@ -797,8 +524,6 @@ you push on it, and accounts for the day already around you.
 | Recovery awareness | Pro | Shipped, **ungated** | Same seam |
 | Affinity — "loved it" / "too much" carrying forward | Pro | Shipped, **ungated** | Same seam |
 | **Returning after a gap** | **Free** | Shipped | Non-negotiable — see the gap problem below |
-| Health-informed *today* (short sleep → gentler) | **Free** | Spec only (§7.5) | See the Health question below |
-| Health *trends* across weeks | Pro | Spec only | Needs a past; that is the definition of Pro |
 | Plain-language patterns | Pro | Not built | See the patterns rule below |
 | Personalised weekly reflection | Pro | Not built | Distinct from the Look Back — see below |
 
@@ -844,7 +569,7 @@ paywall.
 
 ---
 
-#### Seven things this split gets wrong if written carelessly
+#### Six things this split gets wrong if written carelessly
 
 **⚠️ 1. The gap problem — this amends §10.** §10 states the seam mechanically:
 *"free menus are generated with `history: []` and `affinity: [:]`."* **That line
@@ -865,20 +590,7 @@ The fix is to make memory a *shape* rather than a flag, so the engine keeps no
 The engine stays a pure function of what it is handed. What Pro buys is a richer
 argument, not a different code path.
 
-**⚠️ 2. The Health question — do not ask for health data and then hold it
-hostage.** §7.5 does not make Apple Health a Pro feature, and turning it into
-one wholesale is a new decision with an ethics problem: requesting sleep and
-step permissions and then declining to act on them unless somebody pays is
-indefensible, and reads badly to a reviewer. The split that holds:
-
-- **Free:** health context shaping *today*. Slept badly → today's menu is
-  gentler. This is safety-shaped behaviour and belongs to everyone.
-- **Pro:** health context accumulated *over weeks* — trends, and recommendations
-  that reference a pattern rather than a night.
-
-Consistent with the whole line: free adapts to today, Pro remembers you.
-
-**⚠️ 3. The patterns rule.** "Shorter sessions work better for you in the
+**⚠️ 2. The patterns rule.** "Shorter sessions work better for you in the
 morning" is a causal claim wearing correlational clothes. It is the identical
 construction §15 permanently bans for supplements ("your energy tends to be
 better on the days you take it"), and the ban does not get weaker because the
@@ -891,14 +603,14 @@ subject is session length instead of iron. The rule for "Your patterns":
 to make findings about anybody's body. Prose only — no charts, rings, or bars
 (§4), and no percentages, which are scores wearing a different hat.
 
-**⚠️ 4. The weekly reflection is not the Look Back.** The Look Back is free
+**⚠️ 3. The weekly reflection is not the Look Back.** The Look Back is free
 forever and this section does not touch it. Its job is making a return feel like
 resuming; it is a churn mechanic, not an engagement one. The Pro weekly
 reflection is additive and different in kind: it is about a week you were
 present for, and it says nothing about absence. If the two ever start reading
 like the same feature, the free one is the one that stays.
 
-**⚠️ 5. Voice check-ins are the free-text problem with a microphone on it.**
+**⚠️ 4. Voice check-ins are the free-text problem with a microphone on it.**
 Decision 15 accepted on-device redaction and Worker parsing for *typed* text,
 with named obligations (owned denylist, adversarial suite, explicit consent,
 tap check-in retained). Speech adds a second exposure that decision did not
@@ -908,7 +620,7 @@ retained** — the transcript enters the same redaction path as typed text and t
 audio is discarded. A convenience feature is not worth a new class of data
 leaving the device.
 
-**⚠️ 6. Offline already works for everyone, and must keep working.** The
+**⚠️ 5. Offline already works for everyone, and must keep working.** The
 authored catalog is bundled and plays with no network today. "Offline saved
 routines" as a Pro line would be gating something that currently works, which
 breaks §10's promise that the free tier is "genuinely useful and never
@@ -916,7 +628,7 @@ crippled." If offline appears on the paywall at all it is as *offline
 **Specials***, which are Pro because planning ahead is Pro — not because the
 files stopped being local.
 
-**⚠️ 7. The paywall may only name features that exist in the binary.**
+**⚠️ 6. The paywall may only name features that exist in the binary.**
 Advertising Specials, custom menus, or voice check-ins before they ship is a
 Guideline 2.3.1 rejection and a refund liability, and it costs a review cycle
 we do not have. Paywall copy is generated from the shipped list, and the list is
@@ -941,8 +653,7 @@ Three rows. Not ten. The product is simple and the wall should read that way.
 
 Then one quiet line beneath, naming only what has shipped:
 
-> *Plus Apple Health personalisation, weekly reflections, voice check-ins, and
-> unlimited swaps.*
+> *Plus weekly reflections, voice check-ins, and unlimited swaps.*
 
 Built with RevenueCat Paywalls (remote config), so the rows and the plus-line
 move as features land without a resubmission — which is also the honest answer
@@ -1065,8 +776,8 @@ export default {
 | Sent | Never sent |
 |---|---|
 | `picks` — session ids | `PlanCheckIn.body` (`sore` / `stiff` / `stressed` / **`cramping`**) |
-| `reasonCodes` — the ten `ReasonCode` cases, incl. `shortSleep` / `quietDay` / `busyDay` (§7.5.5) | `PlanProfile.workArounds` (**`pregnancy`**, **`postpartum`**, **`pelvicFloor`**, `knees`, `wrists`, `lowBack`, `fatigue`) |
-| coarse state — `energy`, `time`, `daysSinceLast` | name, location, device id, **HealthKit values — raw, rounded, or bucketed**, session history |
+| `reasonCodes` — the seven `ReasonCode` cases | `PlanProfile.workArounds` (**`pregnancy`**, **`postpartum`**, **`pelvicFloor`**, `knees`, `wrists`, `lowBack`, `fatigue`) |
+| coarse state — `energy`, `time`, `daysSinceLast` | name, location, device id, session history |
 | `subscriberID` — RevenueCat's app user id | name, email, or any identifier we mint ourselves |
 
 **Why the right-hand column is drawn where it is.** `cramping`, `pregnancy`, `postpartum`, and `pelvicFloor` are reproductive health data — the most scrutinised category there is, under both App Store review and GDPR Article 9. They are load-bearing for the engine and worthless to the copy layer, which is writing one warm sentence. There is no version of that sentence worth sending them for. A test asserts the encoded JSON keys exactly, so this stays true through a refactor.
@@ -1084,7 +795,7 @@ The cost is real and worth stating plainly. Before Apple Sign In this is Revenue
 **Testing — unhappy paths are mandatory**
 First launch with no data · profile with zero equipment · 5 minutes and empty energy · every candidate filtered out (fallback: always at least one Appetizer exists that needs nothing) · offline · Claude timeout/malformed response · RevenueCat unreachable · purchase interrupted · returning after 30 days · clock changes and timezone shifts. **All timestamps stored UTC, rendered local.**
 
-**Privacy:** all personal data on-device, with one named exception — the free-text check-in is redacted on device and parsed in the Worker (§7.5.8, §16 decision 15). Health-derived values are exempt and never leave the phone. No account, no analytics SDK that collects health data. The app has no outbound network path at all until the copy layer lands in W4, and works completely with it switched off after that — the claim to make is the specific one ("the engine that decides runs on your phone; the only thing that ever leaves is a line of framing copy, for paying users"), never the vague one ("private-first"), because the specific one survives the follow-up question. `PrivacyInfo.xcprivacy` completed with required-reason API declarations. App Store health-app rules: **no medical claims, no diagnosis, no treatment language** anywhere in copy or metadata.
+**Privacy:** all personal data on-device, with one named exception — the free-text check-in is redacted on device and parsed in the Worker (§16 decision 15). No account, no analytics SDK that collects health data. The app has no outbound network path at all until the copy layer lands in W4, and works completely with it switched off after that — the claim to make is the specific one ("the engine that decides runs on your phone; the only thing that ever leaves is a line of framing copy, for paying users"), never the vague one ("private-first"), because the specific one survives the follow-up question. `PrivacyInfo.xcprivacy` completed with required-reason API declarations. App Store health-app rules: **no medical claims, no diagnosis, no treatment language** anywhere in copy or metadata.
 
 ---
 
@@ -1116,7 +827,7 @@ First launch with no data · profile with zero equipment · 5 minutes and empty 
 | **W5** (Sep 17–20) | Store listing, screenshots (1179×2556, no device frame), 1024 icon, privacy manifest. **Submit to App Review.** |
 | **W5–6** (Sep 20–30) | Review response buffer. 2-minute demo video. Devpost submission. Build-in-public posts. |
 
-**Cut list, in order, if we're behind:** widget → custom menus → Specials → Look Back → LLM copy layer (falls back to templates, product still works).
+**Cut list, in order, if we're behind:** widget → Custom Appetizers / Desserts → Specials → Look Back → LLM copy layer (falls back to templates, product still works).
 
 ---
 
@@ -1147,7 +858,7 @@ First launch with no data · profile with zero equipment · 5 minutes and empty 
 
 Called out in the submission because vision is rewarded and costs zero build time now:
 
-1. **~~HealthKit-informed check-ins.~~ Now in v1 — see §7.5.** Sleep, workouts, and steps land in the engine as quiet context. What stays deferred is the *cardiac* half of the original idea: resting heart rate and HRV are Watch-only, need multi-week baselines, and "your resting heart rate is elevated" sits too close to a health claim to ship without a proper review.
+1. **HealthKit-informed check-ins.** Sleep, workouts, and steps as quiet engine context — briefly speced for v1 as §7.5, then cut for scope (§16 decision 18). If revisited: resting heart rate and HRV stay out regardless, since they're Watch-only, need multi-week baselines, and "your resting heart rate is elevated" sits too close to a health claim to ship without a proper review.
 1a. **Supplements, via the HealthKit Medications API (iOS 26).** FeelGood has no supplement feature today — no model, no log, no reminders — so supplement-aware framing ("you haven't logged today's iron") is a product feature to build first, not a HealthKit integration. When it exists, iOS 26's Medications API is the sync path. Note the hard line that comes with it: we may observe whether something was taken, and we may never suggest it caused an outcome. "Your energy tends to be better on the days you take it" is a causal claim wearing correlational clothes, and it is out of scope permanently, not just for v1.
 2. **Simone's real Pilates classes.** The content schema is video-ready today; this is a data drop, not a rebuild.
 3. **Cycle-aware planning.** Menus that shift across the menstrual cycle — high-signal for this exact audience, high-sensitivity, deserves proper research.
@@ -1174,9 +885,10 @@ Called out in the submission because vision is rewarded and costs zero build tim
 | 12 *(2026-08-30)* | Apple Health — the ask | **Intent in onboarding (card 5, skippable, no system sheet); the iOS permission sheet deferred to the first moment the signal matters.** Keeps the §7.1 promise that a real menu precedes any ask, and keeps Apple's contextual-permission guidance. If nothing is ticked, we never ask again. |
 | 13 *(2026-08-30)* | Apple Health — write-back | **Yes, as two separate off-by-default features:** `HKWorkout` for completed sessions and `.mindfulSession` for breathwork and recovery. Neither is bundled into the read permission. The write→read double-count in `recoveryBalance` is a named correctness risk with a required test. |
 | 14 *(2026-08-30)* | Apple Health — the off switch | **Per-signal switches plus a master off.** Turning one off purges every on-device value derived from it. Samples we wrote to Health survive by default, with an explicitly separate opt-in to delete them. In-app switches govern whether *FeelGood uses* a signal, never system access — HIG requires that distinction hold. |
-| 15 *(2026-08-30)* | Free-text check-in — where it's parsed | **On-device redaction, then parsed in the Worker.** ⚠️ This knowingly reverses §11's rule that free text never leaves the device and that reproductive terms are structurally absent rather than filtered. Accepted with eyes open; the obligations it creates (owned denylist, adversarial test suite, explicit consent, retained tap check-in) are specified in §7.5.8. Health-derived values are exempt and stay on device. |
-| 16 *(2026-08-31)* | What Pro actually is | **Three categories — intelligence, flexibility, continuity — specced in §10.1.** Written because every Pro row in §10 was still free in the binary: the entitlement seam was never built, so there was nothing to sell. §10.1 also **amends §10's mechanical claim** that free menus use `history: []` — that would make returning-after-a-gap a paid feature. Free gets recency-only memory; Pro gets full history and affinity. Health shaping *today* stays free; Health *trends* are Pro. |
+| 15 *(2026-08-30)* | Free-text check-in — where it's parsed | **On-device redaction, then parsed in the Worker.** ⚠️ This knowingly reverses §11's rule that free text never leaves the device and that reproductive terms are structurally absent rather than filtered. Accepted with eyes open, with named obligations: owned denylist, adversarial test suite, explicit consent, retained tap check-in. |
+| 16 *(2026-08-31)* | What Pro actually is | **Three categories — intelligence, flexibility, continuity — specced in §10.1.** Written because every Pro row in §10 was still free in the binary: the entitlement seam was never built, so there was nothing to sell. §10.1 also **amends §10's mechanical claim** that free menus use `history: []` — that would make returning-after-a-gap a paid feature. Free gets recency-only memory; Pro gets full history and affinity. |
 | 16 *(2026-08-31)* | Copy proxy — which id identifies the subscriber | **RevenueCat's app user id, read from the SDK.** Supersedes the `anonInstallID` design in §11. A locally minted UUID cannot be verified against RevenueCat because RevenueCat was never told it existed — the original wiring refused every paying user, silently, because failing closed looks identical to being misconfigured. After Apple Sign In the value is the Apple user id: opaque, never an email, but stable in a way a per-install UUID was not. Accepted as the cost of a server-side entitlement check. |
+| 18 *(2026-09-01)* | Apple Health — cut from scope | **Reverses decisions 11–14 and the former §7.5 in full.** Too large for this timeline — five build phases (capability read, onboarding surface, per-signal switches, a copy-layer amendment, and write-back) for a feature that touches sleep, workouts, and steps across three separate `ReasonCode`s, none of which had shipped. No HealthKit code exists in the app, so this is a scope cut, not a removal. Restores the original §15 v2+ deferral. If revisited, re-litigate the free/Pro split from scratch rather than reusing the old §7.5 spec — the split itself (health shaping *today* free, *trends* Pro) is worth keeping if the feature ever returns, but the feature is out for now. |
 
 ### Still open
 
@@ -1194,6 +906,6 @@ This stays open because it isn't ours to close, and it's worth being clear-eyed 
 
 **9. App Store listing copy** must avoid any health, medical, or outcome claim. Needs a careful pass before submission, not the night before.
 
-**10. The conversational check-in needs its own PRD section.** Decision 15 settles where the sentence is parsed, and §7.5.8 settles where health context enters it. Everything else about it is unwritten: latency budget against §7.3's "never a spinner, never a blocked render", offline behaviour, parse-failure fallback, what the agent may say when intent isn't matched, and how it stays inside §7.3's rule that the engine picks. It is a larger change than the Health work and should not be scoped inside it.
+**10. The conversational check-in needs its own PRD section.** Decision 15 settles where the sentence is parsed. Everything else about it is unwritten: latency budget against §7.3's "never a spinner, never a blocked render", offline behaviour, parse-failure fallback, what the agent may say when intent isn't matched, and how it stays inside §7.3's rule that the engine picks. It is a larger change than the Health work and should not be scoped inside it.
 
 **11. Redaction denylist ownership.** Decision 15 only works if somebody owns the list and reviews it on a cadence. Unassigned is the same as unmaintained, and here that has a privacy cost rather than a quality one.

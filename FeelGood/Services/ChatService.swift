@@ -2,9 +2,10 @@
 //  ChatService.swift
 //  FeelGood
 //
-//  Conversational check-in provider. Dispatches sanitized user queries to the
-//  Cloudflare Worker /chat endpoint and parses structured check-in overrides
-//  alongside the companion's warm response.
+//  Conversational stateful agent provider. Dispatches sanitized user queries
+//  with multi-turn context to the backend agent / Cloudflare Worker /chat
+//  endpoint, decoding structured schema-driven UI payloads (messages,
+//  routine recommendation cards, dynamic quick-reply action chips, and overrides).
 //
 
 import Foundation
@@ -31,6 +32,132 @@ nonisolated enum QuickFilter: String, Codable, Sendable, CaseIterable {
         case .gentler: "leaf"
         case .moreEnergizing: "bolt"
         case .canNotLeave: "house"
+        }
+    }
+}
+
+/// Classified conversational intent
+nonisolated enum ChatIntent: String, Codable, Sendable {
+    case newRoutineRequest = "new_routine_request"
+    case inquiry = "inquiry"
+    case acknowledgment = "acknowledgment"
+    case refinement = "refinement"
+    case actionTrigger = "action_trigger"
+    case generalCheckIn = "general_check_in"
+}
+
+/// Stateful conversation phase
+nonisolated enum ConversationPhase: String, Codable, Sendable {
+    case greeting = "greeting"
+    case needsDiscovery = "needs_discovery"
+    case recommendationActive = "recommendation_active"
+    case routineCommitted = "routine_committed"
+    case inquiryActive = "inquiry_active"
+}
+
+/// Action types supported by quick-reply action chips
+nonisolated enum QuickReplyType: String, Codable, Sendable {
+    case commitToToday = "commit_to_today"
+    case askWhy = "ask_why"
+    case swapRoutine = "swap_routine"
+    case filterGentler = "filter_gentler"
+    case filterShorter = "filter_shorter"
+    case filterMoreEnergizing = "filter_more_energizing"
+    case filterStayingIn = "filter_staying_in"
+    case startSession = "start_session"
+    case customPrompt = "custom_prompt"
+}
+
+/// Dynamic quick-reply action chip returned by the backend agent
+nonisolated struct QuickReplyAction: Identifiable, Hashable, Codable, Sendable {
+    let id: String
+    let label: String
+    let symbol: String?
+    let actionType: QuickReplyType
+    let payload: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case label
+        case symbol
+        case actionType = "action_type"
+        case payload
+    }
+
+    init(
+        id: String,
+        label: String,
+        symbol: String? = nil,
+        actionType: QuickReplyType,
+        payload: String? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.symbol = symbol
+        self.actionType = actionType
+        self.payload = payload
+    }
+}
+
+/// Structured routine recommendation payload directly driving the UI card
+nonisolated struct StructuredRecommendation: Identifiable, Hashable, Codable, Sendable {
+    var id: String { sessionID }
+    let sessionID: String
+    let title: String
+    let subtitle: String
+    let durationMin: Int
+    let intensity: String
+    let course: String
+    let reason: String
+    let tags: [String]
+    let equipment: [String]?
+    let targetArea: String?
+
+    enum CodingKeys: String, CodingKey {
+        case sessionID = "session_id"
+        case title
+        case subtitle
+        case durationMin = "duration_min"
+        case intensity
+        case course
+        case reason
+        case tags
+        case equipment
+        case targetArea = "target_area"
+    }
+
+    init(
+        sessionID: String,
+        title: String,
+        subtitle: String,
+        durationMin: Int,
+        intensity: String = "gentle",
+        course: String = "main",
+        reason: String,
+        tags: [String] = [],
+        equipment: [String]? = nil,
+        targetArea: String? = nil
+    ) {
+        self.sessionID = sessionID
+        self.title = title
+        self.subtitle = subtitle
+        self.durationMin = durationMin
+        self.intensity = intensity
+        self.course = course
+        self.reason = reason
+        self.tags = tags
+        self.equipment = equipment
+        self.targetArea = targetArea
+    }
+
+    /// Convert to a Course enum for styling
+    var resolvedCourse: Course {
+        switch course.lowercased() {
+        case "appetizer": .appetizer
+        case "side", "sides": .side
+        case "dessert": .dessert
+        case "special": .special
+        default: .main
         }
     }
 }
@@ -75,22 +202,155 @@ nonisolated struct ConversationalOverrides: Hashable, Sendable {
     }
 }
 
+/// Lean 3-mode conversation state (PRD §10.1 & Week 2 Core Loop)
+nonisolated enum ChatMode: String, Codable, Sendable {
+    case clarifying
+    case banter
+    case recommendation
+}
+
+/// Full structured response from the agent
 nonisolated struct ChatResponse: Sendable {
     let message: String
+    let mode: ChatMode
+    let intent: ChatIntent
+    let phase: ConversationPhase
+    let recommendation: StructuredRecommendation?
+    let quickReplies: [QuickReplyAction]
     let overrides: ConversationalOverrides
+
+    init(
+        message: String,
+        mode: ChatMode? = nil,
+        intent: ChatIntent = .generalCheckIn,
+        phase: ConversationPhase = .recommendationActive,
+        recommendation: StructuredRecommendation? = nil,
+        quickReplies: [QuickReplyAction] = [],
+        overrides: ConversationalOverrides = ConversationalOverrides()
+    ) {
+        self.message = message
+        if let mode {
+            self.mode = mode
+        } else if phase == .needsDiscovery {
+            self.mode = .clarifying
+        } else if recommendation != nil {
+            self.mode = .recommendation
+        } else {
+            self.mode = .banter
+        }
+        self.intent = intent
+        self.phase = phase
+        self.recommendation = (self.mode == .recommendation) ? recommendation : nil
+        self.quickReplies = quickReplies
+        self.overrides = overrides
+    }
+}
+
+/// Historical message turn sent to backend
+nonisolated struct ChatTurnPayload: Codable, Sendable {
+    let role: String // "user" | "model"
+    let text: String
+
+    enum CodingKeys: String, CodingKey {
+        case role
+        case text
+        case content
+    }
+
+    init(role: String, text: String) {
+        self.role = role
+        self.text = text
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.role = try container.decode(String.self, forKey: .role)
+        if let text = try? container.decode(String.self, forKey: .text) {
+            self.text = text
+        } else if let content = try? container.decode(String.self, forKey: .content) {
+            self.text = content
+        } else {
+            self.text = ""
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(role, forKey: .role)
+        try container.encode(text, forKey: .text)
+    }
+}
+
+/// Backwards compatibility alias
+typealias WireChatMessage = ChatTurnPayload
+
+/// User feedback and habit context influencing recommendations
+nonisolated struct ChatUserContext: Codable, Sendable {
+    let likedActivities: [String]?
+    let lastFeel: String?
+    let recentCompletions: Int?
+    let recoveryOwed: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case likedActivities = "liked_activities"
+        case lastFeel = "last_feel"
+        case recentCompletions = "recent_completions"
+        case recoveryOwed = "recovery_owed"
+    }
+
+    init(
+        likedActivities: [String]? = nil,
+        lastFeel: String? = nil,
+        recentCompletions: Int? = nil,
+        recoveryOwed: Bool? = nil
+    ) {
+        self.likedActivities = likedActivities
+        self.lastFeel = lastFeel
+        self.recentCompletions = recentCompletions
+        self.recoveryOwed = recoveryOwed
+    }
 }
 
 nonisolated protocol ChatProviding: Sendable {
-    func describeDay(prompt: String) async -> ChatResponse?
+    func describeDay(
+        prompt: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?
+    ) async -> ChatResponse?
+}
+
+extension ChatProviding {
+    func describeDay(
+        prompt: String,
+        history: [WireChatMessage] = [],
+        activeSessionID: String? = nil
+    ) async -> ChatResponse? {
+        await describeDay(prompt: prompt, history: history, activeSessionID: activeSessionID, userContext: nil)
+    }
 }
 
 /// Network transport for /chat
 nonisolated protocol ChatTransport: Sendable {
-    func sendChat(prompt: String, subscriberID: String, timeout: TimeInterval) async throws -> ChatResponse
+    func sendChat(
+        prompt: String,
+        subscriberID: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?,
+        timeout: TimeInterval
+    ) async throws -> ChatResponse
 }
 
 nonisolated struct URLSessionChatTransport: ChatTransport {
-    func sendChat(prompt: String, subscriberID: String, timeout: TimeInterval) async throws -> ChatResponse {
+    func sendChat(
+        prompt: String,
+        subscriberID: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?,
+        timeout: TimeInterval
+    ) async throws -> ChatResponse {
         guard let chatURL = WorkerConstants.chatURL else {
             throw ChatTransportError.notConfigured
         }
@@ -100,7 +360,13 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
         request.timeoutInterval = timeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let payload = WireChatPayload(prompt: prompt, subscriberID: subscriberID)
+        let payload = WireChatPayload(
+            prompt: prompt,
+            subscriberID: subscriberID,
+            history: history.isEmpty ? nil : history,
+            activeSessionID: activeSessionID,
+            userContext: userContext
+        )
         request.httpBody = try JSONEncoder().encode(payload)
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -111,18 +377,55 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
 
         let decoded = try JSONDecoder().decode(WireChatResponse.self, from: data)
         let overrides = decoded.extractedCheckIn?.toOverrides() ?? ConversationalOverrides()
+        let intent = decoded.intent ?? .generalCheckIn
+        let phase = decoded.phase ?? .recommendationActive
+        let replies = decoded.quickReplies ?? []
 
-        return ChatResponse(message: decoded.message, overrides: overrides)
+        return ChatResponse(
+            message: decoded.message,
+            mode: decoded.mode,
+            intent: intent,
+            phase: phase,
+            recommendation: decoded.recommendation,
+            quickReplies: replies,
+            overrides: overrides
+        )
     }
 
     private struct WireChatPayload: Encodable {
         let prompt: String
         let subscriberID: String
+        let history: [WireChatMessage]?
+        let activeSessionID: String?
+        let userContext: ChatUserContext?
+
+        enum CodingKeys: String, CodingKey {
+            case prompt
+            case subscriberID
+            case history
+            case activeSessionID
+            case userContext = "user_context"
+        }
     }
 
     private struct WireChatResponse: Decodable {
         let message: String
+        let mode: ChatMode?
+        let intent: ChatIntent?
+        let phase: ConversationPhase?
+        let recommendation: StructuredRecommendation?
+        let quickReplies: [QuickReplyAction]?
         let extractedCheckIn: WireExtractedCheckIn?
+
+        enum CodingKeys: String, CodingKey {
+            case message
+            case mode
+            case intent
+            case phase
+            case recommendation
+            case quickReplies = "quick_replies"
+            case extractedCheckIn = "extracted_check_in"
+        }
     }
 
     private struct WireExtractedCheckIn: Decodable {
@@ -132,6 +435,15 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
         let body: String?
         let intent: String?
         let quickFilter: String?
+
+        enum CodingKeys: String, CodingKey {
+            case energy
+            case timeBudget = "time_budget"
+            case place
+            case body
+            case intent
+            case quickFilter = "quick_filter"
+        }
 
         func toOverrides() -> ConversationalOverrides {
             var e: Energy?
@@ -172,7 +484,7 @@ actor ChatService: ChatProviding {
     init(
         transport: any ChatTransport = URLSessionChatTransport(),
         redactor: RedactionService = .shared,
-        timeout: TimeInterval = 3.0,
+        timeout: TimeInterval = 10.0,
         isProUnlocked: @escaping @Sendable () async -> Bool = { await MainActor.run { PurchasesManager.shared.isProUnlocked } },
         subscriberID: @escaping @Sendable () async -> String = { await MainActor.run { PurchasesManager.shared.appUserID } }
     ) {
@@ -183,30 +495,198 @@ actor ChatService: ChatProviding {
         self.subscriberID = subscriberID
     }
 
-    func describeDay(prompt: String) async -> ChatResponse? {
+    func describeDay(
+        prompt: String,
+        history: [WireChatMessage] = [],
+        activeSessionID: String? = nil,
+        userContext: ChatUserContext? = nil
+    ) async -> ChatResponse? {
         let sanitized = redactor.sanitize(prompt.trimmingCharacters(in: .whitespacesAndNewlines))
         guard !sanitized.isEmpty else { return nil }
 
         let subID = await subscriberID()
 
+        // Pre-edge paywall check: Pro users or free users with daily quota remaining
+        let pro = await isProUnlocked()
+        let canPerform = await MainActor.run {
+            PurchasesManager.shared.canPerformEdgeChat()
+        }
+        let allowed = pro || canPerform
+
+        guard allowed else {
+            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext)
+        }
+
         guard let response = try? await transport.sendChat(
             prompt: sanitized,
             subscriberID: subID,
+            history: history,
+            activeSessionID: activeSessionID,
+            userContext: userContext,
             timeout: timeout
         ) else {
-            // Fall back to on-device heuristic parsing if network fails
-            return LocalHeuristicParser.parse(sanitized)
+            // Fall back to on-device stateful heuristic engine if offline / network fails
+            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext)
+        }
+
+        await MainActor.run {
+            PurchasesManager.shared.recordEdgeChatPerformed()
         }
 
         return response
     }
 }
 
-/// On-device local heuristic parser as offline fallback
-nonisolated enum LocalHeuristicParser {
-    static func parse(_ text: String) -> ChatResponse {
-        let lower = text.lowercased()
+/// On-device local stateful heuristic engine matching the state machine & schema offline
+nonisolated enum LocalStatefulChatEngine {
+    private static let catalogSessions: [Session] = {
+        (try? ContentStore.bundled().sessions) ?? []
+    }()
 
+    static func sessionById(_ id: String) -> Session? {
+        catalogSessions.first { $0.id == id }
+    }
+
+    static func matchBestSession(
+        targetDuration: Int? = nil,
+        intensity: String? = nil,
+        bodyFocus: BodyFocus? = nil,
+        excludedFocus: BodyFocus? = nil,
+        intent: Intent? = nil,
+        activity: Activity? = nil,
+        excludeID: String? = nil,
+        userContext: ChatUserContext? = nil
+    ) -> Session? {
+        guard !catalogSessions.isEmpty else { return nil }
+
+        var candidates: [(session: Session, score: Int)] = []
+
+        for s in catalogSessions {
+            if let excludeID, s.id == excludeID { continue }
+            if let excludedFocus, s.bodyFocus.contains(excludedFocus) { continue }
+            var score = 0
+
+            if let targetDuration {
+                let diff = abs(s.durationMin - targetDuration)
+                if diff == 0 { score += 30 }
+                else if diff <= 3 { score += 18 }
+                else if diff <= 6 { score += 10 }
+                else { score -= min(diff * 2, 25) }
+            }
+
+            if let intensity {
+                let sIntensityStr = s.intensity <= 2 ? "gentle" : (s.intensity == 3 ? "moderate" : "dynamic")
+                if sIntensityStr == intensity { score += 15 }
+            }
+
+            if let bodyFocus, s.bodyFocus.contains(bodyFocus) {
+                score += 20
+            }
+
+            if let intent, s.intents.contains(intent) {
+                score += 15
+            }
+
+            if let activity, s.activity == activity {
+                score += 25
+            }
+
+            if s.course == .main {
+                score += 2
+            }
+
+            if let userContext {
+                if let liked = userContext.likedActivities, liked.contains(s.activity.rawValue) {
+                    score += 12
+                }
+                if userContext.recoveryOwed == true || userContext.lastFeel == "tooMuch" {
+                    if s.intensity <= 2 { score += 15 }
+                    else if s.intensity >= 4 { score -= 25 }
+                }
+            }
+
+            candidates.append((s, score))
+        }
+
+        candidates.sort { $0.score > $1.score }
+        guard let topScore = candidates.first?.score else { return nil }
+
+        // Sample among top tier (within 6 points of top score) to provide natural variety
+        let topTier = candidates.filter { $0.score >= topScore - 6 }
+        return topTier.randomElement()?.session ?? candidates.first?.session
+    }
+
+    static func structuredRecommendation(for s: Session, reason: String? = nil) -> StructuredRecommendation {
+        let intensityLabel = s.intensity <= 2 ? "gentle" : (s.intensity == 3 ? "moderate" : "dynamic")
+        let courseLabel = s.course.rawValue.capitalized
+        let tags = [courseLabel, "\(s.durationMin) min", intensityLabel.capitalized]
+        return StructuredRecommendation(
+            sessionID: s.id,
+            title: s.title,
+            subtitle: s.subtitle,
+            durationMin: s.durationMin,
+            intensity: intensityLabel,
+            course: s.course.rawValue,
+            reason: reason ?? "Curated to fit your \(s.durationMin)-minute window and match how your body feels.",
+            tags: tags,
+            targetArea: s.bodyFocus.first?.rawValue
+        )
+    }
+
+    static func orchestrate(
+        prompt: String,
+        history: [WireChatMessage] = [],
+        activeSessionID: String? = nil,
+        userContext: ChatUserContext? = nil
+    ) -> ChatResponse {
+        let trimmedLower = prompt.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let vaguePhrases = [
+            "no", "nah", "nope", "it feels okay", "feels okay", "not sure", "idk",
+            "maybe", "meh", "whatever", "don't know", "dont know", "nothing",
+            "nothing really", "im ok", "i'm ok", "im okay", "i'm okay"
+        ]
+
+        if vaguePhrases.contains(trimmedLower) {
+            return ChatResponse(
+                message: "Got it. Would you prefer a short breath reset, a gentle floor stretch, or something to build a little energy?",
+                mode: .clarifying,
+                intent: .generalCheckIn,
+                phase: .needsDiscovery,
+                recommendation: nil,
+                quickReplies: [
+                    QuickReplyAction(id: "floor_stretch", label: "5 min floor stretch", symbol: "figure.mind.and.body", actionType: .customPrompt, payload: "5 min gentle floor stretch"),
+                    QuickReplyAction(id: "breath_reset", label: "Breath reset", symbol: "wind", actionType: .customPrompt, payload: "3 min breath reset"),
+                    QuickReplyAction(id: "gentle_mobility", label: "Gentle mobility", symbol: "figure.cooldown", actionType: .customPrompt, payload: "10 min gentle mobility"),
+                    QuickReplyAction(id: "resting_today", label: "Resting today", symbol: "bed.double", actionType: .customPrompt, payload: "I am taking a full rest day")
+                ],
+                overrides: ConversationalOverrides()
+            )
+        }
+
+        let lower = prompt.lowercased()
+
+        // 1. Intent Classification
+        var intent: ChatIntent = .generalCheckIn
+        var phase: ConversationPhase = .recommendationActive
+
+        if ["k", "ok", "okay", "yes", "sounds good", "perfect", "let's do it", "looks good", "great"].contains(lower) {
+            intent = .acknowledgment
+            phase = .routineCommitted
+        } else if lower.contains("why") || lower.contains("what is") || lower.contains("how does") || lower.contains("what if") || lower.contains("will this help") || lower.contains("will it help") || lower.contains("does this help") || lower.contains("is this good") || lower.contains("can this help") {
+            intent = .inquiry
+            phase = .inquiryActive
+        } else if lower.contains("shorter") || lower.contains("gentler") || lower.contains("energiz") || lower.contains("not today") || lower.contains("something else") || lower.contains("don't need") || lower.contains("dont need") || lower.contains("don't want") || lower.contains("dont want") || lower.contains("no hips") || lower.contains("not hips") {
+            intent = .refinement
+            phase = .recommendationActive
+        } else if lower.contains("add to today") || lower.contains("swap") || lower.contains("start") {
+            intent = .actionTrigger
+            phase = .routineCommitted
+        } else if lower.contains("min") || lower.contains("tired") || lower.contains("back") || lower.contains("sore") || lower.contains("stiff") || lower.contains("breath") || lower.contains("wired") || lower.contains("shake") || lower.contains("walk") || lower.contains("dance") {
+            intent = .newRoutineRequest
+            phase = .recommendationActive
+        }
+
+        // 2. Overrides extraction
         var energy: Energy?
         if lower.contains("empty") || lower.contains("tired") || lower.contains("exhaust") || lower.contains("drain") || lower.contains("low") {
             energy = .low
@@ -217,26 +697,46 @@ nonisolated enum LocalHeuristicParser {
         }
 
         var time: TimeBudget?
-        if lower.contains("5 min") || lower.contains("five") {
-            time = .fiveMinutes
-        } else if lower.contains("10 min") || lower.contains("ten") {
-            time = .aLittle
-        } else if lower.contains("15 min") || lower.contains("fifteen") {
-            time = .fifteenMinutes
-        } else if lower.contains("20 min") || lower.contains("twenty") {
-            time = .twentyMinutes
-        } else if lower.contains("25 min") {
-            time = .twentyFiveMinutes
-        } else if lower.contains("30 min") || lower.contains("thirty") {
-            time = .some
-        } else if lower.contains("45") || lower.contains("hour") {
+        var durMin: Int = 15
+        if lower.contains("45 min") || lower.contains("45min") || lower.contains("hour") {
             time = .plenty
+            durMin = 45
+        } else if lower.contains("35 min") || lower.contains("35min") {
+            time = .thirtyFiveMinutes
+            durMin = 35
+        } else if lower.contains("30 min") || lower.contains("30min") || lower.contains("thirty") {
+            time = .some
+            durMin = 30
+        } else if lower.contains("25 min") || lower.contains("25min") {
+            time = .twentyFiveMinutes
+            durMin = 25
+        } else if lower.contains("20 min") || lower.contains("20min") || lower.contains("twenty") {
+            time = .twentyMinutes
+            durMin = 20
+        } else if lower.contains("15 min") || lower.contains("15min") || lower.contains("fifteen") {
+            time = .fifteenMinutes
+            durMin = 15
+        } else if lower.contains("10 min") || lower.contains("10min") || lower.contains("ten") {
+            time = .aLittle
+            durMin = 10
+        } else if lower.contains("5 min") || lower.contains("5min") || lower.contains("five") {
+            time = .fiveMinutes
+            durMin = 5
+        } else if lower.contains("3 min") || lower.contains("3min") || lower.contains("three") {
+            time = .fiveMinutes
+            durMin = 3
+        } else if lower.contains("2 min") || lower.contains("2min") || lower.contains("two") {
+            time = .fiveMinutes
+            durMin = 2
+        } else if lower.contains("1 min") || lower.contains("1min") || lower.contains("one min") {
+            time = .fiveMinutes
+            durMin = 1
         }
 
         var place: PlaceIntent?
         if lower.contains("gym") {
             place = .atTheGym
-        } else if lower.contains("outdoors") || lower.contains("outside") || lower.contains("go out") || lower.contains("walk") || lower.contains("park") {
+        } else if lower.contains("outdoors") || lower.contains("outside") || lower.contains("walk") || lower.contains("park") {
             place = .happyToGoOut
         } else if lower.contains("home") || lower.contains("staying in") || lower.contains("stay in") || lower.contains("bed") || lower.contains("mat") {
             place = .stayingIn
@@ -245,16 +745,233 @@ nonisolated enum LocalHeuristicParser {
         var body: BodyState?
         if lower.contains("sore") || lower.contains("ache") || lower.contains("hurt") {
             body = .sore
-        } else if lower.contains("stiff") || lower.contains("tight") {
+        } else if lower.contains("stiff") || lower.contains("tight") || lower.contains("shoulder") || lower.contains("back") {
             body = .stiff
-        } else if lower.contains("stress") || lower.contains("anxious") || lower.contains("tense") {
+        } else if lower.contains("stress") || lower.contains("anxious") || lower.contains("tense") || lower.contains("wired") {
             body = .stressed
         } else if lower.contains("good") {
             body = .good
         }
 
-        let overrides = ConversationalOverrides(energy: energy, time: time, place: place, body: body)
-        return ChatResponse(message: "Here's a gentle plan that fits your day.", overrides: overrides)
+        var filter: QuickFilter?
+        if lower.contains("shorter") { filter = .shorter }
+        else if lower.contains("gentler") { filter = .gentler }
+        else if lower.contains("energiz") { filter = .moreEnergizing }
+        else if lower.contains("staying in") || lower.contains("stay in") { filter = .canNotLeave }
+
+        var requestedActivity: Activity?
+        if lower.contains("yoga") { requestedActivity = .yoga }
+        else if lower.contains("pilates") { requestedActivity = .pilates }
+        else if lower.contains("strength") || lower.contains("weight") || lower.contains("lift") { requestedActivity = .strength }
+        else if lower.contains("stretch") { requestedActivity = .stretching }
+        else if lower.contains("walk") || lower.contains("walking") { requestedActivity = .walking }
+        else if lower.contains("dance") { requestedActivity = .dance }
+        else if lower.contains("qigong") || lower.contains("qi gong") { requestedActivity = .qigong }
+        else if lower.contains("breath") || lower.contains("box breathing") { requestedActivity = .breathwork }
+        else if lower.contains("jump rope") || lower.contains("shake") || lower.contains("jumping jack") { requestedActivity = .agility }
+
+        var targetFocus: BodyFocus?
+        var excludedFocus: BodyFocus?
+
+        if lower.contains("hip") {
+            if lower.contains("don't need hip") || lower.contains("dont need hip") || lower.contains("don't want hip") || lower.contains("dont want hip") || lower.contains("no hip") || lower.contains("not hip") || lower.contains("no hips") || lower.contains("not hips") {
+                excludedFocus = .hips
+            } else {
+                targetFocus = .hips
+            }
+        }
+        if lower.contains("back") {
+            if lower.contains("no back") || lower.contains("not back") {
+                excludedFocus = .back
+            } else {
+                targetFocus = .back
+            }
+        }
+        if lower.contains("neck") || lower.contains("shoulder") { targetFocus = .neckShoulders }
+        else if lower.contains("core") { targetFocus = .core }
+
+        var targetIntent: Intent?
+        if lower.contains("energiz") || lower.contains("wake") { targetIntent = .energize }
+        else if lower.contains("calm") || lower.contains("stress") || lower.contains("anxious") || lower.contains("relax") || lower.contains("sleep") { targetIntent = .calm }
+        else if lower.contains("mobil") || lower.contains("stiff") { targetIntent = .mobilize }
+        else if lower.contains("joy") || lower.contains("play") { targetIntent = .joy }
+
+        let overrides = ConversationalOverrides(energy: energy, time: time, place: place, body: body, quickFilter: filter)
+
+        // 3. Response copy & structured recommendation
+        var message = "Here's a gentle plan that fits your day."
+        var recommendation: StructuredRecommendation?
+
+        switch intent {
+        case .inquiry:
+            if lower.contains("can't sit still") || lower.contains("can not sit") || lower.contains("sitting") {
+                message = "Then move first. This one's standing."
+                if let s = sessionById("app-jump-rope-ninety") {
+                    recommendation = structuredRecommendation(for: s, reason: "Standing reset to dissipate restless energy before settling down.")
+                }
+            } else if lower.contains("back") {
+                message = "Yes — releasing tight hip flexors and pelvis tension takes direct pulling pressure off your lumbar spine."
+            } else if lower.contains("why") {
+                message = "This sequence unloads spinal tension and opens tight hips without straining your joints."
+            } else {
+                message = "Here is what this sequence focuses on for your movement today."
+            }
+
+        case .acknowledgment:
+            message = "You're all set. Take your time, breathe deeply, and enjoy moving."
+
+        case .actionTrigger:
+            message = "Added to today's menu. Tap Start whenever you're ready."
+
+        case .refinement:
+            if excludedFocus == .hips || lower.contains("don't need hip") || lower.contains("dont need hip") {
+                if let s = matchBestSession(targetDuration: durMin, bodyFocus: .back, excludedFocus: .hips, excludeID: activeSessionID, userContext: userContext) ?? matchBestSession(targetDuration: durMin, excludedFocus: .hips, excludeID: activeSessionID, userContext: userContext) {
+                    message = "Understood, skipping hips. Here is dedicated lower back and spine support."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("shorter") || lower.contains("5 min") || lower.contains("3 min") || lower.contains("2 min") {
+                let targetMin = durMin <= 5 ? durMin : 5
+                if let s = matchBestSession(targetDuration: targetMin, intensity: "gentle", excludeID: activeSessionID, userContext: userContext) {
+                    message = "Adjusted. Here is a \(s.durationMin)-minute targeted reset."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("energiz") || lower.contains("strong") {
+                if let s = matchBestSession(targetDuration: durMin, intensity: "dynamic", intent: .energize, excludeID: activeSessionID, userContext: userContext) {
+                    message = "Picked up the pace with an uplifting energizing reset."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("gentler") || lower.contains("softer") {
+                if let s = matchBestSession(targetDuration: durMin, intensity: "gentle", intent: .calm, excludeID: activeSessionID, userContext: userContext) {
+                    message = "Swapped to a softer, fully supported sequence."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else {
+                if let s = matchBestSession(targetDuration: durMin, excludeID: activeSessionID, userContext: userContext) {
+                    message = "Here is a fresh alternative for your day."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            }
+
+        case .newRoutineRequest, .generalCheckIn:
+            // Explicit Dopamine Menu & targeted micro-action triggers
+            if lower.contains("shake") || lower.contains("restless") || lower.contains("overwhelm") {
+                if let s = sessionById("app-shake-out-five") {
+                    message = "A physical shake-out to release tension and reset your nervous system."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("power pose") || lower.contains("confidence") {
+                if let s = sessionById("app-power-pose-two") {
+                    message = "An expansive standing posture to restore quiet confidence."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("cold water") || lower.contains("splash") || lower.contains("panic") {
+                if let s = sessionById("app-cold-water-splash") {
+                    message = "Quick dive-reflex reset to immediately slow a racing heart."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("progressive muscle") || lower.contains("pmr") {
+                if let s = sessionById("dessert-pmr-ten") {
+                    message = "Full-body progressive relaxation to release holding from toes to crown."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("gratitude") {
+                if let s = sessionById("dessert-gratitude-scan-five") {
+                    message = "A gentle body scan appreciating everything your body did today."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("jumping jack") {
+                if let s = sessionById("app-jumping-jacks-two") {
+                    message = "Quick cardio intervals to break through inertia and awaken motivation."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("dance") {
+                if let s = sessionById("side-dance-it-out-five") {
+                    message = "Free freestyle movement to your favorite track."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("walk") || lower.contains("brisk") {
+                if let s = sessionById("main-brisk-walk-ten") {
+                    message = "A brisk 10-minute walk to clear brain fog and elevate blood flow."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("desk") && (lower.contains("shoulder") || lower.contains("neck")) {
+                if let s = sessionById("side-desk-shoulder-reset") {
+                    message = "Chair-safe shoulder release between meetings."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("wrist") || lower.contains("forearm") || lower.contains("typing") {
+                if let s = sessionById("side-desk-wrist-reset") {
+                    message = "Gentle release for wrists and hands from typing."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("box breathing") || lower.contains("box breath") {
+                if let s = sessionById("app-box-breathing") {
+                    message = "Four rounds of calming box breathing."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            } else if lower.contains("evening") || lower.contains("night") || lower.contains("sleep") || lower.contains("unwind") {
+                if let s = sessionById("dessert-tea-and-quiet-stretch") {
+                    message = "Grounding evening floor relaxation to ease down before sleep."
+                    recommendation = structuredRecommendation(for: s)
+                }
+            }
+
+            // If not caught by specific trigger, dynamically query catalog
+            if recommendation == nil {
+                if let matched = matchBestSession(
+                    targetDuration: durMin,
+                    intensity: energy == .strong ? "dynamic" : (energy == .low ? "gentle" : nil),
+                    bodyFocus: targetFocus,
+                    intent: targetIntent,
+                    activity: requestedActivity,
+                    excludeID: activeSessionID,
+                    userContext: userContext
+                ) {
+                    message = "Calibrated for your \(matched.durationMin)-minute window today."
+                    recommendation = structuredRecommendation(for: matched)
+                }
+            }
+        }
+
+        // 4. Dynamic Quick Replies
+        var quickReplies: [QuickReplyAction] = []
+        if recommendation != nil {
+            quickReplies = [
+                QuickReplyAction(id: "shorter", label: "Something shorter", symbol: "clock.arrow.circlepath", actionType: .filterShorter),
+                QuickReplyAction(id: "why_this", label: "Why this?", symbol: "questionmark.circle", actionType: .askWhy),
+                QuickReplyAction(id: "not_today", label: "Not today", symbol: "xmark.circle", actionType: .swapRoutine)
+            ]
+        } else if intent == .acknowledgment {
+            quickReplies = [
+                QuickReplyAction(id: "start_now", label: "Start routine", symbol: "play.fill", actionType: .startSession),
+                QuickReplyAction(id: "something_else", label: "Change mind", symbol: "arrow.triangle.2.circlepath", actionType: .swapRoutine)
+            ]
+        } else {
+            quickReplies = [
+                QuickReplyAction(id: "shorter", label: "10 min reset", symbol: "clock", actionType: .customPrompt, payload: "10 min gentle reset"),
+                QuickReplyAction(id: "gentler", label: "Gentler option", symbol: "leaf", actionType: .filterGentler),
+                QuickReplyAction(id: "staying_in", label: "Staying in", symbol: "house", actionType: .filterStayingIn)
+            ]
+        }
+
+        let mode: ChatMode
+        if recommendation != nil {
+            mode = .recommendation
+        } else if phase == .needsDiscovery {
+            mode = .clarifying
+        } else {
+            mode = .banter
+        }
+
+        return ChatResponse(
+            message: message,
+            mode: mode,
+            intent: intent,
+            phase: phase,
+            recommendation: recommendation,
+            quickReplies: quickReplies,
+            overrides: overrides
+        )
     }
 }
 
@@ -265,7 +982,12 @@ nonisolated struct InMemoryChatService: ChatProviding {
         self.response = response
     }
 
-    func describeDay(prompt: String) async -> ChatResponse? {
-        response ?? LocalHeuristicParser.parse(prompt)
+    func describeDay(
+        prompt: String,
+        history: [WireChatMessage] = [],
+        activeSessionID: String? = nil,
+        userContext: ChatUserContext? = nil
+    ) async -> ChatResponse? {
+        response ?? LocalStatefulChatEngine.orchestrate(prompt: prompt, history: history, activeSessionID: activeSessionID, userContext: userContext)
     }
 }

@@ -64,12 +64,96 @@ nonisolated extension Equipment {
     }
 }
 
+nonisolated extension BodyFocus {
+    var label: String {
+        switch self {
+        case .full: "Full Body"
+        case .core: "Core"
+        case .lowerBody: "Lower Body"
+        case .upperBody: "Upper Body"
+        case .back: "Spine & Back"
+        case .hips: "Hips"
+        case .neckShoulders: "Neck & Shoulders"
+        }
+    }
+}
+
 nonisolated extension Session {
     var durationLabel: String { "\(durationMin) min" }
 
-    /// "Mat · 20 min" — what you need and how long, nothing else.
+    /// What the session targets — e.g. "Spine & Hips", "Neck & Shoulders", "Full Body".
+    var targetLabel: String {
+        let titleAndSubtitle = "\(title) \(subtitle)".lowercased()
+        let focusSet = Set(bodyFocus)
+
+        // 1. Spine & Hips explicitly combined
+        if (titleAndSubtitle.contains("spine") && titleAndSubtitle.contains("hip")) ||
+           (focusSet.contains(.back) && focusSet.contains(.hips)) {
+            return "Spine & Hips"
+        }
+
+        // 2. Desk worker or posture resets targeting spine / back / hips
+        if titleAndSubtitle.contains("posture") || titleAndSubtitle.contains("desk") || titleAndSubtitle.contains("hunch") {
+            if focusSet.contains(.back) && focusSet.contains(.hips) {
+                return "Spine & Hips"
+            }
+            if focusSet.contains(.back) {
+                return "Spine & Posture"
+            }
+            if focusSet.contains(.neckShoulders) {
+                return "Neck & Shoulders"
+            }
+            return "Spine & Hips"
+        }
+
+        // 3. Keyword cues in title or subtitle
+        if titleAndSubtitle.contains("spine") {
+            return focusSet.contains(.hips) ? "Spine & Hips" : "Spine & Back"
+        }
+        if titleAndSubtitle.contains("neck") || titleAndSubtitle.contains("shoulder") || focusSet.contains(.neckShoulders) {
+            return "Neck & Shoulders"
+        }
+        if titleAndSubtitle.contains("glute") || titleAndSubtitle.contains("hip") || focusSet == [.hips] {
+            return focusSet.contains(.lowerBody) ? "Hips & Legs" : "Hips"
+        }
+        if focusSet.contains(.back) {
+            return "Spine & Back"
+        }
+        if focusSet.contains(.core) || titleAndSubtitle.contains("core") || titleAndSubtitle.contains("ab") {
+            return "Core"
+        }
+        if focusSet.contains(.lowerBody) || titleAndSubtitle.contains("leg") {
+            return "Lower Body"
+        }
+        if focusSet.contains(.upperBody) || titleAndSubtitle.contains("arm") || titleAndSubtitle.contains("chest") {
+            return "Upper Body"
+        }
+
+        // 4. Default to first non-full body focus if present
+        if let primary = bodyFocus.first(where: { $0 != .full }) {
+            return primary.label
+        }
+
+        return "Full Body"
+    }
+
+    /// Impact classification — e.g. "Low Impact", "High Impact".
+    var impactLabel: String {
+        if qualities.contains(.impact) || activity == .jumpRope || (intensity >= 4 && (activity == .agility || activity == .skating)) {
+            return "High Impact"
+        }
+        return "Low Impact"
+    }
+
+    /// Quick visual pills: equipment, duration, target area, impact level.
+    /// e.g. ["Mat", "30 min", "Spine & Hips", "Low Impact"]
     var chips: [String] {
-        equipment.compactMap(\.label) + [durationLabel]
+        var pills: [String] = []
+        pills.append(contentsOf: equipment.compactMap(\.label))
+        pills.append(durationLabel)
+        pills.append(targetLabel)
+        pills.append(impactLabel)
+        return pills
     }
 }
 
@@ -146,9 +230,6 @@ nonisolated extension TimeBudget {
         }
     }
 
-    var summaryPhrase: String {
-        checkInDetail
-    }
 }
 
 extension PlaceIntent {
