@@ -18,6 +18,7 @@ struct YouView: View {
     @State private var isBrowsing = false
     @State private var isShowingSubscription = false
     @State private var isShowingAccount = false
+    @State private var isShowingHiddenExercises = false
     #if DEBUG
     @State private var isDebugging = false
     #endif
@@ -71,6 +72,7 @@ struct YouView: View {
                         #endif
                         Button("Everything", systemImage: "square.stack") { isBrowsing = true }
                         Button("What's true now", systemImage: "slider.horizontal.3") { isEditingProfile = true }
+                        Button("Hidden exercises", systemImage: "eye.slash") { isShowingHiddenExercises = true }
                         Button("Account & privacy", systemImage: "person.crop.circle") { isShowingAccount = true }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -90,6 +92,9 @@ struct YouView: View {
                 onProfileSaved(updated)
                 model.update(profile: updated.planProfile)
             }
+        }
+        .sheet(isPresented: $isShowingHiddenExercises) {
+            HiddenExercisesView(model: model)
         }
         .sheet(isPresented: $isShowingSubscription) {
             NavigationStack {

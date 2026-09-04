@@ -79,7 +79,9 @@ final class TodayModel {
         self.log = log
         self.copy = copy
         self.progressStore = progressStore
-        self.profile = profile
+        var activeProfile = profile
+        activeProfile.hiddenSessionIDs.formUnion(log.hiddenSessionIDs())
+        self.profile = activeProfile
         self.ownSessions = own
         self.checkIn = todaysCheckIn
         self.calendarOpening = calendarOpening
@@ -356,6 +358,44 @@ final class TodayModel {
 
     func isInProgress(_ item: MenuItem) -> Bool {
         inProgressSessionIDs.contains(item.session.id) && !isCompleted(item)
+    }
+
+    // MARK: Hidden exercises ("Don't suggest this again")
+
+    /// Permanently hides a session so it is never recommended by the engine.
+    /// If it is currently on Today's menu, it is immediately swapped out.
+    func hide(_ session: Session, now: Date = Date()) {
+        profile.hiddenSessionIDs.insert(session.id)
+        log.hideSession(session.id, at: now)
+
+        if let item = menu.items.first(where: { $0.session.id == session.id }) {
+            let currentInput = input(now: now)
+            if let replacement = engine.alternative(
+                for: item,
+                onMenu: menu,
+                input: currentInput,
+                alreadySeen: swappedAway.union([session.id])
+            ) ?? engine.cyclicAlternative(
+                for: item,
+                onMenu: menu,
+                input: currentInput
+            ) {
+                swappedAway.insert(item.session.id)
+                menu = menu.replacing(item, with: replacement)
+                log.save(menu, generatedAt: now)
+                publishSnapshot(now: now)
+            }
+        }
+    }
+
+    /// Restores a previously hidden session so it can be recommended again.
+    func unhide(sessionID: String, now: Date = Date()) {
+        profile.hiddenSessionIDs.remove(sessionID)
+        log.unhideSession(sessionID, at: now)
+    }
+
+    func isHidden(_ sessionID: String) -> Bool {
+        profile.hiddenSessionIDs.contains(sessionID)
     }
 
     // MARK: Somebody's own movement
