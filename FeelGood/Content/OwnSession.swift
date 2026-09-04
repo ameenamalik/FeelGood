@@ -42,7 +42,8 @@ nonisolated extension Activity {
     var impliedPlaces: Set<Place> {
         switch self {
         case .swimming: [.pool]
-        case .biking, .walking, .racquet, .climbing, .skating: [.outdoors]
+        case .biking, .walking, .climbing, .skating: [.outdoors]
+        case .racquet: []
         case .strength, .carries: [.home, .gym]
         default: [.home]
         }
@@ -56,7 +57,8 @@ nonisolated extension Activity {
         case .biking: [.bike]
         case .skating: [.skates]
         case .jumpRope: [.rope]
-        case .walking, .racquet, .climbing: [.outdoor]
+        case .walking, .climbing: [.outdoor]
+        case .racquet: []
         case .pilates, .yoga, .stretching: [.mat]
         default: []
         }

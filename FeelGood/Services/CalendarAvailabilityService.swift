@@ -87,7 +87,10 @@ nonisolated enum CalendarMovementTitleClassifier {
         if hasWord("skate", "skating") { return .skating }
         if hasWord("dance", "dancing", "zumba") { return .dance }
         if hasPhrase("jump rope") { return .jumpRope }
-        if hasWord("tennis", "pickleball", "badminton", "squash") { return .racquet }
+        if hasWord(
+            "tennis", "pickleball", "badminton", "squash",
+            "basketball", "soccer", "football", "volleyball"
+        ) { return .racquet }
         if hasWord("climb", "climbing", "bouldering") { return .climbing }
         if hasWord("boxing", "kickboxing", "judo", "karate") || hasPhrase("martial arts") {
             return .martialArts

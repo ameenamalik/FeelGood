@@ -103,38 +103,13 @@ struct OnboardingView: View {
         case .access:
             AccessChoices(
                 activities: $model.activities,
+                sports: $model.sports,
                 equipment: $model.equipment,
                 places: $model.places,
                 showsSymbols: false,
                 usesAura: false,
                 usesPills: true
             )
-
-        case .cadence:
-            VStack(alignment: .leading, spacing: FGSpace.l) {
-                answerGroup("Each week") {
-                    ForEach(Cadence.allCases, id: \.self) { option in
-                        FGPill(
-                            title: option.label,
-                            selectedAura: .apricot,
-                            isSelected: model.cadence == option
-                        ) {
-                            withAnimation(FGMotion.gentle) { model.cadence = option }
-                        }
-                    }
-                }
-                answerGroup("Each day") {
-                    ForEach(MovementMoments.allCases, id: \.self) { option in
-                        FGPill(
-                            title: option.label,
-                            selectedAura: .sage,
-                            isSelected: model.moments == option
-                        ) {
-                            withAnimation(FGMotion.gentle) { model.moments = option }
-                        }
-                    }
-                }
-            }
 
         case .intent:
             FlowRow(
@@ -235,16 +210,6 @@ struct OnboardingView: View {
         return palette[index % palette.count]
     }
 
-
-    private func answerGroup<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: FGSpace.s) {
-            Text(title)
-                .font(FGFont.body.weight(.medium))
-                .foregroundStyle(FGColor.ink)
-
-            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) { content() }
-        }
-    }
 
     private func toggle<T: Hashable>(_ value: T, in keyPath: ReferenceWritableKeyPath<OnboardingModel, Set<T>>) {
         withAnimation(FGMotion.gentle) {
