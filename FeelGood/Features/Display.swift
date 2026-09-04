@@ -230,6 +230,7 @@ nonisolated extension TimeBudget {
         }
     }
 
+    var summaryPhrase: String { checkInDetail }
 }
 
 extension PlaceIntent {

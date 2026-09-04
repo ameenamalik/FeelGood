@@ -35,12 +35,29 @@ final class FeelGoodUITests: XCTestCase {
 
     @MainActor
     private func completeOnboarding(_ app: XCUIApplication) {
+        let introNext = app.buttons["Next"]
+        if introNext.waitForExistence(timeout: 2) {
+            introNext.tap()
+            let continueButton = app.buttons["Continue"]
+            XCTAssertTrue(continueButton.waitForExistence(timeout: 2))
+            continueButton.tap()
+            let makeItMine = app.buttons["Make it mine"]
+            XCTAssertTrue(makeItMine.waitForExistence(timeout: 2))
+            makeItMine.tap()
+        }
+
         let pilates = app.buttons["Pilates"]
         guard pilates.waitForExistence(timeout: 5) else { return }
         pilates.tap()
-        for _ in 0..<3 {
-            app.buttons["Next"].tap()
-        }
+        app.buttons["No equipment"].tap()
+        app.buttons["At home"].tap()
+        app.buttons["Next"].tap()
+
+        app.buttons["Most days"].tap()
+        app.buttons["Twice"].tap()
+        app.buttons["Next"].tap()
+
+        app.buttons["Next"].tap()
         app.buttons["Show me today"].tap()
     }
 
