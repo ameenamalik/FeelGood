@@ -39,6 +39,7 @@ struct ProfileEditView: View {
                     section("What do you have access to?") {
                         AccessChoices(
                             activities: $answers.activities,
+                            sports: $answers.sports,
                             equipment: $answers.equipment,
                             places: $answers.places
                         )

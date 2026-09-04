@@ -49,6 +49,20 @@ struct PersistenceTests {
         #expect(profile.planProfile.intents == [.strengthen, .calm])
     }
 
+    @Test("A profile preserves optional sport details")
+    func profileStoresSports() throws {
+        let context = try context()
+        let answers = ProfileAnswers(
+            activities: [.racquet],
+            sports: [.pickleball, .soccer]
+        )
+        let profile = UserProfile(answers: answers, now: Fixture.now)
+        context.insert(profile)
+
+        #expect(profile.answers.activities.contains(.racquet))
+        #expect(profile.answers.sports == [.pickleball, .soccer])
+    }
+
     @Test("Unticking the gym takes the weights with it")
     func implicationsAreNotStuckOn() throws {
         let context = try context()

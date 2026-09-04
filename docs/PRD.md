@@ -256,32 +256,23 @@ one continuous story in the same warm wash and typography as onboarding:
 Completing the introduction is remembered on-device, so abandoning the profile
 questions does not replay the marketing screens on every launch.
 
-### 7.1 Onboarding — "what's available to you?" (≤ 90 seconds, 4 cards)
+### 7.1 Onboarding — "what's available to you?" (≤ 90 seconds, 3 cards)
 
 Framed around *availability and reality*, never around goals-as-metrics.
 
 1. **What do you have access to?** Multi-select activities + equipment **+ places** (home · outdoors · gym · studio · pool). Only movement that genuinely depends on owning something or going somewhere is offered — a pool, a bike, skates, a mat, somewhere to be outside. Movement that needs nothing but a body and a floor (**qi gong, breathwork, carries, footwork**) is deliberately *not* on this card: nobody should have to recognise the word "carries" before they have seen a single session. Those stay in the candidate pool permanently and are recommended on merit — qi gong on a stressed evening, carries when the intent is strength. **A place implies what is in it:** ticking *a gym* stands in for the mat, weights, bands and bikes inside it and for having somewhere to lift, so it is never asked twice as a separate equipment chip. A pool is deliberately not implied by a gym — plenty of gyms have none, and a session that can't happen is worse than one that was never offered. See `Activity.isAlwaysAvailable` and `Place.impliedEquipment`. (Determines the entire candidate pool. The single most important question.)
-2. **How often do you want to move?** Two rows on one card, because they are different questions and both are cheap to answer:
-   - *Across the week:* Every day · Most days · A few times a week · When I can. *(Cadence target — used for gentle balancing, never for grading.)*
-   - ***Within a day: how many times would you like intentional movement?*** Once, properly · A couple of times · Sprinkled through the day. *(Shapes the menu, not the workload — see below.)*
-3. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up · Play. *(Pick one or more. A session matching any selected direction gets the `intent` weighting.)*
-4. **Anything to work around?** Free-text-lite chips: lower back, knees, wrists, pregnancy/postpartum, low iron/fatigue, none. *(Filters, never diagnoses.)*
+2. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up · Play. *(Pick one or more. A session matching any selected direction gets the `intent` weighting.)*
+3. **Anything to work around?** Free-text-lite chips: lower back, knees, wrists, pregnancy/postpartum, low iron/fatigue, none. *(Filters, never diagnoses.)*
 
 Available time is intentionally not asked during onboarding. It changes day to
 day and already belongs to the daily check-in; asking it here would duplicate
 the stronger, more current signal.
 
-**Why "how many times a day" is a real question and not a second cadence slider.**
-It changes the *shape* of the menu rather than its size. Somebody who wants one
-proper session gets a hero Main and very little else. Somebody who wants
-movement sprinkled through the day gets the same total minutes rearranged — two
-or three Sides and an Appetizer, each attached to something already happening
-(the kettle, the school run, the call). Same person, same twenty minutes,
-completely different menu.
-
-This matters for the target user specifically: "47 tabs open" rarely means one
-free 30-minute block. It usually means five loose five-minute ones, and no
-existing app is shaped for that.
+Cadence and preferred movement moments are also not asked during onboarding.
+The engine begins with gentle defaults (`mostDays` and `aCouple`) and those
+preferences remain editable from the profile. The daily check-in carries the
+more useful truth about what is realistic today without turning first-run into
+a target-setting exercise.
 
 It is never a target and never counted back. Asking for three moments and doing
 one is not a partial anything — the day still just shows what fits.
@@ -401,7 +392,7 @@ and profile controls remain secondary to the reflection.
 
 | # | Screen | Purpose |
 |---|---|---|
-| 1 | **Onboarding** | 4 cards, ≤90s, ends on a real generated menu (§7.1). |
+| 1 | **Onboarding** | 3 cards, ≤90s, ends on a real generated menu (§7.1). |
 | 2 | **Today** *(home)* | The menu. Appetizer → hero Main → Sides → Dessert. One screen, no scroll. |
 | 3 | **Check-in sheet** | Two-tap energy/time, optional body. Regenerates in place. |
 | 4 | **Session detail** | What it is, why it was picked, what you need. Start. |

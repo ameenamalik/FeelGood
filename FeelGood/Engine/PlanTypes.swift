@@ -63,6 +63,13 @@ nonisolated enum TimeOfDay: String, Codable, CaseIterable, Sendable {
     }
 }
 
+/// Optional detail beneath the broad Sports movement choice. These preferences
+/// make the profile feel specific without pretending every sport is a separate
+/// authored session type in the catalog.
+nonisolated enum SportPreference: String, Codable, CaseIterable, Sendable {
+    case pickleball, tennis, basketball, soccer, volleyball, other
+}
+
 /// The engine's view of the profile — the answers from onboarding (PRD §7.1).
 nonisolated struct PlanProfile: Hashable, Sendable {
     var availableActivities: Set<Activity>

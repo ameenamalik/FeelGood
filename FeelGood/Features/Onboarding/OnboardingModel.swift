@@ -2,7 +2,7 @@
 //  OnboardingModel.swift
 //  FeelGood
 //
-//  Four cards, ninety seconds, framed around what's available to you rather than
+//  Three cards, ninety seconds, framed around what's available to you rather than
 //  around goals-as-metrics. No account, no email, no paywall — the first menu
 //  appears before anything is asked for. See PRD §7.1. Today's available time
 //  belongs in the daily check-in, so onboarding does not ask for it again.
@@ -15,12 +15,11 @@ import Observation
 final class OnboardingModel {
 
     enum Card: Int, CaseIterable {
-        case access, cadence, intent, workArounds
+        case access, intent, workArounds
 
         var title: String {
             switch self {
             case .access: "What do you have access to?"
-            case .cadence: "How often do you want to move?"
             case .intent: "What are you moving toward?"
             case .workArounds: "Anything to work around?"
             }
@@ -29,7 +28,6 @@ final class OnboardingModel {
         var detail: String? {
             switch self {
             case .access: nil
-            case .cadence: nil
             case .intent: "Pick one or more."
             case .workArounds: nil
             }
@@ -47,6 +45,10 @@ final class OnboardingModel {
         get { answers.activities }
         set { answers.activities = newValue }
     }
+    var sports: Set<SportPreference> {
+        get { answers.sports }
+        set { answers.sports = newValue }
+    }
     var equipment: Set<Equipment> {
         get { answers.equipment }
         set { answers.equipment = newValue }
@@ -54,25 +56,6 @@ final class OnboardingModel {
     var places: Set<Place> {
         get { answers.places }
         set { answers.places = newValue }
-    }
-    /// Selection state is separate from the persisted fallback so onboarding
-    /// can begin visually unanswered without making existing profiles optional.
-    private var selectedCadence: Cadence?
-    private var selectedMoments: MovementMoments?
-
-    var cadence: Cadence? {
-        get { selectedCadence }
-        set {
-            selectedCadence = newValue
-            if let newValue { answers.cadence = newValue }
-        }
-    }
-    var moments: MovementMoments? {
-        get { selectedMoments }
-        set {
-            selectedMoments = newValue
-            if let newValue { answers.moments = newValue }
-        }
     }
     var realisticMinutes: Int {
         get { answers.realisticMinutes }
@@ -104,8 +87,6 @@ final class OnboardingModel {
         switch card {
         case .access:
             accessSectionsAreComplete
-        case .cadence:
-            cadence != nil && moments != nil
         case .intent, .workArounds:
             true
         }
@@ -222,12 +203,16 @@ nonisolated extension Activity {
         case .jumpRope: "figure.jumprope"
         case .agility: "figure.run"
         case .carries: "figure.strengthtraining.functional"
-        case .racquet: "tennis.racket"
+        case .racquet: "sportscourt"
         case .climbing: "figure.climbing"
         case .martialArts: "figure.martial.arts"
         case .breathwork: "wind"
         }
     }
+}
+
+nonisolated extension SportPreference {
+    var onboardingSymbol: String { "sportscourt" }
 }
 
 nonisolated extension Equipment {
