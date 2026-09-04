@@ -22,6 +22,8 @@ export interface UserPreferencesContext {
   lastFeel?: "lovedIt" | "fine" | "tooMuch";
   recentCompletions?: number;
   recoveryOwed?: boolean;
+  hiddenSessionIDs?: string[];
+  hidden_session_ids?: string[];
 }
 
 export interface ChatPayload {
@@ -304,6 +306,10 @@ function buildSystemPrompt(
     if (userContext.likedActivities && userContext.likedActivities.length > 0) {
       prompt += `\nUSER PREFERENCES: Activities they especially love: ${userContext.likedActivities.join(", ")}. Prioritize these when appropriate.`;
     }
+    const hidden = userContext.hiddenSessionIDs || userContext.hidden_session_ids;
+    if (hidden && hidden.length > 0) {
+      prompt += `\nEXCLUDED / HIDDEN EXERCISES: The user has explicitly chosen to hide these routines: ${hidden.join(", ")}. Never suggest or recommend these.`;
+    }
   }
   if (knowledgeContext) {
     prompt += `\n\n${knowledgeContext}\n\nKNOWLEDGE USAGE: If the user asks about app FAQs, subscription, pricing, exercises (e.g. box breathing, shake out, power pose, gratitude scan), or science/voice guidelines, use the relevant knowledge context above to answer accurately and warmly.`;
@@ -352,7 +358,11 @@ function resolveCanonicalRecommendation(
     return null;
   }
 
+  const hidden = userContext?.hiddenSessionIDs || userContext?.hidden_session_ids;
   let matchedSession: CatalogSessionItem | undefined = findSessionById(sessionId);
+  if (matchedSession && hidden && hidden.includes(matchedSession.id)) {
+    matchedSession = undefined;
+  }
 
   if (!matchedSession) {
     // If the input was purely vague, don't guess a routine
@@ -390,6 +400,7 @@ function resolveCanonicalRecommendation(
       likedActivities: userContext?.likedActivities,
       recoveryOwed: userContext?.recoveryOwed,
       lastFeel: userContext?.lastFeel,
+      hiddenSessionIds: hidden,
     });
   }
 

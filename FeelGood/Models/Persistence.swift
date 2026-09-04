@@ -30,6 +30,8 @@ final class UserProfile {
     var intentRaw: String
     var intentsRaw: [String] = []
     var workAroundsRaw: [String]
+    /// Sessions explicitly hidden ("Don't suggest this again"). Hard-filtered by the engine.
+    var hiddenSessionIDsRaw: [String] = []
     /// Local hour for the optional daily invitation. `nil` means no reminder.
     var reminderHour: Int?
     var createdAt: Date
@@ -66,6 +68,7 @@ final class UserProfile {
         intentsRaw = intentValues
         intentRaw = intentValues.first ?? Intent.energize.rawValue
         workAroundsRaw = answers.workArounds.map(\.rawValue).sorted()
+        hiddenSessionIDsRaw = answers.hiddenSessionIDs.sorted()
         self.reminderHour = reminderHour
         createdAt = now
         updatedAt = now
@@ -85,7 +88,8 @@ final class UserProfile {
             realisticMinutes: realisticMinutes,
             bestTimeOfDay: TimeOfDay(rawValue: bestTimeOfDayRaw) ?? .varies,
             intents: decodedIntents,
-            workArounds: Set(workAroundsRaw.compactMap(WorkAround.init(rawValue:)))
+            workArounds: Set(workAroundsRaw.compactMap(WorkAround.init(rawValue:))),
+            hiddenSessionIDs: Set(hiddenSessionIDsRaw)
         )
     }
 
@@ -108,6 +112,21 @@ final class UserProfile {
         intentsRaw = answers.intents.map(\.rawValue).sorted()
         intentRaw = intentsRaw.first ?? Intent.energize.rawValue
         workAroundsRaw = answers.workArounds.map(\.rawValue).sorted()
+        hiddenSessionIDsRaw = answers.hiddenSessionIDs.sorted()
+        updatedAt = now
+    }
+
+    func hideSession(_ sessionID: String, now: Date = Date()) {
+        var current = Set(hiddenSessionIDsRaw)
+        current.insert(sessionID)
+        hiddenSessionIDsRaw = current.sorted()
+        updatedAt = now
+    }
+
+    func unhideSession(_ sessionID: String, now: Date = Date()) {
+        var current = Set(hiddenSessionIDsRaw)
+        current.remove(sessionID)
+        hiddenSessionIDsRaw = current.sorted()
         updatedAt = now
     }
 
