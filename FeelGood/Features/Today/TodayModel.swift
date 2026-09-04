@@ -85,6 +85,7 @@ final class TodayModel {
         self.calendarOpening = calendarOpening
         self.history = recorded
         self.calendar = calendar
+        self.dailySwapsCount = Self.swapCount(in: recorded, on: now, calendar: calendar)
         self.inProgressSessionIDs = Set(
             (store.sessions + own)
                 .filter { progressStore.progress(for: $0.id) != nil }
@@ -155,6 +156,7 @@ final class TodayModel {
     /// changes underneath the screen rather than because of it.
     func reload(now: Date = Date()) {
         history = log.history(before: now)
+        dailySwapsCount = Self.swapCount(in: history, on: now, calendar: calendar)
         swappedAway = []
         menu = engine.makeMenu(input(now: now))
         log.save(menu, generatedAt: now)
@@ -450,6 +452,18 @@ final class TodayModel {
 
     private func rebuildEngine() {
         engine = PlanEngine(catalog: store.sessions + ownSessions)
+    }
+
+    private static func swapCount(
+        in history: [HistoryEntry],
+        on date: Date,
+        calendar: Calendar
+    ) -> Int {
+        history.count { entry in
+            guard calendar.isDate(entry.date, inSameDayAs: date) else { return false }
+            if case .swappedAway = entry.outcome { return true }
+            return false
+        }
     }
 
     /// Asks the copy layer to upgrade `menu.headline` in place. Not called
