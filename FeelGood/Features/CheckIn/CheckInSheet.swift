@@ -17,6 +17,7 @@
 
 import SwiftUI
 import PostHog
+import RevenueCatUI
 
 struct CheckInSheet: View {
     let current: PlanCheckIn?
@@ -39,6 +40,7 @@ struct CheckInSheet: View {
     @State private var movementPlan: CalendarMovementPlan?
     @State private var confirmedMovementPlan: CalendarMovementPlan?
     @State private var isLoadingMovementPlans = false
+    @State private var isShowingPaywall = false
     @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
     private var isMovementRecognitionEnabled = false
     /// How many questions are on screen. Only ever grows within a sitting —
@@ -97,13 +99,17 @@ struct CheckInSheet: View {
                 HStack(spacing: 4) {
                     ForEach(CheckInMode.allCases, id: \.self) { tab in
                         Button {
-                            withAnimation(FGMotion.settle) {
-                                mode = tab
+                            if tab == .describeDay && !hasProAccess {
+                                isShowingPaywall = true
+                            } else {
+                                withAnimation(FGMotion.settle) {
+                                    mode = tab
+                                }
                             }
                         } label: {
                             HStack(spacing: 6) {
                                 if tab == .describeDay {
-                                    Image(systemName: "sparkles")
+                                    Image(systemName: hasProAccess ? "sparkles" : "lock.fill")
                                         .font(.system(size: 12))
                                 }
                                 Text(tab.rawValue)
@@ -159,6 +165,9 @@ struct CheckInSheet: View {
         .sensoryFeedback(.selection, trigger: selection)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .sheet(isPresented: $isShowingPaywall) {
+            PaywallView(displayCloseButton: true)
+        }
         .task { await loadCalendarContextIfConnected() }
         .onChange(of: isMovementRecognitionEnabled) { _, isEnabled in
             if isEnabled {
@@ -276,6 +285,14 @@ struct CheckInSheet: View {
 
             case .denied:
                 calendarStatus("Calendar access is off. You can still choose a time below.")
+            }
+        } else {
+            calendarCard(
+                title: "Work around your day",
+                detail: "FeelGood Pro can use today’s Calendar openings to suggest a realistic time.",
+                buttonTitle: "See FeelGood Pro"
+            ) {
+                isShowingPaywall = true
             }
         }
     }

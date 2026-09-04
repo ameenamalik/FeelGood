@@ -506,14 +506,9 @@ actor ChatService: ChatProviding {
 
         let subID = await subscriberID()
 
-        // Pre-edge paywall check: Pro users or free users with daily quota remaining
-        let pro = await isProUnlocked()
-        let canPerform = await MainActor.run {
-            PurchasesManager.shared.canPerformEdgeChat()
-        }
-        let allowed = pro || canPerform
-
-        guard allowed else {
+        // The on-device fallback stays available for previews and offline use,
+        // but only a verified Pro subscriber may reach the paid edge service.
+        guard await isProUnlocked() else {
             return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext)
         }
 
@@ -527,10 +522,6 @@ actor ChatService: ChatProviding {
         ) else {
             // Fall back to on-device stateful heuristic engine if offline / network fails
             return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext)
-        }
-
-        await MainActor.run {
-            PurchasesManager.shared.recordEdgeChatPerformed()
         }
 
         return response

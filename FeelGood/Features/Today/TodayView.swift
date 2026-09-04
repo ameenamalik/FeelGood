@@ -19,6 +19,8 @@ struct TodayView: View {
     @State private var isCheckingIn = false
     @State private var isLogging = false
     @State private var isShowingPaywall = false
+    @State private var shouldOfferProAfterDismissal = false
+    @AppStorage("hasShownFirstCompletionPaywall") private var hasShownFirstCompletionPaywall = false
     @State private var isAdjusting = false
     @State private var selected: MenuItem?
     #if DEBUG
@@ -72,8 +74,10 @@ struct TodayView: View {
         .sheet(isPresented: $isShowingPaywall) {
             RevenueCatUI.PaywallView(displayCloseButton: true)
         }
-        .sheet(item: $selected) { item in
-            SessionDetailView(item: item, model: model)
+        .sheet(item: $selected, onDismiss: presentCompletionPaywallIfNeeded) { item in
+            SessionDetailView(item: item, model: model) {
+                shouldOfferProAfterDismissal = true
+            }
         }
         .onChange(of: requestedSessionID.wrappedValue, initial: true) { _, id in
             openRequestedSession(id)
@@ -229,12 +233,16 @@ struct TodayView: View {
                 Spacer(minLength: FGSpace.s)
 
                 Button {
-                    withAnimation(FGMotion.settle) {
-                        isAdjusting.toggle()
+                    if model.isProUser {
+                        withAnimation(FGMotion.settle) {
+                            isAdjusting.toggle()
+                        }
+                    } else {
+                        isShowingPaywall = true
                     }
                 } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "slider.horizontal.3")
+                        Image(systemName: model.isProUser ? "slider.horizontal.3" : "lock.fill")
                             .font(.system(size: 11, weight: .medium))
                         Text("Adjust")
                             .font(FGFont.label.weight(.medium))
@@ -287,6 +295,14 @@ struct TodayView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func presentCompletionPaywallIfNeeded() {
+        guard shouldOfferProAfterDismissal else { return }
+        shouldOfferProAfterDismissal = false
+        guard !model.isProUser, !hasShownFirstCompletionPaywall else { return }
+        hasShownFirstCompletionPaywall = true
+        isShowingPaywall = true
     }
 
     @ViewBuilder
