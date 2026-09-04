@@ -232,8 +232,6 @@ nonisolated extension TimeBudget {
         case .plenty: "45.circle"
         }
     }
-
-    var summaryPhrase: String { checkInDetail }
 }
 
 extension PlaceIntent {
