@@ -28,7 +28,7 @@ name = "feelgood-copy-production"
 
 [[env.production.kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "REPLACE_WITH_PRODUCTION_KV_NAMESPACE_ID"
+id = "82a371c9f70447e2b28972e3f10777f7"
 
 [env.production.vars]
 AI_SEARCH_INSTANCE_NAME = "nameless-feather-c645"

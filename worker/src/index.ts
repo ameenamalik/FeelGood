@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { handleChat, isValidChatPayload } from "./chat";
 import { hasProEntitlement } from "./entitlement";
+import { privacyPolicyResponse, supportResponse, termsResponse } from "./legal";
 import { playerResponse } from "./player";
 import { isRateLimited } from "./rateLimit";
 import { COPY_SYSTEM_PROMPT } from "./systemPrompt";
@@ -22,8 +23,22 @@ export default {
           chat: "POST /chat",
           copy: "POST /copy",
           player: "GET /player?v=<id>",
+          privacy: "GET /privacy",
+          terms: "GET /terms",
+          support: "GET /support",
         },
       });
+    }
+
+    // Static Legal & Policy routes (App Store Review requirement)
+    if (url.pathname === "/privacy" || url.pathname === "/privacy-policy.html") {
+      return privacyPolicyResponse();
+    }
+    if (url.pathname === "/terms" || url.pathname === "/terms.html") {
+      return termsResponse();
+    }
+    if (url.pathname === "/support" || url.pathname === "/support.html") {
+      return supportResponse();
     }
 
     // `/player` is public and static: it holds no secret, reads no KV, and
@@ -98,34 +113,44 @@ export default {
       },
       async () => {
         try {
-          const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-          const messages = [{ role: "user" as const, content: JSON.stringify(body) }];
+          let line: string | null = null;
 
-          const response = await traceChatModel(
-            {
-              agentName: "feelgood-copy-agent",
-              agentId: "feelgood-copywriter",
-              conversationId: body.subscriberID || "anonymous",
-            },
-            {
-              system: "anthropic",
-              model: "claude-opus-5",
-              systemPrompt: COPY_SYSTEM_PROMPT,
-              inputMessages: messages,
-            },
-            async (setResponse) => {
-              const res = await client.messages.create({
-                model: "claude-opus-5",
-                max_tokens: 300,
-                system: [{ type: "text", text: COPY_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-                messages,
-              });
-              setResponse(res.content);
-              return res;
-            }
-          );
+          // Prioritize Gemini 1.5 Flash (primary model)
+          if (env.GEMINI_API_KEY) {
+            line = await generateGeminiCopy(body, env.GEMINI_API_KEY);
+          }
 
-          const line = firstText(response);
+          // Fallback to Anthropic if Gemini unavailable or not configured and Anthropic key exists
+          if (!line && env.ANTHROPIC_API_KEY) {
+            const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+            const messages = [{ role: "user" as const, content: JSON.stringify(body) }];
+
+            const response = await traceChatModel(
+              {
+                agentName: "feelgood-copy-agent",
+                agentId: "feelgood-copywriter",
+                conversationId: body.subscriberID || "anonymous",
+              },
+              {
+                system: "anthropic",
+                model: "claude-3-5-haiku-20241022",
+                systemPrompt: COPY_SYSTEM_PROMPT,
+                inputMessages: messages,
+              },
+              async (setResponse) => {
+                const res = await client.messages.create({
+                  model: "claude-3-5-haiku-20241022",
+                  max_tokens: 300,
+                  system: [{ type: "text", text: COPY_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+                  messages,
+                });
+                setResponse(res.content);
+                return res;
+              }
+            );
+            line = firstText(response);
+          }
+
           if (!line) return new Response("empty response", { status: 500 });
 
           return Response.json({ line });
@@ -138,6 +163,49 @@ export default {
     );
   },
 };
+
+async function generateGeminiCopy(body: unknown, apiKey: string): Promise<string | null> {
+  try {
+    const payload = JSON.stringify({
+      systemInstruction: {
+        parts: [{ text: COPY_SYSTEM_PROMPT }],
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: `Here is the user context and today's picks payload: ${JSON.stringify(body)}. Write a single warm, grounded headline line.` }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 150,
+      },
+    });
+
+    let resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+    });
+
+    if (resp.status === 404) {
+      resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      });
+    }
+
+    if (!resp.ok) return null;
+    const data = (await resp.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    return text || null;
+  } catch {
+    return null;
+  }
+}
 
 function firstText(response: Anthropic.Message): string | null {
   const block = response.content.find((entry) => entry.type === "text");
