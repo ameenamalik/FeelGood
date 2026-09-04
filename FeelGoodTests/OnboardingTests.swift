@@ -26,6 +26,7 @@ struct OnboardingTests {
     @Test("Every choice icon is an available SF Symbol")
     func choiceSymbolsExist() {
         var symbols = Activity.allCases.map(\.onboardingSymbol)
+        symbols += SportPreference.allCases.map(\.onboardingSymbol)
         symbols += Equipment.allCases.map(\.onboardingSymbol)
         symbols += Place.allCases.map(\.onboardingSymbol)
         symbols += Cadence.allCases.map(\.onboardingSymbol)
@@ -82,25 +83,18 @@ struct OnboardingTests {
         #expect(model.canAdvance)
     }
 
-    @Test("Weekly cadence and daily moments start empty and are both required")
-    func cadenceHasNoDefaults() {
+    @Test("Onboarding skips cadence and uses gentle defaults")
+    func cadenceUsesDefaults() {
         let model = OnboardingModel()
         model.activities = [.walking]
         model.equipment = [.none]
         model.places = [.home]
         model.advance()
 
-        #expect(model.cadence == nil)
-        #expect(model.moments == nil)
-        #expect(!model.canAdvance)
-
-        model.cadence = .fewTimesAWeek
-        #expect(!model.canAdvance)
-
-        model.moments = .once
+        #expect(model.card == .intent)
         #expect(model.canAdvance)
-        #expect(model.makeProfile().cadence == .fewTimesAWeek)
-        #expect(model.makeProfile().moments == .once)
+        #expect(model.makeProfile().cadence == .mostDays)
+        #expect(model.makeProfile().moments == .aCouple)
     }
 
     @Test("Movement the card never asks about is never recorded as a preference")

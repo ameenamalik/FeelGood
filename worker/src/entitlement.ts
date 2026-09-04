@@ -24,16 +24,9 @@ const PRO_ENTITLEMENT_ID = "pro";
 /// the app's, and a README that asked for a v2 key against this v1 endpoint.
 /// Every refusal below therefore says *why* — visible with `wrangler tail`.
 export async function hasProEntitlement(subscriberID: string, env: Env): Promise<boolean> {
-  // Allow local development testing, sandbox accounts, and App Review demo users
-  if (
-    !env.REVENUECAT_SECRET_API_KEY ||
-    subscriberID.startsWith("test-") ||
-    subscriberID.startsWith("sandbox-") ||
-    subscriberID.startsWith("demo-") ||
-    subscriberID === "app-store-reviewer" ||
-    subscriberID === "reviewer"
-  ) {
-    return true;
+  if (!env.REVENUECAT_SECRET_API_KEY) {
+    console.warn("entitlement: REVENUECAT_SECRET_API_KEY is missing; denying access");
+    return false;
   }
 
   try {

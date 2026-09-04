@@ -256,32 +256,23 @@ one continuous story in the same warm wash and typography as onboarding:
 Completing the introduction is remembered on-device, so abandoning the profile
 questions does not replay the marketing screens on every launch.
 
-### 7.1 Onboarding — "what's available to you?" (≤ 90 seconds, 4 cards)
+### 7.1 Onboarding — "what's available to you?" (≤ 90 seconds, 3 cards)
 
 Framed around *availability and reality*, never around goals-as-metrics.
 
 1. **What do you have access to?** Multi-select activities + equipment **+ places** (home · outdoors · gym · studio · pool). Only movement that genuinely depends on owning something or going somewhere is offered — a pool, a bike, skates, a mat, somewhere to be outside. Movement that needs nothing but a body and a floor (**qi gong, breathwork, carries, footwork**) is deliberately *not* on this card: nobody should have to recognise the word "carries" before they have seen a single session. Those stay in the candidate pool permanently and are recommended on merit — qi gong on a stressed evening, carries when the intent is strength. **A place implies what is in it:** ticking *a gym* stands in for the mat, weights, bands and bikes inside it and for having somewhere to lift, so it is never asked twice as a separate equipment chip. A pool is deliberately not implied by a gym — plenty of gyms have none, and a session that can't happen is worse than one that was never offered. See `Activity.isAlwaysAvailable` and `Place.impliedEquipment`. (Determines the entire candidate pool. The single most important question.)
-2. **How often do you want to move?** Two rows on one card, because they are different questions and both are cheap to answer:
-   - *Across the week:* Every day · Most days · A few times a week · When I can. *(Cadence target — used for gentle balancing, never for grading.)*
-   - ***Within a day: how many times would you like intentional movement?*** Once, properly · A couple of times · Sprinkled through the day. *(Shapes the menu, not the workload — see below.)*
-3. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up · Play. *(Pick one or more. A session matching any selected direction gets the `intent` weighting.)*
-4. **Anything to work around?** Free-text-lite chips: lower back, knees, wrists, pregnancy/postpartum, low iron/fatigue, none. *(Filters, never diagnoses.)*
+2. **What are you moving toward?** Strength · Calm · Mobility · Energy · Just showing up · Play. *(Pick one or more. A session matching any selected direction gets the `intent` weighting.)*
+3. **Anything to work around?** Free-text-lite chips: lower back, knees, wrists, pregnancy/postpartum, low iron/fatigue, none. *(Filters, never diagnoses.)*
 
 Available time is intentionally not asked during onboarding. It changes day to
 day and already belongs to the daily check-in; asking it here would duplicate
 the stronger, more current signal.
 
-**Why "how many times a day" is a real question and not a second cadence slider.**
-It changes the *shape* of the menu rather than its size. Somebody who wants one
-proper session gets a hero Main and very little else. Somebody who wants
-movement sprinkled through the day gets the same total minutes rearranged — two
-or three Sides and an Appetizer, each attached to something already happening
-(the kettle, the school run, the call). Same person, same twenty minutes,
-completely different menu.
-
-This matters for the target user specifically: "47 tabs open" rarely means one
-free 30-minute block. It usually means five loose five-minute ones, and no
-existing app is shaped for that.
+Cadence and preferred movement moments are also not asked during onboarding.
+The engine begins with gentle defaults (`mostDays` and `aCouple`) and those
+preferences remain editable from the profile. The daily check-in carries the
+more useful truth about what is realistic today without turning first-run into
+a target-setting exercise.
 
 It is never a target and never counted back. Asking for three moments and doing
 one is not a partial anything — the day still just shows what fits.
@@ -401,7 +392,7 @@ and profile controls remain secondary to the reflection.
 
 | # | Screen | Purpose |
 |---|---|---|
-| 1 | **Onboarding** | 4 cards, ≤90s, ends on a real generated menu (§7.1). |
+| 1 | **Onboarding** | 3 cards, ≤90s, ends on a real generated menu (§7.1). |
 | 2 | **Today** *(home)* | The menu. Appetizer → hero Main → Sides → Dessert. One screen, no scroll. |
 | 3 | **Check-in sheet** | Two-tap energy/time, optional body. Regenerates in place. |
 | 4 | **Session detail** | What it is, why it was picked, what you need. Start. |
@@ -489,8 +480,9 @@ gated tab is a visible wall on a free tier we have promised is "genuinely useful
 and never crippled."
 
 Mechanically this is a clean seam and costs the engine nothing: free menus are
-generated with `history: []` and `affinity: [:]`. `PlanEngine` stays a pure
-function either way — there is no `isPro` branch anywhere inside it.
+generated with `.recencyOnly(lastActiveDate:)`, while Pro receives full history
+and affinity. `PlanEngine` stays a pure function either way — there is no
+`isPro` branch anywhere inside it.
 
 **Pricing:** $6.99/mo · **$34.99/yr** (7-day free trial).
 
@@ -508,16 +500,12 @@ $34.99 is the deliberate middle: it reads as "under $35" and prices the annual a
 
 ### 10.1 What Pro actually is — the split
 
-*Written 2026-08-31, and the reason it needed writing is uncomfortable:* **every
-Pro row in the §10 table is currently free.** Not by decision — by omission.
-`TodayModel` hands the engine the full history and affinity regardless of
-entitlement, no swap limit exists, Specials and custom menus were never built,
-and the widget ships to everyone. Exactly one Pro feature is genuinely gated:
-the written coaching voice. There is nothing to put on a paywall, and no amount
-of paywall copy fixes a missing build.
-
-So this is not a pricing exercise. It is the list of seams to cut, in the order
-to cut them.
+*Updated 2026-09-04:* the paid seams below are now enforced. Free receives only
+recency memory and one persisted swap per local day. Pro receives full history
+and affinity, unlimited swaps, quick adjustments, conversational planning, and
+the optional Calendar context. All authored sessions, Look Back, Library, and
+the widget remain free. This table is the release source of truth; unbuilt
+features must not appear in the remote-configured paywall.
 
 **The pitch, restated: Pro is not more content.** It cannot be — every video is
 free forever under YouTube's terms (§6), and the authored micro-sessions are the
@@ -536,9 +524,9 @@ you push on it, and accounts for the day already around you.
 
 | Capability | Tier | State today | Note |
 |---|---|---|---|
-| History-aware balancing (14-day window) | Pro | Shipped, **ungated** | The seam is which memory the engine is handed |
-| Recovery awareness | Pro | Shipped, **ungated** | Same seam |
-| Affinity — "loved it" / "too much" carrying forward | Pro | Shipped, **ungated** | Same seam |
+| History-aware balancing (14-day window) | Pro | Shipped, gated | The seam is which memory the engine is handed |
+| Recovery awareness | Pro | Shipped, gated | Same seam |
+| Affinity — "loved it" / "too much" carrying forward | Pro | Shipped, gated | Same seam |
 | **Returning after a gap** | **Free** | Shipped | Non-negotiable — see the gap problem below |
 | Plain-language patterns | Pro | Not built | See the patterns rule below |
 | Personalised weekly reflection | Pro | Not built | Distinct from the Look Back — see below |
@@ -546,17 +534,17 @@ you push on it, and accounts for the day already around you.
 #### Category 2 — Change the plan in seconds
 
 This is the category that makes the upgrade feel useful in the first minute
-rather than on day fourteen, and it is almost entirely unbuilt.
+rather than on day fourteen.
 
 | Capability | Tier | State today | Note |
 |---|---|---|---|
-| First swap of the day | **Free** | Shipped (unlimited) | Needs a limit before it can be a Pro line |
-| Unlimited swaps | Pro | Not built | No counter exists anywhere |
-| "Make it shorter" | Pro | Not built | Re-plan against a smaller time budget |
-| "Make it gentler" | Pro | Not built | Intensity ceiling |
-| "Give me something more energizing" | Pro | Not built | Quality bias |
-| "I can't leave the house" | Pro | Not built | Place override for today only |
-| Rebuild today's menu in conversation | Pro | Not built | Depends on the conversational section (§7.6, unwritten) |
+| First swap of the day | **Free** | Shipped, gated | Count is rebuilt from today's persisted swap history on launch |
+| Unlimited swaps | Pro | Shipped, gated | |
+| "Make it shorter" | Pro | Shipped, gated | Re-plan against a smaller time budget |
+| "Make it gentler" | Pro | Shipped, gated | Intensity ceiling |
+| "Give me something more energizing" | Pro | Shipped, gated | Quality bias |
+| "I can't leave the house" | Pro | Shipped, gated | Place override for today only |
+| Rebuild today's menu in conversation | Pro | Shipped, gated | Chat and Describe Day share the Pro entitlement |
 | Save / favourite a session | Pro | Not built | |
 | Custom Appetizers / Desserts | Pro | Not built | On the §13 cut list |
 | "Surprise me" / "keep it familiar" | Pro | Not built | A variety dial over existing scoring |
@@ -573,8 +561,8 @@ paywall.
 | Capability | Tier | State today | Note |
 |---|---|---|---|
 | Weekly Specials | Pro | **Engine-ready, no UI** | `PlanContext.scheduledSpecials` is read by the engine; nothing in the app ever writes it |
-| Calendar-aware daily check-in | Pro | **Shipped** | The availability path reads only today's event times on-device, reduces them to anonymous busy intervals, and suggests a duration the person must confirm |
-| Calendar movement recognition | Pro | **Shipped** | Separate opt-in; matches a conservative movement vocabulary against event names on-device, immediately discards the names, and never counts attendance without confirmation |
+| Calendar-aware daily check-in | Pro | **Shipped, gated** | The availability path reads only today's event times on-device, reduces them to anonymous busy intervals, and suggests a duration the person must confirm |
+| Calendar movement recognition | Pro | **Shipped, gated** | Separate opt-in; matches a conservative movement vocabulary against event names on-device, immediately discards the names, and never counts attendance without confirmation |
 | Scheduling around your week | Pro | Not built | |
 | "Busy day tomorrow" | Pro | Not built | |
 | Travel mode | Pro | Not built | A place + equipment override with an end date |
@@ -670,7 +658,7 @@ Three rows. Not ten. The product is simple and the wall should read that way.
 
 Then one quiet line beneath, naming only what has shipped:
 
-> *Plus weekly reflections, voice check-ins, and unlimited swaps.*
+> *Plus conversational check-ins and unlimited swaps.*
 
 Built with RevenueCat Paywalls (remote config), so the rows and the plus-line
 move as features land without a resubmission — which is also the honest answer

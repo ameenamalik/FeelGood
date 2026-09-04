@@ -37,10 +37,23 @@ nonisolated extension Activity {
         case .jumpRope: "Jump rope"
         case .agility: "Footwork"
         case .carries: "Carries"
-        case .racquet: "Racquet"
+        case .racquet: "Sports"
         case .climbing: "Climbing"
         case .martialArts: "Martial arts"
         case .breathwork: "Breathwork"
+        }
+    }
+}
+
+nonisolated extension SportPreference {
+    var label: String {
+        switch self {
+        case .pickleball: "Pickleball"
+        case .tennis: "Tennis"
+        case .basketball: "Basketball"
+        case .soccer: "Soccer"
+        case .volleyball: "Volleyball"
+        case .other: "Other sport"
         }
     }
 }
@@ -296,7 +309,7 @@ extension Activity {
         case .jumpRope: "jump rope"
         case .agility: "footwork"
         case .carries: "carries"
-        case .racquet: "racquet"
+        case .racquet: "sports"
         case .climbing: "climbing"
         case .martialArts: "martial arts"
         case .breathwork: "breathwork"

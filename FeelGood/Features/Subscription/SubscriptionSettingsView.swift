@@ -15,7 +15,6 @@ struct SubscriptionSettingsView: View {
     @State private var isPaywallPresented = false
     @State private var isCustomerCenterPresented = false
     @State private var isRestoring = false
-    @State private var purchasingPackageID: String?
     @State private var restoreResultMessage: String?
 
     var body: some View {
@@ -25,11 +24,6 @@ struct SubscriptionSettingsView: View {
             manageSection
         }
         .navigationTitle("Subscription")
-        .task {
-            if purchasesManager.offerings == nil {
-                await purchasesManager.fetchOfferings()
-            }
-        }
         .sheet(isPresented: $isPaywallPresented) {
             PaywallView(displayCloseButton: true)
         }
@@ -69,48 +63,24 @@ struct SubscriptionSettingsView: View {
     }
 
     private var plansSection: some View {
-        Section("Plans") {
-            if purchasesManager.isLoadingOfferings {
-                ProgressView()
+        Section("FeelGood Pro") {
+            if purchasesManager.isProUnlocked {
+                Text("Your Pro features are unlocked.")
+                    .foregroundStyle(.secondary)
             } else {
-                if let monthly = purchasesManager.monthlyPackage {
-                    planRow(title: "Monthly", package: monthly)
-                }
-                if let yearly = purchasesManager.yearlyPackage {
-                    planRow(title: "Yearly", package: yearly)
-                }
-                if purchasesManager.monthlyPackage == nil,
-                   purchasesManager.yearlyPackage == nil {
-                    Text("No plans available right now.")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Try FeelGood Pro free")
+                        .font(.headline)
+                    Text("Eligible new subscribers can try the annual plan free for 7 days.")
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-            }
-            Button("View full paywall") {
-                isPaywallPresented = true
-            }
-        }
-    }
 
-    private func planRow(title: String, package: Package) -> some View {
-        Button {
-            Task {
-                purchasingPackageID = package.identifier
-                await purchasesManager.purchase(package: package)
-                purchasingPackageID = nil
-            }
-        } label: {
-            HStack {
-                Text(title)
-                Spacer()
-                if purchasingPackageID == package.identifier {
-                    ProgressView()
-                } else {
-                    Text(package.localizedPriceString)
-                        .foregroundStyle(.secondary)
+                Button("See plans and start trial") {
+                    isPaywallPresented = true
                 }
             }
         }
-        .disabled(purchasingPackageID != nil || purchasesManager.isProUnlocked)
     }
 
     private var manageSection: some View {
