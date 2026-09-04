@@ -1791,11 +1791,15 @@ export function matchBestSession(params: {
     let score = 0;
 
     if (params.targetDuration) {
-      const diff = Math.abs(s.durationMin - params.targetDuration);
-      if (diff === 0) score += 20;
-      else if (diff <= 3) score += 12;
-      else if (diff <= 6) score += 6;
-      else score -= diff;
+      if (s.durationMin > params.targetDuration) {
+        score -= (s.durationMin - params.targetDuration) * 10;
+      } else {
+        const diff = params.targetDuration - s.durationMin;
+        if (diff === 0) score += 25;
+        else if (diff <= 3) score += 15;
+        else if (diff <= 5) score += 10;
+        else score -= diff;
+      }
     }
 
     if (params.intensity && s.intensity === params.intensity) {

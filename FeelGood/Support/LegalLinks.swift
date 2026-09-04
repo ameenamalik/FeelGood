@@ -11,6 +11,13 @@ import Foundation
 /// subscriptions specifically, and general metadata requirements for every
 /// app). Swap these for real, hosted pages before shipping.
 nonisolated enum LegalLinks {
-    static let termsOfUse = URL(string: "https://www.feelgood.app/terms")!
-    static let privacyPolicy = URL(string: "https://www.feelgood.app/privacy")!
+    static let fallbackBase = URL(string: "https://feelgood-copy-production.ameenazara3.workers.dev")!
+
+    static var termsOfUse: URL {
+        WorkerConstants.baseURL?.appending(path: "terms") ?? fallbackBase.appending(path: "terms")
+    }
+
+    static var privacyPolicy: URL {
+        WorkerConstants.baseURL?.appending(path: "privacy") ?? fallbackBase.appending(path: "privacy")
+    }
 }

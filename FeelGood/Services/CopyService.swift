@@ -85,8 +85,8 @@ actor CopyService: CopyProviding {
     init(
         transport: any CopyTransport = URLSessionCopyTransport(),
         timeout: TimeInterval = WorkerConstants.requestTimeout,
-        isProUnlocked: @escaping @Sendable () async -> Bool = { await PurchasesManager.shared.isProUnlocked },
-        subscriberID: @escaping @Sendable () async -> String = { await PurchasesManager.shared.appUserID }
+        isProUnlocked: @escaping @Sendable () async -> Bool = { PurchasesManager.shared.isProUnlocked },
+        subscriberID: @escaping @Sendable () async -> String = { PurchasesManager.shared.appUserID }
     ) {
         self.transport = transport
         self.timeout = timeout
