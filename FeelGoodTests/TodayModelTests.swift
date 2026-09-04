@@ -55,6 +55,26 @@ struct TodayModelTests {
         #expect(model.menu.main?.session.durationMin ?? 0 <= opening.budget.maxMinutes)
     }
 
+    @Test("A confirmed calendar movement plan counts as completed movement")
+    func confirmedCalendarMovementCounts() throws {
+        let eventID = "calendar-test-\(UUID().uuidString)"
+        let plan = CalendarMovementPlan(
+            id: eventID,
+            start: Fixture.now.addingTimeInterval(-90 * 60),
+            end: Fixture.now.addingTimeInterval(-30 * 60),
+            activity: .pilates
+        )
+        let model = model()
+
+        model.log(plan, now: Fixture.now)
+
+        let entry = try #require(model.history.last)
+        #expect(entry.activity == .pilates)
+        #expect(entry.date == plan.end)
+        #expect(entry.wasCompleted)
+        #expect(CalendarMovementPreferences.isHandled(eventID))
+    }
+
     @Test("Leaving a workout saves progress without completing it")
     func leavingSavesProgressWithoutCompletion() {
         let log = InMemorySessionLog()

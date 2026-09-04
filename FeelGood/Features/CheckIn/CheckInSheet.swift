@@ -25,7 +25,7 @@ struct CheckInSheet: View {
     let preferredTime: TimeOfDay
     let realisticMinutes: Int
     private let calendarProvider: any CalendarAvailabilityProviding
-    let onDone: (PlanCheckIn, CalendarOpening?) -> Void
+    let onDone: (PlanCheckIn, CalendarOpening?, CalendarMovementPlan?) -> Void
 
     @State private var energy: Energy?
     @State private var time: TimeBudget?
@@ -36,6 +36,11 @@ struct CheckInSheet: View {
     @State private var calendarConnectionState: CalendarConnectionState
     @State private var isLoadingCalendar = false
     @State private var calendarLoadFailed = false
+    @State private var movementPlan: CalendarMovementPlan?
+    @State private var confirmedMovementPlan: CalendarMovementPlan?
+    @State private var isLoadingMovementPlans = false
+    @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
+    private var isMovementRecognitionEnabled = false
     /// How many questions are on screen. Only ever grows within a sitting —
     /// taking an answer back must not make a question you have already seen
     /// disappear out from under you.
@@ -51,7 +56,7 @@ struct CheckInSheet: View {
         preferredTime: TimeOfDay = .varies,
         realisticMinutes: Int = 20,
         calendarProvider: any CalendarAvailabilityProviding = EventKitCalendarAvailabilityService.shared,
-        onDone: @escaping (PlanCheckIn, CalendarOpening?) -> Void
+        onDone: @escaping (PlanCheckIn, CalendarOpening?, CalendarMovementPlan?) -> Void
     ) {
         self.current = current
         self.currentCalendarOpening = currentCalendarOpening
@@ -67,6 +72,8 @@ struct CheckInSheet: View {
         _calendarOpening = State(initialValue: currentCalendarOpening)
         _selectedCalendarOpening = State(initialValue: currentCalendarOpening)
         _calendarConnectionState = State(initialValue: calendarProvider.connectionState)
+        _movementPlan = State(initialValue: nil)
+        _confirmedMovementPlan = State(initialValue: nil)
         // Coming back to change one answer should not re-run the reveal — the
         // whole sheet is already yours at that point.
         _revealed = State(initialValue: current == nil ? 1 : CheckInFlow.stepCount)
@@ -123,7 +130,7 @@ struct CheckInSheet: View {
                             text: $chatText,
                             overrides: $chatOverrides,
                             onCommit: { checkIn in
-                                onDone(checkIn, nil)
+                                onDone(checkIn, nil, nil)
                             }
                         )
                     }
@@ -152,7 +159,15 @@ struct CheckInSheet: View {
         .sensoryFeedback(.selection, trigger: selection)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .task { await loadCalendarOpeningIfConnected() }
+        .task { await loadCalendarContextIfConnected() }
+        .onChange(of: isMovementRecognitionEnabled) { _, isEnabled in
+            if isEnabled {
+                Task { await loadMovementPlansIfEnabled() }
+            } else {
+                movementPlan = nil
+                confirmedMovementPlan = nil
+            }
+        }
     }
 
     // MARK: Questions
@@ -230,6 +245,9 @@ struct CheckInSheet: View {
                 }
 
             case .connected:
+                movementRecognitionToggle
+                movementPlanContext
+
                 if isLoadingCalendar {
                     HStack(spacing: FGSpace.s) {
                         ProgressView()
@@ -260,6 +278,110 @@ struct CheckInSheet: View {
                 calendarStatus("Calendar access is off. You can still choose a time below.")
             }
         }
+    }
+
+    private var movementRecognitionToggle: some View {
+        Toggle(isOn: $isMovementRecognitionEnabled) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Recognize movement plans")
+                    .font(FGFont.body.weight(.semibold))
+                    .foregroundStyle(FGColor.ink)
+                Text("Uses event names only on this device to spot workouts and classes.")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(FGColor.gold)
+        .padding(FGSpace.m)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .postHogMask()
+    }
+
+    @ViewBuilder
+    private var movementPlanContext: some View {
+        if isMovementRecognitionEnabled {
+            if isLoadingMovementPlans {
+                calendarStatus("Looking for movement already planned today…")
+            } else if let movementPlan {
+                movementPlanCard(movementPlan)
+            }
+        }
+    }
+
+    private func movementPlanCard(_ plan: CalendarMovementPlan) -> some View {
+        let hasEnded = plan.end <= Date()
+        let isHappeningNow = plan.start <= Date() && !hasEnded
+
+        return VStack(alignment: .leading, spacing: FGSpace.s) {
+            HStack(spacing: FGSpace.xs) {
+                Image(systemName: "figure.mind.and.body")
+                Text(movementPlanTitle(plan, hasEnded: hasEnded, isHappeningNow: isHappeningNow))
+            }
+            .font(FGFont.body.weight(.semibold))
+            .foregroundStyle(FGColor.ink)
+
+            Text(movementPlanDetail(plan, hasEnded: hasEnded))
+                .font(FGFont.caption)
+                .foregroundStyle(FGColor.inkMuted)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if hasEnded {
+                WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
+                    FGPill(
+                        title: "Yes, count it",
+                        selectedAura: .sage,
+                        isSelected: confirmedMovementPlan == plan
+                    ) {
+                        confirmedMovementPlan = confirmedMovementPlan == plan ? nil : plan
+                    }
+                    FGPill(title: "Didn't happen", isSelected: false) {
+                        dismissMovementPlan(plan)
+                    }
+                    FGPill(title: "Not movement", isSelected: false) {
+                        dismissMovementPlan(plan)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(FGSpace.m)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                .strokeBorder(confirmedMovementPlan == plan ? FGColor.ink : FGColor.lineStrong, lineWidth: 1)
+        )
+        .postHogMask()
+        .accessibilityElement(children: .contain)
+    }
+
+    private func movementPlanTitle(
+        _ plan: CalendarMovementPlan,
+        hasEnded: Bool,
+        isHappeningNow: Bool
+    ) -> String {
+        if hasEnded { return "Did your \(plan.activity.label.lowercased()) session happen?" }
+        if isHappeningNow { return "Movement is on your calendar now" }
+        return "Movement is already on your calendar"
+    }
+
+    private func movementPlanDetail(_ plan: CalendarMovementPlan, hasEnded: Bool) -> String {
+        if hasEnded {
+            return "Confirm it before FeelGood counts it. Calendar plans are never logged automatically."
+        }
+        return "A \(plan.activity.label.lowercased()) session is planned for \(plan.start.formatted(date: .omitted, time: .shortened)). Choose time below only if you want something extra."
+    }
+
+    private func dismissMovementPlan(_ plan: CalendarMovementPlan) {
+        CalendarMovementPreferences.markHandled(plan.id)
+        confirmedMovementPlan = nil
+        movementPlan = nil
     }
 
     private func calendarCard(
@@ -439,12 +561,40 @@ struct CheckInSheet: View {
         Analytics.capture(
             CheckInAnalytics(energy: energy, time: time, place: place, body: body_)
         )
-        onDone(plan, selectedCalendarOpening)
+        onDone(plan, selectedCalendarOpening, confirmedMovementPlan)
     }
 
     private func connectCalendar() async {
         calendarConnectionState = await calendarProvider.requestAccess()
+        await loadCalendarContextIfConnected()
+    }
+
+    private func loadCalendarContextIfConnected() async {
         await loadCalendarOpeningIfConnected()
+        await loadMovementPlansIfEnabled()
+    }
+
+    private func loadMovementPlansIfEnabled() async {
+        guard
+            hasProAccess,
+            calendarConnectionState == .connected,
+            isMovementRecognitionEnabled
+        else { return }
+
+        isLoadingMovementPlans = true
+        defer { isLoadingMovementPlans = false }
+
+        do {
+            let now = Date()
+            let plans = try await calendarProvider.movementPlans(on: now, calendar: .current)
+                .filter { !CalendarMovementPreferences.isHandled($0.id) }
+            movementPlan = plans
+                .filter { $0.end <= now }
+                .max { $0.end < $1.end }
+                ?? plans.filter { $0.end > now }.min { $0.start < $1.start }
+        } catch {
+            movementPlan = nil
+        }
     }
 
     private func loadCalendarOpeningIfConnected() async {
@@ -492,14 +642,14 @@ struct CheckInSheet: View {
 }
 
 #Preview("Empty") {
-    CheckInSheet(current: nil) { _, _ in }
+    CheckInSheet(current: nil) { _, _, _ in }
         .environment(PurchasesManager.shared)
 }
 
 #Preview("Answered") {
     CheckInSheet(
         current: PlanCheckIn(energy: .low, time: .aLittle, place: .stayingIn, body: .stiff)
-    ) { _, _ in }
+    ) { _, _, _ in }
     .environment(PurchasesManager.shared)
 }
 

@@ -20,12 +20,17 @@ struct ProfileHeaderView: View {
     @Environment(PurchasesManager.self) private var purchasesManager
     @State private var signInErrorMessage: String?
     @FocusState private var isEditingNickname: Bool
+    @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
+    private var isMovementRecognitionEnabled = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: FGSpace.m) {
             nicknameField
             identitySection
             subscriptionRow
+            if purchasesManager.isProUnlocked {
+                calendarPrivacySection
+            }
             legalLinks
         }
         .padding(FGSpace.page)
@@ -175,6 +180,29 @@ struct ProfileHeaderView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(purchasesManager.isProUnlocked ? "FeelGood Pro" : "Free plan")
         .accessibilityHint("Manage your subscription")
+    }
+
+    // MARK: Calendar privacy
+
+    private var calendarPrivacySection: some View {
+        Toggle(isOn: $isMovementRecognitionEnabled) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Recognize movement plans")
+                    .font(FGFont.body.weight(.medium))
+                    .foregroundStyle(FGColor.ink)
+                Text("Checks Calendar event names on this device for workouts and classes. Names are never saved or shared.")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(FGColor.gold)
+        .padding(FGSpace.m)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .postHogMask()
     }
 
     // MARK: Legal

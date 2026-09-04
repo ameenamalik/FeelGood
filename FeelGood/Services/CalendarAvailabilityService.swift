@@ -49,6 +49,79 @@ nonisolated struct CalendarOpening: Hashable, Sendable {
     }
 }
 
+/// A calendar event whose title matched a small, on-device movement
+/// vocabulary. The title itself is deliberately discarded at this boundary.
+nonisolated struct CalendarMovementPlan: Hashable, Sendable, Identifiable {
+    let id: String
+    let start: Date
+    let end: Date
+    let activity: Activity
+
+    var durationMinutes: Int {
+        max(1, Int(end.timeIntervalSince(start) / 60))
+    }
+}
+
+/// Pure, conservative title matching. A miss only means the event remains an
+/// ordinary busy interval; a false positive would ask an intrusive question.
+nonisolated enum CalendarMovementTitleClassifier {
+    static func activity(for title: String) -> Activity? {
+        let normalized = title
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            .lowercased()
+        let words = Set(normalized.split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init))
+
+        func hasWord(_ candidates: String...) -> Bool {
+            candidates.contains(where: words.contains)
+        }
+
+        func hasPhrase(_ candidates: String...) -> Bool {
+            candidates.contains(where: normalized.contains)
+        }
+
+        if hasWord("pilates", "reformer") { return .pilates }
+        if hasWord("yoga") { return .yoga }
+        if hasWord("qigong") || hasPhrase("qi gong", "tai chi") { return .qigong }
+        if hasWord("swim", "swimming") { return .swimming }
+        if hasWord("bike", "biking", "cycling", "spin") { return .biking }
+        if hasWord("skate", "skating") { return .skating }
+        if hasWord("dance", "dancing", "zumba") { return .dance }
+        if hasPhrase("jump rope") { return .jumpRope }
+        if hasWord("tennis", "pickleball", "badminton", "squash") { return .racquet }
+        if hasWord("climb", "climbing", "bouldering") { return .climbing }
+        if hasWord("boxing", "kickboxing", "judo", "karate") || hasPhrase("martial arts") {
+            return .martialArts
+        }
+        if hasWord("breathwork") || hasPhrase("breath work") { return .breathwork }
+        if hasWord("stretch", "stretching", "mobility") { return .stretching }
+        if hasWord("walk", "walking", "hike", "hiking") { return .walking }
+        if hasWord("lifting", "weightlifting", "crossfit", "workout")
+            || hasPhrase("strength training", "gym session", "personal training") {
+            return .strength
+        }
+        return nil
+    }
+}
+
+/// Local-only decisions prevent the same calendar event being asked about on
+/// every check-in. Only opaque event identifiers are stored, never titles.
+@MainActor
+enum CalendarMovementPreferences {
+    static let recognitionEnabledKey = "calendarMovementRecognitionEnabled"
+    private static let handledEventIDsKey = "calendarMovementHandledEventIDs"
+
+    static func isHandled(_ eventID: String, defaults: UserDefaults = .standard) -> Bool {
+        Set(defaults.stringArray(forKey: handledEventIDsKey) ?? []).contains(eventID)
+    }
+
+    static func markHandled(_ eventID: String, defaults: UserDefaults = .standard) {
+        var ids = defaults.stringArray(forKey: handledEventIDsKey) ?? []
+        ids.removeAll(where: { $0 == eventID })
+        ids.append(eventID)
+        defaults.set(Array(ids.suffix(100)), forKey: handledEventIDsKey)
+    }
+}
+
 @MainActor
 protocol CalendarAvailabilityProviding: AnyObject {
     var connectionState: CalendarConnectionState { get }
@@ -60,6 +133,9 @@ protocol CalendarAvailabilityProviding: AnyObject {
         realisticMinutes: Int,
         calendar: Calendar
     ) async throws -> CalendarOpening?
+
+    /// Call only after the person explicitly enables title recognition.
+    func movementPlans(on date: Date, calendar: Calendar) async throws -> [CalendarMovementPlan]
 }
 
 /// Deterministic stand-in for previews and view-level tests. Keeping it beside
@@ -68,13 +144,16 @@ protocol CalendarAvailabilityProviding: AnyObject {
 final class InMemoryCalendarAvailabilityService: CalendarAvailabilityProviding {
     var connectionState: CalendarConnectionState
     var opening: CalendarOpening?
+    var plans: [CalendarMovementPlan]
 
     init(
         connectionState: CalendarConnectionState = .connected,
-        opening: CalendarOpening? = nil
+        opening: CalendarOpening? = nil,
+        plans: [CalendarMovementPlan] = []
     ) {
         self.connectionState = connectionState
         self.opening = opening
+        self.plans = plans
     }
 
     func requestAccess() async -> CalendarConnectionState {
@@ -88,6 +167,10 @@ final class InMemoryCalendarAvailabilityService: CalendarAvailabilityProviding {
         calendar: Calendar
     ) async throws -> CalendarOpening? {
         opening
+    }
+
+    func movementPlans(on date: Date, calendar: Calendar) async throws -> [CalendarMovementPlan] {
+        plans
     }
 }
 
@@ -148,6 +231,35 @@ final class EventKitCalendarAvailabilityService: CalendarAvailabilityProviding {
             realisticMinutes: realisticMinutes,
             calendar: calendar
         )
+    }
+
+    func movementPlans(on date: Date, calendar: Calendar) async throws -> [CalendarMovementPlan] {
+        guard connectionState == .connected else { return [] }
+
+        let dayStart = calendar.startOfDay(for: date)
+        guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else { return [] }
+        let predicate = store.predicateForEvents(withStart: dayStart, end: dayEnd, calendars: nil)
+
+        return store.events(matching: predicate).compactMap { event in
+            guard
+                event.status != .canceled,
+                let activity = CalendarMovementTitleClassifier.activity(for: event.title ?? "")
+            else { return nil }
+
+            let fallbackID = [
+                "calendar",
+                String(event.startDate.timeIntervalSinceReferenceDate),
+                String(event.endDate.timeIntervalSinceReferenceDate),
+                activity.rawValue,
+            ].joined(separator: "-")
+            return CalendarMovementPlan(
+                id: event.eventIdentifier ?? fallbackID,
+                start: event.startDate,
+                end: event.endDate,
+                activity: activity
+            )
+        }
+        .sorted { $0.start < $1.start }
     }
 }
 

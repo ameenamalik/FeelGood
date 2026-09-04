@@ -56,8 +56,11 @@ struct TodayView: View {
                 isProUser: model.isProUser,
                 preferredTime: model.profile.bestTimeOfDay,
                 realisticMinutes: model.profile.realisticMinutes
-            ) { checkIn, calendarOpening in
+            ) { checkIn, calendarOpening, completedMovementPlan in
                 model.apply(checkIn, calendarOpening: calendarOpening)
+                if let completedMovementPlan {
+                    model.log(completedMovementPlan)
+                }
                 isCheckingIn = false
             }
         }
