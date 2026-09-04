@@ -240,6 +240,22 @@ While the v1 catalog provides non-clinical contraindication filtering (`lowBack`
 
 ## 7. Personalization
 
+### 7.0 Product introduction — three screens, then onboarding
+
+Before the first profile questions, a one-time three-screen introduction tells
+one continuous story in the same warm wash and typography as onboarding:
+
+1. **What FeelGood is:** “A menu for whatever kind of day you’re having.” No
+   streaks, scores, guilt, account prompt, or sign-in link.
+2. **What the person tells us:** energy, time, and place—the small amount of
+   daily context needed to make a useful decision.
+3. **What FeelGood gives back:** one Main, a few Sides, and something small
+   enough to begin.
+
+“Make it mine” moves directly into the availability-first onboarding below.
+Completing the introduction is remembered on-device, so abandoning the profile
+questions does not replay the marketing screens on every launch.
+
 ### 7.1 Onboarding — "what's available to you?" (≤ 90 seconds, 4 cards)
 
 Framed around *availability and reality*, never around goals-as-metrics.
@@ -557,7 +573,8 @@ paywall.
 | Capability | Tier | State today | Note |
 |---|---|---|---|
 | Weekly Specials | Pro | **Engine-ready, no UI** | `PlanContext.scheduledSpecials` is read by the engine; nothing in the app ever writes it |
-| Calendar-aware daily check-in | Pro | **Shipped** | Reads only today's event times on-device, reduces them to anonymous busy intervals, and suggests a duration the person must confirm |
+| Calendar-aware daily check-in | Pro | **Shipped** | The availability path reads only today's event times on-device, reduces them to anonymous busy intervals, and suggests a duration the person must confirm |
+| Calendar movement recognition | Pro | **Shipped** | Separate opt-in; matches a conservative movement vocabulary against event names on-device, immediately discards the names, and never counts attendance without confirmation |
 | Scheduling around your week | Pro | Not built | |
 | "Busy day tomorrow" | Pro | Not built | |
 | Travel mode | Pro | Not built | A place + equipment override with an end date |

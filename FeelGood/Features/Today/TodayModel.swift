@@ -393,6 +393,26 @@ final class TodayModel {
         complete(session, startedAt: now, feel: nil, now: now)
     }
 
+    /// A calendar title can suggest that movement was planned, but only this
+    /// explicit confirmation turns it into history. The original title is
+    /// never available here and therefore cannot be persisted or uploaded.
+    func log(_ plan: CalendarMovementPlan, now: Date = Date()) {
+        let endedAt = min(plan.end, now)
+        guard plan.start < endedAt else { return }
+
+        let duration = min(max(plan.durationMinutes, 5), 180)
+        let title = LoggedWorkout.defaultTitle(for: plan.activity, durationMin: duration)
+        let session = Session.own(
+            id: "calendar-\(UUID().uuidString)",
+            title: title,
+            activity: plan.activity,
+            durationMin: duration,
+            intensity: 3
+        )
+        complete(session, startedAt: plan.start, feel: nil, now: endedAt)
+        CalendarMovementPreferences.markHandled(plan.id)
+    }
+
     func rename(_ session: Session, to title: String) {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, ownSessions.contains(where: { $0.id == session.id }) else { return }
