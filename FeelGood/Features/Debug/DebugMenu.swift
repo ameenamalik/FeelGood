@@ -21,7 +21,6 @@ struct DebugMenu: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(PurchasesManager.self) private var purchasesManager
     @State private var lastApplied: DebugScenario?
-    @AppStorage("debugForceProUnlocked") private var debugForceProUnlocked = false
     @State private var purchasingPackageID: String?
 
     private var seeder: DebugSeeder {
@@ -90,7 +89,13 @@ struct DebugMenu: View {
                     }
 
                     FGCard {
-                        Toggle("Force Pro unlocked", isOn: $debugForceProUnlocked)
+                        Toggle(
+                            "Force Pro unlocked",
+                            isOn: Binding(
+                                get: { purchasesManager.debugForceProUnlocked },
+                                set: { purchasesManager.debugForceProUnlocked = $0 }
+                            )
+                        )
                             .font(FGFont.body)
                             .foregroundStyle(FGColor.ink)
                     }

@@ -17,6 +17,7 @@ struct SessionDetailView: View {
     let session: Session
     let course: Course
     let model: TodayModel
+    let onCompleted: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var isPlaying = false
@@ -29,17 +30,19 @@ struct SessionDetailView: View {
     @State private var isConfirmingHide = false
 
     /// From the menu, where something chose it.
-    init(item: MenuItem, model: TodayModel) {
+    init(item: MenuItem, model: TodayModel, onCompleted: @escaping () -> Void = {}) {
         session = item.session
         course = item.course
         self.model = model
+        self.onCompleted = onCompleted
     }
 
     /// From the Library, where nobody chose it and somebody went looking.
-    init(session: Session, model: TodayModel) {
+    init(session: Session, model: TodayModel, onCompleted: @escaping () -> Void = {}) {
         self.session = session
         course = session.course
         self.model = model
+        self.onCompleted = onCompleted
     }
 
     var body: some View {
@@ -79,6 +82,7 @@ struct SessionDetailView: View {
                             FGPrimaryButton(title: "I did this") {
                                 Analytics.capture("workout_completed", properties: workoutProperties)
                                 model.complete(session, startedAt: Date(), feel: nil)
+                                onCompleted()
                                 dismiss()
                             }
                             HStack(spacing: FGSpace.m) {
@@ -118,6 +122,7 @@ struct SessionDetailView: View {
                     case .completed(let feel):
                         Analytics.capture("workout_completed", properties: workoutProperties)
                         model.complete(session, startedAt: startedAt, feel: feel)
+                        onCompleted()
                     case .paused(let progress):
                         model.pause(session, at: progress)
                     }

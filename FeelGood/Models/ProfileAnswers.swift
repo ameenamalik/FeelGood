@@ -11,6 +11,8 @@ import Foundation
 
 nonisolated struct ProfileAnswers: Hashable, Sendable {
     var activities: Set<Activity> = []
+    /// Optional detail when the broad Sports activity is selected.
+    var sports: Set<SportPreference> = []
     /// Empty until the person explicitly picks equipment or "No equipment".
     /// `availableEquipment` still adds `.none` as the engine's safe baseline.
     var equipment: Set<Equipment> = []

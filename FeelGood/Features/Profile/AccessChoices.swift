@@ -11,6 +11,7 @@ import SwiftUI
 
 struct AccessChoices: View {
     @Binding var activities: Set<Activity>
+    @Binding var sports: Set<SportPreference>
     @Binding var equipment: Set<Equipment>
     @Binding var places: Set<Place>
     var showsSymbols = false
@@ -48,9 +49,24 @@ struct AccessChoices: View {
                         aura: .sage,
                         isSelected: activities.contains(activity)
                     ) {
-                        toggle(activity, in: $activities)
+                        toggleActivity(activity)
                     }
                 }
+            }
+            if activities.contains(.racquet) {
+                group("Which sports? (optional)") {
+                    ForEach(SportPreference.allCases, id: \.self) { sport in
+                        choice(
+                            title: sport.label,
+                            symbol: sport.onboardingSymbol,
+                            aura: .apricot,
+                            isSelected: sports.contains(sport)
+                        ) {
+                            toggle(sport, in: $sports)
+                        }
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
             group("Equipment") {
                 ForEach(Self.equipmentChoices, id: \.self) { item in
@@ -144,6 +160,17 @@ struct AccessChoices: View {
                 binding.wrappedValue.remove(value)
             } else {
                 binding.wrappedValue.insert(value)
+            }
+        }
+    }
+
+    private func toggleActivity(_ activity: Activity) {
+        withAnimation(FGMotion.gentle) {
+            if activities.contains(activity) {
+                activities.remove(activity)
+                if activity == .racquet { sports.removeAll() }
+            } else {
+                activities.insert(activity)
             }
         }
     }

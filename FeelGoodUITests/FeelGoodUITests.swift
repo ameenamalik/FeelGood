@@ -53,10 +53,6 @@ final class FeelGoodUITests: XCTestCase {
         app.buttons["At home"].tap()
         app.buttons["Next"].tap()
 
-        app.buttons["Most days"].tap()
-        app.buttons["Twice"].tap()
-        app.buttons["Next"].tap()
-
         app.buttons["Next"].tap()
         app.buttons["Show me today"].tap()
     }

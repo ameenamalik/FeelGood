@@ -124,6 +124,20 @@ struct TodayModelTests {
         #expect(recreated.isInProgress(item))
     }
 
+    @Test("The free daily swap does not reset when Today is recreated")
+    func freeSwapSurvivesRecreation() throws {
+        PurchasesManager.shared.debugForceProUnlocked = false
+        let log = InMemorySessionLog()
+        let first = model(log: log)
+        let item = try #require(first.menu.items.first { first.canSwap($0, now: Fixture.now) })
+
+        first.swap(item, now: Fixture.now)
+        let recreated = model(log: log)
+
+        #expect(recreated.dailySwapsCount == 1)
+        #expect(!recreated.hasRemainingSwaps)
+    }
+
     @Test("Finishing something writes it down and moves affinity")
     func finishingIsRecorded() {
         let log = InMemorySessionLog()

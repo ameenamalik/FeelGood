@@ -34,7 +34,7 @@ final class PurchasesManager {
 
     var isProUnlocked: Bool {
         #if DEBUG
-        if Self.debugForceProUnlocked { return true }
+        if debugForceProUnlocked { return true }
         #endif
         return customerInfo?.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
     }
@@ -45,9 +45,10 @@ final class PurchasesManager {
     /// Reachable from `DebugMenu`; persisted so it survives a relaunch
     /// mid-testing. Compiled out of Release entirely — there is no key for
     /// a reviewer or a real build to stumble into.
-    static var debugForceProUnlocked: Bool {
-        get { UserDefaults.standard.bool(forKey: "debugForceProUnlocked") }
-        set { UserDefaults.standard.set(newValue, forKey: "debugForceProUnlocked") }
+    var debugForceProUnlocked: Bool {
+        didSet {
+            UserDefaults.standard.set(debugForceProUnlocked, forKey: "debugForceProUnlocked")
+        }
     }
     #endif
 
@@ -55,36 +56,14 @@ final class PurchasesManager {
     var monthlyPackage: Package? { offerings?.current?.monthly }
     var yearlyPackage: Package? { offerings?.current?.annual }
 
-    // MARK: - Daily AI Chat Interaction Quota
-
-    /// Maximum free AI interactions per day before paywall is required for edge LLM calls.
-    static let maxDailyFreeEdgeChats = 1
-
-    private var todayDateKey: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return "edge_chat_count_\(formatter.string(from: Date()))"
-    }
-
-    var dailyEdgeChatCount: Int {
-        UserDefaults.standard.integer(forKey: todayDateKey)
-    }
-
-    func canPerformEdgeChat() -> Bool {
-        if isProUnlocked { return true }
-        return dailyEdgeChatCount < Self.maxDailyFreeEdgeChats
-    }
-
-    func recordEdgeChatPerformed() {
-        guard !isProUnlocked else { return }
-        let current = dailyEdgeChatCount
-        UserDefaults.standard.set(current + 1, forKey: todayDateKey)
-    }
-
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.feelgood.app", category: "Purchases")
     private var customerInfoObservationTask: Task<Void, Never>?
 
-    private init() {}
+    private init() {
+        #if DEBUG
+        debugForceProUnlocked = UserDefaults.standard.bool(forKey: "debugForceProUnlocked")
+        #endif
+    }
 
     /// Call once, as early as possible in app startup (before any UI reads `isProUnlocked`).
     func configure() {
@@ -99,8 +78,23 @@ final class PurchasesManager {
         observeCustomerInfoUpdates()
 
         Task {
-            await fetchOfferings()
+            async let customerInfo: Void = refreshCustomerInfo()
+            async let offerings: Void = fetchOfferings()
+            _ = await (customerInfo, offerings)
         }
+    }
+
+    /// Explicitly refreshes the subscriber record. The update stream handles
+    /// changes after launch, but a gate must not depend on a future change to
+    /// learn that an existing subscriber is already entitled.
+    func refreshCustomerInfo() async {
+        do {
+            customerInfo = try await Purchases.shared.customerInfo()
+        } catch {
+            logger.error("Failed to refresh CustomerInfo: \(error.localizedDescription)")
+            Analytics.log("CustomerInfo refresh failed", level: .error, attributes: ["error": error.localizedDescription])
+        }
+        hasLoadedCustomerInfo = true
     }
 
     /// If your app has its own auth system, call this after login/logout so RevenueCat's

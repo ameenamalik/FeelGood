@@ -16,6 +16,7 @@ import SwiftData
 @Model
 final class UserProfile {
     var activitiesRaw: [String]
+    var sportsRaw: [String] = []
     var equipmentRaw: [String]
     // Attributes added after the first build carry defaults so lightweight
     // migration can fill them in for stores that predate them. A new mandatory
@@ -59,6 +60,7 @@ final class UserProfile {
     init(answers: ProfileAnswers, reminderHour: Int? = nil, now: Date) {
         let intentValues = answers.intents.map(\.rawValue).sorted()
         activitiesRaw = answers.activities.map(\.rawValue).sorted()
+        sportsRaw = answers.sports.map(\.rawValue).sorted()
         equipmentRaw = answers.equipment.map(\.rawValue).sorted()
         placesRaw = answers.places.map(\.rawValue).sorted()
         cadenceRaw = answers.cadence.rawValue
@@ -81,6 +83,7 @@ final class UserProfile {
     var answers: ProfileAnswers {
         ProfileAnswers(
             activities: Set(activitiesRaw.compactMap(Activity.init(rawValue:))),
+            sports: Set(sportsRaw.compactMap(SportPreference.init(rawValue:))),
             equipment: Set(equipmentRaw.compactMap(Equipment.init(rawValue:))).union([.none]),
             places: Set(placesRaw.compactMap(Place.init(rawValue:))),
             cadence: Cadence(rawValue: cadenceRaw) ?? .mostDays,
@@ -103,6 +106,7 @@ final class UserProfile {
     /// the same day. `updatedAt` is what the root view re-keys on.
     func apply(_ answers: ProfileAnswers, now: Date) {
         activitiesRaw = answers.activities.map(\.rawValue).sorted()
+        sportsRaw = answers.sports.map(\.rawValue).sorted()
         equipmentRaw = answers.equipment.map(\.rawValue).sorted()
         placesRaw = answers.places.map(\.rawValue).sorted()
         cadenceRaw = answers.cadence.rawValue
