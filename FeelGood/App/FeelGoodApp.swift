@@ -108,7 +108,7 @@ struct RootView: View {
                     )
                     .id(profile.updatedAt)
                 } else {
-                    OnboardingView { onboarding in
+                    FirstRunFlow { onboarding in
                         context.insert(onboarding.makeRecord(now: Date()))
                         try? context.save()
                     }

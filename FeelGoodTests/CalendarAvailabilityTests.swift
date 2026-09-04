@@ -87,3 +87,27 @@ struct CalendarAvailabilityTests {
         ))!
     }
 }
+
+@Suite("Calendar movement title recognition")
+struct CalendarMovementTitleClassifierTests {
+    @Test("Recognizes clear supported movement names", arguments: [
+        ("Reformer Pilates class", Activity.pilates),
+        ("Morning yoga", Activity.yoga),
+        ("Pool swim", Activity.swimming),
+        ("Gym workout", Activity.strength),
+        ("Pickleball with Sam", Activity.racquet),
+    ])
+    func recognizesMovement(title: String, expected: Activity) {
+        #expect(CalendarMovementTitleClassifier.activity(for: title) == expected)
+    }
+
+    @Test("Does not guess from ordinary calendar language", arguments: [
+        "Team training",
+        "Product walkthrough",
+        "Dentist appointment",
+        "Dinner",
+    ])
+    func ignoresUnclearTitles(title: String) {
+        #expect(CalendarMovementTitleClassifier.activity(for: title) == nil)
+    }
+}
