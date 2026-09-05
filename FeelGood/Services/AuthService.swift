@@ -167,6 +167,14 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
 
     public init() {
         if Self.isFirebaseConfigured && FirebaseApp.app() != nil {
+            // GoogleSignIn does not read GoogleService-Info.plist on its own —
+            // without this, GIDSignIn.signIn(withPresenting:) throws an
+            // uncaught NSInvalidArgumentException ("No active configuration.
+            // Make sure GIDClientID is set in Info.plist.") that crashes the
+            // app the moment someone taps "Continue with Google."
+            if let clientID = FirebaseApp.app()?.options.clientID {
+                GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+            }
             self.authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
                 self?.handleFirebaseUserChanged(user)
             }
@@ -305,6 +313,10 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
               let clientID = dict["CLIENT_ID"] as? String,
               !clientID.isEmpty else {
             throw AuthError.unknown("Google Sign-In requires enabling the Google provider in Firebase Console to download your Client ID.")
+        }
+
+        if GIDSignIn.sharedInstance.configuration == nil {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
         }
 
         do {

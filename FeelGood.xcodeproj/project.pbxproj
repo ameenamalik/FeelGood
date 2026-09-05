@@ -14,6 +14,7 @@
 		7B7D390B64588ACDCF50AE26 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 0A32FDDC7017E56EDD5653CD /* RevenueCat */; };
 		AEFB05C338AD350F235063CE /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = C8B171FF5B141850648C49DA /* FirebaseCore */; };
 		B90FDB8D235A87FD6444FBD5 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = AAA8FD465B3465A2B40A38CB /* GoogleSignInSwift */; };
+		BA4F818306EE55A3B2971B0F /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC8257D6E4BF67D0C7C641DC /* GoogleService-Info.plist */; };
 		C9A4756F90D3FAA7DF176DA5 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 378D96DFB6B72F152DA61DD7 /* Lottie */; };
 		D58111500000000000000001 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = D58111500000000000000002 /* PostHog */; };
 		FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FEE1DA000000000000000002 /* FeelGoodWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -61,18 +62,19 @@
 		43A871C43033C6D300DD35A1 /* FeelGood.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FeelGood.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		43A871D53033C6D600DD35A1 /* FeelGoodTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FeelGoodTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		43A871DF3033C6D600DD35A1 /* FeelGoodUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FeelGoodUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC8257D6E4BF67D0C7C641DC /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; lastKnownFileType = text.plist; name = "GoogleService-Info.plist"; path = "FeelGood/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FEE1DA000000000000000002 /* FeelGoodWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FeelGoodWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		43A871E73033C6D600DD35A1 /* Exceptions for "FeelGood" folder in "FeelGood" target */ = {
+		43A871E73033C6D600DD35A1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 43A871C33033C6D300DD35A1 /* FeelGood */;
 		};
-		FEE1DA00000000000000000E /* Exceptions for "FeelGoodWidget" folder in "FeelGoodWidget" target */ = {
+		FEE1DA00000000000000000E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -85,7 +87,7 @@
 		43A871C63033C6D300DD35A1 /* FeelGood */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				43A871E73033C6D600DD35A1 /* Exceptions for "FeelGood" folder in "FeelGood" target */,
+				43A871E73033C6D600DD35A1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
 			path = FeelGood;
 			sourceTree = "<group>";
@@ -103,7 +105,7 @@
 		FEE1DA000000000000000003 /* FeelGoodWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				FEE1DA00000000000000000E /* Exceptions for "FeelGoodWidget" folder in "FeelGoodWidget" target */,
+				FEE1DA00000000000000000E /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
 			path = FeelGoodWidget;
 			sourceTree = "<group>";
@@ -165,6 +167,7 @@
 				FEE1DA00000000000000000F /* FeelGoodShared */,
 				FEE1DA000000000000000003 /* FeelGoodWidget */,
 				43A871C53033C6D300DD35A1 /* Products */,
+				AC8257D6E4BF67D0C7C641DC /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -348,6 +351,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA4F818306EE55A3B2971B0F /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

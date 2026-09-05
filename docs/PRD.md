@@ -252,9 +252,13 @@ one continuous story in the same warm wash and typography as onboarding:
 3. **What FeelGood gives back:** one Main, a few Sides, and something small
    enough to begin.
 
-“Make it mine” moves directly into the availability-first onboarding below.
-Completing the introduction is remembered on-device, so abandoning the profile
-questions does not replay the marketing screens on every launch.
+“Make it mine” moves into one upfront, skippable sign-up screen — Apple,
+Google, or email, with "Not now — just show me today" always available — and
+from there into the availability-first onboarding below. Completing the
+introduction is remembered on-device, so abandoning the profile questions does
+not replay the marketing screens on every launch. See decision 19: this
+reverses the "no account prompt" promise for the flow as a whole, though the
+three introduction screens above stay exactly as written.
 
 ### 7.1 Onboarding — "what's available to you?" (≤ 90 seconds, 3 cards)
 
@@ -277,7 +281,10 @@ a target-setting exercise.
 It is never a target and never counted back. Asking for three moments and doing
 one is not a partial anything — the day still just shows what fits.
 
-No account required. No email gate. No paywall in onboarding. First menu appears before any ask.
+No account, no email, and no paywall within these three cards themselves —
+still true. The account ask now sits one screen earlier, between the
+introduction and this quiz (§7.0, decision 19), always skippable; nothing in
+onboarding depends on having said yes to it.
 
 ### 7.2 The daily check-in — two taps, ten seconds
 
@@ -894,6 +901,7 @@ Called out in the submission because vision is rewarded and costs zero build tim
 | 16 *(2026-08-31)* | What Pro actually is | **Three categories — intelligence, flexibility, continuity — specced in §10.1.** Written because every Pro row in §10 was still free in the binary: the entitlement seam was never built, so there was nothing to sell. §10.1 also **amends §10's mechanical claim** that free menus use `history: []` — that would make returning-after-a-gap a paid feature. Free gets recency-only memory; Pro gets full history and affinity. |
 | 16 *(2026-08-31)* | Copy proxy — which id identifies the subscriber | **RevenueCat's app user id, read from the SDK.** Supersedes the `anonInstallID` design in §11. A locally minted UUID cannot be verified against RevenueCat because RevenueCat was never told it existed — the original wiring refused every paying user, silently, because failing closed looks identical to being misconfigured. After Apple Sign In the value is the Apple user id: opaque, never an email, but stable in a way a per-install UUID was not. Accepted as the cost of a server-side entitlement check. |
 | 18 *(2026-09-01)* | Apple Health — cut from scope | **Reverses decisions 11–14 and the former §7.5 in full.** Too large for this timeline — five build phases (capability read, onboarding surface, per-signal switches, a copy-layer amendment, and write-back) for a feature that touches sleep, workouts, and steps across three separate `ReasonCode`s, none of which had shipped. No HealthKit code exists in the app, so this is a scope cut, not a removal. Restores the original §15 v2+ deferral. If revisited, re-litigate the free/Pro split from scratch rather than reusing the old §7.5 spec — the split itself (health shaping *today* free, *trends* Pro) is worth keeping if the feature ever returns, but the feature is out for now. |
+| 19 *(2026-09-04)* | Onboarding — upfront sign-up | **One skippable sign-up screen (Apple/Google/email, "Not now — just show me today") now sits between the §7.0 introduction and the §7.1 onboarding quiz.** Reverses §7.1's "no account required... first menu appears before any ask" as a whole-flow promise — the three introduction screens and the three onboarding cards each individually still ask nothing about an account, but the person now sees a skippable sign-up ask before either the quiz or the first menu. Reuses the existing `AuthSheetView`/`AuthService` (Firebase-backed Apple/Google/email, already built) rather than new auth code; `RootView` still routes purely on a local `UserProfile` row, so signing in does **not** yet skip onboarding on a new device or reinstall — cross-device restore via Firestore is explicitly deferred, not built. |
 
 ### Still open
 

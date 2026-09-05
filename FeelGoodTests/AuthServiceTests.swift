@@ -88,4 +88,26 @@ struct AuthServiceTests {
         let customUser = AuthUser(uid: "4", providerID: "custom")
         #expect(customUser.providerDisplay == "Account")
     }
+
+    @Test("AuthSheetView initializes with custom onDismiss and onAuthenticated closures")
+    func authSheetViewCallbacks() {
+        var didAuthenticate = false
+        var didDismiss = false
+        let sheet = AuthSheetView(
+            showsHeroIllustration: true,
+            onAuthenticated: { didAuthenticate = true },
+            onDismiss: { didDismiss = true }
+        )
+        #expect(sheet.showsHeroIllustration)
+        sheet.onAuthenticated?()
+        #expect(didAuthenticate)
+        sheet.onDismiss?()
+        #expect(didDismiss)
+    }
+
+    @Test("FirstRunFlow AppStorage keys are stable")
+    func firstRunFlowKeys() {
+        #expect(FirstRunFlow.hasSeenIntroKey == "hasSeenProductIntro")
+        #expect(FirstRunFlow.hasSeenWelcomeSignUpKey == "hasSeenWelcomeSignUp")
+    }
 }
