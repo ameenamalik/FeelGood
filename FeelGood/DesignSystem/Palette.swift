@@ -237,10 +237,10 @@ nonisolated extension TimeBudget {
 
     var checkInAura: FGAura {
         switch self {
-        case .fiveMinutes, .twentyFiveMinutes, .plenty: .sage
-        case .aLittle, .some: .apricot
+        case .fiveMinutes, .twentyFiveMinutes, .fortyFiveMinutes: .sage
+        case .aLittle, .some, .fiftyMinutes: .apricot
         case .fifteenMinutes, .thirtyFiveMinutes: .lilac
-        case .twentyMinutes, .fortyMinutes: .blush
+        case .twentyMinutes, .fortyMinutes, .plenty: .blush
         }
     }
 }
