@@ -249,6 +249,23 @@ struct ChatServiceTests {
         #expect(negation.recommendation?.sessionID != "app-hip-openers")
         #expect(negation.message.contains("skipping hips") || negation.message.contains("no hips"))
     }
+
+    @Test("Local stateful engine strictly excludes hidden sessions")
+    func localStatefulEngineExcludesHiddenSessions() {
+        // Find what matches normally for a 5 min low intensity session
+        let normalMatch = LocalStatefulChatEngine.matchBestSession(targetDuration: 5, intensity: "gentle")
+        #expect(normalMatch != nil)
+
+        if let normalMatch {
+            let context = ChatUserContext(hiddenSessionIDs: [normalMatch.id])
+            let hiddenMatch = LocalStatefulChatEngine.matchBestSession(
+                targetDuration: 5,
+                intensity: "gentle",
+                userContext: context
+            )
+            #expect(hiddenMatch?.id != normalMatch.id)
+        }
+    }
 }
 
 private actor FakeChatTransport: ChatTransport {

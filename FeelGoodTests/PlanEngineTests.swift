@@ -733,4 +733,40 @@ struct PlanEngineTests {
         #expect(menu.main?.session.id == "main-yoga")
         #expect(menu.appetizer?.session.id == "app-yoga")
     }
+
+    @Test("Hidden sessions are strictly excluded from the menu")
+    func hiddenSessionsAreNeverRecommended() {
+        let profile = Fixture.profile(activities: [.yoga, .pilates])
+        let checkIn = PlanCheckIn(energy: .steady, time: .plenty)
+        let unhiddenInput = PlanInput(profile: profile, checkIn: checkIn, context: Fixture.context())
+        let unhiddenMenu = Fixture.engine.makeMenu(unhiddenInput)
+
+        guard let mainSession = unhiddenMenu.main?.session else {
+            Issue.record("Expected a main session")
+            return
+        }
+
+        // Hide that main session
+        var hiddenProfile = profile
+        hiddenProfile.hiddenSessionIDs.insert(mainSession.id)
+        let hiddenInput = PlanInput(profile: hiddenProfile, checkIn: checkIn, context: Fixture.context())
+        let hiddenMenu = Fixture.engine.makeMenu(hiddenInput)
+
+        #expect(hiddenMenu.main?.session.id != mainSession.id)
+        #expect(!hiddenMenu.items.contains(where: { $0.session.id == mainSession.id }))
+    }
+
+    @Test("Barefoot porch breath is excluded when hidden by user")
+    func barefootPorchBreathExcludedWhenHidden() {
+        var profile = Fixture.profile(activities: [.breathwork, .yoga, .pilates])
+        profile.hiddenSessionIDs.insert("dessert-barefoot-breath")
+        let input = PlanInput(
+            profile: profile,
+            checkIn: PlanCheckIn(energy: .low, time: .plenty),
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+
+        #expect(!menu.items.contains(where: { $0.session.id == "dessert-barefoot-breath" }))
+    }
 }

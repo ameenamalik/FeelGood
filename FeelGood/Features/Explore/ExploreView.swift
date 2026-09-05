@@ -582,7 +582,8 @@ struct ExploreView: View {
             likedActivities: Array(Set(liked)),
             lastFeel: lastFeel,
             recentCompletions: completedEntries.count,
-            recoveryOwed: recoveryOwed
+            recoveryOwed: recoveryOwed,
+            hiddenSessionIDs: Array(model.profile.hiddenSessionIDs)
         )
         let wireHistory = messages.suffix(4).map {
             ChatTurnPayload(role: $0.role == .user ? "user" : "model", text: $0.text)

@@ -91,6 +91,7 @@ nonisolated struct PlanProfile: Hashable, Sendable {
         Intent.allCases.first(where: intents.contains) ?? .energize
     }
     var workArounds: Set<WorkAround>
+    var hiddenSessionIDs: Set<String>
 
     init(
         availableActivities: Set<Activity>,
@@ -102,7 +103,8 @@ nonisolated struct PlanProfile: Hashable, Sendable {
         bestTimeOfDay: TimeOfDay = .varies,
         intent: Intent = .energize,
         workArounds: Set<WorkAround> = [],
-        intents: Set<Intent>? = nil
+        intents: Set<Intent>? = nil,
+        hiddenSessionIDs: Set<String> = []
     ) {
         self.availableActivities = availableActivities
         self.equipment = equipment.union([.none])
@@ -113,6 +115,7 @@ nonisolated struct PlanProfile: Hashable, Sendable {
         self.bestTimeOfDay = bestTimeOfDay
         self.intents = intents.flatMap { $0.isEmpty ? nil : $0 } ?? [intent]
         self.workArounds = workArounds
+        self.hiddenSessionIDs = hiddenSessionIDs
     }
 }
 

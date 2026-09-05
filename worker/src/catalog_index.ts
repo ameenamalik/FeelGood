@@ -1782,11 +1782,13 @@ export function matchBestSession(params: {
   likedActivities?: string[];
   recoveryOwed?: boolean;
   lastFeel?: "lovedIt" | "fine" | "tooMuch";
+  hiddenSessionIds?: string[];
 }): CatalogSessionItem {
   let best: CatalogSessionItem = CATALOG_SESSIONS[0]!;
   let bestScore = -999;
 
   for (const s of CATALOG_SESSIONS) {
+    if (params.hiddenSessionIds && params.hiddenSessionIds.includes(s.id)) continue;
     if (params.excludeId && s.id === params.excludeId) continue;
     let score = 0;
 

@@ -47,6 +47,12 @@ protocol SessionLogging: AnyObject, Sendable {
     /// They are somebody's own, which means they get to change their mind.
     func rename(_ sessionID: String, to title: String)
     func forget(_ sessionID: String)
+
+    // MARK: Hidden exercises ("Don't suggest this again")
+
+    func hideSession(_ sessionID: String, at date: Date)
+    func unhideSession(_ sessionID: String, at date: Date)
+    func hiddenSessionIDs() -> Set<String>
 }
 
 // MARK: - SwiftData
@@ -104,6 +110,25 @@ final class SessionLog: SessionLogging {
             fetch(FetchDescriptor<AffinityRecord>()).map { ($0.sessionID, $0.score) },
             uniquingKeysWith: { first, _ in first }
         )
+    }
+
+    func hideSession(_ sessionID: String, at date: Date) {
+        if let profile = fetch(FetchDescriptor<UserProfile>()).first {
+            profile.hideSession(sessionID, now: date)
+            save()
+        }
+    }
+
+    func unhideSession(_ sessionID: String, at date: Date) {
+        if let profile = fetch(FetchDescriptor<UserProfile>()).first {
+            profile.unhideSession(sessionID, now: date)
+            save()
+        }
+    }
+
+    func hiddenSessionIDs() -> Set<String> {
+        guard let profile = fetch(FetchDescriptor<UserProfile>()).first else { return [] }
+        return Set(profile.hiddenSessionIDsRaw)
     }
 
     // MARK: Private
@@ -324,5 +349,21 @@ final class InMemorySessionLog: SessionLogging {
     func forget(_ sessionID: String) {
         forgotten.append(sessionID)
         keptSessions.removeAll { $0.id == sessionID }
+    }
+
+    // MARK: Hidden exercises
+
+    private(set) var hiddenSessions: Set<String> = []
+
+    func hideSession(_ sessionID: String, at date: Date) {
+        hiddenSessions.insert(sessionID)
+    }
+
+    func unhideSession(_ sessionID: String, at date: Date) {
+        hiddenSessions.remove(sessionID)
+    }
+
+    func hiddenSessionIDs() -> Set<String> {
+        hiddenSessions
     }
 }

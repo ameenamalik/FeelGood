@@ -290,24 +290,28 @@ nonisolated struct ChatUserContext: Codable, Sendable {
     let lastFeel: String?
     let recentCompletions: Int?
     let recoveryOwed: Bool?
+    let hiddenSessionIDs: [String]?
 
     enum CodingKeys: String, CodingKey {
         case likedActivities = "liked_activities"
         case lastFeel = "last_feel"
         case recentCompletions = "recent_completions"
         case recoveryOwed = "recovery_owed"
+        case hiddenSessionIDs = "hidden_session_ids"
     }
 
     init(
         likedActivities: [String]? = nil,
         lastFeel: String? = nil,
         recentCompletions: Int? = nil,
-        recoveryOwed: Bool? = nil
+        recoveryOwed: Bool? = nil,
+        hiddenSessionIDs: [String]? = nil
     ) {
         self.likedActivities = likedActivities
         self.lastFeel = lastFeel
         self.recentCompletions = recentCompletions
         self.recoveryOwed = recoveryOwed
+        self.hiddenSessionIDs = hiddenSessionIDs
     }
 }
 
@@ -553,6 +557,7 @@ nonisolated enum LocalStatefulChatEngine {
         var candidates: [(session: Session, score: Int)] = []
 
         for s in catalogSessions {
+            if let hidden = userContext?.hiddenSessionIDs, hidden.contains(s.id) { continue }
             if let excludeID, s.id == excludeID { continue }
             if let excludedFocus, s.bodyFocus.contains(excludedFocus) { continue }
             var score = 0

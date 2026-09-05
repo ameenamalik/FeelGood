@@ -270,6 +270,9 @@ nonisolated struct PlanEngine: Sendable {
 
     /// Hard filters. Everything here is a "never", not a preference.
     func isEligible(_ session: Session, input: PlanInput, checkIn: PlanCheckIn) -> Bool {
+        // Hidden sessions: when someone hides a routine ("Don't suggest this again"),
+        // it is never recommended anywhere on the menu.
+        guard !input.profile.hiddenSessionIDs.contains(session.id) else { return false }
         // Work-arounds. For this audience — many postpartum — pelvic floor,
         // joints and pregnancy are not edge cases.
         guard Set(session.contraindications).isDisjoint(with: input.profile.workArounds) else { return false }
@@ -503,6 +506,7 @@ nonisolated struct PlanEngine: Sendable {
                 && $0.worksAtHome
                 && !$0.source.isVideo
                 && !excluding.contains($0.id)
+                && !input.profile.hiddenSessionIDs.contains($0.id)
                 && Set($0.contraindications).isDisjoint(with: input.profile.workArounds)
         }
         return fallback.map { candidate(for: $0, input: input, checkIn: checkIn, stats: stats).item }
@@ -515,8 +519,10 @@ nonisolated struct PlanEngine: Sendable {
             $0.course == .dessert
                 && $0.needsNoEquipment
                 && $0.worksAtHome
+                && $0.durationMin <= checkIn.time.maxMinutes
                 && !$0.source.isVideo
                 && !excluding.contains($0.id)
+                && !input.profile.hiddenSessionIDs.contains($0.id)
                 && Set($0.contraindications).isDisjoint(with: input.profile.workArounds)
         }
         return fallback.map { candidate(for: $0, input: input, checkIn: checkIn, stats: stats).item }
@@ -548,7 +554,12 @@ nonisolated struct HistoryStats: Sendable {
         let window = input.history.filter { daysAgo($0.date) < PlanEngine.historyWindowDays && daysAgo($0.date) >= 0 }
         let completed = window.filter(\.wasCompleted)
 
-        let lastActiveDaysAgo = input.memory.lastActiveDate.map { daysAgo($0) }
+        let lastActiveDaysAgo: Int? = switch input.memory {
+        case .recencyOnly(let date):
+            date.map { daysAgo($0) }.flatMap { $0 >= 0 ? $0 : nil }
+        case .full:
+            nil
+        }
         hasNoHistory = completed.isEmpty && lastActiveDaysAgo == nil
         completedThisWeek = completed.filter { daysAgo($0.date) < 7 }.count
         daysSinceLastCompleted = completed.map { daysAgo($0.date) }.min() ?? lastActiveDaysAgo
