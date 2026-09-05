@@ -34,6 +34,10 @@ struct LogWorkoutSheet: View {
     @State private var title = ""
     @FocusState private var isNamingIt: Bool
     @Environment(\.dismiss) private var dismiss
+    @Environment(AuthService.self) private var authService
+    @AppStorage("hasShownCustomWorkoutAuthPrompt") private var hasShownCustomWorkoutAuthPrompt = false
+    @State private var isShowingAuthPrompt = false
+    @State private var pendingLoggedWorkout: LoggedWorkout?
 
     private static let durations = [10, 20, 30, 45, 60]
     private static let efforts: [(label: String, intensity: Int)] = [
@@ -92,6 +96,18 @@ struct LogWorkoutSheet: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .sheet(isPresented: $isShowingAuthPrompt, onDismiss: {
+            if let pending = pendingLoggedWorkout {
+                pendingLoggedWorkout = nil
+                onDone(pending)
+                dismiss()
+            }
+        }) {
+            AuthSheetView(
+                title: "Save your routine",
+                subtitle: "Create an account so your custom workout is saved and synced across devices."
+            )
+        }
     }
 
     private var keepIt: some View {
@@ -104,19 +120,24 @@ struct LogWorkoutSheet: View {
                     }
                 }
             }
+            .accessibilityHint("Adds this workout to your candidates pool")
 
             if isKept {
-                TextField("Name it", text: $title)
+                TextField("Name it (optional)", text: $title)
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.ink)
                     .textFieldStyle(.plain)
+                    .textInputAutocapitalization(.words)
                     .focused($isNamingIt)
                     .submitLabel(.done)
                     .onSubmit { isNamingIt = false }
-                    .padding(FGSpace.m)
-                    .background(
+                    .padding(.horizontal, FGSpace.m)
+                    .padding(.vertical, 10)
+                    .background(FGColor.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
+                    .overlay(
                         RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
-                            .fill(FGColor.surface)
+                            .strokeBorder(FGColor.line, lineWidth: 1)
                     )
                     .accessibilityLabel("Name for this workout")
                     .postHogMask()
@@ -142,15 +163,22 @@ struct LogWorkoutSheet: View {
             "intensity": intensity,
             "saved_for_later": isKept
         ])
-        onDone(
-            LoggedWorkout(
-                activity: activity,
-                durationMin: durationMin,
-                intensity: intensity,
-                isKept: isKept,
-                title: name.isEmpty ? LoggedWorkout.defaultTitle(for: activity, durationMin: durationMin) : name
-            )
+        let workout = LoggedWorkout(
+            activity: activity,
+            durationMin: durationMin,
+            intensity: intensity,
+            isKept: isKept,
+            title: name.isEmpty ? LoggedWorkout.defaultTitle(for: activity, durationMin: durationMin) : name
         )
+
+        if isKept && !authService.isAuthenticated && !hasShownCustomWorkoutAuthPrompt {
+            hasShownCustomWorkoutAuthPrompt = true
+            pendingLoggedWorkout = workout
+            isShowingAuthPrompt = true
+            return
+        }
+
+        onDone(workout)
         dismiss()
     }
 }

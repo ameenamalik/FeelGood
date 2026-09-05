@@ -54,6 +54,9 @@ struct ExploreView: View {
     @State private var selectedSession: Session?
     @State private var activeTimeLabel: String = "15 min"
     @FocusState private var isFieldFocused: Bool
+    @Environment(AuthService.self) private var authService
+    @AppStorage("hasShownExploreAuthPrompt") private var hasShownExploreAuthPrompt = false
+    @State private var isShowingAuthPrompt = false
 
     private let persistenceKey = "FeelGood.ChatHistory.v2"
 
@@ -116,6 +119,12 @@ struct ExploreView: View {
         }
         .sheet(item: $selectedSession) { session in
             SessionDetailView(session: session, model: model)
+        }
+        .sheet(isPresented: $isShowingAuthPrompt) {
+            AuthSheetView(
+                title: "Save your routine",
+                subtitle: "Save this personalized recommendation to your account and keep it across devices."
+            )
         }
         .onAppear {
             loadPersistedHistory()
@@ -679,6 +688,11 @@ struct ExploreView: View {
         if let messageID, let index = messages.firstIndex(where: { $0.id == messageID }) {
             messages[index].isCommittedToToday = true
             savePersistedHistory()
+        }
+
+        if !authService.isAuthenticated && !hasShownExploreAuthPrompt {
+            hasShownExploreAuthPrompt = true
+            isShowingAuthPrompt = true
         }
     }
 

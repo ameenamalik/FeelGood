@@ -7,6 +7,8 @@ import SwiftUI
 import SwiftData
 import os
 import PostHog
+import FirebaseCore
+import GoogleSignIn
 
 @main
 struct FeelGoodApp: App {
@@ -19,6 +21,10 @@ struct FeelGoodApp: App {
     private let content: ContentStore?
 
     init() {
+        if AuthService.isFirebaseConfigured {
+            FirebaseApp.configure()
+        }
+
         if let projectToken = Bundle.main.object(forInfoDictionaryKey: "PostHogProjectToken") as? String,
            let host = Bundle.main.object(forInfoDictionaryKey: "PostHogHost") as? String,
            !projectToken.isEmpty,
@@ -86,6 +92,7 @@ struct FeelGoodApp: App {
         }
         .modelContainer(storage.container)
         .environment(PurchasesManager.shared)
+        .environment(AuthService.shared)
     }
 
 }
@@ -122,6 +129,9 @@ struct RootView: View {
                     description: Text("Reinstalling the app should fix it.")
                 )
             }
+        }
+        .onOpenURL { url in
+            _ = GIDSignIn.sharedInstance.handle(url)
         }
     }
 }
