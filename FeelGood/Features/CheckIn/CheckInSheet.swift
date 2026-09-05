@@ -48,7 +48,6 @@ struct CheckInSheet: View {
     /// disappear out from under you.
     @State private var revealed: Int
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(PurchasesManager.self) private var purchasesManager
 
     init(
@@ -214,21 +213,10 @@ struct CheckInSheet: View {
             calendarContext(using: proxy)
                 .postHogMask()
 
-            FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
-                ForEach(TimeBudget.allCases, id: \.self) { option in
-                    FGAuraTile(
-                        title: option.checkInMinutes,
-                        detail: "min",
-                        titleStyle: .display,
-                        preferredHeight: 112,
-                        aura: option.checkInAura,
-                        isSelected: time == option
-                    ) {
-                        time = option
-                        selectedCalendarOpening = nil
-                        reveal(after: 1, didAnswer: true, using: proxy)
-                    }
-                }
+            TimeBudgetScale(selection: time) { option in
+                time = option
+                selectedCalendarOpening = nil
+                reveal(after: 1, didAnswer: true, using: proxy)
             }
             .postHogMask()
         }
@@ -655,6 +643,162 @@ struct CheckInSheet: View {
 
     private var hasProAccess: Bool {
         isProUser || purchasesManager.isProUnlocked
+    }
+}
+
+/// A clean time slider that maps its smooth visual track onto the durations
+/// supported by the planning engine. It deliberately has no thumb until the
+/// person chooses, so an unanswered check-in never looks prefilled.
+private struct TimeBudgetScale: View {
+    let selection: TimeBudget?
+    let onSelect: (TimeBudget) -> Void
+
+    private let options = TimeBudget.allCases
+    @State private var previewSelection: TimeBudget?
+    @State private var dragProgress: CGFloat?
+
+    init(selection: TimeBudget?, onSelect: @escaping (TimeBudget) -> Void) {
+        self.selection = selection
+        self.onSelect = onSelect
+        _previewSelection = State(initialValue: selection)
+    }
+
+    var body: some View {
+        VStack(spacing: FGSpace.s) {
+            if let activeSelection {
+                Text(compactLabel(for: activeSelection))
+                    .font(FGFont.body.weight(.semibold))
+                    .foregroundStyle(FGColor.clayDeep)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            GeometryReader { geometry in
+                let sideInset: CGFloat = 12
+                let trackWidth = max(geometry.size.width - (sideInset * 2), 1)
+                let thumbProgress = activeProgress ?? 0
+
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(FGColor.lineStrong.opacity(0.35))
+                        .frame(width: trackWidth, height: 5)
+                        .offset(x: sideInset)
+
+                    if let activeProgress {
+                        Capsule()
+                            .fill(FGColor.clayDeep)
+                            .frame(width: trackWidth * activeProgress, height: 5)
+                            .offset(x: sideInset)
+                    }
+
+                    Circle()
+                        .fill(activeSelection == nil ? FGColor.surface : FGColor.clay)
+                        .frame(width: 24, height: 24)
+                        .overlay {
+                            Circle()
+                                .strokeBorder(
+                                    activeSelection == nil ? FGColor.lineStrong : FGColor.clayDeep,
+                                    lineWidth: 2
+                                )
+                        }
+                        .shadow(color: FGColor.ink.opacity(0.12), radius: 3, y: 1)
+                        .position(
+                            x: sideInset + (trackWidth * thumbProgress),
+                            y: geometry.size.height / 2
+                        )
+                }
+                .contentShape(Rectangle())
+                .simultaneousGesture(
+                    SpatialTapGesture()
+                        .onEnded { value in
+                            select(at: value.location.x, width: geometry.size.width)
+                        }
+                )
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 8)
+                        .onChanged { value in
+                            let progress = progress(at: value.location.x, width: geometry.size.width)
+                            dragProgress = progress
+                            previewSelection = option(for: progress)
+                        }
+                        .onEnded { value in
+                            select(at: value.location.x, width: geometry.size.width)
+                        }
+                )
+            }
+            .frame(height: FGSize.minTouchTarget)
+
+            HStack {
+                Text("5 min")
+                Spacer()
+                Text("1 hr")
+            }
+            .font(FGFont.caption)
+            .foregroundStyle(FGColor.inkMuted)
+        }
+        .padding(.vertical, FGSpace.xs)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Available time")
+        .accessibilityValue(selection?.checkInLabel ?? "Not selected")
+        .accessibilityHint("Swipe up or down to change the number of minutes")
+        .accessibilityAdjustableAction(adjustSelection)
+        .onChange(of: selection) { _, newSelection in
+            previewSelection = newSelection
+            dragProgress = nil
+        }
+    }
+
+    private var activeSelection: TimeBudget? {
+        previewSelection ?? selection
+    }
+
+    private func compactLabel(for option: TimeBudget) -> String {
+        option.maxMinutes == 60 ? "1 hr" : "\(option.maxMinutes) min"
+    }
+
+    private var activeProgress: CGFloat? {
+        if let dragProgress { return dragProgress }
+        guard
+            let activeSelection,
+            let index = options.firstIndex(of: activeSelection),
+            options.count > 1
+        else { return nil }
+        return CGFloat(index) / CGFloat(options.count - 1)
+    }
+
+    private func progress(at xPosition: CGFloat, width: CGFloat) -> CGFloat {
+        let sideInset: CGFloat = 12
+        let trackWidth = max(width - (sideInset * 2), 1)
+        return min(max((xPosition - sideInset) / trackWidth, 0), 1)
+    }
+
+    private func option(for progress: CGFloat) -> TimeBudget {
+        let index = Int((progress * CGFloat(options.count - 1)).rounded())
+        return options[index]
+    }
+
+    private func select(at xPosition: CGFloat, width: CGFloat) {
+        let option = option(for: progress(at: xPosition, width: width))
+        previewSelection = option
+        dragProgress = nil
+        onSelect(option)
+    }
+
+    private func adjustSelection(_ direction: AccessibilityAdjustmentDirection) {
+        let currentIndex = selection.flatMap { options.firstIndex(of: $0) }
+        let nextIndex: Int
+
+        switch direction {
+        case .increment:
+            nextIndex = min((currentIndex ?? -1) + 1, options.count - 1)
+        case .decrement:
+            nextIndex = max((currentIndex ?? options.count) - 1, 0)
+        @unknown default:
+            return
+        }
+
+        let option = options[nextIndex]
+        previewSelection = option
+        onSelect(option)
     }
 }
 

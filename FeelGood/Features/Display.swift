@@ -206,7 +206,9 @@ nonisolated extension TimeBudget {
         case .some: "Thirty minutes"
         case .thirtyFiveMinutes: "Thirty-five minutes"
         case .fortyMinutes: "Forty minutes"
-        case .plenty: "45+ minutes"
+        case .fortyFiveMinutes: "Forty-five minutes"
+        case .fiftyMinutes: "Fifty minutes"
+        case .plenty: "One hour"
         }
     }
 
@@ -220,7 +222,9 @@ nonisolated extension TimeBudget {
         case .some: "30 min"
         case .thirtyFiveMinutes: "35 min"
         case .fortyMinutes: "40 min"
-        case .plenty: "45+ min"
+        case .fortyFiveMinutes: "45 min"
+        case .fiftyMinutes: "50 min"
+        case .plenty: "1 hr"
         }
     }
 
@@ -242,7 +246,9 @@ nonisolated extension TimeBudget {
         case .some: "30.circle"
         case .thirtyFiveMinutes: "35.circle"
         case .fortyMinutes: "40.circle"
-        case .plenty: "45.circle"
+        case .fortyFiveMinutes: "45.circle"
+        case .fiftyMinutes: "50.circle"
+        case .plenty: "clock"
         }
     }
 

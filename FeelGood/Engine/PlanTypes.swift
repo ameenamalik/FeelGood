@@ -128,6 +128,8 @@ nonisolated enum TimeBudget: String, Codable, CaseIterable, Sendable {
     case some
     case thirtyFiveMinutes
     case fortyMinutes
+    case fortyFiveMinutes
+    case fiftyMinutes
     case plenty
 
     /// Hard ceiling on session length. Never recommend 30 when the answer was 10.
@@ -141,6 +143,8 @@ nonisolated enum TimeBudget: String, Codable, CaseIterable, Sendable {
         case .some: 30
         case .thirtyFiveMinutes: 35
         case .fortyMinutes: 40
+        case .fortyFiveMinutes: 45
+        case .fiftyMinutes: 50
         case .plenty: 60
         }
     }
