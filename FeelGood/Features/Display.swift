@@ -251,7 +251,6 @@ nonisolated extension TimeBudget {
         case .plenty: "clock"
         }
     }
-
 }
 
 extension PlaceIntent {

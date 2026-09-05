@@ -57,7 +57,8 @@ enum Fixture {
         bestTimeOfDay: TimeOfDay = .varies,
         intent: Intent = .strengthen,
         intents: Set<Intent>? = nil,
-        workArounds: Set<WorkAround> = []
+        workArounds: Set<WorkAround> = [],
+        hiddenSessionIDs: Set<String> = []
     ) -> PlanProfile {
         PlanProfile(
             availableActivities: activities,
@@ -69,7 +70,8 @@ enum Fixture {
             bestTimeOfDay: bestTimeOfDay,
             intent: intent,
             workArounds: workArounds,
-            intents: intents
+            intents: intents,
+            hiddenSessionIDs: hiddenSessionIDs
         )
     }
 

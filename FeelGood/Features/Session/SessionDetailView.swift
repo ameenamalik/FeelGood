@@ -27,6 +27,7 @@ struct SessionDetailView: View {
     @State private var isRenaming = false
     @State private var newTitle = ""
     @State private var isConfirmingRemoval = false
+    @State private var isConfirmingHide = false
 
     /// From the menu, where something chose it.
     init(item: MenuItem, model: TodayModel, onCompleted: @escaping () -> Void = {}) {
@@ -96,10 +97,15 @@ struct SessionDetailView: View {
                         }
                         .padding(.top, FGSpace.s)
                     } else {
-                        FGPrimaryButton(title: savedProgress == nil ? "Start" : "Resume") {
-                            Analytics.capture("workout_started", properties: workoutProperties)
-                            startedAt = savedProgress?.startedAt ?? Date()
-                            isPlaying = true
+                        VStack(spacing: FGSpace.s) {
+                            FGPrimaryButton(title: savedProgress == nil ? "Start" : "Resume") {
+                                Analytics.capture("workout_started", properties: workoutProperties)
+                                startedAt = savedProgress?.startedAt ?? Date()
+                                isPlaying = true
+                            }
+                            FGQuietButton("Don't suggest this again", systemImage: "eye.slash") {
+                                isConfirmingHide = true
+                            }
                         }
                         .padding(.top, FGSpace.s)
                     }
@@ -146,6 +152,20 @@ struct SessionDetailView: View {
             Button("Keep it", role: .cancel) {}
         } message: {
             Text("It stops being offered. The times you did it still count.")
+        }
+        .confirmationDialog(
+            "Don't suggest this again?",
+            isPresented: $isConfirmingHide,
+            titleVisibility: .visible
+        ) {
+            Button("Hide this exercise", role: .destructive) {
+                Analytics.capture("session_hidden", properties: ["session_id": session.id, "title": session.title])
+                model.hide(session)
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("We won't suggest '\(session.title)' on your menu anymore. You can review or unhide it anytime from your Profile.")
         }
         .presentationDragIndicator(.visible)
     }
