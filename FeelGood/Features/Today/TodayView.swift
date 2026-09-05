@@ -21,6 +21,9 @@ struct TodayView: View {
     @State private var isShowingPaywall = false
     @State private var shouldOfferProAfterDismissal = false
     @AppStorage("hasShownFirstCompletionPaywall") private var hasShownFirstCompletionPaywall = false
+    @AppStorage("hasShownFirstCompletionAuthPrompt") private var hasShownFirstCompletionAuthPrompt = false
+    @State private var isShowingAuthPrompt = false
+    @Environment(AuthService.self) private var authService
     @State private var isAdjusting = false
     @State private var selected: MenuItem?
     #if DEBUG
@@ -78,6 +81,12 @@ struct TodayView: View {
             SessionDetailView(item: item, model: model) {
                 shouldOfferProAfterDismissal = true
             }
+        }
+        .sheet(isPresented: $isShowingAuthPrompt) {
+            AuthSheetView(
+                title: "Save your routine",
+                subtitle: "You finished today's session! Create an account to save your progress and keep your daily menus personalized."
+            )
         }
         .onChange(of: requestedSessionID.wrappedValue, initial: true) { _, id in
             openRequestedSession(id)
@@ -300,6 +309,13 @@ struct TodayView: View {
     private func presentCompletionPaywallIfNeeded() {
         guard shouldOfferProAfterDismissal else { return }
         shouldOfferProAfterDismissal = false
+
+        if !authService.isAuthenticated && !hasShownFirstCompletionAuthPrompt {
+            hasShownFirstCompletionAuthPrompt = true
+            isShowingAuthPrompt = true
+            return
+        }
+
         guard !model.isProUser, !hasShownFirstCompletionPaywall else { return }
         hasShownFirstCompletionPaywall = true
         isShowingPaywall = true

@@ -3,8 +3,8 @@
 //  FeelGood
 //
 //  Identity, entirely optional and entirely separate from the plan: a
-//  nickname (a preference, not a fact), Sign in with Apple (off by default,
-//  never required to see a menu), subscription status, and the legal links
+//  nickname (a preference, not a fact), Authentication (Apple, Google,
+//  Email/Password), subscription status, and the legal links
 //  Apple requires. Nothing here feeds the engine or the copy layer — see
 //  CLAUDE.md and `UserProfile`'s "Identity" section.
 //
@@ -18,7 +18,10 @@ struct ProfileHeaderView: View {
     let onManageSubscription: () -> Void
 
     @Environment(PurchasesManager.self) private var purchasesManager
+    @Environment(AuthService.self) private var authService
     @State private var signInErrorMessage: String?
+    @State private var isShowingAuthSheet = false
+    @State private var isShowingDeleteConfirmation = false
     @FocusState private var isEditingNickname: Bool
     @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
     private var isMovementRecognitionEnabled = false
@@ -35,7 +38,9 @@ struct ProfileHeaderView: View {
         }
         .padding(FGSpace.page)
         .padding(.bottom, FGSpace.s)
-        .task { await refreshAppleCredentialState() }
+        .sheet(isPresented: $isShowingAuthSheet) {
+            AuthSheetView()
+        }
         .alert(
             "Couldn't sign in",
             isPresented: Binding(
@@ -46,6 +51,18 @@ struct ProfileHeaderView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(signInErrorMessage ?? "")
+        }
+        .confirmationDialog(
+            "Delete Account",
+            isPresented: $isShowingDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Account", role: .destructive) {
+                handleDeleteAccount()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will delete your account credentials and sign you out. Your local on-device routine history remains intact.")
         }
     }
 
@@ -69,64 +86,111 @@ struct ProfileHeaderView: View {
 
     @ViewBuilder
     private var identitySection: some View {
-        if profile.appleUserID != nil {
-            HStack(spacing: FGSpace.s) {
-                Image(systemName: "person.crop.circle.fill")
+        if let user = authService.currentUser {
+            VStack(alignment: .leading, spacing: FGSpace.s) {
+                HStack(spacing: FGSpace.s) {
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(FGColor.sageDeep)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(user.email ?? user.displayName ?? "Signed In")
+                            .font(FGFont.body.weight(.medium))
+                            .foregroundStyle(FGColor.ink)
+                            .postHogMask()
+
+                        Text("Signed in with \(user.providerDisplay)")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+
+                    Spacer()
+                }
+
+                HStack(spacing: FGSpace.m) {
+                    Button("Sign out") {
+                        handleSignOut()
+                    }
+                    .font(FGFont.caption.weight(.medium))
                     .foregroundStyle(FGColor.inkMuted)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Signed in with Apple")
-                        .font(FGFont.body)
-                        .foregroundStyle(FGColor.ink)
-                        .postHogMask()
-                    Button("Sign out", action: signOut)
+
+                    Text("•")
                         .font(FGFont.caption)
+                        .foregroundStyle(FGColor.line)
+
+                    Button("Delete account") {
+                        isShowingDeleteConfirmation = true
+                    }
+                    .font(FGFont.caption.weight(.medium))
+                    .foregroundStyle(FGColor.clayDeep)
+                }
+                .padding(.leading, 32)
+            }
+            .padding(FGSpace.m)
+            .background(
+                RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                    .fill(FGColor.surface)
+            )
+        } else {
+            Button {
+                isShowingAuthSheet = true
+            } label: {
+                HStack(spacing: FGSpace.s) {
+                    Image(systemName: "person.crop.circle.badge.plus")
+                        .foregroundStyle(FGColor.goldDeep)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Sign in or create account")
+                            .font(FGFont.body.weight(.medium))
+                            .foregroundStyle(FGColor.ink)
+
+                        Text("Save your routines and keep your history synced")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
                         .foregroundStyle(FGColor.inkMuted)
                 }
-                Spacer()
+                .padding(FGSpace.m)
+                .background(
+                    RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                        .fill(FGColor.surface)
+                )
             }
-        } else {
-            SignInWithAppleButton(.signIn, onRequest: configure, onCompletion: handle)
-                .signInWithAppleButtonStyle(.black)
-                .frame(height: FGSize.minTouchTarget)
-                .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+            .buttonStyle(.plain)
+            .accessibilityLabel("Sign in or create account")
+            .accessibilityHint("Save your routines across devices with Apple, Google, or email")
         }
     }
 
-    /// No scopes requested. Sign in with Apple is here so a subscription
-    /// survives a reinstall or a new phone, and the app-scoped user id alone
-    /// does that. Name and email were requested before, stored, and sent to
-    /// PostHog — while the privacy policy said in five places that we collect
-    /// neither. Asking for identity the product never uses is the part that
-    /// was wrong, not the policy.
-    private func configure(_ request: ASAuthorizationAppleIDRequest) {
-        request.requestedScopes = []
-    }
-
-    private func handle(_ result: Result<ASAuthorization, Error>) {
-        switch result {
-        case .success(let authorization):
-            guard let credential = AppleCredential(authorization) else { return }
-            profile.applyAppleSignIn(userID: credential.userID)
-            Task { await purchasesManager.logIn(appUserID: credential.userID) }
-
-        case .failure(let error):
-            // Tapping "Cancel" on the system sheet is not something to alert
-            // about — it's the same as never having tapped the button.
-            if (error as? ASAuthorizationError)?.code == .canceled { return }
+    private func handleSignOut() {
+        do {
+            try authService.signOut()
+            profile.signOutOfApple()
+            resetAnalyticsIdentity()
+        } catch {
             signInErrorMessage = error.localizedDescription
         }
     }
 
-    private func signOut() {
-        profile.signOutOfApple()
-        resetAnalyticsIdentity()
-        Task { await purchasesManager.logOut() }
+    private func handleDeleteAccount() {
+        Task {
+            do {
+                try await authService.deleteAccount()
+                profile.signOutOfApple()
+                resetAnalyticsIdentity()
+            } catch {
+                signInErrorMessage = error.localizedDescription
+            }
+        }
     }
 
     /// Analytics is never told who signed in. PostHog keeps its own
-    /// per-install distinct id, which is what the privacy policy describes;
-    /// calling `identify` with the Apple user id would tie every event to a
-    /// stable account and make that description false again.
+    /// per-install distinct id, which is what the privacy policy describes.
     private func resetAnalyticsIdentity() {
         guard isPostHogConfigured else { return }
         PostHogSDK.shared.reset()
@@ -138,22 +202,6 @@ struct ProfileHeaderView: View {
             return false
         }
         return !projectToken.isEmpty && !host.isEmpty
-    }
-
-    /// Apple ID sign-in can be revoked from the user's device settings
-    /// without the app ever hearing about it. A stale "signed in" row is
-    /// worse than a quiet local sign-out the next time You is opened.
-    private func refreshAppleCredentialState() async {
-        guard let userID = profile.appleUserID else { return }
-        let state = await withCheckedContinuation { continuation in
-            ASAuthorizationAppleIDProvider().getCredentialState(forUserID: userID) { state, _ in
-                continuation.resume(returning: state)
-            }
-        }
-        if state == .revoked || state == .notFound {
-            profile.signOutOfApple()
-            resetAnalyticsIdentity()
-        }
     }
 
     // MARK: Subscription
@@ -220,4 +268,5 @@ struct ProfileHeaderView: View {
 #Preview("Free, signed out") {
     ProfileHeaderView(profile: UserProfile(answers: ProfileAnswers(), now: .now)) {}
         .environment(PurchasesManager.shared)
+        .environment(AuthService.shared)
 }
