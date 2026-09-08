@@ -7,6 +7,8 @@ import SwiftUI
 import SwiftData
 import os
 import PostHog
+import FirebaseCore
+import GoogleSignIn
 
 @main
 struct FeelGoodApp: App {
@@ -19,6 +21,10 @@ struct FeelGoodApp: App {
     private let content: ContentStore?
 
     init() {
+        if AuthService.isFirebaseConfigured {
+            FirebaseApp.configure()
+        }
+
         if let projectToken = Bundle.main.object(forInfoDictionaryKey: "PostHogProjectToken") as? String,
            let host = Bundle.main.object(forInfoDictionaryKey: "PostHogHost") as? String,
            !projectToken.isEmpty,
@@ -86,6 +92,7 @@ struct FeelGoodApp: App {
         }
         .modelContainer(storage.container)
         .environment(PurchasesManager.shared)
+        .environment(AuthService.shared)
     }
 
 }
@@ -122,6 +129,9 @@ struct RootView: View {
                     description: Text("Reinstalling the app should fix it.")
                 )
             }
+        }
+        .onOpenURL { url in
+            _ = GIDSignIn.sharedInstance.handle(url)
         }
     }
 }
@@ -161,6 +171,20 @@ private struct TodayScreen: View {
         // its own persistent thread instead of a one-shot drawer. Today
         // stays the default and stays uncluttered; this is just how the
         // peers to it become reachable. Library and Settings land here too.
+        // iOS 26 gives the tab bar its floating Liquid Glass treatment
+        // automatically — forcing `.ultraThinMaterial` on it, as the pre-26
+        // build did, locks it back to the old edge-to-edge translucent bar
+        // instead. Only pre-26 needs that explicit material.
+        if #available(iOS 26, *) {
+            tabView
+        } else {
+            tabView
+                .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
+        }
+    }
+
+    private var tabView: some View {
         TabView(selection: $tab) {
             Tab("Today", systemImage: "sun.max", value: Destination.today) {
                 TodayView(model: model, requestedSessionID: $requestedSessionID)
@@ -177,8 +201,6 @@ private struct TodayScreen: View {
             }
         }
         .tint(FGColor.ink)
-        .toolbarBackground(.ultraThinMaterial, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
         .onOpenURL { url in
             guard let id = DeepLink.sessionID(from: url) else { return }
             tab = .today

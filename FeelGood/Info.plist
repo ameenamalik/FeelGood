@@ -12,7 +12,17 @@
 				<string>feelgood</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.google.signin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.177113770799-7837tmpi0nqt89r6boaohpvnvf1tq2i1</string>
+			</array>
+		</dict>
 	</array>
+	<key>GIDClientID</key>
+	<string>177113770799-7837tmpi0nqt89r6boaohpvnvf1tq2i1.apps.googleusercontent.com</string>
 	<key>WorkerBaseURL</key>
 	<string>$(WORKER_BASE_URL)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

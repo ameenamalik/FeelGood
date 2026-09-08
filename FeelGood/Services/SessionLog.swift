@@ -42,7 +42,7 @@ protocol SessionLogging: AnyObject, Sendable {
 
     /// Kept so the engine can offer it back later.
     @discardableResult
-    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, now: Date) -> Session
+    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, course: Course?, now: Date) -> Session
     func kept() -> [Session]
     /// They are somebody's own, which means they get to change their mind.
     func rename(_ sessionID: String, to title: String)
@@ -53,6 +53,13 @@ protocol SessionLogging: AnyObject, Sendable {
     func hideSession(_ sessionID: String, at date: Date)
     func unhideSession(_ sessionID: String, at date: Date)
     func hiddenSessionIDs() -> Set<String>
+}
+
+extension SessionLogging {
+    @discardableResult
+    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, now: Date) -> Session {
+        keep(title: title, activity: activity, durationMin: durationMin, intensity: intensity, course: nil, now: now)
+    }
 }
 
 // MARK: - SwiftData
@@ -190,12 +197,13 @@ final class SessionLog: SessionLogging {
     // MARK: Somebody's own workouts
 
     @discardableResult
-    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, now: Date) -> Session {
+    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, course: Course? = nil, now: Date) -> Session {
         let kept = CustomSession(
             title: title,
             activity: activity,
             durationMin: durationMin,
             intensity: intensity,
+            course: course,
             createdAt: now
         )
         context.insert(kept)
@@ -322,13 +330,14 @@ final class InMemorySessionLog: SessionLogging {
     // MARK: Somebody's own workouts
 
     @discardableResult
-    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, now: Date) -> Session {
+    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, course: Course? = nil, now: Date) -> Session {
         let session = Session.own(
             id: "own-\(keptSessions.count)",
             title: title,
             activity: activity,
             durationMin: durationMin,
-            intensity: intensity
+            intensity: intensity,
+            course: course
         )
         keptSessions.append(session)
         return session
@@ -341,7 +350,7 @@ final class InMemorySessionLog: SessionLogging {
         keptSessions = keptSessions.map { session in
             session.id == sessionID
                 ? .own(id: session.id, title: title, activity: session.activity,
-                       durationMin: session.durationMin, intensity: session.intensity)
+                       durationMin: session.durationMin, intensity: session.intensity, course: session.course)
                 : session
         }
     }

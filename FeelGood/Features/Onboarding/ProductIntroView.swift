@@ -3,7 +3,9 @@
 //  FeelGood
 //
 //  Three quiet promises before onboarding: what FeelGood is, what it asks,
-//  and what it gives back. No account gate—the first real menu comes first.
+//  and what it gives back — still no account gate on these three screens.
+//  `FirstRunFlow` below is what sequences intro → an upfront, skippable
+//  sign-up screen → the onboarding quiz; see PRD §7.0/§7.1.
 //
 
 import SwiftUI
@@ -11,19 +13,36 @@ import UIKit
 
 struct FirstRunFlow: View {
     static let hasSeenIntroKey = "hasSeenProductIntro"
+    static let hasSeenWelcomeSignUpKey = "hasSeenWelcomeSignUp"
 
     let onFinish: (OnboardingModel) -> Void
     @AppStorage(Self.hasSeenIntroKey) private var hasSeenIntro = false
+    @AppStorage(Self.hasSeenWelcomeSignUpKey) private var hasSeenWelcomeSignUp = false
 
     var body: some View {
         Group {
-            if hasSeenIntro {
-                OnboardingView(onFinish: onFinish)
-            } else {
+            if !hasSeenIntro {
                 ProductIntroView {
                     Analytics.capture("product_intro_completed")
                     hasSeenIntro = true
                 }
+            } else if !hasSeenWelcomeSignUp {
+                AuthSheetView(
+                    title: "FeelGood",
+                    subtitle: "A menu, not a workout. Pick what fits today — no streaks, no scores.",
+                    showsHeroIllustration: true,
+                    initialMode: .createAccount,
+                    guestButtonTitle: "Not now — just show me today",
+                    onAuthenticated: {
+                        Analytics.capture("welcome_sign_up_completed")
+                        hasSeenWelcomeSignUp = true
+                    },
+                    onDismiss: {
+                        hasSeenWelcomeSignUp = true
+                    }
+                )
+            } else {
+                OnboardingView(onFinish: onFinish)
             }
         }
     }

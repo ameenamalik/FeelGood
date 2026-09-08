@@ -127,8 +127,10 @@ nonisolated enum Intent: String, Codable, CaseIterable, Sendable {
 }
 
 /// The menu metaphor. See PRD §3.
-nonisolated enum Course: String, Codable, CaseIterable, Sendable {
+nonisolated enum Course: String, Codable, CaseIterable, Sendable, Identifiable {
     case appetizer, main, side, dessert, special
+
+    var id: String { rawValue }
 }
 
 // MARK: - Session
