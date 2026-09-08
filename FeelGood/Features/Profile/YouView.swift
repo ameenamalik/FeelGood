@@ -25,17 +25,8 @@ struct YouView: View {
 
     var body: some View {
         NavigationStack {
-            // Pre-26 gets a flat bar in the page colour, matching the rest of
-            // the app's chrome before Liquid Glass existed. iOS 26 leaves the
-            // navigation bar unmodified so it gets its automatic floating
-            // glass treatment over the wash instead of a hard-edged flat bar.
-            Group {
-                if #available(iOS 26, *) {
-                    page
-                } else {
-                    page.toolbarBackground(FGColor.bg, for: .navigationBar)
-                }
-            }
+            // Match the navigation bar to the page's warm background.
+            page.toolbarBackground(FGColor.bg, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     // `SwiftUI.Menu` spelled out: `Menu` is this app's own

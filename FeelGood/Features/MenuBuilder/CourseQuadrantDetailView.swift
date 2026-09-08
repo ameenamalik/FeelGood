@@ -40,34 +40,31 @@ struct CourseQuadrantDetailView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
-                    // Header
-                    VStack(alignment: .leading, spacing: FGSpace.xs) {
-                        HStack(spacing: FGSpace.s) {
-                            Text(course.label)
-                                .font(FGFont.title)
-                                .foregroundStyle(FGColor.ink)
-                            CourseTag(course: course)
-                        }
-
-                        Text(courseSubtitle)
-                            .font(FGFont.reason)
-                            .foregroundStyle(FGColor.inkMuted)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                    courseHero
 
                     // Routines list
-                    VStack(spacing: FGSpace.s) {
+                    VStack(alignment: .leading, spacing: FGSpace.s) {
+                        if !routines.isEmpty {
+                            Text("Saved routines")
+                                .font(FGFont.label.weight(.semibold))
+                                .foregroundStyle(FGColor.inkMuted)
+                                .textCase(.uppercase)
+                                .tracking(0.7)
+                                .padding(.horizontal, FGSpace.xs)
+                        }
+
                         if routines.isEmpty {
                             VStack(spacing: FGSpace.s) {
-                                Text("No custom routines in \(course.label.lowercased())s yet")
+                                Text("Nothing here yet")
                                     .font(FGFont.itemTitle)
                                     .foregroundStyle(FGColor.ink)
-                                Text("Tap the button below to add your first routine.")
+                                Text("Add a routine you would happily choose again.")
                                     .font(FGFont.caption)
                                     .foregroundStyle(FGColor.inkMuted)
+                                    .multilineTextAlignment(.center)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, FGSpace.xl)
+                            .padding(.vertical, FGSpace.l)
                         } else {
                             ForEach(routines) { session in
                                 routineRow(session)
@@ -79,17 +76,19 @@ struct CourseQuadrantDetailView: View {
                             isAddingRoutine = true
                         } label: {
                             HStack(spacing: FGSpace.s) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.system(size: 16, weight: .medium))
-                                Text("Add another \(course.label.lowercased()) routine")
-                                    .font(FGFont.body.weight(.medium))
+                                Image(systemName: "plus")
+                                    .font(.system(size: 14, weight: .bold))
+                                Text("Add \(course.label.lowercased()) routine")
+                                    .font(FGFont.body.weight(.semibold))
                             }
-                            .foregroundStyle(course.tagText)
+                            .foregroundStyle(FGColor.ink)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                                    .strokeBorder(course.tagText.opacity(0.3), style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
+                            .frame(minHeight: 54)
+                            .background(course.accentGradient)
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .strokeBorder(course.tagText.opacity(0.12), lineWidth: 1)
                             )
                         }
                         .buttonStyle(.plain)
@@ -100,7 +99,7 @@ struct CourseQuadrantDetailView: View {
             }
             .scrollBounceBehavior(.basedOnSize)
         }
-        .navigationTitle(course.label)
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -140,6 +139,42 @@ struct CourseQuadrantDetailView: View {
         }
     }
 
+    private var courseHero: some View {
+        HStack(spacing: FGSpace.m) {
+            VStack(alignment: .leading, spacing: FGSpace.s) {
+                Text(course.label)
+                    .font(FGFont.title)
+                    .foregroundStyle(FGColor.ink)
+
+                Text(courseSubtitle)
+                    .font(FGFont.reason)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("\(routines.count) saved")
+                    .font(FGFont.label.weight(.semibold))
+                    .foregroundStyle(course.tagText)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(FGColor.surface.opacity(0.68), in: Capsule())
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Image(course.menuMascotAsset)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 94, height: 94)
+                .accessibilityHidden(true)
+        }
+        .padding(FGSpace.l)
+        .background(course.accentGradient)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .strokeBorder(course.tagText.opacity(0.10), lineWidth: 1)
+        )
+    }
+
     /// One tap opens it; everything else — rename, delete, put it on Today —
     /// lives in the long-press menu instead of a row of always-visible
     /// buttons.
@@ -149,23 +184,40 @@ struct CourseQuadrantDetailView: View {
         return Button {
             selectedSession = session
         } label: {
-            HStack(spacing: FGSpace.s) {
-                VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: FGSpace.m) {
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    .fill(course.accentGradient)
+                    .frame(width: 5, height: 42)
+
+                VStack(alignment: .leading, spacing: 4) {
                     Text(session.title)
                         .font(FGFont.body.weight(.medium))
                         .foregroundStyle(FGColor.ink)
                         .multilineTextAlignment(.leading)
 
-                    Text(isTodayOverride ? "On Today's menu · \(session.durationMin) min" : "\(session.durationMin) min")
-                        .font(FGFont.caption)
-                        .foregroundStyle(isTodayOverride ? course.tagText : FGColor.inkMuted)
+                    HStack(spacing: FGSpace.s) {
+                        Text("\(session.durationMin) min")
+                            .font(FGFont.label.weight(.semibold))
+                            .foregroundStyle(course.tagText)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .background(course.tagFill, in: Capsule())
+
+                        if isTodayOverride {
+                            Text("On Today’s menu")
+                                .font(FGFont.caption)
+                                .foregroundStyle(course.tagText)
+                        }
+                    }
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(FGColor.inkMuted)
+                    .foregroundStyle(course.tagText)
+                    .frame(width: 32, height: 32)
+                    .background(course.tagFill, in: Circle())
             }
             .padding(FGSpace.m)
             .background(
@@ -174,8 +226,9 @@ struct CourseQuadrantDetailView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .strokeBorder(FGColor.line, lineWidth: 1)
+                    .strokeBorder(course.tagText.opacity(0.12), lineWidth: 1)
             )
+            .shadow(color: FGColor.ink.opacity(0.025), radius: 5, y: 2)
         }
         .buttonStyle(.plain)
         .contextMenu {

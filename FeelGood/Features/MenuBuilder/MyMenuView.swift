@@ -2,10 +2,8 @@
 //  MyMenuView.swift
 //  FeelGood
 //
-//  The 2x2 Dopamine Menu Dashboard.
-//  Designated sections for Appetizer, Main, Side, and Dessert. Each card is a
-//  title, a count, and a few plain preview lines — the whole card opens the
-//  full list; nothing on it is a separate tap target.
+//  A stacked Dopamine Menu: one ticket for each course. The whole ticket opens
+//  its routine list; nothing inside it is a separate tap target.
 //
 
 import SwiftUI
@@ -23,27 +21,22 @@ struct MyMenuView: View {
         .side, .dessert
     ]
 
-    private let gridColumns = [
-        GridItem(.flexible(), spacing: FGSpace.s),
-        GridItem(.flexible(), spacing: FGSpace.s)
-    ]
-
     var body: some View {
         NavigationStack {
             ZStack {
                 FGColor.bg.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: FGSpace.l) {
-                        // Header
-                        header
+                GeometryReader { proxy in
+                    let fixedHeight = CGFloat(122)
+                    let cardHeight = max(104, (proxy.size.height - fixedHeight) / 4)
 
-                        // 2x2 Dashboard Grid
-                        dashboardGrid
+                    VStack(alignment: .leading, spacing: FGSpace.l) {
+                        header
+                        dashboardGrid(cardHeight: cardHeight)
                     }
-                    .padding(FGSpace.page)
+                    .padding(.horizontal, FGSpace.page)
+                    .padding(.vertical, FGSpace.m)
                 }
-                .scrollBounceBehavior(.basedOnSize)
             }
             .navigationTitle("My Menu")
             .navigationBarTitleDisplayMode(.inline)
@@ -88,73 +81,81 @@ struct MyMenuView: View {
             .foregroundStyle(FGColor.ink)
     }
 
-    // MARK: - 2x2 Dashboard Grid
+    // MARK: - Stacked Menu
 
-    private var dashboardGrid: some View {
-        LazyVGrid(columns: gridColumns, spacing: FGSpace.s) {
+    private func dashboardGrid(cardHeight: CGFloat) -> some View {
+        VStack(spacing: FGSpace.s) {
             ForEach(quadrants, id: \.self) { course in
-                quadrantCard(for: course)
+                quadrantCard(for: course, height: cardHeight)
             }
         }
+        .frame(maxWidth: .infinity)
     }
 
-    private func quadrantCard(for course: Course) -> some View {
+    private func quadrantCard(for course: Course, height: CGFloat) -> some View {
         let routines = model.customRoutines(for: course)
-        let previewItems = Array(routines.prefix(3))
+        let previewItems = Array(routines.prefix(1))
 
         return Button {
             selectedDetailCourse = course
         } label: {
-            VStack(alignment: .leading, spacing: FGSpace.s) {
-                // Quadrant header: title, count, chevron — no colour block.
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(course.label)
-                        .font(FGFont.itemTitle)
-                        .foregroundStyle(FGColor.ink)
+            ZStack(alignment: .trailing) {
+                HStack(spacing: FGSpace.m) {
+                    VStack(alignment: .leading, spacing: FGSpace.xs) {
+                        Text(course.label)
+                            .font(FGFont.sectionTitle)
+                            .foregroundStyle(FGColor.ink)
+                            .lineLimit(1)
 
-                    Spacer()
-
-                    Text("\(routines.count)")
-                        .font(FGFont.body)
-                        .foregroundStyle(course.tagText)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(course.tagText)
-                }
-
-                Divider()
-                    .overlay(FGColor.line)
-
-                // Plain preview lines — no boxes, no icons, no per-row taps.
-                VStack(alignment: .leading, spacing: 6) {
-                    if previewItems.isEmpty {
-                        Text("Nothing yet")
-                            .font(FGFont.caption)
+                        Text("\(routines.count) \(routines.count == 1 ? "routine" : "routines")")
+                            .font(FGFont.label)
                             .foregroundStyle(FGColor.inkMuted)
-                    } else {
-                        ForEach(previewItems) { session in
-                            Text("•  \(session.title)")
-                                .font(FGFont.caption)
+
+                        if previewItems.isEmpty {
+                            Text("Nothing yet")
+                                .font(FGFont.body)
                                 .foregroundStyle(FGColor.inkMuted)
-                                .lineLimit(1)
+                        } else {
+                            VStack(alignment: .leading, spacing: 3) {
+                                ForEach(previewItems) { session in
+                                    Text(session.title)
+                                        .font(FGFont.caption)
+                                        .foregroundStyle(FGColor.inkMuted)
+                                        .lineLimit(1)
+                                }
+                            }
                         }
+
+                        Spacer(minLength: 0)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Image(course.menuMascotAsset)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 64, height: 64)
+                        .accessibilityHidden(true)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(course.tagText)
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
             }
-            .padding(FGSpace.m)
-            .frame(maxWidth: .infinity, minHeight: 160, alignment: .topLeading)
-            .background(
-                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .fill(FGColor.surface)
-            )
+            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .leading)
+            .background(course.accentGradient)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .strokeBorder(FGColor.line, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(course.tagText.opacity(0.05), lineWidth: 0.75)
             )
+            .shadow(color: FGColor.ink.opacity(0.05), radius: 8, y: 4)
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(course.label), \(routines.count) routines")
         .accessibilityAddTraits(.isButton)
     }
+
 }

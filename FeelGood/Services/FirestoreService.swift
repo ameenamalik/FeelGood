@@ -8,11 +8,11 @@
 //  Follows firebase-firestore guidelines:
 //  - Only import FirebaseFirestore (no FirebaseFirestoreSwift)
 //  - Safe lazy initialization (never inline Firestore.firestore() before configure)
-//  - Lifecycles managed with isolated deinit and .task(id:)
+//  - Listener lifecycles are managed explicitly when auth state changes
 //
 
 import FirebaseCore
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 import Foundation
 import SwiftUI
 
@@ -210,7 +210,7 @@ public final class FirestoreService: Sendable {
 
     // MARK: - User Preferences & Profile Sync
 
-    public func saveUserPreferences(userId: String, data: [String: Any]) async throws {
+    public func saveUserPreferences(userId: String, data: sending [String: Any]) async throws {
         guard let db else { return }
         try await db.collection("users")
             .document(userId)
@@ -223,10 +223,5 @@ public final class FirestoreService: Sendable {
         stopListening()
         guard let db else { return }
         try await db.collection("users").document(userId).delete()
-    }
-
-    isolated deinit {
-        workoutsListener?.remove()
-        completionsListener?.remove()
     }
 }

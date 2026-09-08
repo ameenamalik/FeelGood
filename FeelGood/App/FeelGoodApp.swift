@@ -171,17 +171,11 @@ private struct TodayScreen: View {
         // its own persistent thread instead of a one-shot drawer. Today
         // stays the default and stays uncluttered; this is just how the
         // peers to it become reachable. Library and Settings land here too.
-        // iOS 26 gives the tab bar its floating Liquid Glass treatment
-        // automatically — forcing `.ultraThinMaterial` on it, as the pre-26
-        // build did, locks it back to the old edge-to-edge translucent bar
+        // Keep the tab bar readable over the app's warm background wash.
         // instead. Only pre-26 needs that explicit material.
-        if #available(iOS 26, *) {
-            tabView
-        } else {
-            tabView
-                .toolbarBackground(.ultraThinMaterial, for: .tabBar)
-                .toolbarBackground(.visible, for: .tabBar)
-        }
+        tabView
+            .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+            .toolbarBackground(.visible, for: .tabBar)
     }
 
     private var tabView: some View {

@@ -199,35 +199,61 @@ struct TodayView: View {
     /// answering to amending.
     private var checkInPrompt: some View {
         Button { isCheckingIn = true } label: {
-            HStack(spacing: FGSpace.m - 2) {
-                AuraDot(color: FGColor.rose, size: 40)
+            HStack(spacing: FGSpace.s + 2) {
+                Image(systemName: model.checkIn == nil ? "heart.fill" : "checkmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(FGColor.inkOnAccent)
+                    .frame(width: 30, height: 30)
+                    .background(FGColor.rose.opacity(0.52), in: Circle())
 
-                Text(model.checkIn?.summaryLine ?? "Tell me and today's menu fits it better")
-                    .font(FGFont.itemTitle)
-                    .foregroundStyle(FGColor.ink)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(model.checkIn?.summaryLine ?? "Check in for today")
+                        .font(FGFont.itemTitle)
+                        .foregroundStyle(FGColor.inkOnAccent)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(model.checkIn == nil ? 1 : 2)
 
-                Text(model.checkIn == nil ? "Answer" : "Change")
-                    .font(FGFont.body.weight(.medium))
-                    .foregroundStyle(FGColor.goldDeep)
-                    .fixedSize()
+                    if model.checkIn == nil {
+                        Text("Takes about 30 seconds")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkOnAccent.opacity(0.68))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if model.checkIn == nil {
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(FGColor.inkOnAccent.opacity(0.72))
+                } else {
+                    Text("Edit")
+                        .font(FGFont.body.weight(.medium))
+                        .foregroundStyle(FGColor.goldDeep)
+                        .fixedSize()
+                        .padding(.trailing, FGSpace.s)
+                }
             }
-            .padding(.vertical, 14)
+            .frame(minHeight: 62)
+            .padding(.vertical, FGSpace.xs)
             .padding(.horizontal, FGSpace.m)
             .background(
-                RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                    .fill(FGColor.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                    .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+                Capsule(style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [FGAura.blush.core, FGAura.apricot.core],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
             )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityLabel(
+            model.checkIn.map { "Today's check-in: \($0.summaryLine). Edit" }
+                ?? "Check in for today. Takes about 30 seconds"
+        )
     }
 
     /// "Your menu", sum of duration, and collapsible quick adjust drawer.
@@ -237,6 +263,9 @@ struct TodayView: View {
                 Text("Your menu")
                     .font(FGFont.sectionTitle)
                     .foregroundStyle(FGColor.ink)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .layoutPriority(1)
                     .accessibilityAddTraits(.isHeader)
 
                 Text("• \(model.menu.items.reduce(0) { $0 + $1.session.durationMin }) min")
@@ -245,35 +274,18 @@ struct TodayView: View {
 
                 Spacer(minLength: FGSpace.s)
 
-                // Real functional controls, grouped so the two capsules
-                // blend the way Liquid Glass expects related controls to.
-                // Pre-26 keeps the flat capsule chrome the rest of the app
-                // still uses for its buttons.
-                if #available(iOS 26, *) {
-                    GlassEffectContainer(spacing: FGSpace.s) {
-                        HStack(spacing: FGSpace.s) {
-                            routineButtonLabel
-                                .glassEffect(.regular.interactive(), in: Capsule())
-                            adjustButtonLabel
-                                .glassEffect(
-                                    isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
-                                    in: Capsule()
-                                )
-                        }
-                    }
-                } else {
-                    HStack(spacing: FGSpace.s) {
-                        routineButtonLabel
-                            .background(FGColor.surface)
-                            .clipShape(Capsule())
-                            .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
-                        adjustButtonLabel
-                            .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
-                            .clipShape(Capsule())
-                            .overlay(
-                                Capsule().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
-                            )
-                    }
+                // Compact capsule controls matching the rest of the app.
+                HStack(spacing: FGSpace.s) {
+                    routineButtonLabel
+                        .background(FGColor.surface)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
+                    adjustButtonLabel
+                        .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
+                        )
                 }
             }
 
@@ -337,25 +349,12 @@ struct TodayView: View {
     }
 
     private var quickFilterRow: some View {
-        Group {
-            if #available(iOS 26, *) {
-                GlassEffectContainer(spacing: 8) {
-                    HStack(spacing: 8) {
-                        ForEach(QuickFilter.allCases, id: \.self) { filter in
-                            quickFilterButtonLabel(filter)
-                                .glassEffect(.regular.interactive(), in: Capsule())
-                        }
-                    }
-                }
-            } else {
-                HStack(spacing: 8) {
-                    ForEach(QuickFilter.allCases, id: \.self) { filter in
-                        quickFilterButtonLabel(filter)
-                            .background(FGColor.surface)
-                            .clipShape(Capsule())
-                            .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
-                    }
-                }
+        HStack(spacing: 8) {
+            ForEach(QuickFilter.allCases, id: \.self) { filter in
+                quickFilterButtonLabel(filter)
+                    .background(FGColor.surface)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
             }
         }
     }
@@ -580,22 +579,12 @@ private struct MenuItemBody: View {
 
                 if canSwap {
                     Button(action: onSwap) {
-                        Group {
-                            if #available(iOS 26, *) {
-                                Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundStyle(FGColor.inkMuted)
-                                    .frame(width: 28, height: 28)
-                                    .glassEffect(.regular.interactive(), in: Circle())
-                            } else {
-                                Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundStyle(FGColor.inkMuted)
-                                    .frame(width: 28, height: 28)
-                                    .background(FGColor.bg.opacity(0.7))
-                                    .clipShape(Circle())
-                            }
-                        }
+                        Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(FGColor.inkMuted)
+                            .frame(width: 28, height: 28)
+                            .background(FGColor.bg.opacity(0.7))
+                            .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(isReset ? "Start over" : "Shuffle")
