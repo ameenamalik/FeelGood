@@ -21,7 +21,11 @@ struct TodayView: View {
     @State private var isShowingPaywall = false
     @State private var shouldOfferProAfterDismissal = false
     @AppStorage("hasShownFirstCompletionPaywall") private var hasShownFirstCompletionPaywall = false
+    @AppStorage("hasShownFirstCompletionAuthPrompt") private var hasShownFirstCompletionAuthPrompt = false
+    @State private var isShowingAuthPrompt = false
+    @Environment(AuthService.self) private var authService
     @State private var isAdjusting = false
+    @State private var isShowingMyMenu = false
     @State private var selected: MenuItem?
     #if DEBUG
     @State private var isDebugging = false
@@ -74,10 +78,19 @@ struct TodayView: View {
         .sheet(isPresented: $isShowingPaywall) {
             RevenueCatUI.PaywallView(displayCloseButton: true)
         }
+        .sheet(isPresented: $isShowingMyMenu) {
+            MyMenuView(model: model)
+        }
         .sheet(item: $selected, onDismiss: presentCompletionPaywallIfNeeded) { item in
             SessionDetailView(item: item, model: model) {
                 shouldOfferProAfterDismissal = true
             }
+        }
+        .sheet(isPresented: $isShowingAuthPrompt) {
+            AuthSheetView(
+                title: "Save your routine",
+                subtitle: "You finished today's session! Create an account to save your progress and keep your daily menus personalized."
+            )
         }
         .onChange(of: requestedSessionID.wrappedValue, initial: true) { _, id in
             openRequestedSession(id)
@@ -232,64 +245,42 @@ struct TodayView: View {
 
                 Spacer(minLength: FGSpace.s)
 
-                Button {
-                    if model.isProUser {
-                        withAnimation(FGMotion.settle) {
-                            isAdjusting.toggle()
+                // Real functional controls, grouped so the two capsules
+                // blend the way Liquid Glass expects related controls to.
+                // Pre-26 keeps the flat capsule chrome the rest of the app
+                // still uses for its buttons.
+                if #available(iOS 26, *) {
+                    GlassEffectContainer(spacing: FGSpace.s) {
+                        HStack(spacing: FGSpace.s) {
+                            routineButtonLabel
+                                .glassEffect(.regular.interactive(), in: Capsule())
+                            adjustButtonLabel
+                                .glassEffect(
+                                    isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
+                                    in: Capsule()
+                                )
                         }
-                    } else {
-                        isShowingPaywall = true
                     }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: model.isProUser ? "slider.horizontal.3" : "lock.fill")
-                            .font(.system(size: 11, weight: .medium))
-                        Text("Adjust")
-                            .font(FGFont.label.weight(.medium))
-                        Image(systemName: isAdjusting ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 9, weight: .semibold))
+                } else {
+                    HStack(spacing: FGSpace.s) {
+                        routineButtonLabel
+                            .background(FGColor.surface)
+                            .clipShape(Capsule())
+                            .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
+                        adjustButtonLabel
+                            .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
+                            )
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .foregroundStyle(isAdjusting ? FGColor.ink : FGColor.inkMuted)
-                    .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
-                    .clipShape(Capsule())
-                    .overlay(
-                        Capsule().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
-                    )
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Adjust today's menu")
             }
 
             if isAdjusting {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(QuickFilter.allCases, id: \.self) { filter in
-                            Button {
-                                withAnimation(FGMotion.settle) {
-                                    model.applyQuickFilter(filter)
-                                }
-                            } label: {
-                                HStack(spacing: 5) {
-                                    Image(systemName: filter.symbol)
-                                        .font(.system(size: 11, weight: .medium))
-                                    Text(filter.label)
-                                        .font(FGFont.label.weight(.medium))
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 7)
-                                .foregroundStyle(FGColor.ink)
-                                .background(FGColor.surface)
-                                .clipShape(Capsule())
-                                .overlay(
-                                    Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.vertical, 2)
+                    quickFilterRow
+                        .padding(.vertical, 2)
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -297,9 +288,109 @@ struct TodayView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private var routineButtonLabel: some View {
+        Button {
+            isShowingMyMenu = true
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "plus")
+                    .font(.system(size: 11, weight: .semibold))
+                Text("Routine")
+                    .font(FGFont.label.weight(.medium))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .foregroundStyle(FGColor.ink)
+            .fixedSize()
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add custom routine or view My Menu")
+    }
+
+    private var adjustButtonLabel: some View {
+        Button {
+            if model.isProUser {
+                withAnimation(FGMotion.settle) {
+                    isAdjusting.toggle()
+                }
+            } else {
+                isShowingPaywall = true
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: model.isProUser ? "slider.horizontal.3" : "lock.fill")
+                    .font(.system(size: 11, weight: .medium))
+                Text("Adjust")
+                    .font(FGFont.label.weight(.medium))
+                Image(systemName: isAdjusting ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .foregroundStyle(isAdjusting ? FGColor.ink : FGColor.inkMuted)
+            .fixedSize()
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Adjust today's menu")
+    }
+
+    private var quickFilterRow: some View {
+        Group {
+            if #available(iOS 26, *) {
+                GlassEffectContainer(spacing: 8) {
+                    HStack(spacing: 8) {
+                        ForEach(QuickFilter.allCases, id: \.self) { filter in
+                            quickFilterButtonLabel(filter)
+                                .glassEffect(.regular.interactive(), in: Capsule())
+                        }
+                    }
+                }
+            } else {
+                HStack(spacing: 8) {
+                    ForEach(QuickFilter.allCases, id: \.self) { filter in
+                        quickFilterButtonLabel(filter)
+                            .background(FGColor.surface)
+                            .clipShape(Capsule())
+                            .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
+                    }
+                }
+            }
+        }
+    }
+
+    private func quickFilterButtonLabel(_ filter: QuickFilter) -> some View {
+        Button {
+            withAnimation(FGMotion.settle) {
+                model.applyQuickFilter(filter)
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: filter.symbol)
+                    .font(.system(size: 11, weight: .medium))
+                Text(filter.label)
+                    .font(FGFont.label.weight(.medium))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .foregroundStyle(FGColor.ink)
+            .fixedSize()
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
     private func presentCompletionPaywallIfNeeded() {
         guard shouldOfferProAfterDismissal else { return }
         shouldOfferProAfterDismissal = false
+
+        if !authService.isAuthenticated && !hasShownFirstCompletionAuthPrompt {
+            hasShownFirstCompletionAuthPrompt = true
+            isShowingAuthPrompt = true
+            return
+        }
+
         guard !model.isProUser, !hasShownFirstCompletionPaywall else { return }
         hasShownFirstCompletionPaywall = true
         isShowingPaywall = true
@@ -413,7 +504,11 @@ private struct ResumeMark: View {
             Text("Resume")
         }
         .font(FGFont.label)
-        .foregroundStyle(FGColor.goldDeep)
+        // Only ever shown on a not-done item, so this always sits on the
+        // course's accent gradient rather than the flat surface — `ink` is
+        // the one colour that gradient guarantees stays legible at its
+        // darkest point (see `Course.accentGradient`).
+        .foregroundStyle(FGColor.ink)
         .accessibilityHidden(true)
     }
 }
@@ -485,12 +580,22 @@ private struct MenuItemBody: View {
 
                 if canSwap {
                     Button(action: onSwap) {
-                        Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(FGColor.inkMuted)
-                            .frame(width: 28, height: 28)
-                            .background(FGColor.bg.opacity(0.7))
-                            .clipShape(Circle())
+                        Group {
+                            if #available(iOS 26, *) {
+                                Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(FGColor.inkMuted)
+                                    .frame(width: 28, height: 28)
+                                    .glassEffect(.regular.interactive(), in: Circle())
+                            } else {
+                                Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(FGColor.inkMuted)
+                                    .frame(width: 28, height: 28)
+                                    .background(FGColor.bg.opacity(0.7))
+                                    .clipShape(Circle())
+                            }
+                        }
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(isReset ? "Start over" : "Shuffle")
@@ -514,23 +619,34 @@ private struct MenuItemBody: View {
                 ForEach(item.session.chips, id: \.self) { chip in
                     FGChip(text: chip)
                 }
+                if item.session.isOwn {
+                    FGChip(text: "Yours")
+                }
             }
 
-            // Why it fits today
+            // Why it fits today. `inkMuted` only clears contrast against the
+            // flat surface a done item settles to — a not-done item sits on
+            // the gradient, where `ink` is the colour guaranteed to stay
+            // legible at its darkest point.
             Text(item.reasonText)
                 .font(FGFont.caption)
-                .foregroundStyle(FGColor.inkMuted)
+                .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 14)
         .padding(.horizontal, FGSpace.m)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                .fill(FGColor.surface)
+                // The gradient is the "this still needs doing" signal, so it
+                // only shows while that's true — a done item settles back to
+                // the flat surface, which is also what keeps `inkMuted` and
+                // the -Deep tag colours (calibrated against white, not this
+                // gradient's darkest stop) safe to use on it.
+                .fill(isDone ? AnyShapeStyle(FGColor.surface) : AnyShapeStyle(item.course.accentGradient))
         )
         .overlay(
             RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+                .strokeBorder(isDone ? FGColor.line : Color.clear, lineWidth: 1)
         )
     }
 }

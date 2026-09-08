@@ -59,4 +59,91 @@ struct OwnWorkoutTests {
         #expect(own(.strength).isOwn)
         #expect(own(.strength).source.steps.isEmpty)
     }
+
+    @Test("Explicit course overrides length inference")
+    func explicitCourseOverridesLength() {
+        let session = Session.own(
+            id: "own-dessert",
+            title: "Dance Break",
+            activity: .dance,
+            durationMin: 5,
+            intensity: 2,
+            course: .dessert
+        )
+        #expect(session.course == .dessert)
+    }
+
+    @Test("Adding custom routine overrides Today menu course slot")
+    @MainActor
+    func customRoutineTodayMenuOverride() {
+        let store = ContentStore(catalog: ContentCatalog(version: 1, sessions: Fixture.catalog, glossary: []))
+        let model = TodayModel(
+            store: store,
+            profile: Fixture.profile(),
+            log: InMemorySessionLog(),
+            now: Fixture.now,
+            calendar: Fixture.utc
+        )
+
+        let custom = model.addCustomRoutine(
+            title: "Morning Sunlight Walk",
+            activity: .walking,
+            durationMin: 15,
+            intensity: 2,
+            course: .main,
+            addToToday: true,
+            now: Fixture.now
+        )
+
+        #expect(model.isCourseOverridden(.main))
+        #expect(model.menu.main?.session.id == custom.id)
+        #expect(model.menu.main?.session.title == "Morning Sunlight Walk")
+        #expect(model.menu.main?.session.isOwn == true)
+
+        model.removeTodayCourseOverride(for: .main, now: Fixture.now)
+        #expect(!model.isCourseOverridden(.main))
+    }
+
+    @Test("Filtering custom routines by course")
+    @MainActor
+    func filteringCustomRoutinesByCourse() {
+        let store = ContentStore(catalog: ContentCatalog(version: 1, sessions: Fixture.catalog, glossary: []))
+        let model = TodayModel(
+            store: store,
+            profile: Fixture.profile(),
+            log: InMemorySessionLog(),
+            now: Fixture.now,
+            calendar: Fixture.utc
+        )
+
+        model.addCustomRoutine(
+            title: "Quick Reset",
+            activity: .breathwork,
+            durationMin: 3,
+            intensity: 1,
+            course: .appetizer,
+            addToToday: false,
+            now: Fixture.now
+        )
+
+        model.addCustomRoutine(
+            title: "Fun Dance",
+            activity: .dance,
+            durationMin: 10,
+            intensity: 3,
+            course: .dessert,
+            addToToday: false,
+            now: Fixture.now
+        )
+
+        let appetizers = model.customRoutines(for: .appetizer)
+        let desserts = model.customRoutines(for: .dessert)
+        let mains = model.customRoutines(for: .main)
+
+        #expect(appetizers.count == 1)
+        #expect(appetizers.first?.title == "Quick Reset")
+        #expect(desserts.count == 1)
+        #expect(desserts.first?.title == "Fun Dance")
+        #expect(mains.isEmpty)
+    }
 }

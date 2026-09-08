@@ -161,6 +161,9 @@ nonisolated extension Session {
     /// Quick visual pills: equipment, duration, target area, impact level.
     /// e.g. ["Mat", "30 min", "Spine & Hips", "Low Impact"]
     var chips: [String] {
+        if isOwn {
+            return [durationLabel]
+        }
         var pills: [String] = []
         pills.append(contentsOf: equipment.compactMap(\.label))
         pills.append(durationLabel)

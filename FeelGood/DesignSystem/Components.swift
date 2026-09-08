@@ -94,19 +94,38 @@ struct FGQuietButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: FGSpace.xs) {
-                if let systemImage { Image(systemName: systemImage) }
-                Text(title)
-            }
-            .font(FGFont.caption.weight(.medium))
-            .foregroundStyle(FGColor.inkMuted)
-            // Short labels like "Skip" are only a few points wide. The height
-            // was already 44; the width was not, and `FGSize.minTouchTarget`
-            // says never smaller than this anywhere.
-            .frame(minWidth: FGSize.minTouchTarget, minHeight: FGSize.minTouchTarget, alignment: .leading)
-            .contentShape(Rectangle())
+            label
         }
         .buttonStyle(.plain)
+    }
+
+    private var label: some View {
+        HStack(spacing: FGSpace.xs) {
+            if let systemImage { Image(systemName: systemImage) }
+            Text(title)
+        }
+        .font(FGFont.caption.weight(.medium))
+        .foregroundStyle(FGColor.inkMuted)
+        // Short labels like "Skip" are only a few points wide. The height
+        // was already 44; the width was not, and `FGSize.minTouchTarget`
+        // says never smaller than this anywhere.
+        .frame(minWidth: FGSize.minTouchTarget, minHeight: FGSize.minTouchTarget, alignment: .leading)
+        .padding(.horizontal, FGSpace.xs)
+        .contentShape(Capsule())
+        // A real, tappable control, so it earns its own floating glass
+        // capsule on 26 rather than sitting flush with the page — pre-26
+        // stays exactly as quiet as before: no background at all.
+        .modifier(FGQuietGlass())
+    }
+}
+
+private struct FGQuietGlass: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular.interactive(), in: Capsule())
+        } else {
+            content
+        }
     }
 }
 

@@ -1,0 +1,699 @@
+//
+//  AuthSheetView.swift
+//  FeelGood
+//
+//  A serene, respectful authentication sheet presented when users want to
+//  save their routine, complete their first activation milestone, or manage
+//  their account.
+//
+//  Supports Apple Sign In, Google Sign In, and Email/Password.
+//
+
+import AuthenticationServices
+import GoogleSignIn
+import SwiftUI
+import UIKit
+
+struct AuthSheetView: View {
+    var title: String = "Save your routine"
+    var subtitle: String = "Keep your movement history and personalized daily menus synced safely across devices."
+    /// Swaps the small "sparkles" glyph for the brand-mark + fruit-cluster
+    /// illustration, for the one entry point (onboarding's welcome screen)
+    /// that's a first impression rather than a milestone nudge.
+    var showsHeroIllustration: Bool = false
+    var guestButtonTitle: String = "Continue as guest"
+    var onAuthenticated: (() -> Void)? = nil
+    var onDismiss: (() -> Void)? = nil
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(AuthService.self) private var authService
+
+    @State private var mode: AuthMode
+    @State private var email: String = ""
+    @State private var password: String = ""
+    @State private var isLoading: Bool = false
+    @State private var errorMessage: String? = nil
+    @State private var successMessage: String? = nil
+    @State private var currentRawNonce: String = ""
+    @State private var path: [HeroStage] = []
+
+    enum AuthMode {
+        case signIn
+        case createAccount
+    }
+
+    /// Where "Continue with Email" / "Already have an account? Sign in" push
+    /// to, in the hero-illustration entry screen. Not used by the four
+    /// milestone-nudge call sites, which keep everything on one screen.
+    enum HeroStage: Hashable {
+        case emailCreate
+        case emailSignIn
+    }
+
+    init(
+        title: String = "Save your routine",
+        subtitle: String = "Keep your movement history and personalized daily menus synced safely across devices.",
+        showsHeroIllustration: Bool = false,
+        initialMode: AuthMode = .signIn,
+        guestButtonTitle: String = "Continue as guest",
+        onAuthenticated: (() -> Void)? = nil,
+        onDismiss: (() -> Void)? = nil
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.showsHeroIllustration = showsHeroIllustration
+        self.guestButtonTitle = guestButtonTitle
+        self.onAuthenticated = onAuthenticated
+        self.onDismiss = onDismiss
+        _mode = State(initialValue: initialMode)
+    }
+
+    private func finishDismissal() {
+        path.removeAll()
+        onDismiss?()
+        dismiss()
+    }
+
+    var body: some View {
+        NavigationStack(path: $path) {
+            ZStack {
+                FGColor.bg.ignoresSafeArea()
+                FGBrandWash(reach: 0.55).ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: FGSpace.l) {
+                        headerSection
+
+                        if showsHeroIllustration {
+                            heroEntryButtons
+                        } else {
+                            VStack(spacing: FGSpace.m) {
+                                appleButton(label: mode == .signIn ? .signIn : .signUp)
+                                googleSignInButton
+
+                                orDivider
+
+                                emailPasswordSection
+                            }
+                            .frame(maxWidth: 360)
+                        }
+
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .font(FGFont.caption)
+                                .foregroundStyle(FGColor.clayDeep)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, FGSpace.m)
+                                .transition(.opacity)
+                        }
+
+                        if let successMessage {
+                            Text(successMessage)
+                                .font(FGFont.caption)
+                                .foregroundStyle(FGColor.sageDeep)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, FGSpace.m)
+                                .transition(.opacity)
+                        }
+
+                        guestFooter
+                    }
+                    .padding(.horizontal, FGSpace.page)
+                    .padding(.top, FGSpace.m)
+                    .padding(.bottom, FGSpace.xl)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if !showsHeroIllustration {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") {
+                            finishDismissal()
+                        }
+                        .foregroundStyle(FGColor.inkMuted)
+                    }
+                }
+            }
+            .navigationDestination(for: HeroStage.self) { stage in
+                heroDestination(stage)
+            }
+        }
+    }
+
+    // MARK: - Hero entry (onboarding welcome screen only)
+
+    /// Three plain "Continue with…" pills and nothing else — no inline form,
+    /// no mode picker. Tapping Email or "Sign in" pushes a single-purpose
+    /// screen instead of expanding everything in place.
+    private var heroEntryButtons: some View {
+        VStack(spacing: FGSpace.m) {
+            appleButton(label: .continue)
+            googleContinueButton
+            emailContinueButton
+
+            Button("Already have an account? Sign in") {
+                path.append(.emailSignIn)
+            }
+            .font(FGFont.caption.weight(.medium))
+            .foregroundStyle(FGColor.goldDeep)
+            .padding(.top, FGSpace.xs)
+            .disabled(isLoading)
+
+            if isLoading {
+                ProgressView()
+                    .tint(FGColor.ink)
+                    .padding(.top, FGSpace.xs)
+            }
+        }
+        .frame(maxWidth: 360)
+    }
+
+    private var emailContinueButton: some View {
+        Button {
+            path.append(.emailCreate)
+        } label: {
+            HStack(spacing: FGSpace.s) {
+                Image(systemName: "envelope.fill")
+                    .font(.system(size: 15, weight: .medium))
+                Text("Continue with Email")
+                    .font(FGFont.body.weight(.medium))
+            }
+            .foregroundStyle(FGColor.bg)
+            .frame(maxWidth: .infinity, minHeight: 56)
+            .background(FGColor.ink)
+            .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// The pushed single-purpose screen for either "Continue with Email"
+    /// (create account) or "Already have an account? Sign in".
+    @ViewBuilder
+    private func heroDestination(_ stage: HeroStage) -> some View {
+        ZStack {
+            FGColor.bg.ignoresSafeArea()
+            FGBrandWash(reach: 0.4).ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: FGSpace.l) {
+                    VStack(spacing: FGSpace.s) {
+                        Text(stage == .emailCreate ? "Create your account" : "Welcome back")
+                            .font(FGFont.display)
+                            .tracking(-0.5)
+                            .foregroundStyle(FGColor.ink)
+                            .multilineTextAlignment(.center)
+
+                        Text(
+                            stage == .emailCreate
+                                ? "So today's menu is waiting for you next time, wherever you open FeelGood."
+                                : "Sign in and we'll pick up right where your menu left off."
+                        )
+                        .font(FGFont.body)
+                        .foregroundStyle(FGColor.inkMuted)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.top, FGSpace.l)
+
+                    emailFieldsAndSubmit
+                        .frame(maxWidth: 360)
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.clayDeep)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, FGSpace.m)
+                    }
+
+                    if let successMessage {
+                        Text(successMessage)
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.sageDeep)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, FGSpace.m)
+                    }
+                }
+                .padding(.horizontal, FGSpace.page)
+                .padding(.bottom, FGSpace.xl)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            mode = stage == .emailCreate ? .createAccount : .signIn
+            errorMessage = nil
+            successMessage = nil
+        }
+    }
+
+    // MARK: - Header
+
+    private var headerSection: some View {
+        VStack(spacing: FGSpace.s) {
+            if showsHeroIllustration {
+                WelcomeHeroIllustration()
+                    .padding(.bottom, FGSpace.xs)
+            } else {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 32, weight: .medium))
+                    .foregroundStyle(FGColor.goldDeep)
+                    .accessibilityHidden(true)
+                    .padding(.bottom, 2)
+            }
+
+            Text(title)
+                .font(FGFont.display)
+                .tracking(-0.5)
+                .foregroundStyle(FGColor.ink)
+                .multilineTextAlignment(.center)
+
+            Text(subtitle)
+                .font(FGFont.body)
+                .foregroundStyle(FGColor.inkMuted)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.top, FGSpace.s)
+    }
+
+    // MARK: - Apple Sign In Button
+
+    private func appleButton(label: SignInWithAppleButton.Label) -> some View {
+        SignInWithAppleButton(
+            label,
+            onRequest: { request in
+                let nonce = AuthService.randomNonceString()
+                currentRawNonce = nonce
+                request.requestedScopes = [.fullName, .email]
+                request.nonce = AuthService.sha256(nonce)
+            },
+            onCompletion: { result in
+                handleAppleResult(result)
+            }
+        )
+        .signInWithAppleButtonStyle(.black)
+        .frame(height: 56)
+        .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+    }
+
+    private func handleAppleResult(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            isLoading = true
+            errorMessage = nil
+            Task {
+                do {
+                    try await authService.signInWithApple(
+                        authorization: authorization,
+                        rawNonce: currentRawNonce
+                    )
+                    isLoading = false
+                    onAuthenticated?()
+                    finishDismissal()
+                } catch {
+                    isLoading = false
+                    errorMessage = error.localizedDescription
+                }
+            }
+        case .failure(let error):
+            if (error as? ASAuthorizationError)?.code != .canceled {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - Google Sign In Button
+
+    private var googleSignInButton: some View {
+        Button {
+            signInWithGoogle()
+        } label: {
+            HStack(spacing: FGSpace.s) {
+                googleGLogo
+                    .frame(width: 18, height: 18)
+
+                Text(mode == .signIn ? "Sign in with Google" : "Sign up with Google")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.black)
+            }
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
+                    .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(isLoading)
+    }
+
+    @ViewBuilder
+    private var googleGLogo: some View {
+        if let image = Self.googleLogoImage {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+        } else {
+            Image(systemName: "g.circle.fill")
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(FGColor.ink)
+        }
+    }
+
+    /// The real Google "G" mark, read straight from the GoogleSignIn SDK's own
+    /// resource bundle — the same lookup `GoogleSignInButton` uses internally,
+    /// reimplemented here because that helper isn't exposed publicly. Falls
+    /// back to a plain glyph if the bundle ever can't be found.
+    private static let googleLogoImage: UIImage? = {
+        let bundleName = "GoogleSignIn_GoogleSignIn"
+        let resourceBundle: Bundle? = {
+            if let mainPath = Bundle.main.path(forResource: bundleName, ofType: "bundle") {
+                return Bundle(path: mainPath)
+            }
+            let classBundle = Bundle(for: GIDSignIn.self)
+            if let classPath = classBundle.path(forResource: bundleName, ofType: "bundle") {
+                return Bundle(path: classPath)
+            }
+            return nil
+        }()
+        guard let url = resourceBundle?.url(forResource: "google", withExtension: "png") else { return nil }
+        return UIImage(contentsOfFile: url.path)
+    }()
+
+    /// The hero entry screen's Google button — same dark pill as Apple/Email,
+    /// carrying the real Google mark, rather than Google's own fixed-size
+    /// light button which doesn't match the other two.
+    private var googleContinueButton: some View {
+        Button {
+            signInWithGoogle()
+        } label: {
+            HStack(spacing: FGSpace.s) {
+                googleGLogo
+                    .frame(width: 18, height: 18)
+                Text("Continue with Google")
+                    .font(FGFont.body.weight(.medium))
+                    .foregroundStyle(FGColor.bg)
+            }
+            .frame(maxWidth: .infinity, minHeight: 56)
+            .background(FGColor.ink)
+            .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(isLoading)
+    }
+
+    private func signInWithGoogle() {
+        guard let windowScene = (UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first { $0.activationState == .foregroundActive }
+            ?? UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first),
+              let window = windowScene.windows.first(where: { $0.isKeyWindow }),
+              var topVC = window.rootViewController else {
+            errorMessage = "Unable to find presentation window."
+            return
+        }
+        while let presented = topVC.presentedViewController {
+            topVC = presented
+        }
+
+        isLoading = true
+        errorMessage = nil
+        Task {
+            do {
+                try await authService.signInWithGoogle(presentingViewController: topVC)
+                isLoading = false
+                onAuthenticated?()
+                finishDismissal()
+            } catch {
+                isLoading = false
+                if (error as NSError).code != GIDSignInError.canceled.rawValue {
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    // MARK: - Or Divider
+
+    private var orDivider: some View {
+        HStack(spacing: FGSpace.m) {
+            Rectangle()
+                .fill(FGColor.line)
+                .frame(height: 1)
+
+            Text("or with email")
+                .font(FGFont.caption)
+                .foregroundStyle(FGColor.inkMuted)
+
+            Rectangle()
+                .fill(FGColor.line)
+                .frame(height: 1)
+        }
+        .padding(.vertical, FGSpace.xs)
+    }
+
+    // MARK: - Email & Password Section
+
+    private var emailPasswordSection: some View {
+        VStack(spacing: FGSpace.s) {
+            // Mode toggle
+            Picker("Mode", selection: $mode) {
+                Text("Sign In").tag(AuthMode.signIn)
+                Text("Create Account").tag(AuthMode.createAccount)
+            }
+            .pickerStyle(.segmented)
+            .padding(.bottom, FGSpace.xs)
+
+            emailFieldsAndSubmit
+        }
+    }
+
+    /// Just the fields and the submit action, no mode picker — what the hero
+    /// entry screen's single-purpose pushed destinations show, since the
+    /// stage already declared the mode (see `heroDestination`).
+    private var emailFieldsAndSubmit: some View {
+        VStack(spacing: FGSpace.s) {
+            // Email Field
+            TextField("Email address", text: $email)
+                .font(FGFont.body)
+                .foregroundStyle(FGColor.ink)
+                .textInputAutocapitalization(.never)
+                .keyboardType(.emailAddress)
+                .autocorrectionDisabled(true)
+                .padding(.horizontal, FGSpace.m)
+                .padding(.vertical, 14)
+                .background(FGColor.surface)
+                .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                        .strokeBorder(FGColor.line, lineWidth: 1)
+                )
+
+            // Password Field
+            SecureField("Password", text: $password)
+                .font(FGFont.body)
+                .foregroundStyle(FGColor.ink)
+                .padding(.horizontal, FGSpace.m)
+                .padding(.vertical, 14)
+                .background(FGColor.surface)
+                .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                        .strokeBorder(FGColor.line, lineWidth: 1)
+                )
+
+            // Action Button
+            Button {
+                submitEmailAuth()
+            } label: {
+                HStack {
+                    Spacer()
+                    if isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text(mode == .signIn ? "Sign In" : "Create Account")
+                            .font(FGFont.body.weight(.semibold))
+                    }
+                    Spacer()
+                }
+                .padding(.vertical, 14)
+                .foregroundStyle(Color.white)
+                .background(Color(light: 0x231F1C, dark: 0x1A1715))
+                .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(isLoading || email.trimmingCharacters(in: .whitespaces).isEmpty || password.isEmpty)
+            .opacity(email.trimmingCharacters(in: .whitespaces).isEmpty || password.isEmpty ? 0.5 : 1.0)
+
+            if mode == .signIn {
+                Button("Forgot password?") {
+                    handleForgotPassword()
+                }
+                .font(FGFont.caption)
+                .foregroundStyle(FGColor.inkMuted)
+                .padding(.top, 4)
+            }
+        }
+    }
+
+    private func submitEmailAuth() {
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanEmail.isEmpty, !password.isEmpty else { return }
+
+        isLoading = true
+        errorMessage = nil
+        successMessage = nil
+
+        Task {
+            do {
+                if mode == .signIn {
+                    try await authService.signInWithEmail(email: cleanEmail, password: password)
+                } else {
+                    try await authService.signUpWithEmail(email: cleanEmail, password: password)
+                }
+                isLoading = false
+                onAuthenticated?()
+                finishDismissal()
+            } catch {
+                isLoading = false
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func handleForgotPassword() {
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanEmail.isEmpty else {
+            errorMessage = "Please enter your email address above first."
+            return
+        }
+
+        isLoading = true
+        errorMessage = nil
+        Task {
+            do {
+                try await authService.sendPasswordReset(email: cleanEmail)
+                isLoading = false
+                successMessage = "Password reset email sent. Please check your inbox."
+            } catch {
+                isLoading = false
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - Guest Footer
+
+    private var guestFooter: some View {
+        VStack(spacing: FGSpace.s) {
+            Button(guestButtonTitle) {
+                finishDismissal()
+            }
+            .font(FGFont.label.weight(.medium))
+            .foregroundStyle(FGColor.inkMuted)
+            .padding(.top, FGSpace.s)
+
+            Text("FeelGood stores your health reflections on-device. Accounts are used for backup and syncing across devices.")
+                .font(FGFont.caption)
+                .foregroundStyle(FGColor.inkMuted.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, FGSpace.l)
+        }
+    }
+}
+
+/// The heart mark and a small cluster of the onboarding intent fruits, blooming
+/// out of a soft apricot wash. Reuses the app-icon-reading trick from
+/// `ProductIntroView.promiseHero` rather than a duplicated image asset, so this
+/// always shows the exact shipping icon.
+private struct WelcomeHeroIllustration: View {
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [FGAura.apricot.core, FGAura.apricot.mid, FGAura.apricot.edge.opacity(0)],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 130
+                    )
+                )
+                .frame(width: 240, height: 200)
+                .offset(y: 18)
+
+            VStack(spacing: -18) {
+                mark
+
+                HStack(spacing: -14) {
+                    fruit("IntentMobilityPear", size: 58, rotation: -10, offsetY: 10)
+                    fruit("IntentEnergyClementine", size: 70, rotation: 0, offsetY: -6)
+                    fruit("IntentCalmPeach", size: 60, rotation: 8, offsetY: 4)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 190)
+        .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private var mark: some View {
+        if let markImage {
+            Image(uiImage: markImage)
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
+                .frame(width: 76, height: 76)
+                .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
+                .shadow(color: FGColor.ink.opacity(0.12), radius: 10, y: 6)
+        } else {
+            RoundedRectangle(cornerRadius: 17, style: .continuous)
+                .fill(Color(light: 0x0D0C15, dark: 0x0D0C15))
+                .frame(width: 76, height: 76)
+                .overlay {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 26, weight: .medium))
+                        .foregroundStyle(FGColor.clay)
+                }
+        }
+    }
+
+    /// App icons are compiled into specially named bundle files rather than a
+    /// normal image set — see `ProductIntroView.appIconImage`, the same trick.
+    private var markImage: UIImage? {
+        guard
+            let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
+            let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
+            let files = primary["CFBundleIconFiles"] as? [String]
+        else { return nil }
+
+        return files.reversed().lazy.compactMap(UIImage.init(named:)).first
+    }
+
+    private func fruit(_ name: String, size: CGFloat, rotation: Double, offsetY: CGFloat) -> some View {
+        Image(name)
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .rotationEffect(.degrees(rotation))
+            .offset(y: offsetY)
+    }
+}
+
+#Preview {
+    AuthSheetView()
+        .environment(AuthService.shared)
+}
+
+#Preview("Welcome & sign up") {
+    AuthSheetView(
+        title: "FeelGood",
+        subtitle: "A menu, not a workout. Pick what fits today — no streaks, no scores.",
+        showsHeroIllustration: true,
+        initialMode: .createAccount,
+        guestButtonTitle: "Not now — just show me today"
+    )
+    .environment(AuthService.shared)
+}

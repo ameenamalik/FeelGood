@@ -3,8 +3,8 @@
 //  FeelGood
 //
 //  Identity, entirely optional and entirely separate from the plan: a
-//  nickname (a preference, not a fact), Sign in with Apple (off by default,
-//  never required to see a menu), subscription status, and the legal links
+//  nickname (a preference, not a fact), Authentication (Apple, Google,
+//  Email/Password), subscription status, account deletion, and the legal links
 //  Apple requires. Nothing here feeds the engine or the copy layer — see
 //  CLAUDE.md and `UserProfile`'s "Identity" section.
 //
@@ -17,8 +17,18 @@ struct ProfileHeaderView: View {
     @Bindable var profile: UserProfile
     let onManageSubscription: () -> Void
 
+    @Environment(\.dismiss) private var dismiss
     @Environment(PurchasesManager.self) private var purchasesManager
-    @State private var signInErrorMessage: String?
+    @Environment(AuthService.self) private var authService
+    @State private var errorMessage: String?
+    @State private var errorTitle = "Error"
+    @State private var isShowingAuthSheet = false
+    @State private var isShowingDeleteConfirmation = false
+    @State private var isShowingSignedOutDeleteDialog = false
+    @State private var isShowingDeletionSuccess = false
+    @State private var isShowingResetSuccess = false
+    @State private var isShowingAcknowledgements = false
+    @State private var isDeletingAccount = false
     @FocusState private var isEditingNickname: Bool
     @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
     private var isMovementRecognitionEnabled = false
@@ -31,21 +41,72 @@ struct ProfileHeaderView: View {
             if purchasesManager.isProUnlocked {
                 calendarPrivacySection
             }
+            accountDeletionSection
             legalLinks
         }
         .padding(FGSpace.page)
         .padding(.bottom, FGSpace.s)
-        .task { await refreshAppleCredentialState() }
+        .sheet(isPresented: $isShowingAuthSheet) {
+            AuthSheetView()
+        }
+        .sheet(isPresented: $isShowingAcknowledgements) {
+            NavigationStack { AcknowledgementsView() }
+        }
         .alert(
-            "Couldn't sign in",
+            errorTitle,
             isPresented: Binding(
-                get: { signInErrorMessage != nil },
-                set: { if !$0 { signInErrorMessage = nil } }
+                get: { errorMessage != nil },
+                set: { if !$0 { errorMessage = nil } }
             )
         ) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(signInErrorMessage ?? "")
+            Text(errorMessage ?? "")
+        }
+        .confirmationDialog(
+            "Delete Account?",
+            isPresented: $isShowingDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Account", role: .destructive) {
+                handleDeleteAccount()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently delete your account, synced preferences, and cloud data. This action cannot be undone.")
+        }
+        .confirmationDialog(
+            "Delete Account",
+            isPresented: $isShowingSignedOutDeleteDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Sign In to Delete Account") {
+                isShowingAuthSheet = true
+            }
+            Button("Reset Local Data", role: .destructive) {
+                handleResetLocalData()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You are not currently signed in. If you created an account with Apple, Google, or email, please sign in first to delete your cloud account. You can also reset all local data on this device.")
+        }
+        .alert(
+            "Account Deleted",
+            isPresented: $isShowingDeletionSuccess
+        ) {
+            Button("OK") {
+                dismiss()
+            }
+        } message: {
+            Text("Your account and cloud data have been permanently deleted.")
+        }
+        .alert(
+            "Local Data Reset",
+            isPresented: $isShowingResetSuccess
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your local profile preferences on this device have been cleared.")
         }
     }
 
@@ -69,64 +130,112 @@ struct ProfileHeaderView: View {
 
     @ViewBuilder
     private var identitySection: some View {
-        if profile.appleUserID != nil {
-            HStack(spacing: FGSpace.s) {
-                Image(systemName: "person.crop.circle.fill")
-                    .foregroundStyle(FGColor.inkMuted)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Signed in with Apple")
-                        .font(FGFont.body)
-                        .foregroundStyle(FGColor.ink)
-                        .postHogMask()
-                    Button("Sign out", action: signOut)
-                        .font(FGFont.caption)
+        if let user = authService.currentUser {
+            VStack(alignment: .leading, spacing: FGSpace.s) {
+                HStack(spacing: FGSpace.s) {
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(FGColor.sageDeep)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(user.email ?? user.displayName ?? "Signed In")
+                            .font(FGFont.body.weight(.medium))
+                            .foregroundStyle(FGColor.ink)
+                            .postHogMask()
+
+                        Text("Signed in with \(user.providerDisplay)")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+
+                    Spacer()
+                }
+
+                Button("Sign out") {
+                    handleSignOut()
+                }
+                .font(FGFont.caption.weight(.medium))
+                .foregroundStyle(FGColor.inkMuted)
+                .padding(.leading, 32)
+            }
+            .padding(FGSpace.m)
+            .background(
+                RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                    .fill(FGColor.surface)
+            )
+        } else {
+            Button {
+                isShowingAuthSheet = true
+            } label: {
+                HStack(spacing: FGSpace.s) {
+                    Image(systemName: "person.crop.circle.badge.plus")
+                        .foregroundStyle(FGColor.goldDeep)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Sign in or create account")
+                            .font(FGFont.body.weight(.medium))
+                            .foregroundStyle(FGColor.ink)
+
+                        Text("Save your routines and keep your history synced")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
                         .foregroundStyle(FGColor.inkMuted)
                 }
-                Spacer()
+                .padding(FGSpace.m)
+                .background(
+                    RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                        .fill(FGColor.surface)
+                )
             }
-        } else {
-            SignInWithAppleButton(.signIn, onRequest: configure, onCompletion: handle)
-                .signInWithAppleButtonStyle(.black)
-                .frame(height: FGSize.minTouchTarget)
-                .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+            .buttonStyle(.plain)
+            .accessibilityLabel("Sign in or create account")
+            .accessibilityHint("Save your routines across devices with Apple, Google, or email")
         }
     }
 
-    /// No scopes requested. Sign in with Apple is here so a subscription
-    /// survives a reinstall or a new phone, and the app-scoped user id alone
-    /// does that. Name and email were requested before, stored, and sent to
-    /// PostHog — while the privacy policy said in five places that we collect
-    /// neither. Asking for identity the product never uses is the part that
-    /// was wrong, not the policy.
-    private func configure(_ request: ASAuthorizationAppleIDRequest) {
-        request.requestedScopes = []
-    }
-
-    private func handle(_ result: Result<ASAuthorization, Error>) {
-        switch result {
-        case .success(let authorization):
-            guard let credential = AppleCredential(authorization) else { return }
-            profile.applyAppleSignIn(userID: credential.userID)
-            Task { await purchasesManager.logIn(appUserID: credential.userID) }
-
-        case .failure(let error):
-            // Tapping "Cancel" on the system sheet is not something to alert
-            // about — it's the same as never having tapped the button.
-            if (error as? ASAuthorizationError)?.code == .canceled { return }
-            signInErrorMessage = error.localizedDescription
+    private func handleSignOut() {
+        do {
+            try authService.signOut()
+            profile.signOutOfApple()
+            resetAnalyticsIdentity()
+        } catch {
+            errorTitle = "Couldn't sign out"
+            errorMessage = error.localizedDescription
         }
     }
 
-    private func signOut() {
+    private func handleDeleteAccount() {
+        isDeletingAccount = true
+        Task {
+            do {
+                try await authService.deleteAccount()
+                profile.signOutOfApple()
+                resetAnalyticsIdentity()
+                isDeletingAccount = false
+                isShowingDeletionSuccess = true
+            } catch {
+                isDeletingAccount = false
+                errorTitle = "Couldn't delete account"
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func handleResetLocalData() {
+        profile.nickname = ""
         profile.signOutOfApple()
         resetAnalyticsIdentity()
-        Task { await purchasesManager.logOut() }
+        isShowingResetSuccess = true
     }
 
     /// Analytics is never told who signed in. PostHog keeps its own
-    /// per-install distinct id, which is what the privacy policy describes;
-    /// calling `identify` with the Apple user id would tie every event to a
-    /// stable account and make that description false again.
+    /// per-install distinct id, which is what the privacy policy describes.
     private func resetAnalyticsIdentity() {
         guard isPostHogConfigured else { return }
         PostHogSDK.shared.reset()
@@ -138,22 +247,6 @@ struct ProfileHeaderView: View {
             return false
         }
         return !projectToken.isEmpty && !host.isEmpty
-    }
-
-    /// Apple ID sign-in can be revoked from the user's device settings
-    /// without the app ever hearing about it. A stale "signed in" row is
-    /// worse than a quiet local sign-out the next time You is opened.
-    private func refreshAppleCredentialState() async {
-        guard let userID = profile.appleUserID else { return }
-        let state = await withCheckedContinuation { continuation in
-            ASAuthorizationAppleIDProvider().getCredentialState(forUserID: userID) { state, _ in
-                continuation.resume(returning: state)
-            }
-        }
-        if state == .revoked || state == .notFound {
-            profile.signOutOfApple()
-            resetAnalyticsIdentity()
-        }
     }
 
     // MARK: Subscription
@@ -205,12 +298,73 @@ struct ProfileHeaderView: View {
         .postHogMask()
     }
 
+    // MARK: Account Deletion & Data
+
+    private var accountDeletionSection: some View {
+        VStack(alignment: .leading, spacing: FGSpace.xs) {
+            Text("Account & Data")
+                .font(FGFont.caption.weight(.semibold))
+                .foregroundStyle(FGColor.inkMuted)
+                .textCase(.uppercase)
+                .padding(.horizontal, FGSpace.xs)
+
+            Button(role: .destructive) {
+                if authService.currentUser != nil {
+                    isShowingDeleteConfirmation = true
+                } else {
+                    isShowingSignedOutDeleteDialog = true
+                }
+            } label: {
+                HStack(spacing: FGSpace.s) {
+                    Image(systemName: "trash")
+                        .font(.body)
+                        .foregroundStyle(FGColor.clayDeep)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Delete account")
+                            .font(FGFont.body.weight(.medium))
+                            .foregroundStyle(FGColor.clayDeep)
+
+                        Text(authService.currentUser != nil
+                            ? "Permanently delete your account and cloud data"
+                            : "Sign in to delete your cloud account, or reset local data")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+
+                    Spacer()
+
+                    if isDeletingAccount {
+                        ProgressView()
+                            .tint(FGColor.clayDeep)
+                    } else {
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+                }
+                .padding(FGSpace.m)
+                .background(
+                    RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                        .fill(FGColor.surface)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(isDeletingAccount)
+            .accessibilityLabel("Delete account")
+            .accessibilityHint(authService.currentUser != nil
+                ? "Permanently deletes your account and cloud data"
+                : "Sign in to delete cloud account or reset local data")
+        }
+    }
+
     // MARK: Legal
 
     private var legalLinks: some View {
         HStack(spacing: FGSpace.m) {
             Link("Terms of Use", destination: LegalLinks.termsOfUse)
             Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
+            Button("Acknowledgements") { isShowingAcknowledgements = true }
         }
         .font(FGFont.caption)
         .foregroundStyle(FGColor.inkMuted)
@@ -220,4 +374,6 @@ struct ProfileHeaderView: View {
 #Preview("Free, signed out") {
     ProfileHeaderView(profile: UserProfile(answers: ProfileAnswers(), now: .now)) {}
         .environment(PurchasesManager.shared)
+        .environment(AuthService.shared)
 }
+

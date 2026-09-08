@@ -72,12 +72,15 @@ nonisolated extension Session {
     static func own(
         id: String,
         title: String,
-        activity: Activity,
+        activity: Activity = .stretching,
         durationMin: Int,
-        intensity: Int
+        intensity: Int,
+        course: Course? = nil,
+        equipment: [Equipment]? = nil
     ) -> Session {
         let qualities = activity.typicalQualities
         let intensity = min(max(intensity, 1), 5)
+        let finalCourse = course ?? Self.course(for: durationMin)
         return Session(
             id: id,
             title: title,
@@ -87,7 +90,7 @@ nonisolated extension Session {
             durationMin: max(1, durationMin),
             intensity: intensity,
             energyFit: energyFit(for: intensity),
-            equipment: Array(activity.impliedEquipment.sorted { $0.rawValue < $1.rawValue }),
+            equipment: equipment ?? Array(activity.impliedEquipment.sorted { $0.rawValue < $1.rawValue }),
             places: Array(activity.impliedPlaces.sorted { $0.rawValue < $1.rawValue }),
             bodyFocus: [.full],
             // The same safety rule the authored catalog holds to: anything
@@ -95,7 +98,7 @@ nonisolated extension Session {
             // postpartum or their pelvic floor. It filters; it never explains.
             contraindications: qualities.contains(.impact) ? [.pregnancy, .postpartum, .pelvicFloor] : [],
             intents: intents(for: qualities),
-            course: course(for: durationMin),
+            course: finalCourse,
             source: .authored(steps: [])
         )
     }
