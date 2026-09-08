@@ -53,10 +53,11 @@ struct SessionDetailView: View {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     heading
 
-                    // Visual pills: equipment, duration, target area, impact level.
-                    // e.g. [ Mat ] [ 30 min ] [ Spine & Hips ] [ Low Impact ]
+                    // Equipment, length, impact — not target area, which is
+                    // already the title's own words. A pill that repeats the
+                    // heading back isn't information, it's noise.
                     WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
-                        ForEach(session.chips, id: \.self) { FGChip(text: $0) }
+                        ForEach(detailChips, id: \.self) { FGChip(text: $0) }
                     }
 
                     if !session.source.steps.isEmpty {
@@ -174,6 +175,19 @@ struct SessionDetailView: View {
         model.progress(for: session)
     }
 
+    /// `session.chips` minus target area, which is already spelled out in the
+    /// title above — showing it twice is the "same thing" this screen used
+    /// to repeat.
+    private var detailChips: [String] {
+        if session.isOwn {
+            return [session.durationLabel]
+        }
+        var pills = session.equipment.compactMap(\.label)
+        pills.append(session.durationLabel)
+        pills.append(session.impactLabel)
+        return pills
+    }
+
     private var workoutProperties: [String: Any] {
         [
             "session_id": session.id,
@@ -234,15 +248,17 @@ struct SessionDetailView: View {
         .fgAnimation(FGMotion.gentle, value: isShowingSteps)
     }
 
+    /// Tinted to the course's own accent, not a fixed colour — so this
+    /// screen never argues with the tag it just walked in from.
     private func firstUpSection(_ firstStep: Step) -> some View {
         HStack(alignment: .center, spacing: FGSpace.m) {
             ZStack {
                 Circle()
-                    .fill(Color(light: 0xE5EFE0, dark: 0x24301E))
+                    .fill(course.tagFill)
                     .frame(width: 40, height: 40)
                 Image(systemName: "record.circle")
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(FGColor.sageDeep)
+                    .foregroundStyle(course.tagText)
             }
             .accessibilityHidden(true)
 
@@ -250,27 +266,15 @@ struct SessionDetailView: View {
                 Text("FIRST UP")
                     .font(FGFont.label.weight(.bold))
                     .tracking(0.5)
-                    .foregroundStyle(FGColor.clayDeep)
+                    .foregroundStyle(course.tagText)
 
-                Text(firstUpDescription(for: firstStep))
+                Text("\(stepCost(firstStep)) \(firstStep.name.lowercased())")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(.vertical, FGSpace.xs)
-    }
-
-    private func firstUpDescription(for step: Step) -> String {
-        let cost = stepCost(step)
-        let name = step.name.lowercased()
-        let cue = step.cue.trimmingCharacters(in: .whitespacesAndNewlines)
-        if cue.isEmpty {
-            return "\(cost) \(name)"
-        }
-        let firstClause = cue.components(separatedBy: CharacterSet(charactersIn: ".!?;")).first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? cue
-        let formattedCue = firstClause.prefix(1).lowercased() + firstClause.dropFirst()
-        return "\(cost) \(name), \(formattedCue)"
     }
 
     private func stepCost(_ step: Step) -> String {

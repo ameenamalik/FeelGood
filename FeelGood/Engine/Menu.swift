@@ -62,6 +62,58 @@ nonisolated struct Menu: Hashable, Sendable {
         var seen: Set<ReasonCode> = []
         return items.flatMap(\.reasons).filter { seen.insert($0).inserted }
     }
+
+    /// Returns a copy of this menu with the given course slot replaced.
+    func replacing(course: Course, with session: Session) -> Menu {
+        let item = MenuItem(
+            session: session,
+            course: course,
+            reasons: [],
+            reasonText: session.isOwn ? "Your custom routine" : MenuCopy.fallbackLine(for: session)
+        )
+        return replacing(course: course, withItem: item)
+    }
+
+    /// Returns a copy of this menu with the given course slot replaced with an optional item.
+    func replacing(course: Course, withItem item: MenuItem?) -> Menu {
+        var newAppetizer = appetizer
+        var newMain = main
+        var newSides = sides
+        var newDessert = dessert
+        var newSpecial = special
+
+        switch course {
+        case .appetizer:
+            newAppetizer = item
+        case .main:
+            newMain = item
+        case .side:
+            if let item {
+                if !newSides.isEmpty {
+                    newSides[0] = item
+                } else {
+                    newSides = [item]
+                }
+            } else {
+                newSides = []
+            }
+        case .dessert:
+            newDessert = item
+        case .special:
+            newSpecial = item
+        }
+
+        return Menu(
+            dayStart: dayStart,
+            appetizer: newAppetizer,
+            main: newMain,
+            sides: newSides,
+            dessert: newDessert,
+            special: newSpecial,
+            headline: headline,
+            assumedCheckIn: assumedCheckIn
+        )
+    }
 }
 
 // MARK: - Template copy

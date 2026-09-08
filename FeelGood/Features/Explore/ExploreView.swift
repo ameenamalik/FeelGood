@@ -182,17 +182,12 @@ struct ExploreView: View {
                 .foregroundStyle(FGColor.inkMuted)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color(light: 0xEDE9DF, dark: 0x2A2724))
+                .background(Color(light: 0xF3EEE7, dark: 0x2A2724))
                 .clipShape(Capsule())
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(FGColor.bg)
-        .overlay(
-            Divider()
-                .opacity(0.4),
-            alignment: .bottom
-        )
     }
 
     // MARK: - Initial Curated Conversation State
@@ -200,19 +195,20 @@ struct ExploreView: View {
     private var initialCuratedThread: some View {
         VStack(alignment: .leading, spacing: 18) {
             // Dynamic Welcome from Assistant
-            if let main = model.menu.main {
+            let firstItem = model.menu.items.first ?? model.menu.main
+            if let firstItem {
                 assistantTextBubble(text: "Here is your plan for today (\(activeTimeLabel)). How is your body feeling?")
 
                 recommendationCard(
                     recommendation: StructuredRecommendation(
-                        sessionID: main.session.id,
-                        title: main.session.title,
-                        subtitle: main.session.subtitle,
-                        durationMin: main.session.durationMin,
-                        intensity: main.session.intensity <= 2 ? "gentle" : "moderate",
-                        course: main.session.course.rawValue,
+                        sessionID: firstItem.session.id,
+                        title: firstItem.session.title,
+                        subtitle: firstItem.session.subtitle,
+                        durationMin: firstItem.session.durationMin,
+                        intensity: firstItem.session.intensity <= 2 ? "gentle" : "moderate",
+                        course: firstItem.session.course.rawValue,
                         reason: "Curated for your daily routine.",
-                        tags: main.session.chips
+                        tags: [firstItem.session.course.rawValue.capitalized, "\(firstItem.session.durationMin) min"] + firstItem.session.chips
                     ),
                     messageID: nil
                 )
@@ -256,7 +252,7 @@ struct ExploreView: View {
                 .lineSpacing(4)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                .background(Color(light: 0xF2EFE9, dark: 0x242220))
+                .background(Color(light: 0xF3EEE7, dark: 0x262320))
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
 
             Spacer(minLength: 44)
@@ -273,7 +269,7 @@ struct ExploreView: View {
                 .lineSpacing(4)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .background(Color(light: 0x221E1C, dark: 0x36302C))
+                .background(Color(light: 0x26231F, dark: 0x36322E))
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
@@ -297,7 +293,7 @@ struct ExploreView: View {
                         .foregroundStyle(palette.tagText)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.65))
+                        .background(Color.white.opacity(0.68))
                         .clipShape(Capsule())
                 }
             }
@@ -337,7 +333,7 @@ struct ExploreView: View {
                 }
                 .foregroundStyle(Color.white)
                 .padding(.vertical, 14)
-                .background(Color(light: 0x231F1C, dark: 0x1A1715))
+                .background(Color(light: 0x2C211C, dark: 0x1A1715))
                 .clipShape(Capsule())
             }
             .buttonStyle(.plain)
@@ -401,49 +397,49 @@ struct ExploreView: View {
         case "appetizer":
             return CardPalette(
                 gradient: LinearGradient(
-                    colors: [Color(red: 0.99, green: 0.89, blue: 0.84), Color(red: 0.98, green: 0.77, blue: 0.75)],
+                    colors: [Color(light: 0xFEE4D3, dark: 0x3D261C), Color(light: 0xF5B4AB, dark: 0x4A2222)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
-                titleText: Color(red: 0.22, green: 0.12, blue: 0.08),
-                subtitleText: Color(red: 0.38, green: 0.24, blue: 0.20),
-                tagText: Color(red: 0.22, green: 0.12, blue: 0.08)
+                titleText: Color(light: 0x241C15, dark: 0xF7F3EC),
+                subtitleText: Color(light: 0x4A3B32, dark: 0xD8CCC0),
+                tagText: Color(light: 0x241C15, dark: 0xF7F3EC)
             )
 
         case "side", "sides":
             return CardPalette(
                 gradient: LinearGradient(
-                    colors: [Color(red: 0.90, green: 0.94, blue: 0.88), Color(red: 0.78, green: 0.86, blue: 0.75)],
+                    colors: [Color(light: 0xE8EEE4, dark: 0x202B1D), Color(light: 0xACC5AA, dark: 0x2E422C)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
-                titleText: Color(red: 0.12, green: 0.22, blue: 0.12),
-                subtitleText: Color(red: 0.24, green: 0.36, blue: 0.24),
-                tagText: Color(red: 0.12, green: 0.22, blue: 0.12)
+                titleText: Color(light: 0x1B2618, dark: 0xF7F3EC),
+                subtitleText: Color(light: 0x374A33, dark: 0xD0DCD0),
+                tagText: Color(light: 0x1B2618, dark: 0xF7F3EC)
             )
 
         case "dessert":
             return CardPalette(
                 gradient: LinearGradient(
-                    colors: [Color(red: 0.94, green: 0.88, blue: 0.94), Color(red: 0.86, green: 0.76, blue: 0.88)],
+                    colors: [Color(light: 0xFCEEF3, dark: 0x381C26), Color(light: 0xE6B2BE, dark: 0x482330)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
-                titleText: Color(red: 0.24, green: 0.12, blue: 0.24),
-                subtitleText: Color(red: 0.38, green: 0.22, blue: 0.38),
-                tagText: Color(red: 0.24, green: 0.12, blue: 0.24)
+                titleText: Color(light: 0x2B1520, dark: 0xF7F3EC),
+                subtitleText: Color(light: 0x4E2F3E, dark: 0xDCBFC9),
+                tagText: Color(light: 0x2B1520, dark: 0xF7F3EC)
             )
 
         default: // Main
             return CardPalette(
                 gradient: LinearGradient(
-                    colors: [Color(red: 0.98, green: 0.93, blue: 0.86), Color(red: 0.94, green: 0.85, blue: 0.72)],
+                    colors: [Color(light: 0xFDF1E2, dark: 0x3A2616), Color(light: 0xF3C89B, dark: 0x4A2F1B)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
-                titleText: Color(red: 0.24, green: 0.18, blue: 0.10),
-                subtitleText: Color(red: 0.40, green: 0.30, blue: 0.18),
-                tagText: Color(red: 0.24, green: 0.18, blue: 0.10)
+                titleText: Color(light: 0x281B0E, dark: 0xF7F3EC),
+                subtitleText: Color(light: 0x4A3622, dark: 0xDBCAB8),
+                tagText: Color(light: 0x281B0E, dark: 0xF7F3EC)
             )
         }
     }
@@ -461,7 +457,7 @@ struct ExploreView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
-        .background(Color(light: 0xF2EFE9, dark: 0x242220))
+        .background(Color(light: 0xF3EEE7, dark: 0x262320))
         .clipShape(Capsule())
     }
 
@@ -487,7 +483,7 @@ struct ExploreView: View {
                         .foregroundStyle(FGColor.ink)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 9)
-                        .background(FGColor.surface)
+                        .background(Color(light: 0xFFFFFF, dark: 0x1C1712))
                         .clipShape(Capsule())
                         .overlay(
                             Capsule()
@@ -527,7 +523,7 @@ struct ExploreView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
-                .background(Color(light: 0xEEEBE4, dark: 0x262320))
+                .background(Color(light: 0xF1ECE5, dark: 0x25221F))
                 .clipShape(Capsule())
 
             Button {
@@ -535,11 +531,11 @@ struct ExploreView: View {
             } label: {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Color(red: 0.22, green: 0.12, blue: 0.08))
+                    .foregroundStyle(Color(light: 0x37241D, dark: 0xFCEFEA))
                     .frame(width: 46, height: 46)
                     .background(
                         LinearGradient(
-                            colors: [Color(red: 0.99, green: 0.85, blue: 0.78), Color(red: 0.96, green: 0.72, blue: 0.68)],
+                            colors: [Color(light: 0xFCCAB5, dark: 0x6E4032), Color(light: 0xF5B2A3, dark: 0x5C2E24)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )

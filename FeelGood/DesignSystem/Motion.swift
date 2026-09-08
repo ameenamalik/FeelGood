@@ -14,6 +14,10 @@ nonisolated enum FGMotion {
     /// The swap exchange.
     static let swap = Animation.spring(response: 0.42, dampingFraction: 0.82)
     static let gentle = Animation.easeInOut(duration: 0.28)
+    /// A held step settling into its final-stretch warmth. Slower than
+    /// `gentle` on purpose — this is read peripherally over several seconds,
+    /// not watched.
+    static let settleWarm = Animation.easeInOut(duration: 1.1)
 
     /// Staggered delay for the nth menu item.
     static func stagger(_ index: Int) -> Double { Double(index) * 0.06 }

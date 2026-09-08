@@ -55,6 +55,9 @@ final class TodayModel {
     /// Somebody's own kept workouts, scored alongside the authored catalog.
     private(set) var ownSessions: [Session]
 
+    /// Overrides for courses on Today's menu with a user's custom choice.
+    private(set) var todayCustomOverrides: [Course: Session] = [:]
+
     init(
         store: any ContentProviding,
         profile: PlanProfile,
@@ -468,6 +471,7 @@ final class TodayModel {
     func forget(_ session: Session, now: Date = Date()) {
         log.forget(session.id)
         ownSessions = log.kept()
+        todayCustomOverrides = todayCustomOverrides.filter { $0.value.id != session.id }
         rebuildEngine()
         // Today's menu may have been built on it, so the day is rebuilt rather
         // than left pointing at something that no longer exists.
@@ -477,7 +481,118 @@ final class TodayModel {
             publishSnapshot(now: now)
             requestCopyUpgrade(now: now)
         }
+
+        if let userId = AuthService.shared.currentUser?.uid {
+            Task {
+                try? await FirestoreService.shared.deleteCustomWorkout(userId: userId, workoutId: session.id)
+            }
+        }
     }
+
+    /// Adds a new custom routine created by the user, keeps it in persistence,
+    /// and optionally sets it as an active override on Today's menu.
+    @discardableResult
+    func addCustomRoutine(
+        title: String,
+        activity: Activity = .stretching,
+        durationMin: Int,
+        intensity: Int = 3,
+        course: Course,
+        addToToday: Bool,
+        now: Date = Date()
+    ) -> Session {
+        let session = log.keep(
+            title: title,
+            activity: activity,
+            durationMin: durationMin,
+            intensity: intensity,
+            course: course,
+            now: now
+        )
+        ownSessions = log.kept()
+        rebuildEngine()
+
+        if addToToday {
+            setTodayCourseOverride(session: session, for: course, now: now)
+        }
+
+        if let userId = AuthService.shared.currentUser?.uid {
+            Task {
+                try? await FirestoreService.shared.saveCustomWorkout(
+                    id: session.id,
+                    userId: userId,
+                    title: title,
+                    durationMin: durationMin,
+                    intensity: intensity,
+                    course: course.rawValue,
+                    activity: activity.rawValue
+                )
+            }
+        }
+
+        return session
+    }
+
+    /// Sets a session as the explicit override for a course slot on Today's menu.
+    func setTodayCourseOverride(session: Session, for course: Course, now: Date = Date()) {
+        todayCustomOverrides[course] = session
+        menu = menu.replacing(course: course, with: session)
+        log.save(menu, generatedAt: now)
+        publishSnapshot(now: now)
+    }
+
+    /// Removes a custom override for a course slot on Today's menu, restoring the engine's suggested pick.
+    func removeTodayCourseOverride(for course: Course, now: Date = Date()) {
+        todayCustomOverrides.removeValue(forKey: course)
+        let freshMenu = engine.makeMenu(input(now: now))
+        if let originalItem = freshMenu.items.first(where: { $0.course == course }) {
+            menu = menu.replacing(course: course, withItem: originalItem)
+        }
+        log.save(menu, generatedAt: now)
+        publishSnapshot(now: now)
+    }
+
+    /// Checks whether a course slot on Today's menu is currently overridden with a custom routine.
+    func isCourseOverridden(_ course: Course) -> Bool {
+        todayCustomOverrides[course] != nil
+    }
+
+    /// Fetches all custom routines created by the user for a given course (or all if nil).
+    func customRoutines(for course: Course? = nil) -> [Session] {
+        if let course {
+            return ownSessions.filter { $0.course == course }
+        }
+        return ownSessions
+    }
+
+    /// Syncs any custom routines stored in Firestore into local persistence
+    func syncFromFirestore() {
+        guard AuthService.shared.currentUser != nil else { return }
+        let remote = FirestoreService.shared.customWorkouts
+        guard !remote.isEmpty else { return }
+
+        var didImport = false
+        for workout in remote {
+            if !ownSessions.contains(where: { $0.id == workout.id || $0.title == workout.title }) {
+                let act = workout.activity.flatMap(Activity.init(rawValue:)) ?? .yoga
+                let course = workout.course.flatMap(Course.init(rawValue:))
+                log.keep(
+                    title: workout.title,
+                    activity: act,
+                    durationMin: workout.durationMin,
+                    intensity: workout.intensity,
+                    course: course,
+                    now: workout.createdAt
+                )
+                didImport = true
+            }
+        }
+        if didImport {
+            ownSessions = log.kept()
+            rebuildEngine()
+        }
+    }
+
 
     /// The profile changed on the profile screen. The menu follows the same
     /// day, keeping today's check-in — changing your mind is not a reset.

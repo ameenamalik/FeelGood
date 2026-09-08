@@ -52,6 +52,8 @@ public struct FirestoreCustomWorkout: Codable, Sendable, Identifiable {
     public var title: String
     public var durationMin: Int
     public var intensity: Int
+    public var course: String?
+    public var activity: String?
     public var createdAt: Date
 
     public init(
@@ -60,6 +62,8 @@ public struct FirestoreCustomWorkout: Codable, Sendable, Identifiable {
         title: String,
         durationMin: Int,
         intensity: Int,
+        course: String? = nil,
+        activity: String? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
@@ -67,6 +71,8 @@ public struct FirestoreCustomWorkout: Codable, Sendable, Identifiable {
         self.title = title
         self.durationMin = durationMin
         self.intensity = intensity
+        self.course = course
+        self.activity = activity
         self.createdAt = createdAt
     }
 }
@@ -168,17 +174,23 @@ public final class FirestoreService: Sendable {
     // MARK: - Custom Workouts Persistence
 
     public func saveCustomWorkout(
+        id: String? = nil,
         userId: String,
         title: String,
         durationMin: Int,
-        intensity: Int
+        intensity: Int,
+        course: String? = nil,
+        activity: String? = nil
     ) async throws {
         guard let db else { return }
         let workout = FirestoreCustomWorkout(
+            id: id ?? UUID().uuidString,
             userId: userId,
             title: title,
             durationMin: durationMin,
-            intensity: intensity
+            intensity: intensity,
+            course: course,
+            activity: activity
         )
         try db.collection("users")
             .document(userId)
@@ -203,6 +215,14 @@ public final class FirestoreService: Sendable {
         try await db.collection("users")
             .document(userId)
             .setData(data, merge: true)
+    }
+
+    // MARK: - Account Deletion
+
+    public func deleteUserData(userId: String) async throws {
+        stopListening()
+        guard let db else { return }
+        try await db.collection("users").document(userId).delete()
     }
 
     isolated deinit {

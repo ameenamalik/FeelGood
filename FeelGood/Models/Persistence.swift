@@ -415,21 +415,32 @@ final class CustomSession {
     var durationMin: Int
     /// 1...5, from three words on the log sheet rather than a number.
     var intensity: Int
+    var courseRaw: String? = nil
     var createdAt: Date
 
-    init(id: String = "own-\(UUID().uuidString)", title: String, activity: Activity, durationMin: Int, intensity: Int, createdAt: Date) {
+    init(
+        id: String = "own-\(UUID().uuidString)",
+        title: String,
+        activity: Activity,
+        durationMin: Int,
+        intensity: Int,
+        course: Course? = nil,
+        createdAt: Date
+    ) {
         self.id = id
         self.title = title
         activityRaw = activity.rawValue
         self.durationMin = durationMin
         self.intensity = intensity
+        self.courseRaw = course?.rawValue
         self.createdAt = createdAt
     }
 
     var activity: Activity { Activity(rawValue: activityRaw) ?? .strength }
+    var course: Course? { courseRaw.flatMap(Course.init(rawValue:)) }
 
     var session: Session {
-        .own(id: id, title: title, activity: activity, durationMin: durationMin, intensity: intensity)
+        .own(id: id, title: title, activity: activity, durationMin: durationMin, intensity: intensity, course: course)
     }
 }
 
