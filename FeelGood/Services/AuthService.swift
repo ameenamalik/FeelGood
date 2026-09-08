@@ -19,8 +19,9 @@ import SwiftUI
 
 // MARK: - AuthUser Model
 
-nonisolated public struct AuthUser: Equatable, Sendable {
+nonisolated public struct AuthUser: Equatable, Sendable, Identifiable {
     public let uid: String
+    public var id: String { uid }
     public let email: String?
     public let displayName: String?
     public let providerID: String
@@ -192,6 +193,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         let mapped = Self.mapUser(user)
         self.currentUser = mapped
         Task { @MainActor in
+            FirestoreService.shared.startListening(for: mapped.uid)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         }
     }
@@ -360,6 +362,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         }
         self.currentUser = nil
         Task { @MainActor in
+            FirestoreService.shared.stopListening()
             await PurchasesManager.shared.logOut()
         }
     }
@@ -367,15 +370,24 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
     public func deleteAccount() async throws {
         guard Self.isFirebaseConfigured else {
             self.currentUser = nil
-            await PurchasesManager.shared.logOut()
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
             return
         }
 
         guard let user = Auth.auth().currentUser else { return }
+        let uid = user.uid
         do {
+            try? await FirestoreService.shared.deleteUserData(userId: uid)
             try await user.delete()
+            GIDSignIn.sharedInstance.signOut()
             self.currentUser = nil
-            await PurchasesManager.shared.logOut()
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
         } catch {
             throw AuthError.mapFirebaseError(error)
         }

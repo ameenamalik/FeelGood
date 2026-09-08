@@ -310,15 +310,38 @@ nonisolated extension Course {
     /// point: 6.4:1 (clay), 8.2:1 (gold/appetizer), 5.6:1 (rose/dessert),
     /// 7.7:1 (sage/side).
     var accentGradient: LinearGradient {
-        let dark: Color
         switch self {
-        case .main: dark = Color(light: 0xDD8D5F, dark: 0xDD8D5F)
-        case .appetizer: dark = Color(light: 0xDAB04E, dark: 0xDAB04E)
-        case .side: dark = Color(light: 0x8DBD6B, dark: 0x8DBD6B)
-        case .dessert: dark = Color(light: 0xD87989, dark: 0xD87989)
-        case .special: dark = FGColor.ink
+        case .appetizer:
+            return LinearGradient(
+                colors: [Color(light: 0xFEE4D3, dark: 0x3D261C), Color(light: 0xF5B4AB, dark: 0x4A2222)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .side:
+            return LinearGradient(
+                colors: [Color(light: 0xE8EEE4, dark: 0x202B1D), Color(light: 0xACC5AA, dark: 0x2E422C)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .main:
+            return LinearGradient(
+                colors: [Color(light: 0xFDF1E2, dark: 0x3A2616), Color(light: 0xF3C89B, dark: 0x4A2F1B)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .dessert:
+            return LinearGradient(
+                colors: [Color(light: 0xFCEEF3, dark: 0x381C26), Color(light: 0xE6B2BE, dark: 0x482330)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .special:
+            return LinearGradient(
+                colors: [Color(light: 0xEDE8DF, dark: 0x262320), Color(light: 0xD8D2C7, dark: 0x36322E)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         }
-        return LinearGradient(colors: [accent, dark], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
     /// The course tag as a soft pill rather than a saturated capsule.

@@ -16,6 +16,7 @@ struct PlayerView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var index = 0
     @State private var remaining = 0
     /// Which exercise `remaining` currently belongs to. A resumed exercise
@@ -26,6 +27,19 @@ struct PlayerView: View {
     /// Sets already finished in this step. `setsDone + 1` is the set someone
     /// is standing in the middle of.
     @State private var setsDone = 0
+    /// True once a timed hold has entered its last stretch (see
+    /// `finalStretchThreshold`). Drives a slow warmth over the whole screen —
+    /// never a shrinking shape, never a percentage.
+    @State private var isInFinalStretch = false
+    /// A held step gets exactly one flash marking the moment it enters the
+    /// final stretch. This is what makes the warmth that follows legible —
+    /// without it, the held colour shift alone is too subtle to notice.
+    @State private var hasFiredFinalStretchFlash = false
+    @State private var flashOpacity = 0.0
+    /// A separate, cooler pulse marking that a step has begun — every step,
+    /// counted or timed. Deliberately a different hue from the ending flash
+    /// (sage, not gold) so the two moments never read as the same event.
+    @State private var stepStartOpacity = 0.0
     /// The counter is the whole tap target, and it grows with Dynamic Type —
     /// this is used mid-movement, often without looking straight at it.
     @ScaledMetric(relativeTo: .largeTitle) private var counterHeight = 180.0
@@ -56,11 +70,64 @@ struct PlayerView: View {
         _timerIndex = State(initialValue: validIndex)
         _repsDone = State(initialValue: max(progress?.repsDone ?? 0, 0))
         _setsDone = State(initialValue: max(progress?.setsDone ?? 0, 0))
+
+        // Resuming already inside the final stretch shows the settled warmth
+        // straight away rather than flashing again — the flash marks entering
+        // the moment, and a resume isn't that.
+        let resumedIntoFinalStretch = Self.finalStretchThreshold(for: fullDuration)
+            .map { initialRemaining <= $0 } ?? false
+        _isInFinalStretch = State(initialValue: resumedIntoFinalStretch)
+        _hasFiredFinalStretchFlash = State(initialValue: resumedIntoFinalStretch)
+    }
+
+    /// The last-fifth of a held step, capped at 10 seconds so a long hold's
+    /// ending still reads as final rather than lasting a full minute. `nil`
+    /// under 20 seconds — too short for a flash and a settled hold to read as
+    /// two different things.
+    private static func finalStretchThreshold(for duration: Int) -> Int? {
+        guard duration >= 20 else { return nil }
+        return min(duration / 5, 10)
     }
 
     var body: some View {
         ZStack {
             FGColor.bg.ignoresSafeArea()
+
+            if !isDone {
+                // A cool, quick pulse marking that this step has begun —
+                // every step, counted or timed. Sage rather than gold so it
+                // never reads as the same moment as the ending flash below.
+                FGAura.sage.mid
+                    .opacity(stepStartOpacity)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+
+                // Two layers: a slow settle into warmth that lasts the rest
+                // of the step, and a brief brighter pulse that fires once, on
+                // entry, so the settle afterward is legible rather than a
+                // background shift nobody clocked. Never a shape, never a
+                // percentage — see the project's "no rings, no bars" rule.
+                //
+                // `butter.core` is nearly the same pale value as `bg` itself
+                // (this palette's page colour is already warm), so blending
+                // it in at low opacity was invisible in practice — measured
+                // under 5% of channel range. `butter.mid` carries enough of
+                // its own hue to actually read as "warmer," even held back.
+                // No `.animation(value:)` here on purpose: that would ease
+                // *both* directions equally, so leaving a warm final stretch
+                // for a fresh step would fade the warmth out over a second —
+                // reading as the new exercise starting warm. Entering warmth
+                // eases in (see `updateFinalStretch`); leaving it is instant.
+                FGAura.butter.mid
+                    .opacity(isInFinalStretch ? 0.3 : 0)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+
+                FGAura.butter.edge
+                    .opacity(flashOpacity)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
 
             if isDone {
                 completion
@@ -72,24 +139,75 @@ struct PlayerView: View {
         }
         .task(id: index) {
             guard let step else { return }
+            // Runs exactly once per distinct `index` — including the very
+            // first step — so every step gets its start cue regardless of
+            // how someone arrived at it (start, Next, Back, or resume).
+            fireStepStartCue()
             if timerIndex != index {
                 remaining = step.seconds
                 timerIndex = index
                 repsDone = 0
                 setsDone = 0
+                isInFinalStretch = false
+                hasFiredFinalStretchFlash = false
+                flashOpacity = 0
             }
             // Counted exercises advance through taps, not a hidden timer.
             guard !step.isCounted else { return }
             while remaining > 0 && !isDone {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
-                if isRunning { remaining -= 1 }
+                if isRunning {
+                    remaining -= 1
+                    updateFinalStretch(for: step)
+                }
             }
             if remaining <= 0 { advance() }
         }
         // Every intentional exit goes through Leave so the current timer can
         // be saved before this full-screen player disappears.
         .interactiveDismissDisabled()
+    }
+
+    /// One soft sage pulse marking a step's start. No hold state follows it —
+    /// unlike the ending cue, beginning a step isn't something to linger on.
+    private func fireStepStartCue() {
+        guard !reduceMotion else { return }
+        withAnimation(.easeOut(duration: 0.3)) { stepStartOpacity = 0.5 }
+        Task {
+            try? await Task.sleep(for: .milliseconds(350))
+            withAnimation(.easeIn(duration: 0.6)) { stepStartOpacity = 0 }
+        }
+    }
+
+    /// Checked once per tick of the countdown. Fires the one-time flash the
+    /// moment a step crosses into its final stretch, then leaves the settled
+    /// warmth (`isInFinalStretch`) in place for the rest of the hold.
+    private func updateFinalStretch(for step: Step) {
+        guard !step.isCounted,
+              let threshold = Self.finalStretchThreshold(for: step.seconds),
+              remaining <= threshold,
+              !isInFinalStretch
+        else { return }
+
+        withAnimation(reduceMotion ? nil : FGMotion.settleWarm) {
+            isInFinalStretch = true
+        }
+        guard !hasFiredFinalStretchFlash else { return }
+        hasFiredFinalStretchFlash = true
+        fireFinalStretchFlash()
+    }
+
+    /// A photosensitivity-safe single pulse: one smooth rise, one smoother
+    /// fall, never repeated. Skipped under Reduce Motion — the slower settle
+    /// into warmth still plays and still carries the signal on its own.
+    private func fireFinalStretchFlash() {
+        guard !reduceMotion else { return }
+        withAnimation(.easeOut(duration: 0.35)) { flashOpacity = 0.7 }
+        Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            withAnimation(.easeIn(duration: 0.7)) { flashOpacity = 0 }
+        }
     }
 
     private func videoPlayer(videoID: String, channel: String) -> some View {
@@ -162,16 +280,7 @@ struct PlayerView: View {
                 endPoint: .bottom
             )
 
-            VStack(spacing: FGSpace.s) {
-                Image(systemName: "play.circle.fill")
-                    .font(.system(size: 44))
-                    .foregroundStyle(.white)
-                Text("Watch on YouTube")
-                    .font(FGFont.label)
-                    .foregroundStyle(.white)
-            }
-            .padding(FGSpace.m)
-            .shadow(color: .black.opacity(0.4), radius: 6, y: 1)
+            watchElsewhereLabel
         }
         // White-on-scrim rather than the ink tokens: this sits on a photograph,
         // so it is the one place in the app where the palette can't do the
@@ -186,6 +295,37 @@ struct PlayerView: View {
         .accessibilityElement()
         .accessibilityLabel("Watch \(session.title) on YouTube")
         .accessibilityAddTraits(.isLink)
+    }
+
+    /// The label as a floating pill rather than loose icon-over-text. The
+    /// scrim behind it already carries the legibility work for an arbitrary
+    /// photo, so on 26 the pill can afford to be clear glass rather than a
+    /// second, flatter dimming layer stacked on top of the first.
+    private var watchElsewhereLabel: some View {
+        Group {
+            if #available(iOS 26, *) {
+                HStack(spacing: FGSpace.xs) {
+                    Image(systemName: "play.fill")
+                    Text("Watch on YouTube")
+                        .font(FGFont.label.weight(.medium))
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, FGSpace.m)
+                .padding(.vertical, FGSpace.s)
+                .glassEffect(.clear.tint(.black.opacity(0.35)).interactive(), in: Capsule())
+            } else {
+                VStack(spacing: FGSpace.s) {
+                    Image(systemName: "play.circle.fill")
+                        .font(.system(size: 44))
+                        .foregroundStyle(.white)
+                    Text("Watch on YouTube")
+                        .font(FGFont.label)
+                        .foregroundStyle(.white)
+                }
+                .padding(FGSpace.m)
+                .shadow(color: .black.opacity(0.4), radius: 6, y: 1)
+            }
+        }
     }
 
     private func running(_ step: Step) -> some View {
@@ -254,34 +394,28 @@ struct PlayerView: View {
     private var completion: some View {
         VStack(spacing: FGSpace.l) {
             Spacer()
-            Text("Done.")
-                .font(FGFont.display)
-                .foregroundStyle(FGColor.ink)
-            Text("How did that feel?")
-                .font(FGFont.body)
-                .foregroundStyle(FGColor.inkMuted)
+            ZStack {
+                // The echo of the final-stretch flash, settling out for good.
+                // Sits behind "Done." only — never behind any one Feel
+                // choice below, so it can't read as nudging an answer.
+                FGAura.butter.core
+                    .opacity(0.55)
+                    .frame(width: 280, height: 220)
+                    .blur(radius: 46)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
 
-            HStack(spacing: FGSpace.m) {
-                ForEach(Feel.allCases, id: \.self) { feel in
-                    Button {
-                        onFinish(.completed(feel))
-                    } label: {
-                        VStack(spacing: FGSpace.xs) {
-                            Image(systemName: symbol(for: feel))
-                                .font(.title)
-                            Text(label(for: feel))
-                                .font(FGFont.caption)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget + 24)
+                VStack(spacing: FGSpace.l) {
+                    Text("Done.")
+                        .font(FGFont.display)
                         .foregroundStyle(FGColor.ink)
-                        .background(
-                            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                                .fill(FGColor.surface)
-                        )
-                    }
-                    .buttonStyle(.plain)
+                    Text("How did that feel?")
+                        .font(FGFont.body)
+                        .foregroundStyle(FGColor.inkMuted)
                 }
             }
+
+            feelChoices
             FGQuietButton("Back to last exercise", systemImage: "backward.end") {
                 goBack()
             }
@@ -292,6 +426,50 @@ struct PlayerView: View {
         // Full bleed here: this is the only screen empty enough to carry it,
         // and the only one where decoration is the point.
         .background(FGBrandWash().ignoresSafeArea())
+    }
+
+    /// Three real selection controls floating over the full-bleed wash —
+    /// grouped so they blend into one glass shape the way related controls
+    /// should, rather than three separate floating tiles.
+    private var feelChoices: some View {
+        Group {
+            if #available(iOS 26, *) {
+                GlassEffectContainer(spacing: FGSpace.m) {
+                    HStack(spacing: FGSpace.m) {
+                        ForEach(Feel.allCases, id: \.self) { feel in
+                            feelChoiceLabel(feel)
+                                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
+                        }
+                    }
+                }
+            } else {
+                HStack(spacing: FGSpace.m) {
+                    ForEach(Feel.allCases, id: \.self) { feel in
+                        feelChoiceLabel(feel)
+                            .background(
+                                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                                    .fill(FGColor.surface)
+                            )
+                    }
+                }
+            }
+        }
+    }
+
+    private func feelChoiceLabel(_ feel: Feel) -> some View {
+        Button {
+            onFinish(.completed(feel))
+        } label: {
+            VStack(spacing: FGSpace.xs) {
+                Image(systemName: symbol(for: feel))
+                    .font(.title)
+                Text(label(for: feel))
+                    .font(FGFont.caption)
+            }
+            .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget + 24)
+            .foregroundStyle(FGColor.ink)
+        }
+        .buttonStyle(.plain)
     }
 
     /// Counting reps, not counting down. Deliberately not a progress bar:
@@ -419,6 +597,13 @@ struct PlayerView: View {
                 timerIndex = previousIndex
                 repsDone = 0
                 setsDone = 0
+                // Instant, not eased with the rest of this transaction —
+                // leaving warmth behind should never look like a fade.
+                withAnimation(.none) {
+                    isInFinalStretch = false
+                    hasFiredFinalStretchFlash = false
+                    flashOpacity = 0
+                }
                 isDone = false
             } else if index > steps.startIndex {
                 index -= 1

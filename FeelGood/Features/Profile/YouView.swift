@@ -25,40 +25,17 @@ struct YouView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                FGColor.bg.ignoresSafeArea()
-                FGBrandWash(reach: 0.38).ignoresSafeArea()
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: FGSpace.xl) {
-                        profileHero
-
-                        VStack(alignment: .leading, spacing: FGSpace.s) {
-                            Text("You, lately.")
-                                .font(FGFont.display)
-                                .foregroundStyle(FGColor.ink)
-                                .accessibilityAddTraits(.isHeader)
-
-                            Text("A quiet look at your last two weeks.")
-                                .font(FGFont.body)
-                                .foregroundStyle(FGColor.inkMuted)
-                        }
-
-                        LookBackView(reflection: model.lookBack(now: .now))
-
-                        Text("FeelGood provides general wellness recommendations and is not a substitute for medical advice or physical therapy.")
-                            .font(FGFont.caption)
-                            .foregroundStyle(FGColor.inkMuted)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, FGSpace.m)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(FGSpace.page)
+            // Pre-26 gets a flat bar in the page colour, matching the rest of
+            // the app's chrome before Liquid Glass existed. iOS 26 leaves the
+            // navigation bar unmodified so it gets its automatic floating
+            // glass treatment over the wash instead of a hard-edged flat bar.
+            Group {
+                if #available(iOS 26, *) {
+                    page
+                } else {
+                    page.toolbarBackground(FGColor.bg, for: .navigationBar)
                 }
-                .scrollBounceBehavior(.basedOnSize)
             }
-            .toolbarBackground(FGColor.bg, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     // `SwiftUI.Menu` spelled out: `Menu` is this app's own
@@ -110,7 +87,7 @@ struct YouView: View {
                     }
                 }
                 .background(FGColor.bg)
-                .navigationTitle("Your account")
+                .navigationTitle("Account & privacy")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
@@ -125,6 +102,42 @@ struct YouView: View {
             DebugMenu(content: model.store) { model.reload() }
         }
         #endif
+    }
+
+    private var page: some View {
+        ZStack {
+            FGColor.bg.ignoresSafeArea()
+            FGBrandWash(reach: 0.38).ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: FGSpace.xl) {
+                    profileHero
+
+                    VStack(alignment: .leading, spacing: FGSpace.s) {
+                        Text("You, lately.")
+                            .font(FGFont.display)
+                            .foregroundStyle(FGColor.ink)
+                            .accessibilityAddTraits(.isHeader)
+
+                        Text("A quiet look at your last two weeks.")
+                            .font(FGFont.body)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+
+                    LookBackView(reflection: model.lookBack(now: .now))
+
+                    Text("FeelGood provides general wellness recommendations and is not a substitute for medical advice or physical therapy.")
+                        .font(FGFont.caption)
+                        .foregroundStyle(FGColor.inkMuted)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, FGSpace.m)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(FGSpace.page)
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
     }
 
     /// A quiet mark, not a control — editing identity lives behind "..." only.
