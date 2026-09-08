@@ -338,35 +338,18 @@ struct PlayerView: View {
         .accessibilityAddTraits(.isLink)
     }
 
-    /// The label as a floating pill rather than loose icon-over-text. The
-    /// scrim behind it already carries the legibility work for an arbitrary
-    /// photo, so on 26 the pill can afford to be clear glass rather than a
-    /// second, flatter dimming layer stacked on top of the first.
+    /// The scrim and shadow keep the action legible over an arbitrary photo.
     private var watchElsewhereLabel: some View {
-        Group {
-            if #available(iOS 26, *) {
-                HStack(spacing: FGSpace.xs) {
-                    Image(systemName: "play.fill")
-                    Text("Watch on YouTube")
-                        .font(FGFont.label.weight(.medium))
-                }
+        VStack(spacing: FGSpace.s) {
+            Image(systemName: "play.circle.fill")
+                .font(.system(size: 44))
                 .foregroundStyle(.white)
-                .padding(.horizontal, FGSpace.m)
-                .padding(.vertical, FGSpace.s)
-                .glassEffect(.clear.tint(.black.opacity(0.35)).interactive(), in: Capsule())
-            } else {
-                VStack(spacing: FGSpace.s) {
-                    Image(systemName: "play.circle.fill")
-                        .font(.system(size: 44))
-                        .foregroundStyle(.white)
-                    Text("Watch on YouTube")
-                        .font(FGFont.label)
-                        .foregroundStyle(.white)
-                }
-                .padding(FGSpace.m)
-                .shadow(color: .black.opacity(0.4), radius: 6, y: 1)
-            }
+            Text("Watch on YouTube")
+                .font(FGFont.label)
+                .foregroundStyle(.white)
         }
+        .padding(FGSpace.m)
+        .shadow(color: .black.opacity(0.4), radius: 6, y: 1)
     }
 
     private func running(_ step: Step) -> some View {
@@ -500,30 +483,15 @@ struct PlayerView: View {
         .background(FGBrandWash().ignoresSafeArea())
     }
 
-    /// Three real selection controls floating over the full-bleed wash —
-    /// grouped so they blend into one glass shape the way related controls
-    /// should, rather than three separate floating tiles.
+    /// Three related selection controls over the full-bleed wash.
     private var feelChoices: some View {
-        Group {
-            if #available(iOS 26, *) {
-                GlassEffectContainer(spacing: FGSpace.m) {
-                    HStack(spacing: FGSpace.m) {
-                        ForEach(Feel.allCases, id: \.self) { feel in
-                            feelChoiceLabel(feel)
-                                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
-                        }
-                    }
-                }
-            } else {
-                HStack(spacing: FGSpace.m) {
-                    ForEach(Feel.allCases, id: \.self) { feel in
-                        feelChoiceLabel(feel)
-                            .background(
-                                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                                    .fill(FGColor.surface)
-                            )
-                    }
-                }
+        HStack(spacing: FGSpace.m) {
+            ForEach(Feel.allCases, id: \.self) { feel in
+                feelChoiceLabel(feel)
+                    .background(
+                        RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                            .fill(FGColor.surface)
+                    )
             }
         }
     }

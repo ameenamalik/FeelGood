@@ -11,10 +11,10 @@
 
 import AuthenticationServices
 import CryptoKit
-import FirebaseAuth
+@preconcurrency import FirebaseAuth
 import FirebaseCore
 import Foundation
-import GoogleSignIn
+@preconcurrency import GoogleSignIn
 import SwiftUI
 
 // MARK: - AuthUser Model

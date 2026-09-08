@@ -112,20 +112,14 @@ struct FGQuietButton: View {
         .frame(minWidth: FGSize.minTouchTarget, minHeight: FGSize.minTouchTarget, alignment: .leading)
         .padding(.horizontal, FGSpace.xs)
         .contentShape(Capsule())
-        // A real, tappable control, so it earns its own floating glass
-        // capsule on 26 rather than sitting flush with the page — pre-26
-        // stays exactly as quiet as before: no background at all.
+        // Keep secondary actions intentionally quiet with no background.
         .modifier(FGQuietGlass())
     }
 }
 
 private struct FGQuietGlass: ViewModifier {
     func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
-            content.glassEffect(.regular.interactive(), in: Capsule())
-        } else {
-            content
-        }
+        content
     }
 }
 

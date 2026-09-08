@@ -19,6 +19,17 @@ nonisolated extension Course {
         case .special: "Special"
         }
     }
+
+    /// The friendly character used wherever a menu course needs a visual cue.
+    var menuMascotAsset: String {
+        switch self {
+        case .appetizer: "IntentEnergyClementine"
+        case .main: "IntentStrengthApple"
+        case .side: "IntentMobilityPear"
+        case .dessert: "IntentCalmPeach"
+        case .special: "IntentShowingUpBanana"
+        }
+    }
 }
 
 nonisolated extension Activity {

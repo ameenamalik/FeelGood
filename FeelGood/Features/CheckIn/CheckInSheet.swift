@@ -80,84 +80,26 @@ struct CheckInSheet: View {
         _revealed = State(initialValue: current == nil ? 1 : CheckInFlow.stepCount)
     }
 
-    private enum CheckInMode: String, CaseIterable {
-        case quickTaps = "Quick Taps"
-        case describeDay = "Describe Day"
-    }
-
-    @State private var mode: CheckInMode = .quickTaps
-    @State private var chatText: String = ""
-    @State private var chatOverrides: ConversationalOverrides = ConversationalOverrides()
-
     var body: some View {
         ZStack {
             FGColor.bg.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // Mode switcher
-                HStack(spacing: 4) {
-                    ForEach(CheckInMode.allCases, id: \.self) { tab in
-                        Button {
-                            if tab == .describeDay && !hasProAccess {
-                                isShowingPaywall = true
-                            } else {
-                                withAnimation(FGMotion.settle) {
-                                    mode = tab
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 6) {
-                                if tab == .describeDay {
-                                    Image(systemName: hasProAccess ? "sparkles" : "lock.fill")
-                                        .font(.system(size: 12))
-                                }
-                                Text(tab.rawValue)
-                                    .font(.custom("SFProRounded-Medium", size: 14))
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .foregroundStyle(mode == tab ? FGColor.inkOnAccent : FGColor.ink)
-                            .background(mode == tab ? FGColor.clay : Color.clear)
-                            .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: FGSpace.xl) {
+                        title
+
+                        energyQuestion(proxy)
+                        if revealed > 1 { timeQuestion(proxy) }
+                        if revealed > 2 { placeQuestion(proxy) }
+                        if revealed > 3 { bodyQuestion }
+
+                        footer
                     }
+                    .padding(FGSpace.page)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(4)
-                .background(FGColor.surface)
-                .clipShape(Capsule())
-                .padding(.top, 16)
-                .padding(.bottom, 8)
-
-                if mode == .describeDay {
-                    ScrollView {
-                        ChatCheckInView(
-                            text: $chatText,
-                            overrides: $chatOverrides,
-                            onCommit: { checkIn in
-                                onDone(checkIn, nil, nil)
-                            }
-                        )
-                    }
-                } else {
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: FGSpace.xl) {
-                                title
-
-                                energyQuestion(proxy)
-                                if revealed > 1 { timeQuestion(proxy) }
-                                if revealed > 2 { placeQuestion(proxy) }
-                                if revealed > 3 { bodyQuestion }
-
-                                footer
-                            }
-                            .padding(FGSpace.page)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .scrollBounceBehavior(.basedOnSize)
-                    }
-                }
+                .scrollBounceBehavior(.basedOnSize)
             }
         }
         .fgAnimation(FGMotion.settle, value: revealed)

@@ -59,13 +59,13 @@ struct AddRoutineSheet: View {
                 FGColor.bg.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: FGSpace.l) {
-                        // Title Section
-                        VStack(alignment: .leading, spacing: FGSpace.s) {
-                            Text("Name your routine")
-                                .font(FGFont.itemTitle)
-                                .foregroundStyle(FGColor.ink)
+                    VStack(alignment: .leading, spacing: FGSpace.xl) {
+                        Text("Create a routine")
+                            .font(FGFont.title)
+                            .foregroundStyle(FGColor.ink)
+                            .accessibilityAddTraits(.isHeader)
 
+                        question("What should we call it?") {
                             TextField("e.g. Morning Sunlight Walk, 5-min Neck Release", text: $title)
                                 .font(FGFont.body)
                                 .foregroundStyle(FGColor.ink)
@@ -84,114 +84,86 @@ struct AddRoutineSheet: View {
                                 .postHogMask()
                         }
 
-                        // Section / Course Quadrant
-                        VStack(alignment: .leading, spacing: FGSpace.s) {
-                            Text("Menu Section")
-                                .font(FGFont.itemTitle)
-                                .foregroundStyle(FGColor.ink)
-
-                            HStack(spacing: FGSpace.s) {
+                        question("Where does it belong?") {
+                            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
                                 ForEach([Course.appetizer, Course.main, Course.side, Course.dessert], id: \.self) { c in
-                                    Button {
+                                    FGPill(
+                                        title: c.label,
+                                        selectedAura: aura(for: c),
+                                        isSelected: course == c
+                                    ) {
                                         withAnimation(FGMotion.gentle) {
                                             course = c
-                                            // Adjust sensible default duration if switching courses
                                             if c == .appetizer && durationMin > 10 { durationMin = 5 }
                                             if c == .main && durationMin < 15 { durationMin = 20 }
                                         }
-                                    } label: {
-                                        VStack(spacing: 4) {
-                                            Text(c.label)
-                                                .font(FGFont.label.weight(.semibold))
-                                                .foregroundStyle(course == c ? c.tagText : FGColor.inkMuted)
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 10)
-                                        .background(course == c ? c.tagFill : FGColor.surface)
-                                        .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
-                                                .strokeBorder(course == c ? c.tagText.opacity(0.4) : FGColor.line, lineWidth: 1)
-                                        )
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                         }
 
-                        // Duration Picker
-                        VStack(alignment: .leading, spacing: FGSpace.s) {
-                            Text("Duration")
-                                .font(FGFont.itemTitle)
-                                .foregroundStyle(FGColor.ink)
-
-                            FlowRow(spacing: FGSpace.s) {
+                        question("How much time?") {
+                            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
                                 ForEach(Self.commonDurations, id: \.self) { minutes in
-                                    FGChoice(title: "\(minutes) min", isSelected: durationMin == minutes) {
+                                    FGPill(
+                                        title: "\(minutes) min",
+                                        selectedAura: aura(for: course),
+                                        isSelected: durationMin == minutes
+                                    ) {
                                         withAnimation(FGMotion.gentle) { durationMin = minutes }
                                     }
                                 }
                             }
                         }
 
-                        // Effort / Intensity
-                        VStack(alignment: .leading, spacing: FGSpace.s) {
-                            Text("Effort Level")
-                                .font(FGFont.itemTitle)
-                                .foregroundStyle(FGColor.ink)
-
-                            HStack(spacing: FGSpace.s) {
+                        question("How should it feel?") {
+                            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
                                 ForEach(Self.efforts, id: \.intensity) { effort in
-                                    FGChoice(title: effort.label, isSelected: intensity == effort.intensity) {
+                                    FGPill(
+                                        title: effort.label,
+                                        selectedAura: effortAura(for: effort.intensity),
+                                        isSelected: intensity == effort.intensity
+                                    ) {
                                         withAnimation(FGMotion.gentle) { intensity = effort.intensity }
                                     }
                                 }
                             }
                         }
 
-                        // Add to Today Toggle
-                        VStack(alignment: .leading, spacing: FGSpace.xs) {
-                            Toggle(isOn: $addToToday) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Add to today's menu now")
-                                        .font(FGFont.body.weight(.medium))
-                                        .foregroundStyle(FGColor.ink)
-                                    Text("Replaces today's suggested \(course.label.lowercased()) with this routine.")
-                                        .font(FGFont.caption)
-                                        .foregroundStyle(FGColor.inkMuted)
-                                }
+                        Toggle(isOn: $addToToday) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Add to today’s menu")
+                                    .font(FGFont.body.weight(.semibold))
+                                    .foregroundStyle(FGColor.ink)
+                                Text("Replaces today’s suggested \(course.label.lowercased()).")
+                                    .font(FGFont.caption)
+                                    .foregroundStyle(FGColor.inkMuted)
                             }
-                            .tint(FGColor.clayDeep)
-                            .padding(FGSpace.m)
-                            .background(
-                                RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                                    .fill(FGColor.surface)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                                    .strokeBorder(FGColor.line, lineWidth: 1)
-                            )
                         }
+                        .tint(FGColor.clayDeep)
+                        .padding(FGSpace.m)
+                        .background(FGColor.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                                .strokeBorder(FGColor.lineStrong.opacity(0.45), lineWidth: 1)
+                        )
 
-                        // Or Pick from Library button
-                        FGQuietButton("Or pick an existing session from library", systemImage: "sparkles") {
+                        FGQuietButton("Pick an existing session instead", systemImage: "sparkles") {
                             isShowingCatalogPicker = true
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.top, FGSpace.xs)
 
-                        // Action Button
                         FGPrimaryButton(title: "Save routine", isEnabled: isValid) {
                             saveRoutine()
                         }
-                        .padding(.top, FGSpace.s)
                     }
                     .padding(FGSpace.page)
                 }
                 .scrollBounceBehavior(.basedOnSize)
                 .scrollDismissesKeyboard(.interactively)
             }
-            .navigationTitle("New Routine")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -216,6 +188,39 @@ struct AddRoutineSheet: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+    }
+
+    private func question<Content: View>(
+        _ prompt: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: FGSpace.m) {
+            Text(prompt)
+                .font(FGFont.itemTitle)
+                .foregroundStyle(FGColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+
+            content()
+        }
+    }
+
+    private func aura(for course: Course) -> FGAura {
+        switch course {
+        case .appetizer: .butter
+        case .main: .apricot
+        case .side: .sage
+        case .dessert: .blush
+        case .special: .lilac
+        }
+    }
+
+    private func effortAura(for intensity: Int) -> FGAura {
+        switch intensity {
+        case ...2: .sage
+        case 3: .apricot
+        default: .blush
+        }
     }
 
     private func saveRoutine() {
