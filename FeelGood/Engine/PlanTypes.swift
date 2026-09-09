@@ -179,19 +179,34 @@ nonisolated enum BodyState: String, Codable, CaseIterable, Sendable {
     case sore, stiff, stressed, cramping, good
 }
 
-/// Two taps, ten seconds. The optional third is body.
+/// Two taps, ten seconds. The optional body question accepts multiple concerns.
 nonisolated struct PlanCheckIn: Hashable, Sendable {
     var energy: Energy
     var time: TimeBudget
     /// `nil` falls back to everything the profile allows.
     var place: PlaceIntent?
-    var body: BodyState?
+    var bodies: Set<BodyState>
+
+    /// Compatibility for call sites that provide a single concern. New
+    /// check-ins use `bodies`; reading this returns the first display-ordered
+    /// answer so older integrations continue to behave deterministically.
+    var body: BodyState? {
+        get { BodyState.allCases.first(where: bodies.contains) }
+        set { bodies = newValue.map { Set([$0]) } ?? [] }
+    }
 
     init(energy: Energy, time: TimeBudget, place: PlaceIntent? = nil, body: BodyState? = nil) {
         self.energy = energy
         self.time = time
         self.place = place
-        self.body = body
+        bodies = body.map { Set([$0]) } ?? []
+    }
+
+    init(energy: Energy, time: TimeBudget, place: PlaceIntent? = nil, bodies: Set<BodyState>) {
+        self.energy = energy
+        self.time = time
+        self.place = place
+        self.bodies = bodies
     }
 }
 

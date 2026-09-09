@@ -45,6 +45,16 @@ nonisolated struct CheckInAnalytics: Sendable {
         hasCheckIn = energy != nil || time != nil || place != nil || body != nil
     }
 
+    /// Multi-select variant. The set is intentionally reduced to a boolean;
+    /// no individual body concern is sent to analytics.
+    init(energy: Energy?, time: TimeBudget?, place: PlaceIntent?, bodies: Set<BodyState>) {
+        self.energy = energy
+        self.time = time
+        self.place = place
+        hasBody = !bodies.isEmpty
+        hasCheckIn = energy != nil || time != nil || place != nil || !bodies.isEmpty
+    }
+
     /// The event name this payload belongs to, next to the payload rather than
     /// spelled out at the call site.
     static let eventName = "check_in_completed"

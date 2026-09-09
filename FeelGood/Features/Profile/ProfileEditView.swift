@@ -25,11 +25,14 @@ struct ProfileEditView: View {
         ZStack {
             FGColor.bg.ignoresSafeArea()
 
+            FGBrandWash(reach: 0.28)
+                .ignoresSafeArea()
+
             ScrollView {
-                VStack(alignment: .leading, spacing: FGSpace.xl) {
+                VStack(alignment: .leading, spacing: FGSpace.l) {
                     VStack(alignment: .leading, spacing: FGSpace.s) {
                         Text("What's true now")
-                            .font(FGFont.title)
+                            .font(.system(.largeTitle, design: .rounded).weight(.semibold))
                             .foregroundStyle(FGColor.ink)
                         Text("Change anything. Today's menu follows.")
                             .font(FGFont.reason)
@@ -41,7 +44,10 @@ struct ProfileEditView: View {
                             activities: $answers.activities,
                             sports: $answers.sports,
                             equipment: $answers.equipment,
-                            places: $answers.places
+                            places: $answers.places,
+                            showsSymbols: false,
+                            usesAura: false,
+                            usesPills: true
                         )
                     }
 
@@ -65,9 +71,13 @@ struct ProfileEditView: View {
                     }
 
                     section("What are you moving toward?") {
-                        FlowRow(spacing: FGSpace.s) {
-                            ForEach(Intent.allCases, id: \.self) { intent in
-                                FGChoice(title: intent.label, isSelected: answers.intents.contains(intent)) {
+                        WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
+                            ForEach(Array(Intent.allCases.enumerated()), id: \.element) { index, intent in
+                                FGPill(
+                                    title: intent.label,
+                                    selectedAura: pillAura(at: index),
+                                    isSelected: answers.intents.contains(intent)
+                                ) {
                                     withAnimation(FGMotion.gentle) {
                                         if answers.intents.contains(intent) {
                                             answers.intents.remove(intent)
@@ -82,10 +92,11 @@ struct ProfileEditView: View {
 
                     section("Anything to work around?") {
                         VStack(alignment: .leading, spacing: FGSpace.s) {
-                            FlowRow(spacing: FGSpace.s) {
-                                ForEach(WorkAround.allCases, id: \.self) { workAround in
-                                    FGChoice(
+                            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
+                                ForEach(Array(WorkAround.allCases.enumerated()), id: \.element) { index, workAround in
+                                    FGPill(
                                         title: workAround.label,
+                                        selectedAura: pillAura(at: index),
                                         isSelected: answers.workArounds.contains(workAround)
                                     ) {
                                         withAnimation(FGMotion.gentle) {
@@ -97,9 +108,13 @@ struct ProfileEditView: View {
                                         }
                                     }
                                 }
-                            }
-                            FGChoice(title: "None of these", isSelected: answers.workArounds.isEmpty) {
-                                withAnimation(FGMotion.gentle) { answers.workArounds = [] }
+                                FGPill(
+                                    title: "None of these",
+                                    selectedAura: .butter,
+                                    isSelected: answers.workArounds.isEmpty
+                                ) {
+                                    withAnimation(FGMotion.gentle) { answers.workArounds = [] }
+                                }
                             }
                         }
                         // `pregnancy`, `postpartum` and `pelvicFloor` are on this
@@ -110,27 +125,32 @@ struct ProfileEditView: View {
                         .postHogMask()
                     }
 
-                    VStack(spacing: FGSpace.s) {
-                        FGPrimaryButton(title: "Save") {
-                            Analytics.capture("profile_updated")
-                            onSave(answers)
-                            dismiss()
-                        }
-                        .opacity(answers.isAnswered ? 1 : 0.4)
-                        .disabled(!answers.isAnswered)
-
-                        if !answers.isAnswered {
-                            Text("Keep at least one thing — the menu is built from it.")
-                                .font(FGFont.caption)
-                                .foregroundStyle(FGColor.inkMuted)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
                 }
                 .padding(FGSpace.page)
+                .padding(.bottom, FGSpace.xl)
             }
+            .scrollBounceBehavior(.basedOnSize)
         }
         .presentationDragIndicator(.visible)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: FGSpace.xs) {
+                if !answers.isAnswered {
+                    Text("Keep at least one thing — the menu is built from it.")
+                        .font(FGFont.caption)
+                        .foregroundStyle(FGColor.inkMuted)
+                }
+
+                FGPrimaryButton(title: "Save", isEnabled: answers.isAnswered) {
+                    Analytics.capture("profile_updated")
+                    onSave(answers)
+                    dismiss()
+                }
+            }
+            .padding(.horizontal, FGSpace.page)
+            .padding(.top, FGSpace.s)
+            .padding(.bottom, FGSpace.xs)
+            .background(FGColor.bg.opacity(0.96))
+        }
     }
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
@@ -148,13 +168,22 @@ struct ProfileEditView: View {
         label: @escaping (Option) -> String,
         selection: Binding<Option>
     ) -> some View {
-        FlowRow(spacing: FGSpace.s) {
-            ForEach(options, id: \.self) { option in
-                FGChoice(title: label(option), isSelected: selection.wrappedValue == option) {
+        WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
+            ForEach(Array(options.enumerated()), id: \.element) { index, option in
+                FGPill(
+                    title: label(option),
+                    selectedAura: pillAura(at: index),
+                    isSelected: selection.wrappedValue == option
+                ) {
                     withAnimation(FGMotion.gentle) { selection.wrappedValue = option }
                 }
             }
         }
+    }
+
+    private func pillAura(at index: Int) -> FGAura {
+        let palette: [FGAura] = [.apricot, .lilac, .blush, .sage, .butter]
+        return palette[index % palette.count]
     }
 }
 

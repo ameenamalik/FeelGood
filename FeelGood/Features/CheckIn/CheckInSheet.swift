@@ -31,7 +31,7 @@ struct CheckInSheet: View {
     @State private var energy: Energy?
     @State private var time: TimeBudget?
     @State private var place: PlaceIntent?
-    @State private var body_: BodyState?
+    @State private var bodies: Set<BodyState>
     @State private var calendarOpening: CalendarOpening?
     @State private var selectedCalendarOpening: CalendarOpening?
     @State private var calendarConnectionState: CalendarConnectionState
@@ -69,7 +69,7 @@ struct CheckInSheet: View {
         _energy = State(initialValue: current?.energy)
         _time = State(initialValue: current?.time)
         _place = State(initialValue: current?.place)
-        _body_ = State(initialValue: current?.body)
+        _bodies = State(initialValue: current?.bodies ?? [])
         _calendarOpening = State(initialValue: currentCalendarOpening)
         _selectedCalendarOpening = State(initialValue: currentCalendarOpening)
         _calendarConnectionState = State(initialValue: calendarProvider.connectionState)
@@ -416,9 +416,9 @@ struct CheckInSheet: View {
                 FGPill(
                     title: option.checkInLabel,
                     selectedAura: option.checkInAura,
-                    isSelected: body_ == option
+                    isSelected: bodies.contains(option)
                 ) {
-                    body_ = body_ == option ? nil : option
+                    toggleBody(option)
                 }
             }
         }
@@ -493,22 +493,34 @@ struct CheckInSheet: View {
     /// defaults in `plan` would swallow the first tap on "Steady" — nothing
     /// would appear to change — so haptics key off this instead.
     private var selection: [String?] {
-        [energy?.rawValue, time?.rawValue, place?.rawValue, body_?.rawValue]
+        let selectedBodies = bodies.map(\.rawValue).sorted().joined(separator: ",")
+        return [energy?.rawValue, time?.rawValue, place?.rawValue, selectedBodies.isEmpty ? nil : selectedBodies]
     }
 
     /// What gets handed back: the unanswered questions fall back to the middle,
     /// because skipping is always allowed to produce a menu.
     private var plan: PlanCheckIn {
-        PlanCheckIn(energy: energy ?? .steady, time: time ?? .some, place: place, body: body_)
+        PlanCheckIn(energy: energy ?? .steady, time: time ?? .some, place: place, bodies: bodies)
     }
 
     private func finish() {
-        // `body_` is handed over and dropped: `CheckInAnalytics` has nowhere to
+        // The body answers are handed over and dropped: `CheckInAnalytics` has nowhere to
         // put it. That is the whole point of the type — see its header.
         Analytics.capture(
-            CheckInAnalytics(energy: energy, time: time, place: place, body: body_)
+            CheckInAnalytics(energy: energy, time: time, place: place, bodies: bodies)
         )
         onDone(plan, selectedCalendarOpening, confirmedMovementPlan)
+    }
+
+    private func toggleBody(_ option: BodyState) {
+        if bodies.contains(option) {
+            bodies.remove(option)
+        } else if option == .good {
+            bodies = [.good]
+        } else {
+            bodies.remove(.good)
+            bodies.insert(option)
+        }
     }
 
     private func connectCalendar() async {
