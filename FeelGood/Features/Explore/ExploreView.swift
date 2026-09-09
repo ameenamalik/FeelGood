@@ -9,6 +9,7 @@
 
 import SwiftUI
 import PostHog
+import RevenueCatUI
 
 private struct ConversationMessage: Identifiable, Codable, Sendable {
     enum Role: String, Codable, Sendable {
@@ -55,8 +56,13 @@ struct ExploreView: View {
     @State private var activeTimeLabel: String = "15 min"
     @FocusState private var isFieldFocused: Bool
     @Environment(AuthService.self) private var authService
+    @Environment(PurchasesManager.self) private var purchasesManager
     @AppStorage("hasShownExploreAuthPrompt") private var hasShownExploreAuthPrompt = false
+    /// A free user gets one complete user/assistant exchange. This is separate
+    /// from chat history so clearing the thread cannot reset the trial.
+    @AppStorage("hasUsedFreeChatExchange") private var hasUsedFreeChatExchange = false
     @State private var isShowingAuthPrompt = false
+    @State private var isShowingPaywall = false
 
     private let persistenceKey = "FeelGood.ChatHistory.v2"
 
@@ -126,9 +132,15 @@ struct ExploreView: View {
                 subtitle: "Save this personalized recommendation to your account and keep it across devices."
             )
         }
+        .sheet(isPresented: $isShowingPaywall) {
+            PaywallView(displayCloseButton: true)
+        }
         .onAppear {
             loadPersistedHistory()
             updateActiveTimeLabel()
+        }
+        .task {
+            await purchasesManager.refreshCustomerInfo()
         }
     }
 
@@ -558,6 +570,18 @@ struct ExploreView: View {
         let trimmed = textToSend.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isProcessing else { return }
 
+        // Keep the attempted message in the composer. If the person upgrades,
+        // they can close the paywall and send it without typing it again.
+        if !purchasesManager.isProUnlocked && hasUsedFreeChatExchange {
+            inputText = trimmed
+            isFieldFocused = false
+            isShowingPaywall = true
+            Analytics.capture("chat_paywall_presented", properties: [
+                "trigger": "second_message"
+            ])
+            return
+        }
+
         let userMsg = ConversationMessage(role: .user, text: trimmed)
         messages.append(userMsg)
         inputText = ""
@@ -626,6 +650,9 @@ struct ExploreView: View {
                 )
                 messages.append(assistantMsg)
                 quickReplies = response.quickReplies
+                if !purchasesManager.isProUnlocked {
+                    hasUsedFreeChatExchange = true
+                }
                 savePersistedHistory()
             }
         }

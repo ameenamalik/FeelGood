@@ -276,6 +276,7 @@ struct TodayView: View {
                 Spacer(minLength: FGSpace.s)
 
                 // Compact icon-only controls for routine and quick adjust
+                #if compiler(>=6.2)
                 if #available(iOS 26, *) {
                     GlassEffectContainer(spacing: FGSpace.s) {
                         HStack(spacing: FGSpace.s) {
@@ -289,19 +290,11 @@ struct TodayView: View {
                         }
                     }
                 } else {
-                    HStack(spacing: FGSpace.s) {
-                        routineButtonLabel
-                            .background(FGColor.surface)
-                            .clipShape(Circle())
-                            .overlay(Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1))
-                        adjustButtonLabel
-                            .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
-                            )
-                    }
+                    legacyMenuControls
                 }
+                #else
+                legacyMenuControls
+                #endif
             }
 
             if isAdjusting {
@@ -327,6 +320,21 @@ struct TodayView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add custom routine or view My Menu")
+    }
+
+    private var legacyMenuControls: some View {
+        HStack(spacing: FGSpace.s) {
+            routineButtonLabel
+                .background(FGColor.surface)
+                .clipShape(Circle())
+                .overlay(Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1))
+            adjustButtonLabel
+                .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
+                .clipShape(Circle())
+                .overlay(
+                    Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
+                )
+        }
     }
 
     private var adjustButtonLabel: some View {

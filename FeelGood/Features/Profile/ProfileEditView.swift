@@ -11,13 +11,19 @@ import SwiftUI
 import PostHog
 
 struct ProfileEditView: View {
+    let onShowHiddenExercises: (() -> Void)?
     let onSave: (ProfileAnswers) -> Void
 
     @State private var answers: ProfileAnswers
     @Environment(\.dismiss) private var dismiss
 
-    init(answers: ProfileAnswers, onSave: @escaping (ProfileAnswers) -> Void) {
+    init(
+        answers: ProfileAnswers,
+        onShowHiddenExercises: (() -> Void)? = nil,
+        onSave: @escaping (ProfileAnswers) -> Void
+    ) {
         _answers = State(initialValue: answers)
+        self.onShowHiddenExercises = onShowHiddenExercises
         self.onSave = onSave
     }
 
@@ -123,6 +129,42 @@ struct ProfileEditView: View {
                         // is the other place they can be set. The section heading
                         // stays legible — the question isn't sensitive, the answer is.
                         .postHogMask()
+                    }
+
+                    if let onShowHiddenExercises {
+                        section("Exercise preferences") {
+                            Button(action: onShowHiddenExercises) {
+                                HStack(spacing: FGSpace.m) {
+                                    Image(systemName: "eye.slash")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(FGColor.inkMuted)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Hidden exercises")
+                                            .font(FGFont.body.weight(.semibold))
+                                            .foregroundStyle(FGColor.ink)
+                                        Text("Review anything you chose not to see.")
+                                            .font(FGFont.caption)
+                                            .foregroundStyle(FGColor.inkMuted)
+                                    }
+
+                                    Spacer(minLength: FGSpace.s)
+
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(FGColor.inkMuted)
+                                }
+                                .padding(FGSpace.m)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(FGColor.surface)
+                                .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                                        .strokeBorder(FGColor.line, lineWidth: 1)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
 
                 }

@@ -36,15 +36,26 @@ struct LookBackView: View {
     /// no encouragement to catch up on anything.
     private var early: some View {
         FGCard {
-            VStack(alignment: .leading, spacing: FGSpace.s) {
-                Text("This page fills in as you go.")
-                    .font(FGFont.itemTitle)
-                    .foregroundStyle(FGColor.ink)
-                Text("There's nothing you need to do about it.")
-                    .font(FGFont.reason)
-                    .foregroundStyle(FGColor.inkMuted)
+            HStack(alignment: .center, spacing: FGSpace.m) {
+                VStack(alignment: .leading, spacing: FGSpace.s) {
+                    Text("Your patterns will appear here")
+                        .font(FGFont.itemTitle)
+                        .foregroundStyle(FGColor.ink)
+                    Text("Complete a few sessions and FeelGood will gently notice what works for you.")
+                        .font(FGFont.reason)
+                        .foregroundStyle(FGColor.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Image("IntentShowingUpPear")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 72, height: 72)
+                    .accessibilityHidden(true)
             }
         }
+        .accessibilityElement(children: .combine)
     }
 }
 
