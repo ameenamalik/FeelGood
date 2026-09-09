@@ -260,32 +260,47 @@ struct TodayView: View {
     private var menuHeading: some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
             HStack(alignment: .center, spacing: FGSpace.s) {
-                Text("Your menu")
-                    .font(FGFont.sectionTitle)
-                    .foregroundStyle(FGColor.ink)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .layoutPriority(1)
-                    .accessibilityAddTraits(.isHeader)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("Your menu")
+                        .font(FGFont.sectionTitle)
+                        .foregroundStyle(FGColor.ink)
+                        .accessibilityAddTraits(.isHeader)
 
-                Text("• \(model.menu.items.reduce(0) { $0 + $1.session.durationMin }) min")
-                    .font(FGFont.label)
-                    .foregroundStyle(FGColor.inkMuted)
+                    Text("• \(model.menu.items.reduce(0) { $0 + $1.session.durationMin }) min")
+                        .font(FGFont.label)
+                        .foregroundStyle(FGColor.inkMuted)
+                }
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
 
                 Spacer(minLength: FGSpace.s)
 
-                // Compact capsule controls matching the rest of the app.
-                HStack(spacing: FGSpace.s) {
-                    routineButtonLabel
-                        .background(FGColor.surface)
-                        .clipShape(Capsule())
-                        .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
-                    adjustButtonLabel
-                        .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
-                        .clipShape(Capsule())
-                        .overlay(
-                            Capsule().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
-                        )
+                // Compact icon-only controls for routine and quick adjust
+                if #available(iOS 26, *) {
+                    GlassEffectContainer(spacing: FGSpace.s) {
+                        HStack(spacing: FGSpace.s) {
+                            routineButtonLabel
+                                .glassEffect(.regular.interactive(), in: Circle())
+                            adjustButtonLabel
+                                .glassEffect(
+                                    isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
+                                    in: Circle()
+                                )
+                        }
+                    }
+                } else {
+                    HStack(spacing: FGSpace.s) {
+                        routineButtonLabel
+                            .background(FGColor.surface)
+                            .clipShape(Circle())
+                            .overlay(Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1))
+                        adjustButtonLabel
+                            .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
+                            )
+                    }
                 }
             }
 
@@ -304,17 +319,11 @@ struct TodayView: View {
         Button {
             isShowingMyMenu = true
         } label: {
-            HStack(spacing: 4) {
-                Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .semibold))
-                Text("Routine")
-                    .font(FGFont.label.weight(.medium))
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .foregroundStyle(FGColor.ink)
-            .fixedSize()
-            .contentShape(Capsule())
+            Image(systemName: "plus")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(FGColor.ink)
+                .frame(width: 32, height: 32)
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add custom routine or view My Menu")
@@ -323,26 +332,18 @@ struct TodayView: View {
     private var adjustButtonLabel: some View {
         Button {
             if model.isProUser {
-                withAnimation(FGMotion.settle) {
+                withAnimation(FGMotion.gentle) {
                     isAdjusting.toggle()
                 }
             } else {
                 isShowingPaywall = true
             }
         } label: {
-            HStack(spacing: 4) {
-                Image(systemName: model.isProUser ? "slider.horizontal.3" : "lock.fill")
-                    .font(.system(size: 11, weight: .medium))
-                Text("Adjust")
-                    .font(FGFont.label.weight(.medium))
-                Image(systemName: isAdjusting ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 9, weight: .semibold))
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .foregroundStyle(isAdjusting ? FGColor.ink : FGColor.inkMuted)
-            .fixedSize()
-            .contentShape(Capsule())
+            Image(systemName: isAdjusting ? "xmark" : (model.isProUser ? "slider.horizontal.3" : "lock.fill"))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(FGColor.ink)
+                .frame(width: 32, height: 32)
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Adjust today's menu")
@@ -613,14 +614,6 @@ private struct MenuItemBody: View {
                 }
             }
 
-            // Why it fits today. `inkMuted` only clears contrast against the
-            // flat surface a done item settles to — a not-done item sits on
-            // the gradient, where `ink` is the colour guaranteed to stay
-            // legible at its darkest point.
-            Text(item.reasonText)
-                .font(FGFont.caption)
-                .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 14)
         .padding(.horizontal, FGSpace.m)
