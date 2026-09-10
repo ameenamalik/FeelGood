@@ -29,25 +29,27 @@ struct ProfileHeaderView: View {
     @State private var isShowingResetSuccess = false
     @State private var isShowingAcknowledgements = false
     @State private var isDeletingAccount = false
-    @FocusState private var isEditingNickname: Bool
     @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
     private var isMovementRecognitionEnabled = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: FGSpace.m) {
-            nicknameField
             identitySection
             subscriptionRow
             if purchasesManager.isProUnlocked {
                 calendarPrivacySection
             }
-            accountDeletionSection
+            if authService.currentUser != nil {
+                accountDeletionSection
+            }
             legalLinks
         }
         .padding(FGSpace.page)
         .padding(.bottom, FGSpace.s)
         .sheet(isPresented: $isShowingAuthSheet) {
             AuthSheetView()
+                .environment(authService)
+                .environment(purchasesManager)
         }
         .sheet(isPresented: $isShowingAcknowledgements) {
             NavigationStack { AcknowledgementsView() }
@@ -108,22 +110,6 @@ struct ProfileHeaderView: View {
         } message: {
             Text("Your local profile preferences on this device have been cleared.")
         }
-    }
-
-    // MARK: Nickname
-
-    private var nicknameField: some View {
-        TextField("Add a nickname", text: $profile.nickname)
-            .font(FGFont.title)
-            .foregroundStyle(FGColor.ink)
-            .textFieldStyle(.plain)
-            .textInputAutocapitalization(.words)
-            .focused($isEditingNickname)
-            .submitLabel(.done)
-            .onSubmit { isEditingNickname = false }
-            .accessibilityLabel("Nickname")
-            .accessibilityHint("A name for you, shown only on this device")
-            .postHogMask()
     }
 
     // MARK: Identity

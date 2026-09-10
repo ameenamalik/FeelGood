@@ -27,6 +27,28 @@ struct YouView: View {
         NavigationStack {
             // Match the navigation bar to the page's warm background.
             page.toolbarBackground(FGColor.bg, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        SwiftUI.Menu {
+                            #if DEBUG
+                            Button("User journeys (Time travel)", systemImage: "clock.arrow.circlepath") {
+                                isDebugging = true
+                            }
+                            Divider()
+                            #endif
+                            Button("Everything", systemImage: "square.stack") { isBrowsing = true }
+                            Button("My Preferences", systemImage: "slider.horizontal.3") { isEditingProfile = true }
+                            Button("Hidden exercises", systemImage: "eye.slash") { isShowingHiddenExercises = true }
+                            Button("Account & privacy", systemImage: "person.crop.circle") { isShowingAccount = true }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .foregroundStyle(FGColor.inkMuted)
+                                .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
+                        }
+                        .accessibilityLabel("More")
+                        .accessibilityHint("Browse everything, edit your preferences, or manage your account")
+                    }
+                }
         }
         .sheet(isPresented: $isBrowsing) {
             LibraryView(model: model)
@@ -117,7 +139,7 @@ struct YouView: View {
 
             HStack(spacing: 6) {
                 preferencePill(
-                    "Preferences",
+                    "My Preferences",
                     fill: FGColor.rose.opacity(0.34)
                 ) {
                     isEditingProfile = true
