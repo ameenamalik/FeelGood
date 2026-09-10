@@ -35,7 +35,8 @@ struct SessionLogTests {
             of: session,
             startedAt: Fixture.now.addingTimeInterval(-600),
             endedAt: Fixture.now,
-            feel: .lovedIt
+            feel: .lovedIt,
+            place: .home
         )
 
         let history = log.history(before: Fixture.now.addingTimeInterval(60))
@@ -43,6 +44,8 @@ struct SessionLogTests {
         #expect(history.first?.sessionID == "m-pilates-10")
         #expect(history.first?.wasCompleted == true)
         #expect(history.first?.activity == .pilates)
+        #expect(history.first?.durationMin == 10)
+        #expect(history.first?.place == .home)
     }
 
     @Test("Finishing without answering the reflection still counts")
@@ -99,6 +102,7 @@ struct SessionLogTests {
         log.recordCompletion(of: session, startedAt: Fixture.now, endedAt: Fixture.now, feel: .fine)
 
         #expect(log.history(before: Fixture.now.addingTimeInterval(60)).count == 1)
+        #expect(log.allHistory().count == 2)
     }
 
     @Test("What gets logged is what the engine reads back")

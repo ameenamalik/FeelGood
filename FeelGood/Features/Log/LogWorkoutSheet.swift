@@ -15,6 +15,7 @@ nonisolated struct LoggedWorkout: Hashable, Sendable {
     var activity: Activity
     var durationMin: Int
     var intensity: Int
+    var place: Place? = nil
     var isKept: Bool
     var title: String
 
@@ -30,6 +31,7 @@ struct LogWorkoutSheet: View {
     @State private var activity: Activity?
     @State private var durationMin = 30
     @State private var intensity = 3
+    @State private var place: Place?
     @State private var isKept = false
     @State private var title = ""
     @FocusState private var isNamingIt: Bool
@@ -71,6 +73,16 @@ struct LogWorkoutSheet: View {
                         ForEach(Self.durations, id: \.self) { minutes in
                             FGChoice(title: "\(minutes) min", isSelected: durationMin == minutes) {
                                 withAnimation(FGMotion.gentle) { durationMin = minutes }
+                            }
+                        }
+                    }
+
+                    question("Where? (optional)") {
+                        ForEach([Place.home, .gym, .outdoors, .studio, .pool], id: \.self) { option in
+                            FGChoice(title: placeLabel(option), isSelected: place == option) {
+                                withAnimation(FGMotion.gentle) {
+                                    place = place == option ? nil : option
+                                }
                             }
                         }
                     }
@@ -161,12 +173,14 @@ struct LogWorkoutSheet: View {
             "activity": activity.rawValue,
             "duration_minutes": durationMin,
             "intensity": intensity,
+            "place": place?.rawValue ?? "not_set",
             "saved_for_later": isKept
         ])
         let workout = LoggedWorkout(
             activity: activity,
             durationMin: durationMin,
             intensity: intensity,
+            place: place,
             isKept: isKept,
             title: name.isEmpty ? LoggedWorkout.defaultTitle(for: activity, durationMin: durationMin) : name
         )
@@ -180,6 +194,16 @@ struct LogWorkoutSheet: View {
 
         onDone(workout)
         dismiss()
+    }
+
+    private func placeLabel(_ place: Place) -> String {
+        switch place {
+        case .home: "Home"
+        case .outdoors: "Outdoors"
+        case .gym: "Gym"
+        case .studio: "Studio"
+        case .pool: "Pool"
+        }
     }
 }
 

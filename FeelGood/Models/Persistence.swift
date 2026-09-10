@@ -337,13 +337,16 @@ final class SessionRecord {
     var qualitiesRaw: [String]
     var intensity: Int
     var courseRaw: String
+    var durationMin: Int = 0
+    var placeRaw: String?
 
     init(
         session: Session,
         startedAt: Date,
         dayStart: Date,
         endedAt: Date? = nil,
-        outcome: HistoryOutcome
+        outcome: HistoryOutcome,
+        place: Place? = nil
     ) {
         sessionID = session.id
         self.startedAt = startedAt
@@ -353,6 +356,8 @@ final class SessionRecord {
         qualitiesRaw = session.qualities.map(\.rawValue)
         intensity = session.intensity
         courseRaw = session.course.rawValue
+        durationMin = session.durationMin
+        placeRaw = place?.rawValue
         switch outcome {
         case .completed(let feel):
             outcomeRaw = "completed"
@@ -387,6 +392,8 @@ final class SessionRecord {
             qualities: qualitiesRaw.compactMap(Quality.init(rawValue:)),
             intensity: intensity,
             course: Course(rawValue: courseRaw) ?? .main,
+            durationMin: durationMin,
+            place: placeRaw.flatMap(Place.init(rawValue:)),
             date: endedAt ?? startedAt,
             outcome: outcome
         )

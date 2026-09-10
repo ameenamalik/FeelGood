@@ -33,6 +33,8 @@ final class TodayModel {
     /// calendar, and nothing here is written back to Calendar.
     private(set) var calendarOpening: CalendarOpening?
     private(set) var history: [HistoryEntry]
+    private(set) var littleWins: [LittleWinProgress]
+    private(set) var pendingLittleWinCelebration: LittleWinCelebration?
     private(set) var menu: Menu
     /// `Menu.headline` upgraded by the copy layer, PRD §7.3 — a sibling
     /// property rather than a mutation of `menu.headline` in place, because
@@ -89,6 +91,9 @@ final class TodayModel {
         self.checkIn = todaysCheckIn
         self.calendarOpening = calendarOpening
         self.history = recorded
+        let initialLittleWins = LittleWins.progress(in: log.allHistory(), sessions: store.sessions + own)
+        self.littleWins = initialLittleWins
+        self.pendingLittleWinCelebration = nil
         self.calendar = calendar
         self.dailySwapsCount = Self.swapCount(in: recorded, on: now, calendar: calendar)
         self.inProgressSessionIDs = Set(
@@ -161,6 +166,7 @@ final class TodayModel {
     /// changes underneath the screen rather than because of it.
     func reload(now: Date = Date()) {
         history = log.history(before: now)
+        littleWins = LittleWins.progress(in: log.allHistory(), sessions: everything)
         dailySwapsCount = Self.swapCount(in: history, on: now, calendar: calendar)
         swappedAway = []
         menu = engine.makeMenu(input(now: now))
@@ -341,13 +347,67 @@ final class TodayModel {
 
     /// Finished. The menu deliberately does not regenerate — the day stays as
     /// it was, and what happened counts toward tomorrow.
-    func complete(_ session: Session, startedAt: Date, feel: Feel?, now: Date = Date()) {
+    func complete(
+        _ session: Session,
+        startedAt: Date,
+        feel: Feel?,
+        place: Place? = nil,
+        now: Date = Date()
+    ) {
+        let unlockedBefore = Set(littleWins.filter(\.isUnlocked).map(\.win))
+        let completedPlace = place ?? inferredCompletionPlace(for: session)
         progressStore.clearProgress(for: session.id)
         inProgressSessionIDs.remove(session.id)
-        log.recordCompletion(of: session, startedAt: startedAt, endedAt: now, feel: feel)
+        log.recordCompletion(
+            of: session,
+            startedAt: startedAt,
+            endedAt: now,
+            feel: feel,
+            place: completedPlace
+        )
         history = log.history(before: now)
+        littleWins = LittleWins.progress(in: log.allHistory(), sessions: everything)
+        let newWins = littleWins.filter {
+            $0.isUnlocked && !unlockedBefore.contains($0.win)
+        }
+        if !newWins.isEmpty {
+            pendingLittleWinCelebration = LittleWinCelebration(wins: newWins)
+        }
         refreshCompletedToday(now: now)
         publishSnapshot(now: now)
+
+        if let userId = AuthService.shared.currentUser?.uid {
+            Task {
+                try? await FirestoreService.shared.recordCompletion(
+                    userId: userId,
+                    sessionTitle: session.title,
+                    sessionID: session.id,
+                    startedAt: startedAt,
+                    endedAt: now,
+                    durationMin: session.durationMin,
+                    activity: session.activity.rawValue,
+                    place: completedPlace?.rawValue,
+                    feel: feel?.rawValue
+                )
+            }
+        }
+    }
+
+    func takePendingLittleWinCelebration() -> LittleWinCelebration? {
+        defer { pendingLittleWinCelebration = nil }
+        return pendingLittleWinCelebration
+    }
+
+    private func inferredCompletionPlace(for session: Session) -> Place? {
+        switch checkIn?.place {
+        case .stayingIn: return .home
+        case .atTheGym: return .gym
+        case .happyToGoOut:
+            let awayPlaces = session.places.filter { $0 != .home }
+            return awayPlaces.count == 1 ? awayPlaces[0] : nil
+        case nil:
+            return nil
+        }
     }
 
     /// Leaving the player is a pause, not a workout outcome. It changes no
@@ -435,7 +495,7 @@ final class TodayModel {
             ownSessions = log.kept()
             rebuildEngine()
         }
-        complete(session, startedAt: now, feel: nil, now: now)
+        complete(session, startedAt: now, feel: nil, place: workout.place, now: now)
     }
 
     /// A calendar title can suggest that movement was planned, but only this
