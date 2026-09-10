@@ -281,18 +281,23 @@ struct TodayView: View {
 
                 Spacer(minLength: FGSpace.s)
 
-                // Compact icon-only controls for routine and quick adjust
+                // Compact icon-only controls for routine and quick adjust.
+                // Quick adjust is a Pro feature; free users get only the +,
+                // never a lock icon that gates a control they can't see the
+                // point of yet.
                 #if compiler(>=6.2)
                 if #available(iOS 26, *) {
                     GlassEffectContainer(spacing: FGSpace.s) {
                         HStack(spacing: FGSpace.s) {
                             routineButtonLabel
                                 .glassEffect(.regular.interactive(), in: Circle())
-                            adjustButtonLabel
-                                .glassEffect(
-                                    isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
-                                    in: Circle()
-                                )
+                            if model.isProUser {
+                                adjustButtonLabel
+                                    .glassEffect(
+                                        isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
+                                        in: Circle()
+                                    )
+                            }
                         }
                     }
                 } else {
@@ -334,26 +339,25 @@ struct TodayView: View {
                 .background(FGColor.surface)
                 .clipShape(Circle())
                 .overlay(Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1))
-            adjustButtonLabel
-                .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
-                .clipShape(Circle())
-                .overlay(
-                    Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
-                )
+            if model.isProUser {
+                adjustButtonLabel
+                    .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
+                    )
+            }
         }
     }
 
+    /// Only rendered for Pro users — see `menuHeading`.
     private var adjustButtonLabel: some View {
         Button {
-            if model.isProUser {
-                withAnimation(FGMotion.gentle) {
-                    isAdjusting.toggle()
-                }
-            } else {
-                isShowingPaywall = true
+            withAnimation(FGMotion.gentle) {
+                isAdjusting.toggle()
             }
         } label: {
-            Image(systemName: isAdjusting ? "xmark" : (model.isProUser ? "slider.horizontal.3" : "lock.fill"))
+            Image(systemName: isAdjusting ? "xmark" : "slider.horizontal.3")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(FGColor.ink)
                 .frame(width: 32, height: 32)

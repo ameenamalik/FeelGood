@@ -11,44 +11,14 @@ import SwiftUI
 import PostHog
 import RevenueCatUI
 
-private struct ConversationMessage: Identifiable, Codable, Sendable {
-    enum Role: String, Codable, Sendable {
-        case user
-        case assistant
-    }
-
-    let id: UUID
-    let role: Role
-    let text: String
-    let timestamp: Date
-    var recommendation: StructuredRecommendation?
-    var isReasonVisible: Bool = false
-    var isCommittedToToday: Bool = false
-
-    init(
-        id: UUID = UUID(),
-        role: Role,
-        text: String,
-        timestamp: Date = Date(),
-        recommendation: StructuredRecommendation? = nil,
-        isReasonVisible: Bool = false,
-        isCommittedToToday: Bool = false
-    ) {
-        self.id = id
-        self.role = role
-        self.text = text
-        self.timestamp = timestamp
-        self.recommendation = recommendation
-        self.isReasonVisible = isReasonVisible
-        self.isCommittedToToday = isCommittedToToday
-    }
-}
-
 struct ExploreView: View {
     let model: TodayModel
 
     @State private var messages: [ConversationMessage] = []
     @State private var quickReplies: [QuickReplyAction] = []
+    @State private var threads: [ConversationThread] = []
+    @State private var activeThreadID: UUID?
+    @State private var isShowingHistory: Bool = false
     @State private var inputText: String = ""
     @State private var isProcessing: Bool = false
     @State private var service: any ChatProviding = ChatService()
@@ -64,7 +34,9 @@ struct ExploreView: View {
     @State private var isShowingAuthPrompt = false
     @State private var isShowingPaywall = false
 
-    private let persistenceKey = "FeelGood.ChatHistory.v2"
+    private let threadsPersistenceKey = "FeelGood.ChatThreads.v1"
+    private let activeThreadKey = "FeelGood.ActiveThreadID.v1"
+    private let legacyPersistenceKey = "FeelGood.ChatHistory.v2"
 
     private let defaultStarters: [QuickReplyAction] = [
         QuickReplyAction(id: "starter_why", label: "Why today's plan?", symbol: "questionmark.circle", actionType: .askWhy),
@@ -132,6 +104,21 @@ struct ExploreView: View {
                 subtitle: "Save this personalized recommendation to your account and keep it across devices."
             )
         }
+        .sheet(isPresented: $isShowingHistory) {
+            ChatHistorySheet(
+                threads: threads,
+                activeThreadID: activeThreadID,
+                onSelectThread: { thread in
+                    selectThread(thread)
+                },
+                onNewChat: {
+                    startNewConversation()
+                },
+                onDeleteThread: { id in
+                    deleteThread(id)
+                }
+            )
+        }
         .sheet(isPresented: $isShowingPaywall) {
             PaywallView(displayCloseButton: true)
         }
@@ -158,26 +145,18 @@ struct ExploreView: View {
 
     private var headerBar: some View {
         HStack(alignment: .center) {
-            // Menu / Clear button
-            SwiftUI.Menu {
-                Button(role: .destructive) {
-                    clearChatThread()
-                } label: {
-                    Label("Clear Chat Thread", systemImage: "trash")
-                }
-
-                Button {
-                    loadStarterExample()
-                } label: {
-                    Label("Reset to Starter", systemImage: "arrow.counterclockwise")
-                }
+            // Previous Conversation History Button
+            Button {
+                isShowingHistory = true
             } label: {
-                Image(systemName: "chevron.left")
+                Image(systemName: "clock.arrow.circlepath")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(FGColor.ink)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Chat History")
 
             Spacer()
 
@@ -188,14 +167,29 @@ struct ExploreView: View {
 
             Spacer()
 
-            // Right Time Pill Badge
-            Text(activeTimeLabel)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(FGColor.inkMuted)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color(light: 0xF3EEE7, dark: 0x2A2724))
-                .clipShape(Capsule())
+            // Right side: Active Time Pill Badge + New Chat Button
+            HStack(spacing: 8) {
+                Text(activeTimeLabel)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(FGColor.inkMuted)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color(light: 0xF3EEE7, dark: 0x2A2724))
+                    .clipShape(Capsule())
+
+                Button {
+                    startNewConversation()
+                } label: {
+                    Image(systemName: "square.and.pencil")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(FGColor.ink)
+                        .frame(width: 32, height: 32)
+                        .background(Color(light: 0xF3EEE7, dark: 0x2A2724))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("New Chat")
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -584,6 +578,7 @@ struct ExploreView: View {
 
         let userMsg = ConversationMessage(role: .user, text: trimmed)
         messages.append(userMsg)
+        savePersistedHistory()
         inputText = ""
         isFieldFocused = false
         isProcessing = true
@@ -750,33 +745,138 @@ struct ExploreView: View {
         }
     }
 
-    // MARK: - Persistence
+    // MARK: - Thread Management & Persistence
 
     private func loadPersistedHistory() {
-        guard let data = UserDefaults.standard.data(forKey: persistenceKey),
-              let decoded = try? JSONDecoder().decode([ConversationMessage].self, from: data) else {
+        if let data = UserDefaults.standard.data(forKey: threadsPersistenceKey),
+           let decoded = try? JSONDecoder().decode([ConversationThread].self, from: data),
+           !decoded.isEmpty {
+            threads = decoded
+
+            let savedActiveID = UserDefaults.standard.string(forKey: activeThreadKey).flatMap { UUID(uuidString: $0) }
+            if let savedActiveID, let active = threads.first(where: { $0.id == savedActiveID }) {
+                activeThreadID = active.id
+                messages = active.messages
+                quickReplies = active.quickReplies
+            } else if let first = threads.first {
+                activeThreadID = first.id
+                messages = first.messages
+                quickReplies = first.quickReplies
+            }
             return
         }
-        messages = decoded
+
+        // Migrate legacy single-thread history if present
+        if let legacyData = UserDefaults.standard.data(forKey: legacyPersistenceKey),
+           let legacyMessages = try? JSONDecoder().decode([ConversationMessage].self, from: legacyData),
+           !legacyMessages.isEmpty {
+            let migratedThread = ConversationThread(
+                title: "Previous Check-In",
+                messages: legacyMessages,
+                quickReplies: []
+            )
+            threads = [migratedThread]
+            activeThreadID = migratedThread.id
+            messages = migratedThread.messages
+            quickReplies = []
+            savePersistedHistory()
+            UserDefaults.standard.removeObject(forKey: legacyPersistenceKey)
+            return
+        }
+
+        // Fresh state: create initial thread
+        let initialThread = ConversationThread()
+        threads = [initialThread]
+        activeThreadID = initialThread.id
+        messages = []
+        quickReplies = []
     }
 
     private func savePersistedHistory() {
-        if let data = try? JSONEncoder().encode(messages) {
-            UserDefaults.standard.set(data, forKey: persistenceKey)
+        guard let currentID = activeThreadID else { return }
+
+        if let index = threads.firstIndex(where: { $0.id == currentID }) {
+            threads[index].messages = messages
+            threads[index].quickReplies = quickReplies
+            threads[index].updatedAt = Date()
+            threads[index].title = threads[index].displayTitle
+        } else {
+            let newThread = ConversationThread(
+                id: currentID,
+                title: "New Check-In",
+                messages: messages,
+                quickReplies: quickReplies
+            )
+            threads.insert(newThread, at: 0)
         }
+
+        if let data = try? JSONEncoder().encode(threads) {
+            UserDefaults.standard.set(data, forKey: threadsPersistenceKey)
+        }
+        UserDefaults.standard.set(currentID.uuidString, forKey: activeThreadKey)
     }
 
-    private func clearChatThread() {
-        withAnimation(FGMotion.gentle) {
-            messages.removeAll()
-            quickReplies.removeAll()
-            UserDefaults.standard.removeObject(forKey: persistenceKey)
+    private func startNewConversation() {
+        // If current thread has no messages, just reset inputs and stay on it
+        if messages.isEmpty {
+            inputText = ""
+            isFieldFocused = false
+            return
         }
+
+        // Save current thread first
+        savePersistedHistory()
+
+        let newThread = ConversationThread()
+        withAnimation(FGMotion.gentle) {
+            threads.insert(newThread, at: 0)
+            activeThreadID = newThread.id
+            messages = []
+            quickReplies = []
+            inputText = ""
+            isFieldFocused = false
+        }
+        savePersistedHistory()
     }
 
-    private func loadStarterExample() {
+    private func selectThread(_ thread: ConversationThread) {
+        // Save current thread before switching
+        savePersistedHistory()
+
         withAnimation(FGMotion.gentle) {
-            clearChatThread()
+            activeThreadID = thread.id
+            messages = thread.messages
+            quickReplies = thread.quickReplies
+            inputText = ""
+            isFieldFocused = false
+        }
+        UserDefaults.standard.set(thread.id.uuidString, forKey: activeThreadKey)
+    }
+
+    private func deleteThread(_ id: UUID) {
+        withAnimation(FGMotion.gentle) {
+            threads.removeAll(where: { $0.id == id })
+
+            if activeThreadID == id {
+                if let next = threads.first {
+                    activeThreadID = next.id
+                    messages = next.messages
+                    quickReplies = next.quickReplies
+                } else {
+                    let fresh = ConversationThread()
+                    threads = [fresh]
+                    activeThreadID = fresh.id
+                    messages = []
+                    quickReplies = []
+                }
+            }
+        }
+
+        if let data = try? JSONEncoder().encode(threads) {
+            UserDefaults.standard.set(data, forKey: threadsPersistenceKey)
+        }
+        if let currentActive = activeThreadID {
+            UserDefaults.standard.set(currentActive.uuidString, forKey: activeThreadKey)
         }
     }
 }

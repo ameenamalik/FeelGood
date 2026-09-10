@@ -8,16 +8,20 @@
 //  sign-up screen → the onboarding quiz; see PRD §7.0/§7.1.
 //
 
+import RevenueCatUI
 import SwiftUI
 import UIKit
 
 struct FirstRunFlow: View {
     static let hasSeenIntroKey = "hasSeenProductIntro"
     static let hasSeenWelcomeSignUpKey = "hasSeenWelcomeSignUp"
+    static let hasSeenOnboardingPaywallKey = "hasSeenOnboardingPaywall"
 
     let onFinish: (OnboardingModel) -> Void
     @AppStorage(Self.hasSeenIntroKey) private var hasSeenIntro = false
     @AppStorage(Self.hasSeenWelcomeSignUpKey) private var hasSeenWelcomeSignUp = false
+    @AppStorage(Self.hasSeenOnboardingPaywallKey) private var hasSeenOnboardingPaywall = false
+    @State private var pendingOnboardingModel: OnboardingModel?
 
     var body: some View {
         Group {
@@ -41,8 +45,25 @@ struct FirstRunFlow: View {
                         hasSeenWelcomeSignUp = true
                     }
                 )
+            } else if let pending = pendingOnboardingModel {
+                let completeOnboardingPaywall: () -> Void = {
+                    hasSeenOnboardingPaywall = true
+                    pendingOnboardingModel = nil
+                    onFinish(pending)
+                }
+                PaywallView(displayCloseButton: true)
+                    .onRequestedDismissal(completeOnboardingPaywall)
+                    .onPurchaseCompleted { _ in completeOnboardingPaywall() }
+                    .onRestoreCompleted { _ in completeOnboardingPaywall() }
+                    .guaranteedPaywallCloseButton(action: completeOnboardingPaywall)
             } else {
-                OnboardingView(onFinish: onFinish)
+                OnboardingView { onboarding in
+                    if !hasSeenOnboardingPaywall {
+                        pendingOnboardingModel = onboarding
+                    } else {
+                        onFinish(onboarding)
+                    }
+                }
             }
         }
     }

@@ -504,6 +504,33 @@ private struct ChoiceGridPreview: View {
     }
 }
 
+/// A code-level guarantee that a RevenueCat paywall always has a way out.
+///
+/// `PaywallView(displayCloseButton:)` only affects the legacy "original
+/// template" paywalls — a V2 Paywall Builder template renders its own close
+/// affordance per its dashboard config, and silently ignores the parameter.
+/// If that template is ever edited to drop its close element, the paywall
+/// becomes unskippable with no compile-time or code-review signal. This
+/// overlay never depends on template content, so it can't regress that way.
+extension View {
+    func guaranteedPaywallCloseButton(action: @escaping () -> Void) -> some View {
+        overlay(alignment: .topTrailing) {
+            Button(action: action) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Color.black.opacity(0.6))
+                    .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
+                    .background(.ultraThinMaterial, in: Circle())
+                    .overlay(Circle().strokeBorder(Color.black.opacity(0.08)))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Close")
+            .padding(.top, FGSpace.s)
+            .padding(.trailing, FGSpace.s)
+        }
+    }
+}
+
 /// 327pt is what a 375pt screen leaves after `FGSpace.page` either side — the
 /// narrowest phone still supported, and where the grid used to break.
 #Preview("Choice grid — smallest phone") {
