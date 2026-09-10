@@ -56,22 +56,22 @@ struct OnboardingView: View {
                             alignment: .top
                         )
                         .padding(FGSpace.page)
-                        // Room for the footer. `.safeAreaInset` is applied to
-                        // the reader rather than the scroll view, so it insets
-                        // the container without reserving any scroll content —
-                        // the last tile ended up under the Next button.
-                        .padding(.bottom, FGSize.minTouchTarget + FGSpace.xl)
                         .fgAnimation(FGMotion.gentle, value: model.card)
                     }
                     .scrollBounceBehavior(.basedOnSize)
+                    // The footer's real, dynamic height is reserved by the
+                    // scroll view. This stays correct when Back or validation
+                    // copy appears, on short screens, and at larger text sizes.
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        footer
+                            .padding(.horizontal, FGSpace.page)
+                            .padding(.top, FGSpace.s)
+                            .padding(.bottom, FGSpace.s)
+                            .background(FGColor.bg)
+                    }
                     .onChange(of: model.card) { _, _ in
                         scrollProxy.scrollTo("onboarding-top", anchor: .top)
                     }
-                }
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    footer
-                        .padding(.horizontal, FGSpace.page)
-                        .padding(.vertical, FGSpace.s)
                 }
             }
         }
