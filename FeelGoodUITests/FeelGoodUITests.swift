@@ -63,6 +63,11 @@ final class FeelGoodUITests: XCTestCase {
 
         app.buttons["Next"].tap()
         app.buttons["Show me today"].tap()
+
+        let exploreFree = app.buttons["Explore Free Menu First"]
+        if exploreFree.waitForExistence(timeout: 3) {
+            exploreFree.tap()
+        }
     }
 
     @MainActor
