@@ -165,6 +165,18 @@ struct TodayModelTests {
         #expect(log.affinity()["m-pilates-30"] == nil)
     }
 
+    @Test("A newly unlocked badge is queued once after completion")
+    func firstCompletionQueuesLittleWinCelebration() throws {
+        let model = model(log: InMemorySessionLog())
+        let session = Fixture.catalog.first { $0.id == "a-stretch" }!
+
+        model.complete(session, startedAt: Fixture.now, feel: nil, now: Fixture.now)
+
+        let celebration = try #require(model.takePendingLittleWinCelebration())
+        #expect(celebration.wins.map(\.win).contains(.firstMove))
+        #expect(model.takePendingLittleWinCelebration() == nil)
+    }
+
     @Test("What you just did does not vanish off the screen you're looking at")
     func recordingLeavesTodaysMenuAlone() {
         let model = model()

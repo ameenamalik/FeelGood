@@ -230,6 +230,13 @@ nonisolated struct HistoryEntry: Hashable, Sendable {
     var qualities: [Quality]
     var intensity: Int
     var course: Course
+    /// Authored or explicitly logged length. This is intentionally not derived
+    /// from wall-clock time: a paused five-minute reset is still a five-minute
+    /// reset for Little Wins.
+    var durationMin: Int = 0
+    /// Where it actually happened when the person told us. `nil` means unknown,
+    /// never "home by default".
+    var place: Place? = nil
     /// Absolute instant, stored UTC, rendered local.
     var date: Date
     var outcome: HistoryOutcome

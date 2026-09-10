@@ -22,8 +22,12 @@ public struct FirestoreCompletionRecord: Codable, Sendable, Identifiable {
     public var id: String
     public var userId: String
     public var sessionTitle: String
+    public var sessionID: String?
     public var startedAt: Date
     public var endedAt: Date
+    public var durationMin: Int?
+    public var activity: String?
+    public var place: String?
     public var feel: String?
     public var timestamp: Date
 
@@ -31,16 +35,24 @@ public struct FirestoreCompletionRecord: Codable, Sendable, Identifiable {
         id: String = UUID().uuidString,
         userId: String,
         sessionTitle: String,
+        sessionID: String? = nil,
         startedAt: Date,
         endedAt: Date,
+        durationMin: Int? = nil,
+        activity: String? = nil,
+        place: String? = nil,
         feel: String? = nil,
         timestamp: Date = Date()
     ) {
         self.id = id
         self.userId = userId
         self.sessionTitle = sessionTitle
+        self.sessionID = sessionID
         self.startedAt = startedAt
         self.endedAt = endedAt
+        self.durationMin = durationMin
+        self.activity = activity
+        self.place = place
         self.feel = feel
         self.timestamp = timestamp
     }
@@ -152,16 +164,24 @@ public final class FirestoreService: Sendable {
     public func recordCompletion(
         userId: String,
         sessionTitle: String,
+        sessionID: String,
         startedAt: Date,
         endedAt: Date,
+        durationMin: Int,
+        activity: String,
+        place: String? = nil,
         feel: String? = nil
     ) async throws {
         guard let db else { return }
         let record = FirestoreCompletionRecord(
             userId: userId,
             sessionTitle: sessionTitle,
+            sessionID: sessionID,
             startedAt: startedAt,
             endedAt: endedAt,
+            durationMin: durationMin,
+            activity: activity,
+            place: place,
             feel: feel
         )
         try db.collection("users")

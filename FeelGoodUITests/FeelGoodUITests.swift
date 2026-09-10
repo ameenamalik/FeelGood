@@ -36,14 +36,22 @@ final class FeelGoodUITests: XCTestCase {
     @MainActor
     private func completeOnboarding(_ app: XCUIApplication) {
         let introNext = app.buttons["Next"]
-        if introNext.waitForExistence(timeout: 2) {
+        // Product intro has both Next and Skip. The onboarding quiz also has a
+        // Next button, so checking only that label can accidentally advance the
+        // quiz when a previous UI-test launch already finished the intro.
+        if introNext.waitForExistence(timeout: 2), app.buttons["Skip"].exists {
             introNext.tap()
             let continueButton = app.buttons["Continue"]
-            XCTAssertTrue(continueButton.waitForExistence(timeout: 2))
+            XCTAssertTrue(continueButton.waitForExistence(timeout: 5))
             continueButton.tap()
             let makeItMine = app.buttons["Make it mine"]
-            XCTAssertTrue(makeItMine.waitForExistence(timeout: 2))
+            XCTAssertTrue(makeItMine.waitForExistence(timeout: 5))
             makeItMine.tap()
+        }
+
+        let continueAsGuest = app.buttons["Not now — just show me today"]
+        if continueAsGuest.waitForExistence(timeout: 3) {
+            continueAsGuest.tap()
         }
 
         let pilates = app.buttons["Pilates"]
@@ -73,9 +81,9 @@ final class FeelGoodUITests: XCTestCase {
     @MainActor
     private func openViaLibrary(_ app: XCUIApplication, titleContains: String) {
         app.tabBars.buttons["You"].tap()
-        let everything = app.buttons["Everything"]
-        XCTAssertTrue(everything.waitForExistence(timeout: 5))
-        everything.tap()
+        let library = app.buttons["Library"]
+        XCTAssertTrue(library.waitForExistence(timeout: 5))
+        library.tap()
         let cell = app.buttons.matching(
             NSPredicate(format: "label CONTAINS %@", titleContains)
         ).firstMatch

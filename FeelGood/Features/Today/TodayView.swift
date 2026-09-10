@@ -27,6 +27,7 @@ struct TodayView: View {
     @State private var isAdjusting = false
     @State private var isShowingMyMenu = false
     @State private var selected: MenuItem?
+    @State private var littleWinCelebration: LittleWinCelebration?
     #if DEBUG
     @State private var isDebugging = false
     #endif
@@ -55,7 +56,7 @@ struct TodayView: View {
             // text is large enough to need it.
             .scrollBounceBehavior(.basedOnSize)
         }
-        .sheet(isPresented: $isCheckingIn) {
+        .sheet(isPresented: $isCheckingIn, onDismiss: presentPendingLittleWinCelebration) {
             CheckInSheet(
                 current: model.checkIn,
                 currentCalendarOpening: model.calendarOpening,
@@ -70,7 +71,7 @@ struct TodayView: View {
                 isCheckingIn = false
             }
         }
-        .sheet(isPresented: $isLogging) {
+        .sheet(isPresented: $isLogging, onDismiss: presentPendingLittleWinCelebration) {
             LogWorkoutSheet { workout in
                 model.log(workout)
             }
@@ -85,6 +86,11 @@ struct TodayView: View {
             SessionDetailView(item: item, model: model) {
                 shouldOfferProAfterDismissal = true
             }
+        }
+        .sheet(item: $littleWinCelebration) { celebration in
+            LittleWinCelebrationView(celebration: celebration)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
         }
         .sheet(isPresented: $isShowingAuthPrompt) {
             AuthSheetView(
@@ -402,6 +408,10 @@ struct TodayView: View {
         guard !model.isProUser, !hasShownFirstCompletionPaywall else { return }
         hasShownFirstCompletionPaywall = true
         isShowingPaywall = true
+    }
+
+    private func presentPendingLittleWinCelebration() {
+        littleWinCelebration = model.takePendingLittleWinCelebration()
     }
 
     @ViewBuilder
