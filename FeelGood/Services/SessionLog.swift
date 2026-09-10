@@ -17,12 +17,15 @@ import os
 protocol SessionLogging: AnyObject, Sendable {
     /// A session was finished. `feel` is optional — finishing without answering
     /// the reflection question is still a completion.
-    func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?)
+    func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?, place: Place?)
     /// "Shuffle" on a menu item. A swap is a preference signal, never a failure.
     func recordSwap(of session: Session, at date: Date)
 
     /// The last two weeks, as the engine wants them.
     func history(before now: Date) -> [HistoryEntry]
+    /// Full retained history for lifetime milestones. Planning continues to use
+    /// only the bounded history window above.
+    func allHistory() -> [HistoryEntry]
     /// Rolled-up preference that outlives the history window.
     func affinity() -> [String: Double]
 
@@ -56,6 +59,10 @@ protocol SessionLogging: AnyObject, Sendable {
 }
 
 extension SessionLogging {
+    func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?) {
+        recordCompletion(of: session, startedAt: startedAt, endedAt: endedAt, feel: feel, place: nil)
+    }
+
     @discardableResult
     func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, now: Date) -> Session {
         keep(title: title, activity: activity, durationMin: durationMin, intensity: intensity, course: nil, now: now)
@@ -76,13 +83,14 @@ final class SessionLog: SessionLogging {
         self.calendar = calendar
     }
 
-    func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?) {
+    func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?, place: Place?) {
         let record = SessionRecord(
             session: session,
             startedAt: startedAt,
             dayStart: calendar.startOfDay(for: endedAt),
             endedAt: endedAt,
-            outcome: .completed(feel: feel)
+            outcome: .completed(feel: feel),
+            place: place
         )
         context.insert(record)
 
@@ -107,6 +115,13 @@ final class SessionLog: SessionLogging {
         let cutoff = calendar.date(byAdding: .day, value: -PlanEngine.historyWindowDays, to: now) ?? now
         let descriptor = FetchDescriptor<SessionRecord>(
             predicate: #Predicate { $0.startedAt >= cutoff },
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
+        )
+        return fetch(descriptor).map(\.historyEntry)
+    }
+
+    func allHistory() -> [HistoryEntry] {
+        let descriptor = FetchDescriptor<SessionRecord>(
             sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
         )
         return fetch(descriptor).map(\.historyEntry)
@@ -267,13 +282,15 @@ final class InMemorySessionLog: SessionLogging {
         self.entries = entries
     }
 
-    func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?) {
+    func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?, place: Place?) {
         entries.append(HistoryEntry(
             sessionID: session.id,
             activity: session.activity,
             qualities: session.qualities,
             intensity: session.intensity,
             course: session.course,
+            durationMin: session.durationMin,
+            place: place,
             date: endedAt,
             outcome: .completed(feel: feel)
         ))
@@ -298,6 +315,7 @@ final class InMemorySessionLog: SessionLogging {
     }
 
     func history(before now: Date) -> [HistoryEntry] { entries }
+    func allHistory() -> [HistoryEntry] { entries }
     func affinity() -> [String: Double] { affinityScores }
 
     // MARK: The day

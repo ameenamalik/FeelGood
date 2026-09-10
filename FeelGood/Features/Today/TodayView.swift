@@ -27,6 +27,7 @@ struct TodayView: View {
     @State private var isAdjusting = false
     @State private var isShowingMyMenu = false
     @State private var selected: MenuItem?
+    @State private var littleWinCelebration: LittleWinCelebration?
     #if DEBUG
     @State private var isDebugging = false
     #endif
@@ -55,7 +56,7 @@ struct TodayView: View {
             // text is large enough to need it.
             .scrollBounceBehavior(.basedOnSize)
         }
-        .sheet(isPresented: $isCheckingIn) {
+        .sheet(isPresented: $isCheckingIn, onDismiss: presentPendingLittleWinCelebration) {
             CheckInSheet(
                 current: model.checkIn,
                 currentCalendarOpening: model.calendarOpening,
@@ -70,7 +71,7 @@ struct TodayView: View {
                 isCheckingIn = false
             }
         }
-        .sheet(isPresented: $isLogging) {
+        .sheet(isPresented: $isLogging, onDismiss: presentPendingLittleWinCelebration) {
             LogWorkoutSheet { workout in
                 model.log(workout)
             }
@@ -85,6 +86,11 @@ struct TodayView: View {
             SessionDetailView(item: item, model: model) {
                 shouldOfferProAfterDismissal = true
             }
+        }
+        .sheet(item: $littleWinCelebration) { celebration in
+            LittleWinCelebrationView(celebration: celebration)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
         }
         .sheet(isPresented: $isShowingAuthPrompt) {
             AuthSheetView(
@@ -279,6 +285,7 @@ struct TodayView: View {
                 // Quick adjust is a Pro feature; free users get only the +,
                 // never a lock icon that gates a control they can't see the
                 // point of yet.
+                #if compiler(>=6.2)
                 if #available(iOS 26, *) {
                     GlassEffectContainer(spacing: FGSpace.s) {
                         HStack(spacing: FGSpace.s) {
@@ -294,21 +301,11 @@ struct TodayView: View {
                         }
                     }
                 } else {
-                    HStack(spacing: FGSpace.s) {
-                        routineButtonLabel
-                            .background(FGColor.surface)
-                            .clipShape(Circle())
-                            .overlay(Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1))
-                        if model.isProUser {
-                            adjustButtonLabel
-                                .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
-                                )
-                        }
-                    }
+                    legacyMenuControls
                 }
+                #else
+                legacyMenuControls
+                #endif
             }
 
             if isAdjusting {
@@ -334,6 +331,23 @@ struct TodayView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add custom routine or view My Menu")
+    }
+
+    private var legacyMenuControls: some View {
+        HStack(spacing: FGSpace.s) {
+            routineButtonLabel
+                .background(FGColor.surface)
+                .clipShape(Circle())
+                .overlay(Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1))
+            if model.isProUser {
+                adjustButtonLabel
+                    .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
+                    )
+            }
+        }
     }
 
     /// Only rendered for Pro users — see `menuHeading`.
@@ -398,6 +412,10 @@ struct TodayView: View {
         guard !model.isProUser, !hasShownFirstCompletionPaywall else { return }
         hasShownFirstCompletionPaywall = true
         isShowingPaywall = true
+    }
+
+    private func presentPendingLittleWinCelebration() {
+        littleWinCelebration = model.takePendingLittleWinCelebration()
     }
 
     @ViewBuilder
