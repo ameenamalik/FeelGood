@@ -109,5 +109,6 @@ struct AuthServiceTests {
     func firstRunFlowKeys() {
         #expect(FirstRunFlow.hasSeenIntroKey == "hasSeenProductIntro")
         #expect(FirstRunFlow.hasSeenWelcomeSignUpKey == "hasSeenWelcomeSignUp")
+        #expect(FirstRunFlow.hasSeenOnboardingPaywallKey == "hasSeenOnboardingPaywall")
     }
 }

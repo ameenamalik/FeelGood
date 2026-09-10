@@ -19,9 +19,6 @@ struct YouView: View {
     @State private var isShowingSubscription = false
     @State private var isShowingAccount = false
     @State private var isShowingHiddenExercises = false
-    #if DEBUG
-    @State private var isDebugging = false
-    #endif
 
     var body: some View {
         NavigationStack {
@@ -32,12 +29,6 @@ struct YouView: View {
                     // `SwiftUI.Menu` spelled out: `Menu` is this app's own
                     // word for the day's plan, and that type wins here.
                     SwiftUI.Menu {
-                        #if DEBUG
-                        Button("User journeys (Time travel)", systemImage: "clock.arrow.circlepath") {
-                            isDebugging = true
-                        }
-                        Divider()
-                        #endif
                         Button("Everything", systemImage: "square.stack") { isBrowsing = true }
                         Button("What's true now", systemImage: "slider.horizontal.3") { isEditingProfile = true }
                         Button("Hidden exercises", systemImage: "eye.slash") { isShowingHiddenExercises = true }
@@ -88,11 +79,6 @@ struct YouView: View {
             }
             .presentationDragIndicator(.visible)
         }
-        #if DEBUG
-        .sheet(isPresented: $isDebugging) {
-            DebugMenu(content: model.store) { model.reload() }
-        }
-        #endif
     }
 
     private var page: some View {
