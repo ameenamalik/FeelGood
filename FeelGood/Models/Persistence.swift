@@ -159,6 +159,16 @@ final class UserProfile {
 
 // MARK: - Check-in
 
+nonisolated private func encodeBodyStates(_ states: Set<BodyState>) -> String? {
+    guard !states.isEmpty else { return nil }
+    return states.map(\.rawValue).sorted().joined(separator: ",")
+}
+
+nonisolated private func decodeBodyStates(_ raw: String?) -> Set<BodyState> {
+    guard let raw else { return [] }
+    return Set(raw.split(separator: ",").compactMap { BodyState(rawValue: String($0)) })
+}
+
 @Model
 final class CheckInRecord {
     var takenAt: Date
@@ -175,7 +185,7 @@ final class CheckInRecord {
         energyRaw = checkIn.energy.rawValue
         timeRaw = checkIn.time.rawValue
         placeRaw = checkIn.place?.rawValue
-        bodyRaw = checkIn.body?.rawValue
+        bodyRaw = encodeBodyStates(checkIn.bodies)
     }
 
     var planCheckIn: PlanCheckIn? {
@@ -185,7 +195,7 @@ final class CheckInRecord {
             energy: energy,
             time: time,
             place: placeRaw.flatMap(PlaceIntent.init(rawValue:)),
-            body: bodyRaw.flatMap(BodyState.init(rawValue:))
+            bodies: decodeBodyStates(bodyRaw)
         )
     }
 }
@@ -223,7 +233,7 @@ final class PlanDay {
         self.headlineIsWritten = headlineIsWritten
         assumedEnergyRaw = assumedCheckIn.energy.rawValue
         assumedTimeRaw = assumedCheckIn.time.rawValue
-        assumedBodyRaw = assumedCheckIn.body?.rawValue
+        assumedBodyRaw = encodeBodyStates(assumedCheckIn.bodies)
         self.items = items
     }
 
@@ -241,7 +251,7 @@ final class PlanDay {
         PlanCheckIn(
             energy: Energy(rawValue: assumedEnergyRaw) ?? .steady,
             time: TimeBudget(rawValue: assumedTimeRaw) ?? .some,
-            body: assumedBodyRaw.flatMap(BodyState.init(rawValue:))
+            bodies: decodeBodyStates(assumedBodyRaw)
         )
     }
 
@@ -327,13 +337,16 @@ final class SessionRecord {
     var qualitiesRaw: [String]
     var intensity: Int
     var courseRaw: String
+    var durationMin: Int = 0
+    var placeRaw: String?
 
     init(
         session: Session,
         startedAt: Date,
         dayStart: Date,
         endedAt: Date? = nil,
-        outcome: HistoryOutcome
+        outcome: HistoryOutcome,
+        place: Place? = nil
     ) {
         sessionID = session.id
         self.startedAt = startedAt
@@ -343,6 +356,8 @@ final class SessionRecord {
         qualitiesRaw = session.qualities.map(\.rawValue)
         intensity = session.intensity
         courseRaw = session.course.rawValue
+        durationMin = session.durationMin
+        placeRaw = place?.rawValue
         switch outcome {
         case .completed(let feel):
             outcomeRaw = "completed"
@@ -377,6 +392,8 @@ final class SessionRecord {
             qualities: qualitiesRaw.compactMap(Quality.init(rawValue:)),
             intensity: intensity,
             course: Course(rawValue: courseRaw) ?? .main,
+            durationMin: durationMin,
+            place: placeRaw.flatMap(Place.init(rawValue:)),
             date: endedAt ?? startedAt,
             outcome: outcome
         )

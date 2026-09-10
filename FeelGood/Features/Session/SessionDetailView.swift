@@ -28,6 +28,9 @@ struct SessionDetailView: View {
     @State private var newTitle = ""
     @State private var isConfirmingRemoval = false
     @State private var isConfirmingHide = false
+    @State private var littleWinCelebration: LittleWinCelebration?
+    @State private var shouldCloseAfterPlayer = false
+    @State private var completedPlayerSession = false
 
     /// From the menu, where something chose it.
     init(item: MenuItem, model: TodayModel, onCompleted: @escaping () -> Void = {}) {
@@ -83,8 +86,7 @@ struct SessionDetailView: View {
                             FGPrimaryButton(title: "I did this") {
                                 Analytics.capture("workout_completed", properties: workoutProperties)
                                 model.complete(session, startedAt: Date(), feel: nil)
-                                onCompleted()
-                                dismiss()
+                                presentLittleWinOrFinish()
                             }
                             HStack(spacing: FGSpace.m) {
                                 FGQuietButton("Rename", systemImage: "pencil") {
@@ -114,7 +116,7 @@ struct SessionDetailView: View {
                 .padding(FGSpace.page)
             }
         }
-        .fullScreenCover(isPresented: $isPlaying) {
+        .fullScreenCover(isPresented: $isPlaying, onDismiss: handlePlayerDismiss) {
             PlayerView(
                 session: session,
                 progress: savedProgress,
@@ -123,15 +125,20 @@ struct SessionDetailView: View {
                     case .completed(let feel):
                         Analytics.capture("workout_completed", properties: workoutProperties)
                         model.complete(session, startedAt: startedAt, feel: feel)
-                        onCompleted()
+                        completedPlayerSession = true
                     case .paused(let progress):
                         model.pause(session, at: progress)
                     }
+                    shouldCloseAfterPlayer = true
                     isPlaying = false
-                    dismiss()
                 },
                 startedAt: startedAt
             )
+        }
+        .sheet(item: $littleWinCelebration, onDismiss: finishCompletedSession) { celebration in
+            LittleWinCelebrationView(celebration: celebration)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
         }
         .sheet(item: $explaining) { term in
             GlossarySheet(term: term)
@@ -173,6 +180,38 @@ struct SessionDetailView: View {
 
     private var savedProgress: SessionProgress? {
         model.progress(for: session)
+    }
+
+    private func handlePlayerDismiss() {
+        guard shouldCloseAfterPlayer else { return }
+        shouldCloseAfterPlayer = false
+        if completedPlayerSession {
+            completedPlayerSession = false
+            presentLittleWinOrFinish()
+        } else {
+            dismiss()
+        }
+    }
+
+    private func presentLittleWinOrFinish() {
+        guard let celebration = model.takePendingLittleWinCelebration() else {
+            finishCompletedSession()
+            return
+        }
+
+        // When the player has just closed, give its full-screen presentation
+        // one run-loop turn to finish before asking SwiftUI to present the
+        // celebration sheet. Presenting both in the same transaction can make
+        // the badge silently fail to appear.
+        Task { @MainActor in
+            await Task.yield()
+            littleWinCelebration = celebration
+        }
+    }
+
+    private func finishCompletedSession() {
+        onCompleted()
+        dismiss()
     }
 
     /// `session.chips` minus target area, which is already spelled out in the

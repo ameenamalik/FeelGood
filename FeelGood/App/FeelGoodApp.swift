@@ -184,9 +184,7 @@ private struct TodayScreen: View {
                 TodayView(model: model, requestedSessionID: $requestedSessionID)
             }
             Tab("Chat", systemImage: "bubble.left.and.bubble.right", value: Destination.explore) {
-                ProGateView {
-                    ExploreView(model: model)
-                }
+                ExploreView(model: model)
             }
             Tab("You", systemImage: "person", value: Destination.you) {
                 YouView(model: model, profile: profile) { answers in

@@ -391,9 +391,15 @@ nonisolated struct PlanEngine: Sendable {
             score += weights.cadenceNudge * (1.0 - Double(session.intensity) / 5.0)
         }
 
-        // Body.
-        if let body = checkIn.body {
-            score += bodyScore(session, body: body)
+        // Body. Every selected concern contributes, with a cap so checking
+        // several does not overpower time, energy, and the user's preferences.
+        if !checkIn.bodies.isEmpty {
+            let bodyAdjustment = checkIn.bodies.reduce(0.0) {
+                $0 + bodyScore(session, body: $1)
+            }
+            score += bodyAdjustment.clamped(
+                to: -weights.bodyStateMatch...(weights.bodyStateMatch * 2)
+            )
         }
 
         // Coming back after a gap: shorter and easier, and said warmly.
