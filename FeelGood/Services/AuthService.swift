@@ -147,6 +147,7 @@ public protocol AuthProviding: AnyObject, Sendable {
 // MARK: - Production AuthService
 
 @Observable
+@MainActor
 public final class AuthService: AuthProviding, @unchecked Sendable {
     public static let shared = AuthService()
 
@@ -177,7 +178,9 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
                 GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
             }
             self.authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-                self?.handleFirebaseUserChanged(user)
+                Task { @MainActor in
+                    self?.handleFirebaseUserChanged(user)
+                }
             }
             if let user = Auth.auth().currentUser {
                 self.currentUser = Self.mapUser(user)
@@ -192,8 +195,8 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         }
         let mapped = Self.mapUser(user)
         self.currentUser = mapped
-        Task { @MainActor in
-            FirestoreService.shared.startListening(for: mapped.uid)
+        FirestoreService.shared.startListening(for: mapped.uid)
+        Task {
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         }
     }
@@ -228,6 +231,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             let mapped = Self.mapUser(result.user)
             self.currentUser = mapped
+            FirestoreService.shared.startListening(for: mapped.uid)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
             throw AuthError.mapFirebaseError(error)
@@ -251,6 +255,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             let mapped = Self.mapUser(result.user)
             self.currentUser = mapped
+            FirestoreService.shared.startListening(for: mapped.uid)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
             throw AuthError.mapFirebaseError(error)

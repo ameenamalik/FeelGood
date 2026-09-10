@@ -68,7 +68,12 @@ struct AuthSheetView: View {
         _mode = State(initialValue: initialMode)
     }
 
-    private func finishDismissal() {
+    private func dismissAfterAuth() {
+        path.removeAll()
+        dismiss()
+    }
+
+    private func dismissWithoutAuth() {
         path.removeAll()
         onDismiss?()
         dismiss()
@@ -129,7 +134,7 @@ struct AuthSheetView: View {
                 if !showsHeroIllustration {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Close") {
-                            finishDismissal()
+                            dismissWithoutAuth()
                         }
                         .foregroundStyle(FGColor.inkMuted)
                     }
@@ -191,6 +196,8 @@ struct AuthSheetView: View {
     /// (create account) or "Already have an account? Sign in".
     @ViewBuilder
     private func heroDestination(_ stage: HeroStage) -> some View {
+        let currentMode: AuthMode = stage == .emailCreate ? .createAccount : .signIn
+
         ZStack {
             FGColor.bg.ignoresSafeArea()
             FGBrandWash(reach: 0.4).ignoresSafeArea()
@@ -216,8 +223,34 @@ struct AuthSheetView: View {
                     }
                     .padding(.top, FGSpace.l)
 
-                    emailFieldsAndSubmit
-                        .frame(maxWidth: 360)
+                    VStack(spacing: FGSpace.s) {
+                        emailFieldsAndSubmit(mode: currentMode)
+
+                        if stage == .emailCreate {
+                            Button("Already have an account? Sign in") {
+                                withAnimation(FGMotion.gentle) {
+                                    errorMessage = nil
+                                    successMessage = nil
+                                    path = [.emailSignIn]
+                                }
+                            }
+                            .font(FGFont.caption.weight(.medium))
+                            .foregroundStyle(FGColor.goldDeep)
+                            .padding(.top, FGSpace.xs)
+                        } else {
+                            Button("Don't have an account? Create one") {
+                                withAnimation(FGMotion.gentle) {
+                                    errorMessage = nil
+                                    successMessage = nil
+                                    path = [.emailCreate]
+                                }
+                            }
+                            .font(FGFont.caption.weight(.medium))
+                            .foregroundStyle(FGColor.goldDeep)
+                            .padding(.top, FGSpace.xs)
+                        }
+                    }
+                    .frame(maxWidth: 360)
 
                     if let errorMessage {
                         Text(errorMessage)
@@ -241,11 +274,6 @@ struct AuthSheetView: View {
             .scrollBounceBehavior(.basedOnSize)
         }
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            mode = stage == .emailCreate ? .createAccount : .signIn
-            errorMessage = nil
-            successMessage = nil
-        }
     }
 
     // MARK: - Header
@@ -311,7 +339,7 @@ struct AuthSheetView: View {
                     )
                     isLoading = false
                     onAuthenticated?()
-                    finishDismissal()
+                    dismissAfterAuth()
                 } catch {
                     isLoading = false
                     errorMessage = error.localizedDescription
@@ -425,7 +453,7 @@ struct AuthSheetView: View {
                 try await authService.signInWithGoogle(presentingViewController: topVC)
                 isLoading = false
                 onAuthenticated?()
-                finishDismissal()
+                dismissAfterAuth()
             } catch {
                 isLoading = false
                 if (error as NSError).code != GIDSignInError.canceled.rawValue {
@@ -466,14 +494,12 @@ struct AuthSheetView: View {
             .pickerStyle(.segmented)
             .padding(.bottom, FGSpace.xs)
 
-            emailFieldsAndSubmit
+            emailFieldsAndSubmit(mode: mode)
         }
     }
 
-    /// Just the fields and the submit action, no mode picker — what the hero
-    /// entry screen's single-purpose pushed destinations show, since the
-    /// stage already declared the mode (see `heroDestination`).
-    private var emailFieldsAndSubmit: some View {
+    /// Fields and submit action configured for the given mode.
+    private func emailFieldsAndSubmit(mode: AuthMode) -> some View {
         VStack(spacing: FGSpace.s) {
             // Email Field
             TextField("Email address", text: $email)
@@ -506,7 +532,7 @@ struct AuthSheetView: View {
 
             // Action Button
             Button {
-                submitEmailAuth()
+                submitEmailAuth(mode: mode)
             } label: {
                 HStack {
                     Spacer()
@@ -539,7 +565,7 @@ struct AuthSheetView: View {
         }
     }
 
-    private func submitEmailAuth() {
+    private func submitEmailAuth(mode: AuthMode) {
         let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanEmail.isEmpty, !password.isEmpty else { return }
 
@@ -556,7 +582,7 @@ struct AuthSheetView: View {
                 }
                 isLoading = false
                 onAuthenticated?()
-                finishDismissal()
+                dismissAfterAuth()
             } catch {
                 isLoading = false
                 errorMessage = error.localizedDescription
@@ -590,7 +616,7 @@ struct AuthSheetView: View {
     private var guestFooter: some View {
         VStack(spacing: FGSpace.s) {
             Button(guestButtonTitle) {
-                finishDismissal()
+                dismissWithoutAuth()
             }
             .font(FGFont.label.weight(.medium))
             .foregroundStyle(FGColor.inkMuted)
