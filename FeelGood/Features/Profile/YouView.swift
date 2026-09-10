@@ -116,13 +116,22 @@ struct YouView: View {
             profileHero
 
             HStack(spacing: 6) {
-                preferencePill("Preferences", systemImage: "slider.horizontal.3") {
+                preferencePill(
+                    "Preferences",
+                    fill: FGColor.rose.opacity(0.34)
+                ) {
                     isEditingProfile = true
                 }
-                preferencePill("Library", systemImage: "square.stack") {
+                preferencePill(
+                    "Library",
+                    fill: FGColor.gold.opacity(0.36)
+                ) {
                     isBrowsing = true
                 }
-                preferencePill("Plan & account", systemImage: "person.crop.circle") {
+                preferencePill(
+                    "Plan & account",
+                    fill: FGColor.sage.opacity(0.38)
+                ) {
                     isShowingAccount = true
                 }
             }
@@ -130,25 +139,25 @@ struct YouView: View {
         }
     }
 
-    /// The same light, bordered capsule language used by Today's quick filters.
+    /// Filled factual-chip styling, matching the pills used on menu cards.
     private func preferencePill(
         _ title: String,
-        systemImage: String,
+        fill: Color,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .font(.system(size: 12, weight: .medium, design: .rounded))
+            Text(title)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(FGColor.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.88)
-                .padding(.horizontal, 10)
-                .frame(minHeight: FGSize.minTouchTarget)
-                .background(FGColor.surface)
-                .clipShape(Capsule())
-                .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
+                .padding(.horizontal, 12)
+                .frame(height: 34)
+                .background(Capsule().fill(fill))
         }
         .buttonStyle(.plain)
+        .frame(minHeight: FGSize.minTouchTarget)
+        .contentShape(Rectangle())
         .fixedSize(horizontal: true, vertical: false)
     }
 
