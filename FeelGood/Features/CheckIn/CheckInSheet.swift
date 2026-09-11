@@ -129,7 +129,7 @@ struct CheckInSheet: View {
     }
 
     private func energyQuestion(_ proxy: ScrollViewProxy) -> some View {
-        question("What have you got in the tank?", index: 0) {
+        question("How's your energy?", index: 0) {
             ForEach(Energy.allCases, id: \.self) { option in
                 FGPill(
                     title: option.checkInLabel,

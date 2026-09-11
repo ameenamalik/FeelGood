@@ -203,21 +203,62 @@ struct TodayView: View {
     /// they were given — the menu was built from something you could no longer
     /// see. Now the card holds the line and the action beside it changes from
     /// answering to amending.
+    private struct CheckInAuraPulse: View {
+        let isCheckedIn: Bool
+        @State private var isPulsing = false
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+        var body: some View {
+            ZStack {
+                if !isCheckedIn {
+                    // Breathing ambient aura wave
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    FGColor.rose.opacity(0.42),
+                                    FGColor.clay.opacity(0.20),
+                                    Color.clear
+                                ],
+                                center: .center,
+                                startRadius: 4,
+                                endRadius: 22
+                            )
+                        )
+                        .frame(width: 42, height: 42)
+                        .scaleEffect(isPulsing ? 1.32 : 0.85)
+                        .opacity(isPulsing ? 0.75 : 0.25)
+                        .animation(
+                            reduceMotion ? .none : Animation.easeInOut(duration: 2.2).repeatForever(autoreverses: true),
+                            value: isPulsing
+                        )
+                }
+
+                // Core AuraDot
+                AuraDot(color: isCheckedIn ? FGColor.sageDeep : FGColor.rose, size: 32)
+                    .scaleEffect(isPulsing && !isCheckedIn ? 1.08 : 0.94)
+                    .animation(
+                        reduceMotion ? .none : Animation.easeInOut(duration: 2.2).repeatForever(autoreverses: true),
+                        value: isPulsing
+                    )
+
+                if isCheckedIn {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Color.white)
+                }
+            }
+            .frame(width: 34, height: 34)
+            .onAppear {
+                isPulsing = true
+            }
+        }
+    }
+
     private var checkInPrompt: some View {
         Button { isCheckingIn = true } label: {
-            HStack(spacing: FGSpace.s + 2) {
-                Image(systemName: model.checkIn == nil ? "heart.fill" : "checkmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 32, height: 32)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(light: 0xEE8E62, dark: 0xEE8E62), Color(light: 0xD67CA2, dark: 0xD67CA2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        in: Circle()
-                    )
+            HStack(spacing: FGSpace.s + 3) {
+                CheckInAuraPulse(isCheckedIn: model.checkIn != nil)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.checkIn?.summaryLine ?? "Check in for today")
