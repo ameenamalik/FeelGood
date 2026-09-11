@@ -128,7 +128,7 @@ struct ProductIntroView: View {
                 Button(action: goBack) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(FGColor.ink)
+                        .foregroundStyle(FGColor.inkOnAccent)
                         .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
                         .background(Circle().fill(FGAura.lilac.core))
                 }
@@ -409,7 +409,7 @@ struct ProductIntroView: View {
 
             Text(title)
                 .font(.system(size: isMain ? 13 : 11, weight: isMain ? .semibold : .medium, design: .rounded))
-                .foregroundStyle(FGColor.ink)
+                .foregroundStyle(isMain ? FGColor.inkOnAccent : FGColor.ink)
 
             Spacer(minLength: 0)
 

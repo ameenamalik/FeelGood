@@ -182,7 +182,7 @@ struct AuthSheetView: View {
                 Image(systemName: "envelope.fill")
                     .font(.system(size: 15, weight: .medium))
                 Text("Continue with Email")
-                    .font(FGFont.body.weight(.medium))
+                    .font(.system(size: 17, weight: .semibold))
             }
             .foregroundStyle(FGColor.bg)
             .frame(maxWidth: .infinity, minHeight: 56)
@@ -284,9 +284,7 @@ struct AuthSheetView: View {
                 WelcomeHeroIllustration()
                     .padding(.bottom, FGSpace.xs)
             } else {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 32, weight: .medium))
-                    .foregroundStyle(FGColor.goldDeep)
+                FeelGoodAppIcon(size: 64)
                     .accessibilityHidden(true)
                     .padding(.bottom, 2)
             }
@@ -363,10 +361,10 @@ struct AuthSheetView: View {
                     .frame(width: 18, height: 18)
 
                 Text(mode == .signIn ? "Sign in with Google" : "Sign up with Google")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 19, weight: .medium))
                     .foregroundStyle(Color.black)
             }
-            .frame(maxWidth: .infinity, minHeight: 50)
+            .frame(maxWidth: .infinity, minHeight: 56)
             .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
             .overlay(
@@ -423,7 +421,7 @@ struct AuthSheetView: View {
                 googleGLogo
                     .frame(width: 18, height: 18)
                 Text("Continue with Google")
-                    .font(FGFont.body.weight(.medium))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(FGColor.bg)
             }
             .frame(maxWidth: .infinity, minHeight: 56)
@@ -631,7 +629,7 @@ struct AuthSheetView: View {
     }
 }
 
-/// The heart mark and a small cluster of the onboarding intent fruits, blooming
+/// The app mark and a small cluster of the onboarding intent fruits, blooming
 /// out of a soft apricot wash. Reuses the app-icon-reading trick from
 /// `ProductIntroView.promiseHero` rather than a duplicated image asset, so this
 /// always shows the exact shipping icon.
@@ -651,7 +649,7 @@ private struct WelcomeHeroIllustration: View {
                 .offset(y: 18)
 
             VStack(spacing: -18) {
-                mark
+                FeelGoodAppIcon(size: 76)
 
                 HStack(spacing: -14) {
                     fruit("IntentMobilityPear", size: 58, rotation: -10, offsetY: 10)
@@ -664,40 +662,6 @@ private struct WelcomeHeroIllustration: View {
         .accessibilityHidden(true)
     }
 
-    @ViewBuilder
-    private var mark: some View {
-        if let markImage {
-            Image(uiImage: markImage)
-                .resizable()
-                .interpolation(.high)
-                .scaledToFit()
-                .frame(width: 76, height: 76)
-                .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
-                .shadow(color: FGColor.ink.opacity(0.12), radius: 10, y: 6)
-        } else {
-            RoundedRectangle(cornerRadius: 17, style: .continuous)
-                .fill(Color(light: 0x0D0C15, dark: 0x0D0C15))
-                .frame(width: 76, height: 76)
-                .overlay {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 26, weight: .medium))
-                        .foregroundStyle(FGColor.clay)
-                }
-        }
-    }
-
-    /// App icons are compiled into specially named bundle files rather than a
-    /// normal image set — see `ProductIntroView.appIconImage`, the same trick.
-    private var markImage: UIImage? {
-        guard
-            let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
-            let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
-            let files = primary["CFBundleIconFiles"] as? [String]
-        else { return nil }
-
-        return files.reversed().lazy.compactMap(UIImage.init(named:)).first
-    }
-
     private func fruit(_ name: String, size: CGFloat, rotation: Double, offsetY: CGFloat) -> some View {
         Image(name)
             .resizable()
@@ -705,6 +669,46 @@ private struct WelcomeHeroIllustration: View {
             .frame(width: size, height: size)
             .rotationEffect(.degrees(rotation))
             .offset(y: offsetY)
+    }
+}
+
+/// Reads the shipping app icon from the compiled bundle so every account
+/// prompt stays in sync if the icon changes later.
+private struct FeelGoodAppIcon: View {
+    let size: CGFloat
+
+    var body: some View {
+        Group {
+            if let appIconImage {
+                Image(uiImage: appIconImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .scaledToFit()
+            } else {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(Color(light: 0x0D0C15, dark: 0x0D0C15))
+                    .overlay {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: size * 0.34, weight: .medium))
+                            .foregroundStyle(FGColor.clay)
+                    }
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .shadow(color: FGColor.ink.opacity(0.12), radius: 10, y: 6)
+    }
+
+    private var cornerRadius: CGFloat { size * 0.224 }
+
+    private var appIconImage: UIImage? {
+        guard
+            let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
+            let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
+            let files = primary["CFBundleIconFiles"] as? [String]
+        else { return nil }
+
+        return files.reversed().lazy.compactMap(UIImage.init(named:)).first
     }
 }
 
