@@ -18,47 +18,80 @@
 <body>
 
 <h1>Privacy Policy</h1>
-<p class="updated">Last updated: 31 August 2026 · FeelGood: Dopamine Menu</p>
+<p class="updated">Last updated: 10 September 2026 · FeelGood: Dopamine Menu</p>
 
-<p>FeelGood has no account to create and no password to remember. Sign in with Apple is offered, and is entirely optional — it exists only so a subscription follows you to a new phone. When you use it, Apple gives us a random identifier scoped to this app alone. We do not ask Apple for your name or your email address, and we could not read them if we wanted to.</p>
+<p>This Privacy Policy explains what information FeelGood processes, why it is used, and the choices available to you. You can use FeelGood's core experience without creating an account. Creating an account is optional and enables account-based features such as syncing supported data between devices.</p>
 
-<p>Everything else is a random identifier generated on your device. There is no name, no email address, and no profile tied to a person anywhere in this system.</p>
+<h2>Information stored on your device</h2>
+<p>FeelGood stores information such as onboarding preferences, check-in answers, today's menu, session progress, workout history, hidden exercises, and profile preferences on your device using Apple's local storage. This may include sensitive wellness context that you choose to provide, such as soreness, cramping, pregnancy, postpartum, or pelvic-floor considerations.</p>
+<p>The core recommendation engine runs on your device. Detailed body-concern selections and profile work-arounds are not uploaded to Firebase as part of account sync. Information you voluntarily type into the companion chat is handled separately as described below.</p>
 
-<h2>What stays on your device and never leaves</h2>
-<p>Your check-ins, your profile (including any health-related work-arounds like pregnancy, postpartum, or pelvic floor considerations), and your workout history are stored only on your device using Apple's on-device storage (SwiftData). The engine that decides what to recommend runs entirely on your phone. None of this is ever transmitted anywhere — deleting the app deletes it.</p>
+<h2>Optional accounts and authentication</h2>
+<p>If you create or use an account, authentication is provided through Firebase Authentication. Depending on the method you choose, we may receive and process:</p>
+<ul>
+  <li>A Firebase user identifier</li>
+  <li>Your email address</li>
+  <li>Your display name, if your sign-in provider supplies one</li>
+  <li>Your authentication provider, such as Apple, Google, or email and password</li>
+</ul>
+<p>Apple and Google also process information according to their own privacy policies when you use their sign-in services. FeelGood does not receive your Apple or Google account password.</p>
 
-<h2>What we collect, and why</h2>
+<h2>Workout and routine sync</h2>
+<p>When you are signed in, FeelGood uses Google Firebase and Cloud Firestore to sync supported account data. Synced workout-completion records may include the session title and internal identifier, activity type, authored duration, start and end times, general place category such as home or gym, and optional post-session feedback. Custom routines may include the name you give the routine, activity type, duration, intensity, menu section, and creation date.</p>
+<p>This information is linked to your account identifier and is used to maintain account-associated workout records, restore supported custom routines, personalize the experience, and provide app functionality.</p>
 
-<h2>Product analytics</h2>
-<p>We use PostHog to understand how the app is used — which screens are opened, whether a workout was logged or completed, whether a subscription was purchased. Each event is tied only to a random per-install identifier, never to a name or account. Signing in with Apple does not change this: analytics is never told that a sign-in happened or who it was. We never send your check-in answers, your profile's health-related fields, or any free-text you enter — those fields have no path off the device by design.</p>
+<h2>Companion chat and AI-generated text</h2>
+<p>When you choose to use the companion chat or an AI-generated explanation, FeelGood sends information to our Cloudflare Worker and to an AI provider, currently Google Gemini or Anthropic Claude, to generate a response. Depending on the feature, this may include:</p>
+<ul>
+  <li>The message you type and a limited number of recent conversation turns</li>
+  <li>The active or recommended session and internal session identifiers</li>
+  <li>General check-in context such as energy, available time, and place</li>
+  <li>Liked activity types, your most recent post-session feeling, a recent-completion count, recovery context, and hidden session identifiers</li>
+  <li>Machine-readable reasons for a recommendation and the number of days since a previous completion</li>
+  <li>A RevenueCat subscriber identifier used to verify access and prevent abuse</li>
+</ul>
+<p>Do not include medical information or other information you do not want processed by these services in a chat message. Requests and generated responses may be recorded in Cloudflare observability traces for reliability, debugging, and abuse prevention. Google and Anthropic process prompts and responses under the service arrangements and privacy terms applicable to those providers.</p>
+
+<h2>Product analytics, diagnostics, and session replay</h2>
+<p>We use PostHog to understand app usage and improve reliability. PostHog may receive a random installation identifier, interaction events, subscription events, error and diagnostic information, and coarse product context such as energy, time, place, activity type, duration, intensity, or whether a body question was answered. Some events may include a custom routine or session title.</p>
+<p>Session replay is enabled to help us understand interface problems. It can capture screenshots of the app interface and interaction information. We mask screens and fields designed to contain check-in answers, profile details, chat content, and other sensitive text, but you should understand that session replay records portions of the visible interface.</p>
 
 <h2>Purchases and subscriptions</h2>
-<p>Subscription purchases are handled by Apple's App Store and processed through RevenueCat, which verifies and manages entitlement status. Before you sign in, this is tied to a random identifier RevenueCat generates. If you do sign in with Apple, it is tied to Apple's app-scoped identifier instead — that is what lets your subscription follow you to a new phone. Neither is your name or your email address.</p>
+<p>Purchases are processed by Apple's App Store. We use RevenueCat to verify purchases and manage subscription access. RevenueCat receives purchase and entitlement information together with a RevenueCat-generated subscriber identifier. If you sign in, that subscription identity may be connected to your FeelGood account identifier so access can follow you across devices.</p>
 
-<h2>AI-generated framing copy (Pro feature)</h2>
-<p>For paying subscribers, FeelGood can generate a short line of framing text explaining today's menu. To do this, the following — and only the following — is sent to our server, which forwards it to a language model:</p>
+<h2>Calendar access</h2>
+<p>If you grant calendar permission, FeelGood reads event times on your device to find possible openings in your day. If you separately enable movement recognition, it may also inspect event titles on your device to recognize a scheduled workout or class. Calendar events and titles are not uploaded to Firebase, PostHog, RevenueCat, or the companion-chat service by these features.</p>
+
+<h2>Embedded video and external services</h2>
+<p>Some sessions embed or open videos using YouTube. YouTube and Google may receive information such as your IP address, device information, and video interactions according to their own privacy policies and settings.</p>
+
+<h2>How information is used</h2>
 <ul>
-  <li>Which sessions were picked (internal ids, e.g. <code>app-box-breathing</code>)</li>
-  <li>The general reason those sessions were picked (a machine-readable code, e.g. "low energy")</li>
-  <li>Your reported energy level and time budget for today</li>
-  <li>How many days it's been since your last completed session (a number, never a date or the sessions themselves)</li>
-  <li>The subscription identifier described above, so we can confirm you're a subscriber and prevent abuse</li>
+  <li>To provide, personalize, and sync FeelGood features</li>
+  <li>To authenticate accounts and restore purchases</li>
+  <li>To generate companion-chat responses and recommendation explanations</li>
+  <li>To measure product usage, diagnose errors, and improve the app</li>
+  <li>To protect the service from abuse and enforce feature limits</li>
 </ul>
-<p>This is deliberately narrow. Your check-in's body-focus answer and your profile's work-arounds (cramping, pregnancy, postpartum, pelvic floor) are never included — there is no field for them to travel in, so this isn't a setting that can be misconfigured. If this feature is switched off or you're not a subscriber, the app makes no network requests related to it at all.</p>
 
-<h2>Embedded video</h2>
-<p>Some sessions are Pilates and wellness classes embedded from YouTube's official player. Watching one of these is subject to YouTube's own Privacy Policy and Terms of Service, which are Google's, not ours.</p>
+<h2>Sharing and tracking</h2>
+<p>We share information with service providers only as needed to operate FeelGood, including Apple, Google Firebase, Google Gemini, Google Sign-In, YouTube, Anthropic, Cloudflare, RevenueCat, and PostHog. We do not sell personal information. We do not use information for third-party advertising or cross-app or cross-website tracking.</p>
 
-<h2>What we don't do</h2>
-<ul>
-  <li>No advertising SDKs, no ad tracking</li>
-  <li>No cross-app or cross-website tracking of any kind (nothing to request App Tracking Transparency consent for)</li>
-  <li>We never sell personal data or share it with third parties for their own marketing</li>
-  <li>No account, no login, no way to identify you by name</li>
-</ul>
+<h2>Retention and deletion</h2>
+<p>Information stored only on your device remains there until you remove it through the app or delete the app. Deleting the app does not automatically delete information already held by account, purchase, analytics, AI, or infrastructure providers.</p>
+<p>If you created an account, you can use Delete Account in FeelGood to delete your authentication account and associated top-level account record. To request deletion of synced workout records, custom routines, analytics data, AI traces, or other service-provider records, contact us using the address below. Some information may be retained where reasonably necessary for security, fraud prevention, legal compliance, transaction records, or dispute resolution.</p>
 
 <h2>Your choices</h2>
-<p>Deleting the app removes everything stored on your device. You can also revoke this app's Sign in with Apple access at any time in iOS Settings under your Apple Account. To request deletion of analytics or purchase records, contact us below — because we never collect a name or email address, we can only act on an identifier you provide us.</p>
+<ul>
+  <li>Use the core app without creating an account</li>
+  <li>Decline or revoke calendar access in iOS Settings</li>
+  <li>Sign out or use Delete Account from the account screen</li>
+  <li>Manage or cancel subscriptions through your Apple Account</li>
+  <li>Contact us to request access to or deletion of information associated with an identifier you provide</li>
+</ul>
+
+<h2>Security</h2>
+<p>We use reasonable technical and organizational measures intended to protect information. No method of transmission or storage is completely secure.</p>
 
 <h2>Children</h2>
 <p>FeelGood is not directed at children under 13 and we do not knowingly collect data from them.</p>
@@ -67,7 +100,7 @@
 <p>If this policy changes, the update will be posted on this page with a new "Last updated" date.</p>
 
 <div class="contact">
-  <strong>Questions or requests:</strong><br>
+  <strong>Privacy questions or deletion requests:</strong><br>
   <a href="mailto:ameenazara3@gmail.com">ameenazara3@gmail.com</a>
 </div>
 

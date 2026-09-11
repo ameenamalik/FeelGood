@@ -67,7 +67,6 @@ struct OnboardingView: View {
                             .padding(.horizontal, FGSpace.page)
                             .padding(.top, FGSpace.s)
                             .padding(.bottom, FGSpace.s)
-                            .background(FGColor.bg)
                     }
                     .onChange(of: model.card) { _, _ in
                         scrollProxy.scrollTo("onboarding-top", anchor: .top)

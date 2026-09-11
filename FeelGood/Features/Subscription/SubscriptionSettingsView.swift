@@ -49,7 +49,7 @@ struct SubscriptionSettingsView: View {
             }
         }
         .sheet(isPresented: $isPaywallPresented) {
-            PaywallView(displayCloseButton: true)
+            FeelGoodPaywallView()
         }
         .presentCustomerCenter(isPresented: $isCustomerCenterPresented)
         .alert(

@@ -8,7 +8,6 @@
 //  sign-up screen → the onboarding quiz; see PRD §7.0/§7.1.
 //
 
-import RevenueCatUI
 import SwiftUI
 import UIKit
 
@@ -51,11 +50,7 @@ struct FirstRunFlow: View {
                     pendingOnboardingModel = nil
                     onFinish(pending)
                 }
-                PaywallView(displayCloseButton: true)
-                    .onRequestedDismissal(completeOnboardingPaywall)
-                    .onPurchaseCompleted { _ in completeOnboardingPaywall() }
-                    .onRestoreCompleted { _ in completeOnboardingPaywall() }
-                    .guaranteedPaywallCloseButton(action: completeOnboardingPaywall)
+                FeelGoodPaywallView(onFinished: completeOnboardingPaywall)
             } else {
                 OnboardingView { onboarding in
                     if !hasSeenOnboardingPaywall {
