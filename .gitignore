@@ -47,6 +47,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# ASO screenshot tooling — a standalone Next.js app, not FeelGood source
+app-store-screenshots-editor/node_modules/
+app-store-screenshots-editor/.next/
+
 # Secrets — the Anthropic/Gemini keys live in the Cloudflare Worker, never here
 *.xcconfig.local
 .env
