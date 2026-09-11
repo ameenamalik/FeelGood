@@ -21,6 +21,11 @@ final class TodayModel {
     private let copy: any CopyProviding
     private let progressStore: any SessionProgressStoring
     private let calendar: Calendar
+    /// Defaults to the live `PurchasesManager` singleton, but is injectable —
+    /// same pattern as `CopyService`/`ChatService` — so tests can pin
+    /// entitlement state instead of depending on ambient global state that a
+    /// concurrently-run test elsewhere in the suite might mutate.
+    private let isProUserProvider: () -> Bool
     /// In flight while the copy layer upgrades the headline. Cancelled and
     /// restarted whenever the menu changes underneath it, so a slow response
     /// can never land on a headline it no longer describes.
@@ -66,6 +71,7 @@ final class TodayModel {
         log: any SessionLogging = InMemorySessionLog(),
         copy: any CopyProviding = InMemoryCopyService(),
         progressStore: any SessionProgressStoring = UserDefaultsSessionProgressStore(),
+        isProUserProvider: @escaping () -> Bool = { PurchasesManager.shared.isProUnlocked },
         checkIn: PlanCheckIn? = nil,
         calendarOpening: CalendarOpening? = nil,
         now: Date,
@@ -84,6 +90,7 @@ final class TodayModel {
         self.log = log
         self.copy = copy
         self.progressStore = progressStore
+        self.isProUserProvider = isProUserProvider
         var activeProfile = profile
         activeProfile.hiddenSessionIDs.formUnion(log.hiddenSessionIDs())
         self.profile = activeProfile
@@ -115,7 +122,7 @@ final class TodayModel {
             // is the app's very first menu, generated before `self` exists to
             // call that method on, so it stayed on the old unwrapped
             // initializer and every cold start got Pro's memory for free.
-            let memory: PlanMemory = PurchasesManager.shared.isProUnlocked
+            let memory: PlanMemory = isProUserProvider()
                 ? .full(history: recorded, affinity: log.affinity())
                 : .recencyOnly(lastActiveDate: recorded.filter(\.wasCompleted).map(\.date).max())
             let generated = engine.makeMenu(
@@ -146,7 +153,7 @@ final class TodayModel {
     }
 
     private(set) var dailySwapsCount: Int = 0
-    var isProUser: Bool { PurchasesManager.shared.isProUnlocked }
+    var isProUser: Bool { isProUserProvider() }
     var hasRemainingSwaps: Bool { isProUser || dailySwapsCount < 1 }
 
     private func input(now: Date) -> PlanInput {
