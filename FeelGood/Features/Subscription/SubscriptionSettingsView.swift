@@ -108,13 +108,13 @@ struct SubscriptionSettingsView: View {
                     Text("CURRENT PLAN")
                         .font(FGFont.caption.weight(.semibold))
                         .tracking(0.8)
-                        .foregroundStyle(FGColor.inkMuted)
+                        .foregroundStyle(FGColor.inkOnAccent.opacity(0.7))
                     Text(purchasesManager.isProUnlocked ? "FeelGood Pro" : "FeelGood Free")
                         .font(FGFont.sectionTitle)
-                        .foregroundStyle(FGColor.ink)
+                        .foregroundStyle(FGColor.inkOnAccent)
                     Text(statusDetail)
                         .font(FGFont.reason)
-                        .foregroundStyle(FGColor.inkMuted)
+                        .foregroundStyle(FGColor.inkOnAccent.opacity(0.72))
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -131,7 +131,7 @@ struct SubscriptionSettingsView: View {
                         .fontWeight(.medium)
                 }
                 .font(FGFont.caption)
-                .foregroundStyle(FGColor.inkMuted)
+                .foregroundStyle(FGColor.inkOnAccent.opacity(0.72))
             }
         }
         .padding(20)

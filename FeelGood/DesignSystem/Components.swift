@@ -281,7 +281,7 @@ struct FGAuraTile: View {
     /// Ink that flips with the appearance when the tile is neutral; ink that
     /// does not when it is washed, because the wash does not either.
     private var foreground: Color {
-        isSelected ? FGColor.inkOnAccent : FGColor.ink
+        (isSelected || showsAuraAtRest) ? FGColor.inkOnAccent : FGColor.ink
     }
 
     var body: some View {
@@ -440,7 +440,7 @@ struct FGPill: View {
         Button(action: action) {
             Text(title)
                 .font(FGFont.body.weight(.medium))
-                .foregroundStyle(isSelected && selectedAura == nil ? FGColor.surface : FGColor.inkOnAccent)
+                .foregroundStyle(pillForeground)
                 .padding(.vertical, 11)
                 .padding(.horizontal, 17)
                 .frame(minHeight: FGSize.minTouchTarget)
@@ -468,6 +468,11 @@ struct FGPill: View {
             )
         }
         return AnyShapeStyle(isSelected ? FGColor.ink : FGColor.surface)
+    }
+
+    private var pillForeground: Color {
+        guard isSelected else { return FGColor.ink }
+        return selectedAura == nil ? FGColor.bg : FGColor.inkOnAccent
     }
 }
 
