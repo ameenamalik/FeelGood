@@ -23,6 +23,7 @@ struct TodayView: View {
     @AppStorage("hasShownFirstCompletionAuthPrompt") private var hasShownFirstCompletionAuthPrompt = false
     @State private var isShowingAuthPrompt = false
     @Environment(AuthService.self) private var authService
+    @Environment(\.colorScheme) private var colorScheme
     @State private var isAdjusting = false
     @State private var isShowingMyMenu = false
     @State private var selected: MenuItem?
@@ -206,50 +207,56 @@ struct TodayView: View {
         Button { isCheckingIn = true } label: {
             HStack(spacing: FGSpace.s + 2) {
                 Image(systemName: model.checkIn == nil ? "heart.fill" : "checkmark")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(FGColor.inkOnAccent)
-                    .frame(width: 30, height: 30)
-                    .background(FGColor.rose.opacity(0.52), in: Circle())
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Color.white)
+                    .frame(width: 32, height: 32)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(light: 0xEE8E62, dark: 0xEE8E62), Color(light: 0xD67CA2, dark: 0xD67CA2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        in: Circle()
+                    )
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.checkIn?.summaryLine ?? "Check in for today")
-                        .font(FGFont.itemTitle)
-                        .foregroundStyle(FGColor.inkOnAccent)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundStyle(FGColor.ink)
                         .multilineTextAlignment(.leading)
                         .lineLimit(model.checkIn == nil ? 1 : 2)
 
                     if model.checkIn == nil {
                         Text("Takes about 30 seconds")
-                            .font(FGFont.caption)
-                            .foregroundStyle(FGColor.inkOnAccent.opacity(0.68))
+                            .font(.system(size: 13, weight: .regular))
+                            .foregroundStyle(FGColor.inkMuted)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 if model.checkIn == nil {
                     Image(systemName: "arrow.right")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(FGColor.inkOnAccent.opacity(0.72))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(FGColor.inkMuted)
                 } else {
                     Text("Edit")
                         .font(FGFont.body.weight(.medium))
-                        .foregroundStyle(FGColor.goldDeep)
+                        .foregroundStyle(FGColor.ink)
                         .fixedSize()
                         .padding(.trailing, FGSpace.s)
                 }
             }
-            .frame(minHeight: 62)
+            .frame(minHeight: 60)
             .padding(.vertical, FGSpace.xs)
             .padding(.horizontal, FGSpace.m)
             .background(
-                Capsule(style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [FGAura.blush.core, FGAura.apricot.core],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color.white.opacity(colorScheme == .dark ? 0.10 : 0.72))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.12 : 0.5), lineWidth: 1)
                     )
+                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.04), radius: 8, x: 0, y: 3)
             )
             .contentShape(Rectangle())
         }
@@ -455,18 +462,19 @@ struct TodayView: View {
     }
 }
 
-/// The course, named and tinted. Ink on every accent — the accents are far too
-/// light to carry white text.
+/// The course, named and tinted as a frosted pill consistent with Chat.
 struct CourseTag: View {
     let course: Course
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Text(course.label)
-            .font(FGFont.label.weight(.semibold))
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
             .foregroundStyle(course.tagText)
-            .padding(.horizontal, 11)
+            .padding(.horizontal, 12)
             .padding(.vertical, 5)
-            .background(Capsule().fill(course.tagFill))
+            .background(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.70))
+            .clipShape(Capsule())
     }
 }
 
@@ -512,8 +520,8 @@ private struct DoneMark: View {
             Image(systemName: "checkmark.circle.fill")
             Text("Done")
         }
-        .font(FGFont.label)
-        .foregroundStyle(FGColor.clayDeep)
+        .font(.system(size: 13, weight: .semibold, design: .rounded))
+        .foregroundStyle(FGColor.sageDeep)
         .accessibilityHidden(true)
     }
 }
@@ -524,11 +532,7 @@ private struct ResumeMark: View {
             Image(systemName: "play.circle.fill")
             Text("Resume")
         }
-        .font(FGFont.label)
-        // Only ever shown on a not-done item, so this always sits on the
-        // course's accent gradient rather than the flat surface — `ink` is
-        // the one colour that gradient guarantees stays legible at its
-        // darkest point (see `Course.accentGradient`).
+        .font(.system(size: 13, weight: .semibold, design: .rounded))
         .foregroundStyle(FGColor.ink)
         .accessibilityHidden(true)
     }
@@ -572,10 +576,6 @@ private struct MenuItemRow: View {
 
 /// One menu row: a bloom of the course's colour, the course and its length,
 /// the session, and why it is there.
-///
-/// The Main and the rest used to be two different layouts, which made the
-/// highlight read as a different *kind* of thing rather than as the same thing
-/// emphasised. One body now, and `isHighlighted` only changes the border.
 private struct MenuItemBody: View {
     let item: MenuItem
     let isDone: Bool
@@ -584,9 +584,10 @@ private struct MenuItemBody: View {
     let isReset: Bool
     let isHighlighted: Bool
     let onSwap: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             // Top metadata row: Course tag, status, and shuffle
             HStack(alignment: .center, spacing: FGSpace.s) {
                 CourseTag(course: item.course)
@@ -602,10 +603,10 @@ private struct MenuItemBody: View {
                 if canSwap {
                     Button(action: onSwap) {
                         Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(FGColor.inkMuted)
-                            .frame(width: 28, height: 28)
-                            .background(FGColor.bg.opacity(0.7))
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(FGColor.ink)
+                            .frame(width: 30, height: 30)
+                            .background(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.68))
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -618,38 +619,55 @@ private struct MenuItemBody: View {
                 }
             }
 
-            // Session Title
+            // Session Title in SF Pro Rounded Bold
             Text(item.session.title)
-                .font(FGFont.itemTitle)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
                 .strikethrough(isDone, color: FGColor.clayDeep)
                 .fixedSize(horizontal: false, vertical: true)
 
-            // Visual target & context pills
-            WrapRow(spacing: FGSpace.xs, lineSpacing: FGSpace.xs) {
+            // Visual target & context pills in frosted chat style
+            WrapRow(spacing: 6, lineSpacing: 6) {
                 ForEach(item.session.chips, id: \.self) { chip in
-                    FGChip(text: chip)
+                    Text(chip)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.white.opacity(colorScheme == .dark ? (isDone ? 0.06 : 0.16) : (isDone ? 0.45 : 0.68)))
+                        .clipShape(Capsule())
                 }
                 if item.session.isOwn {
-                    FGChip(text: "Yours")
+                    Text("Yours")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.white.opacity(colorScheme == .dark ? (isDone ? 0.06 : 0.16) : (isDone ? 0.45 : 0.68)))
+                        .clipShape(Capsule())
                 }
             }
 
         }
         .padding(.vertical, 14)
-        .padding(.horizontal, FGSpace.m)
+        .padding(.horizontal, 16)
         .background(
-            RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                // The gradient is the "this still needs doing" signal, so it
-                // only shows while that's true — a done item settles back to
-                // the flat surface, which is also what keeps `inkMuted` and
-                // the -Deep tag colours (calibrated against white, not this
-                // gradient's darkest stop) safe to use on it.
-                .fill(isDone ? AnyShapeStyle(FGColor.surface) : AnyShapeStyle(item.course.accentGradient))
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(
+                    isDone
+                        ? AnyShapeStyle(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.65))
+                        : AnyShapeStyle(item.course.accentGradient)
+                )
+                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.25 : 0.04), radius: 10, x: 0, y: 3)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                .strokeBorder(isDone ? FGColor.line : Color.clear, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(
+                    isDone
+                        ? FGColor.line
+                        : Color.white.opacity(colorScheme == .dark ? 0.12 : 0.35),
+                    lineWidth: 1
+                )
         )
     }
 }

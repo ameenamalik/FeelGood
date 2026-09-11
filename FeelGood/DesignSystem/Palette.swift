@@ -288,10 +288,10 @@ nonisolated extension Course {
     /// `accent` so the two cannot drift apart unnoticed.
     var accentHex: UInt32 {
         switch self {
-        case .main: 0xEAB79A
-        case .appetizer: 0xE6CA89
-        case .side: 0xB3D39C
-        case .dessert: 0xE8B0B9
+        case .main: 0xEE8E62
+        case .appetizer: 0xF5BE58
+        case .side: 0x94BA8E
+        case .dessert: 0xD67CA2
         case .special: 0x241C15
         }
     }
@@ -313,25 +313,25 @@ nonisolated extension Course {
         switch self {
         case .appetizer:
             return LinearGradient(
-                colors: [Color(light: 0xFEE4D3, dark: 0x3D261C), Color(light: 0xF5B4AB, dark: 0x4A2222)],
+                colors: [Color(light: 0xFDE4A0, dark: 0x382810), Color(light: 0xF5BE58, dark: 0x4A3514)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case .side:
             return LinearGradient(
-                colors: [Color(light: 0xE8EEE4, dark: 0x202B1D), Color(light: 0xACC5AA, dark: 0x2E422C)],
+                colors: [Color(light: 0xD8E8D2, dark: 0x192B18), Color(light: 0x94BA8E, dark: 0x253B23)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case .main:
             return LinearGradient(
-                colors: [Color(light: 0xFDF1E2, dark: 0x3A2616), Color(light: 0xF3C89B, dark: 0x4A2F1B)],
+                colors: [Color(light: 0xFCD0BC, dark: 0x381A11), Color(light: 0xEE8E62, dark: 0x4B2115)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case .dessert:
             return LinearGradient(
-                colors: [Color(light: 0xFCEEF3, dark: 0x381C26), Color(light: 0xE6B2BE, dark: 0x482330)],
+                colors: [Color(light: 0xF4CEE0, dark: 0x371728), Color(light: 0xD67CA2, dark: 0x491E36)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -356,10 +356,10 @@ nonisolated extension Course {
     /// clears 6:1 or better.
     var tagFill: Color {
         switch self {
-        case .appetizer: Color(light: 0xFAF1DA, dark: 0x332812)
-        case .main: Color(light: 0xFBE9DD, dark: 0x3A2415)
-        case .side: Color(light: 0xE7F0DD, dark: 0x22301A)
-        case .dessert: Color(light: 0xFAE5E8, dark: 0x33161C)
+        case .appetizer: Color(light: 0xFDECBF, dark: 0x332510)
+        case .main: Color(light: 0xFCE0D2, dark: 0x381E15)
+        case .side: Color(light: 0xE2EDE0, dark: 0x1E2E1D)
+        case .dessert: Color(light: 0xF7DFEB, dark: 0x351B29)
         case .special: FGColor.line
         }
     }
