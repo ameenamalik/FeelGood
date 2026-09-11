@@ -50,7 +50,7 @@ nonisolated public struct AuthUser: Equatable, Sendable, Identifiable {
 
 // MARK: - AuthError
 
-nonisolated public enum AuthError: LocalizedError, Sendable {
+nonisolated public enum AuthError: LocalizedError, Sendable, Equatable {
     case firebaseNotConfigured
     case missingWindow
     case invalidAppleCredential
@@ -142,6 +142,9 @@ public protocol AuthProviding: AnyObject, Sendable {
     func sendPasswordReset(email: String) async throws
     func signOut() throws
     func deleteAccount() async throws
+    func reauthenticateAndDeleteWithApple(authorization: ASAuthorization, rawNonce: String) async throws
+    func reauthenticateAndDeleteWithGoogle(presentingViewController: UIViewController) async throws
+    func reauthenticateAndDeleteWithPassword(password: String) async throws
 }
 
 // MARK: - Production AuthService
@@ -382,19 +385,264 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             return
         }
 
-        guard let user = Auth.auth().currentUser else { return }
+        guard let user = Auth.auth().currentUser else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
         let uid = user.uid
+
+        // Best-effort Firestore user data cleanup with a 3-second timeout so it never hangs
+        await Self.withTimeout(seconds: 3.0, defaultValue: ()) {
+            await FirestoreService.shared.deleteUserData(userId: uid)
+        }
+
         do {
-            try? await FirestoreService.shared.deleteUserData(userId: uid)
-            try await user.delete()
+            try await Self.withTimeout(seconds: 10.0) {
+                try await user.delete()
+            }
             GIDSignIn.sharedInstance.signOut()
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
                 await PurchasesManager.shared.logOut()
             }
+        } catch is AuthTimeoutError {
+            throw AuthError.networkError
         } catch {
             throw AuthError.mapFirebaseError(error)
+        }
+    }
+
+    public func reauthenticateAndDeleteWithApple(authorization: ASAuthorization, rawNonce: String) async throws {
+        guard Self.isFirebaseConfigured else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let appleIDToken = appleIDCredential.identityToken,
+              let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+            throw AuthError.invalidAppleCredential
+        }
+
+        guard let user = Auth.auth().currentUser else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        let credential = OAuthProvider.appleCredential(
+            withIDToken: idTokenString,
+            rawNonce: rawNonce,
+            fullName: appleIDCredential.fullName
+        )
+
+        do {
+            try await user.reauthenticate(with: credential)
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+
+        // Revoke Apple token in accordance with App Store Review Guideline 5.1.1(v)
+        if let authCode = appleIDCredential.authorizationCode,
+           let authCodeString = String(data: authCode, encoding: .utf8) {
+            try? await Auth.auth().revokeToken(withAuthorizationCode: authCodeString)
+        }
+
+        let uid = user.uid
+        await Self.withTimeout(seconds: 3.0, defaultValue: ()) {
+            await FirestoreService.shared.deleteUserData(userId: uid)
+        }
+
+        do {
+            try await Self.withTimeout(seconds: 10.0) {
+                try await user.delete()
+            }
+            GIDSignIn.sharedInstance.signOut()
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+        } catch is AuthTimeoutError {
+            throw AuthError.networkError
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+    }
+
+    public func reauthenticateAndDeleteWithGoogle(presentingViewController: UIViewController) async throws {
+        guard Self.isFirebaseConfigured else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        guard let user = Auth.auth().currentUser else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        guard let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+              let dict = NSDictionary(contentsOfFile: path),
+              let clientID = dict["CLIENT_ID"] as? String,
+              !clientID.isEmpty else {
+            throw AuthError.unknown("Google Sign-In configuration is missing.")
+        }
+
+        if GIDSignIn.sharedInstance.configuration == nil {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        }
+
+        let signInResult: GIDSignInResult
+        do {
+            signInResult = try await GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController)
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+
+        guard let idToken = signInResult.user.idToken?.tokenString else {
+            throw AuthError.missingGoogleIDToken
+        }
+        let accessToken = signInResult.user.accessToken.tokenString
+        let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: accessToken)
+
+        do {
+            try await user.reauthenticate(with: credential)
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+
+        let uid = user.uid
+        await Self.withTimeout(seconds: 3.0, defaultValue: ()) {
+            await FirestoreService.shared.deleteUserData(userId: uid)
+        }
+
+        do {
+            try await Self.withTimeout(seconds: 10.0) {
+                try await user.delete()
+            }
+            GIDSignIn.sharedInstance.signOut()
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+        } catch is AuthTimeoutError {
+            throw AuthError.networkError
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+    }
+
+    public func reauthenticateAndDeleteWithPassword(password: String) async throws {
+        guard Self.isFirebaseConfigured else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        guard let user = Auth.auth().currentUser else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        guard let email = user.email, !email.isEmpty else {
+            throw AuthError.userNotFound
+        }
+
+        let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+        do {
+            try await user.reauthenticate(with: credential)
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+
+        let uid = user.uid
+        await Self.withTimeout(seconds: 3.0, defaultValue: ()) {
+            await FirestoreService.shared.deleteUserData(userId: uid)
+        }
+
+        do {
+            try await Self.withTimeout(seconds: 10.0) {
+                try await user.delete()
+            }
+            GIDSignIn.sharedInstance.signOut()
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+        } catch is AuthTimeoutError {
+            throw AuthError.networkError
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+    }
+
+    // MARK: - Async Timeout Helpers
+
+    private struct AuthTimeoutError: LocalizedError, Sendable {
+        var errorDescription: String? { "Operation timed out." }
+    }
+
+    private static func withTimeout<T: Sendable>(
+        seconds: TimeInterval,
+        operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw AuthTimeoutError()
+            }
+            guard let result = try await group.next() else {
+                throw AuthTimeoutError()
+            }
+            group.cancelAll()
+            return result
+        }
+    }
+
+    private static func withTimeout<T: Sendable>(
+        seconds: TimeInterval,
+        defaultValue: T,
+        operation: @escaping @Sendable () async -> T
+    ) async -> T {
+        do {
+            return try await withTimeout(seconds: seconds) {
+                await operation()
+            }
+        } catch {
+            return defaultValue
         }
     }
 
@@ -459,6 +707,18 @@ public final class MockAuthService: AuthProviding, @unchecked Sendable {
     }
 
     public func deleteAccount() async throws {
+        currentUser = nil
+    }
+
+    public func reauthenticateAndDeleteWithApple(authorization: ASAuthorization, rawNonce: String) async throws {
+        currentUser = nil
+    }
+
+    public func reauthenticateAndDeleteWithGoogle(presentingViewController: UIViewController) async throws {
+        currentUser = nil
+    }
+
+    public func reauthenticateAndDeleteWithPassword(password: String) async throws {
         currentUser = nil
     }
 }

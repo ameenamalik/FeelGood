@@ -11,6 +11,7 @@
 
 import AuthenticationServices
 import PostHog
+import SwiftData
 import SwiftUI
 
 struct ProfileHeaderView: View {
@@ -18,6 +19,7 @@ struct ProfileHeaderView: View {
     let onManageSubscription: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @Environment(PurchasesManager.self) private var purchasesManager
     @Environment(AuthService.self) private var authService
     @State private var errorMessage: String?
@@ -29,6 +31,11 @@ struct ProfileHeaderView: View {
     @State private var isShowingResetSuccess = false
     @State private var isShowingAcknowledgements = false
     @State private var isDeletingAccount = false
+    @State private var isShowingAppleReauth = false
+    @State private var reauthAppleNonce = ""
+    @State private var isShowingGoogleReauthPrompt = false
+    @State private var isShowingPasswordReauthPrompt = false
+    @State private var passwordForReauth = ""
     @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
     private var isMovementRecognitionEnabled = false
 
@@ -39,9 +46,7 @@ struct ProfileHeaderView: View {
             if purchasesManager.isProUnlocked {
                 calendarPrivacySection
             }
-            if authService.currentUser != nil {
-                accountDeletionSection
-            }
+            accountDeletionSection
             legalLinks
         }
         .padding(FGSpace.page)
@@ -53,6 +58,84 @@ struct ProfileHeaderView: View {
         }
         .sheet(isPresented: $isShowingAcknowledgements) {
             NavigationStack { AcknowledgementsView() }
+        }
+        .sheet(isPresented: $isShowingAppleReauth) {
+            NavigationStack {
+                VStack(spacing: FGSpace.l) {
+                    Image(systemName: "apple.logo")
+                        .font(.system(size: 48))
+                        .foregroundStyle(FGColor.ink)
+                        .padding(.top, FGSpace.xl)
+
+                    VStack(spacing: FGSpace.s) {
+                        Text("Confirm Apple ID")
+                            .font(FGFont.title)
+                            .foregroundStyle(FGColor.ink)
+
+                        Text("Apple requires confirming your Apple ID to permanently revoke access and delete your account.")
+                            .font(FGFont.body)
+                            .foregroundStyle(FGColor.inkMuted)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, FGSpace.m)
+                    }
+
+                    SignInWithAppleButton(.continue) { request in
+                        let nonce = AuthService.randomNonceString()
+                        reauthAppleNonce = nonce
+                        request.requestedScopes = [.fullName, .email]
+                        request.nonce = AuthService.sha256(nonce)
+                    } onCompletion: { result in
+                        handleAppleReauthResult(result)
+                    }
+                    .signInWithAppleButtonStyle(.black)
+                    .frame(height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+                    .padding(.horizontal, FGSpace.page)
+
+                    if isDeletingAccount {
+                        ProgressView("Deleting account...")
+                            .tint(FGColor.clayDeep)
+                    }
+
+                    Spacer()
+                }
+                .padding(FGSpace.page)
+                .background(FGColor.bg.ignoresSafeArea())
+                .navigationTitle("Verify Identity")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            isShowingAppleReauth = false
+                        }
+                    }
+                }
+            }
+            .presentationDetents([.medium])
+        }
+        .confirmationDialog(
+            "Confirm Google Account",
+            isPresented: $isShowingGoogleReauthPrompt,
+            titleVisibility: .visible
+        ) {
+            Button("Continue with Google") {
+                handleGoogleReauth()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Google requires verifying your account before permanently deleting it.")
+        }
+        .alert(
+            "Confirm Password",
+            isPresented: $isShowingPasswordReauthPrompt
+        ) {
+            SecureField("Password", text: $passwordForReauth)
+            Button("Delete Account", role: .destructive) {
+                handlePasswordReauth()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Please enter your account password to confirm permanent account deletion.")
         }
         .alert(
             errorTitle,
@@ -196,13 +279,125 @@ struct ProfileHeaderView: View {
         }
     }
 
+    @MainActor
+    private func clearAllUserData() {
+        profile.answers = ProfileAnswers()
+        profile.nickname = ""
+        profile.signOutOfApple()
+        profile.updatedAt = Date()
+
+        try? modelContext.delete(model: SessionRecord.self)
+        try? modelContext.delete(model: AffinityRecord.self)
+        try? modelContext.delete(model: CheckInRecord.self)
+        try? modelContext.delete(model: PlanDay.self)
+        try? modelContext.save()
+
+        resetAnalyticsIdentity()
+    }
+
     private func handleDeleteAccount() {
         isDeletingAccount = true
         Task {
             do {
                 try await authService.deleteAccount()
-                profile.signOutOfApple()
-                resetAnalyticsIdentity()
+                clearAllUserData()
+                isDeletingAccount = false
+                isShowingDeletionSuccess = true
+            } catch let error as AuthError where error == .requiresRecentLogin {
+                isDeletingAccount = false
+                handleReauthenticationRequired()
+            } catch {
+                isDeletingAccount = false
+                errorTitle = "Couldn't delete account"
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func handleReauthenticationRequired() {
+        guard let provider = authService.currentUser?.providerID else {
+            errorTitle = "Authentication Required"
+            errorMessage = "For security, please sign in again before deleting your account."
+            return
+        }
+
+        switch provider {
+        case "apple.com":
+            isShowingAppleReauth = true
+        case "google.com":
+            isShowingGoogleReauthPrompt = true
+        case "password":
+            passwordForReauth = ""
+            isShowingPasswordReauthPrompt = true
+        default:
+            isShowingAuthSheet = true
+        }
+    }
+
+    private func handleAppleReauthResult(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            isDeletingAccount = true
+            Task {
+                do {
+                    try await authService.reauthenticateAndDeleteWithApple(
+                        authorization: authorization,
+                        rawNonce: reauthAppleNonce
+                    )
+                    clearAllUserData()
+                    isDeletingAccount = false
+                    isShowingAppleReauth = false
+                    isShowingDeletionSuccess = true
+                } catch {
+                    isDeletingAccount = false
+                    errorTitle = "Couldn't delete account"
+                    errorMessage = error.localizedDescription
+                }
+            }
+        case .failure(let error):
+            if (error as? ASAuthorizationError)?.code != .canceled {
+                errorTitle = "Couldn't verify Apple ID"
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func handleGoogleReauth() {
+        guard let windowScene = (UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first { $0.activationState == .foregroundActive }
+            ?? UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first),
+              let window = windowScene.windows.first(where: { $0.isKeyWindow }),
+              var topVC = window.rootViewController else {
+            errorMessage = "Unable to find presentation window."
+            return
+        }
+        while let presented = topVC.presentedViewController {
+            topVC = presented
+        }
+
+        isDeletingAccount = true
+        Task {
+            do {
+                try await authService.reauthenticateAndDeleteWithGoogle(presentingViewController: topVC)
+                clearAllUserData()
+                isDeletingAccount = false
+                isShowingDeletionSuccess = true
+            } catch {
+                isDeletingAccount = false
+                errorTitle = "Couldn't delete account"
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func handlePasswordReauth() {
+        let trimmedPassword = passwordForReauth
+        guard !trimmedPassword.isEmpty else { return }
+
+        isDeletingAccount = true
+        Task {
+            do {
+                try await authService.reauthenticateAndDeleteWithPassword(password: trimmedPassword)
+                clearAllUserData()
                 isDeletingAccount = false
                 isShowingDeletionSuccess = true
             } catch {
@@ -214,9 +409,7 @@ struct ProfileHeaderView: View {
     }
 
     private func handleResetLocalData() {
-        profile.nickname = ""
-        profile.signOutOfApple()
-        resetAnalyticsIdentity()
+        clearAllUserData()
         isShowingResetSuccess = true
     }
 
