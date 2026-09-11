@@ -27,6 +27,9 @@ public struct FirestoreCompletionRecord: Codable, Sendable, Identifiable {
     public var endedAt: Date
     public var durationMin: Int?
     public var activity: String?
+    public var qualities: [String]?
+    public var intensity: Int?
+    public var course: String?
     public var place: String?
     public var feel: String?
     public var timestamp: Date
@@ -40,6 +43,9 @@ public struct FirestoreCompletionRecord: Codable, Sendable, Identifiable {
         endedAt: Date,
         durationMin: Int? = nil,
         activity: String? = nil,
+        qualities: [String]? = nil,
+        intensity: Int? = nil,
+        course: String? = nil,
         place: String? = nil,
         feel: String? = nil,
         timestamp: Date = Date()
@@ -52,6 +58,9 @@ public struct FirestoreCompletionRecord: Codable, Sendable, Identifiable {
         self.endedAt = endedAt
         self.durationMin = durationMin
         self.activity = activity
+        self.qualities = qualities
+        self.intensity = intensity
+        self.course = course
         self.place = place
         self.feel = feel
         self.timestamp = timestamp
@@ -169,11 +178,16 @@ public final class FirestoreService: Sendable {
         endedAt: Date,
         durationMin: Int,
         activity: String,
+        qualities: [String] = [],
+        intensity: Int = 1,
+        course: String? = nil,
         place: String? = nil,
-        feel: String? = nil
+        feel: String? = nil,
+        recordID: String? = nil
     ) async throws {
         guard let db else { return }
         let record = FirestoreCompletionRecord(
+            id: recordID ?? Self.completionID(sessionID: sessionID, startedAt: startedAt),
             userId: userId,
             sessionTitle: sessionTitle,
             sessionID: sessionID,
@@ -181,6 +195,9 @@ public final class FirestoreService: Sendable {
             endedAt: endedAt,
             durationMin: durationMin,
             activity: activity,
+            qualities: qualities,
+            intensity: intensity,
+            course: course,
             place: place,
             feel: feel
         )
@@ -189,6 +206,25 @@ public final class FirestoreService: Sendable {
             .collection("completions")
             .document(record.id)
             .setData(from: record)
+    }
+
+    /// A stable document id makes guest-history claiming retry-safe. A failed
+    /// upload can be run again without creating duplicate badge progress.
+    nonisolated public static func completionID(sessionID: String, startedAt: Date) -> String {
+        let safeSessionID = sessionID
+            .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: " ", with: "-")
+        let milliseconds = Int64((startedAt.timeIntervalSince1970 * 1_000).rounded())
+        return "\(safeSessionID)-\(milliseconds)"
+    }
+
+    public func fetchAllCompletions(userId: String) async throws -> [FirestoreCompletionRecord] {
+        guard let db else { return [] }
+        let snapshot = try await db.collection("users")
+            .document(userId)
+            .collection("completions")
+            .getDocuments()
+        return snapshot.documents.compactMap { try? $0.data(as: FirestoreCompletionRecord.self) }
     }
 
     // MARK: - Custom Workouts Persistence
@@ -228,6 +264,15 @@ public final class FirestoreService: Sendable {
             .delete()
     }
 
+    public func fetchAllCustomWorkouts(userId: String) async throws -> [FirestoreCustomWorkout] {
+        guard let db else { return [] }
+        let snapshot = try await db.collection("users")
+            .document(userId)
+            .collection("custom_workouts")
+            .getDocuments()
+        return snapshot.documents.compactMap { try? $0.data(as: FirestoreCustomWorkout.self) }
+    }
+
     // MARK: - User Preferences & Profile Sync
 
     public func saveUserPreferences(userId: String, data: sending [String: Any]) async throws {
@@ -235,6 +280,12 @@ public final class FirestoreService: Sendable {
         try await db.collection("users")
             .document(userId)
             .setData(data, merge: true)
+    }
+
+    public func fetchUserPreferences(userId: String) async throws -> [String: Any]? {
+        guard let db else { return nil }
+        let snapshot = try await db.collection("users").document(userId).getDocument()
+        return snapshot.data()
     }
 
     // MARK: - Account Deletion
@@ -277,4 +328,3 @@ public final class FirestoreService: Sendable {
         }
     }
 }
-
