@@ -26,6 +26,7 @@ struct ProfileHeaderView: View {
     @State private var errorTitle = "Error"
     @State private var isShowingAuthSheet = false
     @State private var isShowingDeleteConfirmation = false
+    @State private var isShowingSignOutConfirmation = false
     @State private var isShowingSignedOutDeleteDialog = false
     @State private var isShowingDeletionSuccess = false
     @State private var isShowingResetSuccess = false
@@ -152,6 +153,18 @@ struct ProfileHeaderView: View {
             Text(errorMessage ?? "")
         }
         .confirmationDialog(
+            "Sign out of FeelGood?",
+            isPresented: $isShowingSignOutConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Sign out", role: .destructive) {
+                handleSignOut()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your account progress will stay safely synced. Its sessions, badges, routines, and preferences will be removed from this device before a fresh guest experience begins.")
+        }
+        .confirmationDialog(
             "Delete Account?",
             isPresented: $isShowingDeleteConfirmation,
             titleVisibility: .visible
@@ -224,7 +237,7 @@ struct ProfileHeaderView: View {
                 }
 
                 Button("Sign out") {
-                    handleSignOut()
+                    isShowingSignOutConfirmation = true
                 }
                 .font(FGFont.caption.weight(.medium))
                 .foregroundStyle(FGColor.inkMuted)
@@ -274,8 +287,9 @@ struct ProfileHeaderView: View {
     private func handleSignOut() {
         do {
             try authService.signOut()
-            profile.signOutOfApple()
+            AccountDataSyncService.clearAccountDataFromDevice(context: modelContext)
             resetAnalyticsIdentity()
+            dismiss()
         } catch {
             errorTitle = "Couldn't sign out"
             errorMessage = error.localizedDescription
@@ -563,4 +577,3 @@ struct ProfileHeaderView: View {
         .environment(PurchasesManager.shared)
         .environment(AuthService.shared)
 }
-

@@ -95,7 +95,7 @@ struct FeelGoodPaywallView: View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
             Text("FeelGood Pro")
                 .font(FGFont.label.weight(.semibold))
-                .foregroundStyle(FGColor.ink)
+                .foregroundStyle(FGColor.inkOnAccent)
                 .padding(.horizontal, FGSpace.m)
                 .padding(.vertical, FGSpace.xs)
                 .background(FGAura.apricot.core, in: Capsule())
@@ -202,15 +202,19 @@ struct FeelGoodPaywallView: View {
             HStack(spacing: FGSpace.s) {
                 Image(systemName: selectedPlan == plan ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 21, weight: .semibold))
-                    .foregroundStyle(selectedPlan == plan ? FGColor.clayDeep : FGColor.lineStrong)
+                    .foregroundStyle(selectedPlan == plan ? FGColor.inkOnAccent : FGColor.lineStrong)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
                         .font(FGFont.body.weight(.semibold))
-                        .foregroundStyle(FGColor.ink)
+                        .foregroundStyle(selectedPlan == plan ? FGColor.inkOnAccent : FGColor.ink)
                     Text(package == nil && purchasesManager.isLoadingOfferings ? "Loading price…" : detail)
                         .font(FGFont.caption)
-                        .foregroundStyle(FGColor.inkMuted)
+                        .foregroundStyle(
+                            selectedPlan == plan
+                                ? FGColor.inkOnAccent.opacity(0.72)
+                                : FGColor.inkMuted
+                        )
                 }
 
                 Spacer(minLength: FGSpace.xs)
@@ -218,7 +222,7 @@ struct FeelGoodPaywallView: View {
                 if let badge {
                     Text(badge)
                         .font(FGFont.label.weight(.semibold))
-                        .foregroundStyle(FGColor.clayDeep)
+                        .foregroundStyle(FGColor.inkOnAccent)
                         .padding(.horizontal, FGSpace.s)
                         .padding(.vertical, FGSpace.xs)
                         .background(FGAura.apricot.mid, in: Capsule())
@@ -233,7 +237,7 @@ struct FeelGoodPaywallView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
                     .strokeBorder(
-                        selectedPlan == plan ? FGColor.ink : FGColor.line,
+                        selectedPlan == plan ? FGColor.inkOnAccent : FGColor.line,
                         lineWidth: selectedPlan == plan ? 1.5 : 1
                     )
             )

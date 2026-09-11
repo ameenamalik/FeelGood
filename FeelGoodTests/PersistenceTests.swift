@@ -155,4 +155,37 @@ struct PersistenceTests {
         #expect(log.checkIn(on: today)?.energy == .low)
         #expect(log.checkIn(on: Fixture.utc.startOfDay(for: Fixture.daysAgo(1))) == nil)
     }
+
+    @Test("Cloud completion identifiers are stable and session-specific")
+    func completionIdentifiersAreIdempotent() {
+        let first = FirestoreService.completionID(sessionID: "a/stretch", startedAt: Fixture.now)
+        let retry = FirestoreService.completionID(sessionID: "a/stretch", startedAt: Fixture.now)
+        let other = FirestoreService.completionID(sessionID: "a/stretch", startedAt: Fixture.daysAgo(1))
+
+        #expect(first == retry)
+        #expect(first != other)
+        #expect(!first.contains("/"))
+    }
+
+    @Test("Signing out removes account data from the device")
+    func accountSignOutClearsLocalData() throws {
+        let context = try context()
+        let profile = UserProfile(answers: ProfileAnswers(activities: [.walking]), now: Fixture.now)
+        context.insert(profile)
+        let log = SessionLog(context: context, calendar: Fixture.utc)
+        let session = Fixture.catalog.first { $0.id == "a-stretch" }!
+        log.recordCompletion(of: session, startedAt: Fixture.now, endedAt: Fixture.now, feel: nil)
+        _ = log.keep(title: "My walk", activity: .walking, durationMin: 10, intensity: 1, now: Fixture.now)
+
+        UserDefaults.standard.set("test-user", forKey: AccountDataSyncService.localOwnerKey)
+        UserDefaults.standard.set(Data([1]), forKey: "FeelGood.ChatThreads.v1")
+
+        AccountDataSyncService.clearAccountDataFromDevice(context: context)
+
+        #expect(try context.fetch(FetchDescriptor<UserProfile>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<SessionRecord>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<CustomSession>()).isEmpty)
+        #expect(AccountDataSyncService.localOwnerUID() == nil)
+        #expect(UserDefaults.standard.data(forKey: "FeelGood.ChatThreads.v1") == nil)
+    }
 }
