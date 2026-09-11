@@ -41,7 +41,9 @@ struct FeelGoodApp: App {
             config.logs.environment = "production"
             #endif
             // Session replay is a different risk surface than events/logs: it
-            // captures whatever's rendered, not an allow-listed payload.
+            // captures whatever's rendered, not an allow-listed payload. Keep
+            // it available for local diagnosis, but never enable screenshot
+            // capture in a Release build that handles private wellness input.
             //
             // `screenshotMode` is not optional for us. Wireframe reconstruction
             // walks a UIKit view hierarchy, and this app has none: the root
@@ -62,10 +64,14 @@ struct FeelGoodApp: App {
             // work-around label, a check-in answer, or a kept session's title and
             // is not explicitly masked ships those pixels to PostHog. See the
             // reproductive-health rule in CLAUDE.md before adding a screen.
+            #if DEBUG
             config.sessionReplay = true
             config.sessionReplayConfig.maskAllTextInputs = false
             config.sessionReplayConfig.maskAllImages = false
             config.sessionReplayConfig.screenshotMode = true
+            #else
+            config.sessionReplay = false
+            #endif
             PostHogSDK.shared.setup(config)
         } else {
             #if DEBUG

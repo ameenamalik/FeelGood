@@ -64,9 +64,17 @@ final class FeelGoodUITests: XCTestCase {
         app.buttons["Next"].tap()
         app.buttons["Show me today"].tap()
 
-        let exploreFree = app.buttons["Explore Free Menu First"]
-        if exploreFree.waitForExistence(timeout: 3) {
-            exploreFree.tap()
+        // RevenueCat owns the onboarding paywall UI. Prefer its native close
+        // action, while retaining the old label as a fallback for cached test
+        // paywalls during a dashboard rollout.
+        let paywallClose = app.buttons["Close"]
+        if paywallClose.waitForExistence(timeout: 5) {
+            paywallClose.tap()
+        } else {
+            let legacyExploreFree = app.buttons["Explore Free Menu First"]
+            if legacyExploreFree.waitForExistence(timeout: 2) {
+                legacyExploreFree.tap()
+            }
         }
     }
 
