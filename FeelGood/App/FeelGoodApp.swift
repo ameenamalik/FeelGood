@@ -213,6 +213,22 @@ struct RootView: View {
         .onOpenURL { url in
             _ = GIDSignIn.sharedInstance.handle(url)
         }
+        #if DEBUG
+        .onAppear {
+            if profiles.isEmpty {
+                let initialProfile = UserProfile(
+                    answers: ProfileAnswers(
+                        activities: [.yoga, .strength, .walking],
+                        places: [.home, .outdoors],
+                        realisticMinutes: 30
+                    ),
+                    now: Date()
+                )
+                context.insert(initialProfile)
+                try? context.save()
+            }
+        }
+        #endif
     }
 
     @MainActor
