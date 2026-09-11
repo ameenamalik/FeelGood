@@ -50,7 +50,7 @@ nonisolated public struct AuthUser: Equatable, Sendable, Identifiable {
 
 // MARK: - AuthError
 
-nonisolated public enum AuthError: LocalizedError, Sendable {
+nonisolated public enum AuthError: LocalizedError, Sendable, Equatable {
     case firebaseNotConfigured
     case missingWindow
     case invalidAppleCredential
@@ -98,7 +98,15 @@ nonisolated public enum AuthError: LocalizedError, Sendable {
 
     static func mapFirebaseError(_ error: Error) -> AuthError {
         let nsError = error as NSError
-        guard nsError.domain == AuthErrorDomain else {
+
+        // Fast-path check for requiresRecentLogin across domain variations
+        if nsError.code == AuthErrorCode.requiresRecentLogin.rawValue
+            || nsError.code == 17014
+            || (nsError.domain.contains("Auth") && nsError.code == 17014) {
+            return .requiresRecentLogin
+        }
+
+        guard nsError.domain == AuthErrorDomain || nsError.domain == "FIRAuthErrorDomain" else {
             return .unknown(error.localizedDescription)
         }
 
@@ -142,6 +150,9 @@ public protocol AuthProviding: AnyObject, Sendable {
     func sendPasswordReset(email: String) async throws
     func signOut() throws
     func deleteAccount() async throws
+    func reauthenticateAndDeleteWithApple(authorization: ASAuthorization, rawNonce: String) async throws
+    func reauthenticateAndDeleteWithGoogle(presentingViewController: UIViewController) async throws
+    func reauthenticateAndDeleteWithPassword(password: String) async throws
 }
 
 // MARK: - Production AuthService
@@ -382,19 +393,323 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             return
         }
 
-        guard let user = Auth.auth().currentUser else { return }
+        guard let user = Auth.auth().currentUser else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        // Firebase requires a "recent" sign-in to delete an account. Checking this
+        // up front — before touching any data — matters because Firestore data
+        // must be deleted *before* the auth user (the security rules key off
+        // request.auth.uid, which stops resolving the moment the account is
+        // gone). If we deleted data first and then discovered reauth was needed,
+        // a user who cancels or fails the reauth prompt is left with a live
+        // account and permanently wiped cloud data. Bailing out here instead
+        // means a stale session never touches data at all — it goes straight to
+        // the reauth flow, which deletes data only once re-authentication has
+        // actually refreshed the session.
+        guard !Self.requiresReauthentication(lastSignInDate: user.metadata.lastSignInDate) else {
+            throw AuthError.requiresRecentLogin
+        }
+
         let uid = user.uid
+
+        // Best-effort Firestore user data cleanup with a non-blocking timeout
+        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
+            await FirestoreService.shared.deleteUserData(userId: uid)
+        }
+
         do {
-            try? await FirestoreService.shared.deleteUserData(userId: uid)
-            try await user.delete()
+            try await Self.withTimeout(seconds: 8.0) {
+                try await user.delete()
+            }
             GIDSignIn.sharedInstance.signOut()
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
                 await PurchasesManager.shared.logOut()
             }
+        } catch is AuthTimeoutError {
+            throw AuthError.networkError
         } catch {
             throw AuthError.mapFirebaseError(error)
+        }
+    }
+
+    /// Conservative local guess at whether Firebase will demand a fresh sign-in
+    /// before allowing a sensitive operation like account deletion. Firebase
+    /// doesn't expose its exact server-side threshold, so this stays well under
+    /// the ~5 minute window reported in practice — a false positive just means
+    /// one extra reauth prompt, while a false negative is the data-loss race
+    /// described in `deleteAccount()`.
+    static func requiresReauthentication(lastSignInDate: Date?, now: Date = Date()) -> Bool {
+        guard let lastSignInDate else { return true }
+        return now.timeIntervalSince(lastSignInDate) > 240
+    }
+
+    public func reauthenticateAndDeleteWithApple(authorization: ASAuthorization, rawNonce: String) async throws {
+        guard Self.isFirebaseConfigured else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let appleIDToken = appleIDCredential.identityToken,
+              let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+            throw AuthError.invalidAppleCredential
+        }
+
+        guard let user = Auth.auth().currentUser else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        let credential = OAuthProvider.appleCredential(
+            withIDToken: idTokenString,
+            rawNonce: rawNonce,
+            fullName: appleIDCredential.fullName
+        )
+
+        do {
+            try await user.reauthenticate(with: credential)
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+
+        // Revoke Apple token in accordance with App Store Review Guideline 5.1.1(v)
+        if let authCode = appleIDCredential.authorizationCode,
+           let authCodeString = String(data: authCode, encoding: .utf8) {
+            try? await Auth.auth().revokeToken(withAuthorizationCode: authCodeString)
+        }
+
+        let uid = user.uid
+        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
+            await FirestoreService.shared.deleteUserData(userId: uid)
+        }
+
+        do {
+            try await Self.withTimeout(seconds: 8.0) {
+                try await user.delete()
+            }
+            GIDSignIn.sharedInstance.signOut()
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+        } catch is AuthTimeoutError {
+            throw AuthError.networkError
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+    }
+
+    public func reauthenticateAndDeleteWithGoogle(presentingViewController: UIViewController) async throws {
+        guard Self.isFirebaseConfigured else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        guard let user = Auth.auth().currentUser else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        guard let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+              let dict = NSDictionary(contentsOfFile: path),
+              let clientID = dict["CLIENT_ID"] as? String,
+              !clientID.isEmpty else {
+            throw AuthError.unknown("Google Sign-In configuration is missing.")
+        }
+
+        if GIDSignIn.sharedInstance.configuration == nil {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        }
+
+        let signInResult: GIDSignInResult
+        do {
+            signInResult = try await GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController)
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+
+        guard let idToken = signInResult.user.idToken?.tokenString else {
+            throw AuthError.missingGoogleIDToken
+        }
+        let accessToken = signInResult.user.accessToken.tokenString
+        let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: accessToken)
+
+        do {
+            try await user.reauthenticate(with: credential)
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+
+        let uid = user.uid
+        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
+            await FirestoreService.shared.deleteUserData(userId: uid)
+        }
+
+        do {
+            try await Self.withTimeout(seconds: 8.0) {
+                try await user.delete()
+            }
+            GIDSignIn.sharedInstance.signOut()
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+        } catch is AuthTimeoutError {
+            throw AuthError.networkError
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+    }
+
+    public func reauthenticateAndDeleteWithPassword(password: String) async throws {
+        guard Self.isFirebaseConfigured else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        guard let user = Auth.auth().currentUser else {
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+            return
+        }
+
+        guard let email = user.email, !email.isEmpty else {
+            throw AuthError.userNotFound
+        }
+
+        let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+        do {
+            try await user.reauthenticate(with: credential)
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+
+        let uid = user.uid
+        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
+            await FirestoreService.shared.deleteUserData(userId: uid)
+        }
+
+        do {
+            try await Self.withTimeout(seconds: 8.0) {
+                try await user.delete()
+            }
+            GIDSignIn.sharedInstance.signOut()
+            self.currentUser = nil
+            Task { @MainActor in
+                FirestoreService.shared.stopListening()
+                await PurchasesManager.shared.logOut()
+            }
+        } catch is AuthTimeoutError {
+            throw AuthError.networkError
+        } catch {
+            throw AuthError.mapFirebaseError(error)
+        }
+    }
+
+    // MARK: - Async Timeout Helpers
+
+    private struct AuthTimeoutError: LocalizedError, Sendable {
+        var errorDescription: String? { "Operation timed out." }
+    }
+
+    private final class TimeoutLock: @unchecked Sendable {
+        private let lock = NSLock()
+        private var hasCompleted = false
+
+        func completeOnce(_ block: () -> Void) {
+            lock.lock()
+            defer { lock.unlock() }
+            guard !hasCompleted else { return }
+            hasCompleted = true
+            block()
+        }
+    }
+
+    static func withTimeout<T: Sendable>(
+        seconds: TimeInterval,
+        operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            let state = TimeoutLock()
+
+            let workTask = Task {
+                do {
+                    let result = try await operation()
+                    state.completeOnce {
+                        continuation.resume(returning: result)
+                    }
+                } catch {
+                    state.completeOnce {
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                state.completeOnce {
+                    workTask.cancel()
+                    continuation.resume(throwing: AuthTimeoutError())
+                }
+            }
+        }
+    }
+
+    static func withTimeout<T: Sendable>(
+        seconds: TimeInterval,
+        defaultValue: T,
+        operation: @escaping @Sendable () async -> T
+    ) async -> T {
+        await withCheckedContinuation { continuation in
+            let state = TimeoutLock()
+
+            let workTask = Task {
+                let result = await operation()
+                state.completeOnce {
+                    continuation.resume(returning: result)
+                }
+            }
+
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                state.completeOnce {
+                    workTask.cancel()
+                    continuation.resume(returning: defaultValue)
+                }
+            }
         }
     }
 
@@ -459,6 +774,18 @@ public final class MockAuthService: AuthProviding, @unchecked Sendable {
     }
 
     public func deleteAccount() async throws {
+        currentUser = nil
+    }
+
+    public func reauthenticateAndDeleteWithApple(authorization: ASAuthorization, rawNonce: String) async throws {
+        currentUser = nil
+    }
+
+    public func reauthenticateAndDeleteWithGoogle(presentingViewController: UIViewController) async throws {
+        currentUser = nil
+    }
+
+    public func reauthenticateAndDeleteWithPassword(password: String) async throws {
         currentUser = nil
     }
 }
