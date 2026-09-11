@@ -26,6 +26,12 @@ final class PurchasesManager {
     /// "still loading" from "confirmed not subscribed".
     private(set) var hasLoadedCustomerInfo = false
 
+    /// While RevenueCat changes identities, access must fail closed. Otherwise
+    /// the previous account's cached CustomerInfo can remain visible long
+    /// enough for a newly signed-in free account to use Pro features.
+    private var isChangingIdentity = false
+    private var identityRevision = 0
+
     /// The id RevenueCat knows this subscriber by — its anonymous id before
     /// Apple Sign In, the Apple user id after. The copy Worker looks the
     /// subscriber up by exactly this value, so it must be read from the SDK
@@ -36,7 +42,22 @@ final class PurchasesManager {
         #if DEBUG
         if debugForceProUnlocked { return true }
         #endif
-        return customerInfo?.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+        guard !isChangingIdentity, let customerInfo else { return false }
+        return Self.hasActiveProEntitlement(in: customerInfo)
+    }
+
+    static func hasActiveProEntitlement(in customerInfo: CustomerInfo) -> Bool {
+        guard customerInfo.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true else {
+            return false
+        }
+
+        #if DEBUG
+        // RevenueCat's Test Store is used only by Debug builds. The production
+        // configuration below enables signed entitlement verification.
+        return true
+        #else
+        return customerInfo.entitlements.verification.isVerified
+        #endif
     }
 
     #if DEBUG
@@ -73,7 +94,14 @@ final class PurchasesManager {
         Purchases.logLevel = .warn
         #endif
 
+        #if DEBUG
         Purchases.configure(withAPIKey: RevenueCatConstants.apiKey)
+        #else
+        let configuration = Configuration.Builder(withAPIKey: RevenueCatConstants.apiKey)
+            .with(entitlementVerificationMode: .informational)
+            .build()
+        Purchases.configure(with: configuration)
+        #endif
 
         observeCustomerInfoUpdates()
 
@@ -88,8 +116,14 @@ final class PurchasesManager {
     /// changes after launch, but a gate must not depend on a future change to
     /// learn that an existing subscriber is already entitled.
     func refreshCustomerInfo() async {
+        guard !isChangingIdentity else { return }
+        let revision = identityRevision
+        let requestedAppUserID = Purchases.shared.appUserID
         do {
-            customerInfo = try await Purchases.shared.customerInfo()
+            let info = try await Purchases.shared.customerInfo()
+            guard revision == identityRevision,
+                  requestedAppUserID == Purchases.shared.appUserID else { return }
+            customerInfo = info
         } catch {
             logger.error("Failed to refresh CustomerInfo: \(error.localizedDescription)")
             Analytics.log("CustomerInfo refresh failed", level: .error, attributes: ["error": error.localizedDescription])
@@ -100,11 +134,17 @@ final class PurchasesManager {
     /// If your app has its own auth system, call this after login/logout so RevenueCat's
     /// anonymous ID is swapped for your stable user ID (and reset on logout).
     func logIn(appUserID: String) async {
+        let revision = beginIdentityChange()
         do {
             let (info, _) = try await Purchases.shared.logIn(appUserID)
+            guard revision == identityRevision else { return }
             customerInfo = info
             hasLoadedCustomerInfo = true
+            isChangingIdentity = false
         } catch {
+            guard revision == identityRevision else { return }
+            isChangingIdentity = false
+            hasLoadedCustomerInfo = true
             lastError = .other(error)
             logger.error("logIn failed: \(error.localizedDescription)")
             Analytics.log("logIn failed", level: .error, attributes: ["error": error.localizedDescription])
@@ -112,14 +152,37 @@ final class PurchasesManager {
     }
 
     func logOut() async {
+        let revision = beginIdentityChange()
         do {
-            customerInfo = try await Purchases.shared.logOut()
+            let info = try await Purchases.shared.logOut()
+            guard revision == identityRevision else { return }
+            customerInfo = info
             hasLoadedCustomerInfo = true
+            isChangingIdentity = false
         } catch {
+            guard revision == identityRevision else { return }
+            isChangingIdentity = false
+            hasLoadedCustomerInfo = true
             lastError = .other(error)
             logger.error("logOut failed: \(error.localizedDescription)")
             Analytics.log("logOut failed", level: .error, attributes: ["error": error.localizedDescription])
         }
+    }
+
+    /// Firebase can invalidate a session without the user tapping Sign Out.
+    /// Reset a retained identified RevenueCat user in that case, while leaving
+    /// a legitimate anonymous purchaser attached to this installation alone.
+    func ensureAnonymousUserForSignedOutSession() async {
+        guard !Purchases.shared.isAnonymous else { return }
+        await logOut()
+    }
+
+    private func beginIdentityChange() -> Int {
+        identityRevision += 1
+        isChangingIdentity = true
+        customerInfo = nil
+        hasLoadedCustomerInfo = false
+        return identityRevision
     }
 
     /// Streams CustomerInfo updates for the lifetime of the app — fires on launch, after
@@ -130,9 +193,10 @@ final class PurchasesManager {
         customerInfoObservationTask = Task { [weak self] in
             guard let self else { return }
             for await info in Purchases.shared.customerInfoStream {
+                guard !self.isChangingIdentity else { continue }
                 self.customerInfo = info
                 self.hasLoadedCustomerInfo = true
-                let proActive = info.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+                let proActive = Self.hasActiveProEntitlement(in: info)
                 self.logger.debug("CustomerInfo updated — pro active: \(proActive)")
                 Analytics.log("CustomerInfo updated", level: .debug, attributes: ["pro_active": proActive])
             }
@@ -160,7 +224,7 @@ final class PurchasesManager {
             let result = try await Purchases.shared.purchase(package: package)
             guard !result.userCancelled else { return false }
             customerInfo = result.customerInfo
-            let unlocked = result.customerInfo.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+            let unlocked = Self.hasActiveProEntitlement(in: result.customerInfo)
             if unlocked {
                 Analytics.capture("subscription_purchased", properties: [
                     "package_id": package.identifier
@@ -186,7 +250,7 @@ final class PurchasesManager {
         do {
             let info = try await Purchases.shared.restorePurchases()
             customerInfo = info
-            let unlocked = info.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true
+            let unlocked = Self.hasActiveProEntitlement(in: info)
             if unlocked {
                 Analytics.capture("subscription_restored")
             }

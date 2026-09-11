@@ -205,6 +205,10 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
     private func handleFirebaseUserChanged(_ user: User?) {
         guard let user else {
             self.currentUser = nil
+            FirestoreService.shared.stopListening()
+            Task {
+                await PurchasesManager.shared.ensureAnonymousUserForSignedOutSession()
+            }
             return
         }
         let mapped = Self.mapUser(user)
