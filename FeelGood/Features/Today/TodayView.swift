@@ -122,13 +122,15 @@ struct TodayView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        #if DEBUG
-        // Long-press anywhere on the header to fabricate history / switch user journeys.
-        .onLongPressGesture(minimumDuration: 0.4) {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            isDebugging = true
-        }
-        #endif
+        // Disabled for now — commented out rather than removed so the debug
+        // menu (DebugMenu.swift) is still one uncomment away.
+        // #if DEBUG
+        // // Long-press anywhere on the header to fabricate history / switch user journeys.
+        // .onLongPressGesture(minimumDuration: 0.4) {
+        //     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        //     isDebugging = true
+        // }
+        // #endif
         .accessibilityElement(children: .combine)
     }
 
