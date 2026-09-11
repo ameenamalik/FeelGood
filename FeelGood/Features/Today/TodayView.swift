@@ -8,7 +8,6 @@
 
 import SwiftUI
 import UIKit
-import RevenueCatUI
 import PostHog
 
 struct TodayView: View {
@@ -77,7 +76,7 @@ struct TodayView: View {
             }
         }
         .sheet(isPresented: $isShowingPaywall) {
-            RevenueCatUI.PaywallView(displayCloseButton: true)
+            FeelGoodPaywallView()
         }
         .sheet(isPresented: $isShowingMyMenu) {
             MyMenuView(model: model)

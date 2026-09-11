@@ -3,7 +3,6 @@
 //  FeelGood
 //
 
-import RevenueCatUI
 import SwiftUI
 
 /// Wraps a piece of UI that should only be visible to FeelGood Pro subscribers. Shows the
@@ -29,7 +28,7 @@ struct ProGateView<Content: View>: View {
             }
         }
         .sheet(isPresented: $isPaywallPresented) {
-            PaywallView(displayCloseButton: true)
+            FeelGoodPaywallView()
         }
         .task {
             await purchasesManager.refreshCustomerInfo()

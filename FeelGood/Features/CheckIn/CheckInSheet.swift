@@ -17,7 +17,6 @@
 
 import SwiftUI
 import PostHog
-import RevenueCatUI
 
 struct CheckInSheet: View {
     let current: PlanCheckIn?
@@ -107,7 +106,7 @@ struct CheckInSheet: View {
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .sheet(isPresented: $isShowingPaywall) {
-            PaywallView(displayCloseButton: true)
+            FeelGoodPaywallView()
         }
         .task { await loadCalendarContextIfConnected() }
         .onChange(of: isMovementRecognitionEnabled) { _, isEnabled in

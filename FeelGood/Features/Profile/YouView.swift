@@ -25,30 +25,8 @@ struct YouView: View {
 
     var body: some View {
         NavigationStack {
-            // Match the navigation bar to the page's warm background.
-            page.toolbarBackground(FGColor.bg, for: .navigationBar)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        SwiftUI.Menu {
-                            #if DEBUG
-                            Button("User journeys (Time travel)", systemImage: "clock.arrow.circlepath") {
-                                isDebugging = true
-                            }
-                            Divider()
-                            #endif
-                            Button("Everything", systemImage: "square.stack") { isBrowsing = true }
-                            Button("My Preferences", systemImage: "slider.horizontal.3") { isEditingProfile = true }
-                            Button("Hidden exercises", systemImage: "eye.slash") { isShowingHiddenExercises = true }
-                            Button("Account & privacy", systemImage: "person.crop.circle") { isShowingAccount = true }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                                .foregroundStyle(FGColor.inkMuted)
-                                .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
-                        }
-                        .accessibilityLabel("More")
-                        .accessibilityHint("Browse everything, edit your preferences, or manage your account")
-                    }
-                }
+            page
+                .toolbar(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $isBrowsing) {
             LibraryView(model: model)
@@ -127,7 +105,9 @@ struct YouView: View {
                         .padding(.top, FGSpace.m)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(FGSpace.page)
+                .padding(.horizontal, FGSpace.page)
+                .padding(.top, FGSpace.s)
+                .padding(.bottom, FGSpace.page)
             }
             .scrollBounceBehavior(.basedOnSize)
         }

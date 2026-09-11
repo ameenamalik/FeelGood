@@ -9,7 +9,6 @@
 
 import SwiftUI
 import PostHog
-import RevenueCatUI
 
 struct ExploreView: View {
     let model: TodayModel
@@ -120,7 +119,7 @@ struct ExploreView: View {
             )
         }
         .sheet(isPresented: $isShowingPaywall) {
-            PaywallView(displayCloseButton: true)
+            FeelGoodPaywallView()
         }
         .onAppear {
             loadPersistedHistory()
