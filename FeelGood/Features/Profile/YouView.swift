@@ -120,19 +120,19 @@ struct YouView: View {
             HStack(spacing: 6) {
                 preferencePill(
                     "My Preferences",
-                    fill: FGColor.rose.opacity(0.34)
+                    fill: FGAura.blush.core
                 ) {
                     isEditingProfile = true
                 }
                 preferencePill(
                     "Library",
-                    fill: FGColor.gold.opacity(0.36)
+                    fill: FGAura.butter.core
                 ) {
                     isBrowsing = true
                 }
                 preferencePill(
                     "Plan & account",
-                    fill: FGColor.sage.opacity(0.38)
+                    fill: FGAura.sage.core
                 ) {
                     isShowingAccount = true
                 }
@@ -150,7 +150,7 @@ struct YouView: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundStyle(FGColor.ink)
+                .foregroundStyle(FGColor.inkOnAccent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.88)
                 .padding(.horizontal, 12)

@@ -298,7 +298,7 @@ struct ExploreView: View {
                         .foregroundStyle(palette.tagText)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.68))
+                        .background(FGColor.surface.opacity(0.68))
                         .clipShape(Capsule())
                 }
             }
@@ -320,7 +320,7 @@ struct ExploreView: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(palette.subtitleText.opacity(0.9))
                     .padding(10)
-                    .background(Color.white.opacity(0.5))
+                    .background(FGColor.surface.opacity(0.5))
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
 
@@ -357,7 +357,7 @@ struct ExploreView: View {
                     .foregroundStyle(isCommitted ? FGColor.sageDeep : palette.titleText)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
-                    .background(Color.white.opacity(0.55))
+                    .background(FGColor.surface.opacity(0.55))
                     .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -372,7 +372,7 @@ struct ExploreView: View {
                             .foregroundStyle(palette.titleText.opacity(0.8))
                             .padding(.horizontal, 12)
                             .padding(.vertical, 7)
-                            .background(Color.white.opacity(0.55))
+                            .background(FGColor.surface.opacity(0.55))
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
