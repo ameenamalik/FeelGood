@@ -562,10 +562,15 @@ struct ProfileHeaderView: View {
     // MARK: Legal
 
     private var legalLinks: some View {
-        HStack(spacing: FGSpace.m) {
-            Link("Terms of Use", destination: LegalLinks.termsOfUse)
-            Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
-            Button("Acknowledgements") { isShowingAcknowledgements = true }
+        VStack(alignment: .leading, spacing: FGSpace.xs) {
+            HStack(spacing: FGSpace.m) {
+                Link("Terms of Use", destination: LegalLinks.termsOfUse)
+                Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
+            }
+            HStack(spacing: FGSpace.m) {
+                Link("Contact Support", destination: LegalLinks.contactSupport)
+                Button("Acknowledgements") { isShowingAcknowledgements = true }
+            }
         }
         .font(FGFont.caption)
         .foregroundStyle(FGColor.inkMuted)
