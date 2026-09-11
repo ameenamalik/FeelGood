@@ -163,6 +163,9 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
     public static let shared = AuthService()
 
     public private(set) var currentUser: AuthUser?
+    /// Describes the interactive authentication that most recently completed.
+    /// `nil` means Firebase restored an existing session at app launch.
+    public private(set) var lastAuthenticationCreatedAccount: Bool?
     public var isAuthenticated: Bool { currentUser != nil }
 
     private var authStateHandle: AuthStateDidChangeListenerHandle?
@@ -233,6 +236,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
                 displayName: email.components(separatedBy: "@").first?.capitalized,
                 providerID: "password"
             )
+            self.lastAuthenticationCreatedAccount = false
             self.currentUser = mock
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
@@ -241,6 +245,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             let mapped = Self.mapUser(result.user)
+            self.lastAuthenticationCreatedAccount = false
             self.currentUser = mapped
             FirestoreService.shared.startListening(for: mapped.uid)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
@@ -257,6 +262,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
                 displayName: email.components(separatedBy: "@").first?.capitalized,
                 providerID: "password"
             )
+            self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
@@ -265,6 +271,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         do {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             let mapped = Self.mapUser(result.user)
+            self.lastAuthenticationCreatedAccount = true
             self.currentUser = mapped
             FirestoreService.shared.startListening(for: mapped.uid)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
@@ -290,6 +297,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
                 displayName: appleIDCredential.fullName?.givenName,
                 providerID: "apple.com"
             )
+            self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
@@ -304,6 +312,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         do {
             let result = try await Auth.auth().signIn(with: credential)
             let mapped = Self.mapUser(result.user)
+            self.lastAuthenticationCreatedAccount = result.additionalUserInfo?.isNewUser ?? false
             self.currentUser = mapped
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
@@ -321,6 +330,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
                 displayName: "Google User",
                 providerID: "google.com"
             )
+            self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
@@ -351,6 +361,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
 
             let result = try await Auth.auth().signIn(with: credential)
             let mapped = Self.mapUser(result.user)
+            self.lastAuthenticationCreatedAccount = result.additionalUserInfo?.isNewUser ?? false
             self.currentUser = mapped
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
@@ -377,6 +388,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             GIDSignIn.sharedInstance.signOut()
         }
         self.currentUser = nil
+        self.lastAuthenticationCreatedAccount = nil
         Task { @MainActor in
             FirestoreService.shared.stopListening()
             await PurchasesManager.shared.logOut()

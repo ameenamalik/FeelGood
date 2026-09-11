@@ -102,7 +102,12 @@ struct RootView: View {
     let content: ContentStore?
 
     @Environment(\.modelContext) private var context
+    @Environment(AuthService.self) private var authService
     @Query private var profiles: [UserProfile]
+    @State private var pendingExistingAccount: AuthUser?
+    @State private var accountReloadID = UUID()
+    @State private var accountSyncError: String?
+    @State private var isSyncingAccount = false
 
     var body: some View {
         Group {
@@ -113,7 +118,7 @@ struct RootView: View {
                         profile: profile,
                         log: SessionLog(context: context)
                     )
-                    .id(profile.updatedAt)
+                    .id("\(profile.updatedAt.timeIntervalSince1970)-\(accountReloadID.uuidString)")
                 } else {
                     FirstRunFlow { onboarding in
                         context.insert(onboarding.makeRecord(now: Date()))
@@ -130,8 +135,125 @@ struct RootView: View {
                 )
             }
         }
+        .onChange(of: authService.currentUser?.uid, initial: true) { _, userID in
+            guard let userID, let user = authService.currentUser, let content else { return }
+            Task {
+                // Firebase's auth-state listener and the interactive method can
+                // finish in either order. A brief debounce lets the method publish
+                // whether this was account creation before deciding to prompt.
+                try? await Task.sleep(for: .milliseconds(200))
+                await handleAccountArrival(user: user, userID: userID, content: content)
+            }
+        }
+        .onChange(of: profiles.count) { _, count in
+            guard count > 0,
+                  let userID = authService.currentUser?.uid,
+                  let content else { return }
+            runAccountSync {
+                try await AccountDataSyncService.mergeLocalProgress(
+                    into: userID,
+                    context: context,
+                    catalog: content.sessions
+                )
+            }
+        }
+        .confirmationDialog(
+            "Progress on this device",
+            isPresented: Binding(
+                get: { pendingExistingAccount != nil },
+                set: { if !$0 { pendingExistingAccount = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Add it to my account") {
+                guard let user = pendingExistingAccount, let content else { return }
+                pendingExistingAccount = nil
+                runAccountSync {
+                    try await AccountDataSyncService.mergeLocalProgress(
+                        into: user.uid,
+                        context: context,
+                        catalog: content.sessions
+                    )
+                }
+            }
+            Button("Use my account progress", role: .destructive) {
+                guard let user = pendingExistingAccount else { return }
+                pendingExistingAccount = nil
+                runAccountSync {
+                    try await AccountDataSyncService.replaceLocalWithAccount(
+                        userID: user.uid,
+                        context: context
+                    )
+                }
+            }
+            Button("Keep using this device as a guest") {
+                pendingExistingAccount = nil
+                try? authService.signOut()
+            }
+        } message: {
+            Text("FeelGood found guest sessions or routines here. Choose whether to add them to this account. Nothing will be merged without your choice.")
+        }
+        .alert(
+            "Progress couldn't sync",
+            isPresented: Binding(
+                get: { accountSyncError != nil },
+                set: { if !$0 { accountSyncError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(accountSyncError ?? "Your progress is still safe on this device.")
+        }
         .onOpenURL { url in
             _ = GIDSignIn.sharedInstance.handle(url)
+        }
+    }
+
+    @MainActor
+    private func handleAccountArrival(user: AuthUser, userID: String, content: ContentStore) async {
+        guard !isSyncingAccount else { return }
+        let owner = AccountDataSyncService.localOwnerUID()
+
+        if owner == userID || authService.lastAuthenticationCreatedAccount == nil {
+            runAccountSync {
+                try await AccountDataSyncService.mergeLocalProgress(
+                    into: userID,
+                    context: context,
+                    catalog: content.sessions
+                )
+            }
+        } else if authService.lastAuthenticationCreatedAccount == true {
+            runAccountSync {
+                try await AccountDataSyncService.mergeLocalProgress(
+                    into: userID,
+                    context: context,
+                    catalog: content.sessions
+                )
+            }
+        } else if AccountDataSyncService.hasGuestProgress(in: context) {
+            pendingExistingAccount = user
+        } else {
+            runAccountSync {
+                try await AccountDataSyncService.replaceLocalWithAccount(
+                    userID: userID,
+                    context: context
+                )
+            }
+        }
+    }
+
+    @MainActor
+    private func runAccountSync(_ operation: @escaping @MainActor () async throws -> Void) {
+        guard !isSyncingAccount else { return }
+        isSyncingAccount = true
+        Task { @MainActor in
+            do {
+                try await operation()
+                accountReloadID = UUID()
+            } catch {
+                accountSyncError = error.localizedDescription
+            }
+            isSyncingAccount = false
         }
     }
 }
@@ -189,6 +311,14 @@ private struct TodayScreen: View {
             Tab("You", systemImage: "person", value: Destination.you) {
                 YouView(model: model, profile: profile) { answers in
                     profile.apply(answers, now: Date())
+                    if let userID = AuthService.shared.currentUser?.uid {
+                        Task {
+                            try? await AccountDataSyncService.syncProfile(
+                                userID: userID,
+                                profile: profile
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -393,6 +393,9 @@ final class TodayModel {
                     endedAt: now,
                     durationMin: session.durationMin,
                     activity: session.activity.rawValue,
+                    qualities: session.qualities.map(\.rawValue),
+                    intensity: session.intensity,
+                    course: session.course.rawValue,
                     place: completedPlace?.rawValue,
                     feel: feel?.rawValue
                 )
