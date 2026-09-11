@@ -239,9 +239,26 @@ public final class FirestoreService: Sendable {
 
     // MARK: - Account Deletion
 
-    public func deleteUserData(userId: String) async throws {
+    public func deleteUserData(userId: String) async {
         stopListening()
         guard let db else { return }
-        try await db.collection("users").document(userId).delete()
+
+        let userRef = db.collection("users").document(userId)
+
+        // Best-effort cleanup of subcollections
+        if let workouts = try? await userRef.collection("custom_workouts").getDocuments() {
+            for doc in workouts.documents {
+                try? await doc.reference.delete()
+            }
+        }
+
+        if let completions = try? await userRef.collection("completions").getDocuments() {
+            for doc in completions.documents {
+                try? await doc.reference.delete()
+            }
+        }
+
+        try? await userRef.delete()
     }
 }
+
