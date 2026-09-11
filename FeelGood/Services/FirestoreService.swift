@@ -245,20 +245,36 @@ public final class FirestoreService: Sendable {
 
         let userRef = db.collection("users").document(userId)
 
-        // Best-effort cleanup of subcollections
-        if let workouts = try? await userRef.collection("custom_workouts").getDocuments() {
-            for doc in workouts.documents {
-                try? await doc.reference.delete()
-            }
-        }
-
-        if let completions = try? await userRef.collection("completions").getDocuments() {
-            for doc in completions.documents {
-                try? await doc.reference.delete()
-            }
-        }
+        // Delete subcollections fully before the root document. `limit(to:)` alone
+        // would silently leave documents behind for any account with more than
+        // one page of history — those become permanently orphaned once the
+        // owning auth user is gone, since Firestore security rules key deletion
+        // rights off `request.auth.uid == userId`. Loop each subcollection to
+        // exhaustion instead of taking a single capped page.
+        async let workoutsCleared: Void = deleteAllDocuments(in: userRef.collection("custom_workouts"))
+        async let completionsCleared: Void = deleteAllDocuments(in: userRef.collection("completions"))
+        _ = await (workoutsCleared, completionsCleared)
 
         try? await userRef.delete()
+    }
+
+    private func deleteAllDocuments(in collection: CollectionReference, pageSize: Int = 300) async {
+        while true {
+            guard let snapshot = try? await collection.limit(to: pageSize).getDocuments(),
+                  !snapshot.documents.isEmpty else {
+                return
+            }
+
+            let batch = collection.firestore.batch()
+            for doc in snapshot.documents {
+                batch.deleteDocument(doc.reference)
+            }
+            try? await batch.commit()
+
+            if snapshot.documents.count < pageSize {
+                return
+            }
+        }
     }
 }
 

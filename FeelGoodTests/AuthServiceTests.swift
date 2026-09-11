@@ -7,6 +7,7 @@
 
 import Foundation
 import Testing
+import UIKit
 @testable import FeelGood
 
 @Suite("Auth Service Tests")
@@ -139,5 +140,60 @@ struct AuthServiceTests {
         #expect(FirstRunFlow.hasSeenIntroKey == "hasSeenProductIntro")
         #expect(FirstRunFlow.hasSeenWelcomeSignUpKey == "hasSeenWelcomeSignUp")
         #expect(FirstRunFlow.hasSeenOnboardingPaywallKey == "hasSeenOnboardingPaywall")
+    }
+
+    @Test("mapFirebaseError maps code 17014 to requiresRecentLogin")
+    func mapFirebaseErrorRequiresRecentLogin() {
+        let nsError = NSError(domain: "FIRAuthErrorDomain", code: 17014, userInfo: [NSLocalizedDescriptionKey: "Recent login required"])
+        let mapped = AuthError.mapFirebaseError(nsError)
+        #expect(mapped == .requiresRecentLogin)
+
+        let genericAuthError = NSError(domain: "FirebaseAuth", code: 17014, userInfo: nil)
+        let mappedGeneric = AuthError.mapFirebaseError(genericAuthError)
+        #expect(mappedGeneric == .requiresRecentLogin)
+    }
+
+    @Test("withTimeout completes when operation finishes before deadline")
+    func withTimeoutSuccess() async throws {
+        let result = try await AuthService.withTimeout(seconds: 1.0) {
+            return "ok"
+        }
+        #expect(result == "ok")
+    }
+
+    @Test("withTimeout throws when uncooperative operation exceeds deadline")
+    func withTimeoutFiresPromptly() async {
+        let start = Date()
+        var didThrow = false
+        do {
+            _ = try await AuthService.withTimeout(seconds: 0.1) {
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                return "never"
+            }
+        } catch {
+            didThrow = true
+        }
+        let elapsed = Date().timeIntervalSince(start)
+        #expect(didThrow)
+        #expect(elapsed < 0.8)
+    }
+
+    @Test("requiresReauthentication treats a missing sign-in date as stale")
+    func requiresReauthenticationNilDate() {
+        #expect(AuthService.requiresReauthentication(lastSignInDate: nil))
+    }
+
+    @Test("requiresReauthentication is false just after signing in")
+    func requiresReauthenticationFresh() {
+        let now = Date()
+        let lastSignIn = now.addingTimeInterval(-30)
+        #expect(!AuthService.requiresReauthentication(lastSignInDate: lastSignIn, now: now))
+    }
+
+    @Test("requiresReauthentication is true once the session is stale")
+    func requiresReauthenticationStale() {
+        let now = Date()
+        let lastSignIn = now.addingTimeInterval(-600)
+        #expect(AuthService.requiresReauthentication(lastSignInDate: lastSignIn, now: now))
     }
 }
