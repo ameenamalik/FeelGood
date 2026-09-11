@@ -281,10 +281,9 @@ struct ProfileHeaderView: View {
 
     @MainActor
     private func clearAllUserData() {
-        profile.answers = ProfileAnswers()
+        profile.apply(ProfileAnswers(), now: Date())
         profile.nickname = ""
         profile.signOutOfApple()
-        profile.updatedAt = Date()
 
         try? modelContext.delete(model: SessionRecord.self)
         try? modelContext.delete(model: AffinityRecord.self)
