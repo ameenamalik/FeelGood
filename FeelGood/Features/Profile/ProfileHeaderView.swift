@@ -145,6 +145,9 @@ struct ProfileHeaderView: View {
             )
         ) {
             Button("OK", role: .cancel) {}
+            Button("Reset Local Data Instead", role: .destructive) {
+                handleResetLocalData()
+            }
         } message: {
             Text(errorMessage ?? "")
         }
@@ -302,33 +305,39 @@ struct ProfileHeaderView: View {
                 clearAllUserData()
                 isDeletingAccount = false
                 isShowingDeletionSuccess = true
-            } catch let error as AuthError where error == .requiresRecentLogin {
+            } catch let error as AuthError {
                 isDeletingAccount = false
-                handleReauthenticationRequired()
+                if error == .requiresRecentLogin {
+                    handleReauthenticationRequired()
+                } else {
+                    errorTitle = "Couldn't delete account"
+                    errorMessage = error.localizedDescription
+                }
             } catch {
                 isDeletingAccount = false
-                errorTitle = "Couldn't delete account"
-                errorMessage = error.localizedDescription
+                let nsError = error as NSError
+                if nsError.code == 17014 {
+                    handleReauthenticationRequired()
+                } else {
+                    errorTitle = "Couldn't delete account"
+                    errorMessage = error.localizedDescription
+                }
             }
         }
     }
 
     private func handleReauthenticationRequired() {
-        guard let provider = authService.currentUser?.providerID else {
-            errorTitle = "Authentication Required"
-            errorMessage = "For security, please sign in again before deleting your account."
-            return
-        }
+        let provider = authService.currentUser?.providerID ?? ""
+        let email = authService.currentUser?.email
 
-        switch provider {
-        case "apple.com":
+        if provider == "apple.com" {
             isShowingAppleReauth = true
-        case "google.com":
+        } else if provider == "google.com" {
             isShowingGoogleReauthPrompt = true
-        case "password":
+        } else if provider == "password" || (email != nil && !provider.contains("apple") && !provider.contains("google")) {
             passwordForReauth = ""
             isShowingPasswordReauthPrompt = true
-        default:
+        } else {
             isShowingAuthSheet = true
         }
     }

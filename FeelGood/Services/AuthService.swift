@@ -98,7 +98,15 @@ nonisolated public enum AuthError: LocalizedError, Sendable, Equatable {
 
     static func mapFirebaseError(_ error: Error) -> AuthError {
         let nsError = error as NSError
-        guard nsError.domain == AuthErrorDomain else {
+
+        // Fast-path check for requiresRecentLogin across domain variations
+        if nsError.code == AuthErrorCode.requiresRecentLogin.rawValue
+            || nsError.code == 17014
+            || (nsError.domain.contains("Auth") && nsError.code == 17014) {
+            return .requiresRecentLogin
+        }
+
+        guard nsError.domain == AuthErrorDomain || nsError.domain == "FIRAuthErrorDomain" else {
             return .unknown(error.localizedDescription)
         }
 
@@ -394,15 +402,29 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             return
         }
 
+        // Firebase requires a "recent" sign-in to delete an account. Checking this
+        // up front — before touching any data — matters because Firestore data
+        // must be deleted *before* the auth user (the security rules key off
+        // request.auth.uid, which stops resolving the moment the account is
+        // gone). If we deleted data first and then discovered reauth was needed,
+        // a user who cancels or fails the reauth prompt is left with a live
+        // account and permanently wiped cloud data. Bailing out here instead
+        // means a stale session never touches data at all — it goes straight to
+        // the reauth flow, which deletes data only once re-authentication has
+        // actually refreshed the session.
+        guard !Self.requiresReauthentication(lastSignInDate: user.metadata.lastSignInDate) else {
+            throw AuthError.requiresRecentLogin
+        }
+
         let uid = user.uid
 
-        // Best-effort Firestore user data cleanup with a 3-second timeout so it never hangs
-        await Self.withTimeout(seconds: 3.0, defaultValue: ()) {
+        // Best-effort Firestore user data cleanup with a non-blocking timeout
+        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
             await FirestoreService.shared.deleteUserData(userId: uid)
         }
 
         do {
-            try await Self.withTimeout(seconds: 10.0) {
+            try await Self.withTimeout(seconds: 8.0) {
                 try await user.delete()
             }
             GIDSignIn.sharedInstance.signOut()
@@ -416,6 +438,17 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         } catch {
             throw AuthError.mapFirebaseError(error)
         }
+    }
+
+    /// Conservative local guess at whether Firebase will demand a fresh sign-in
+    /// before allowing a sensitive operation like account deletion. Firebase
+    /// doesn't expose its exact server-side threshold, so this stays well under
+    /// the ~5 minute window reported in practice — a false positive just means
+    /// one extra reauth prompt, while a false negative is the data-loss race
+    /// described in `deleteAccount()`.
+    static func requiresReauthentication(lastSignInDate: Date?, now: Date = Date()) -> Bool {
+        guard let lastSignInDate else { return true }
+        return now.timeIntervalSince(lastSignInDate) > 240
     }
 
     public func reauthenticateAndDeleteWithApple(authorization: ASAuthorization, rawNonce: String) async throws {
@@ -462,12 +495,12 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         }
 
         let uid = user.uid
-        await Self.withTimeout(seconds: 3.0, defaultValue: ()) {
+        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
             await FirestoreService.shared.deleteUserData(userId: uid)
         }
 
         do {
-            try await Self.withTimeout(seconds: 10.0) {
+            try await Self.withTimeout(seconds: 8.0) {
                 try await user.delete()
             }
             GIDSignIn.sharedInstance.signOut()
@@ -533,12 +566,12 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         }
 
         let uid = user.uid
-        await Self.withTimeout(seconds: 3.0, defaultValue: ()) {
+        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
             await FirestoreService.shared.deleteUserData(userId: uid)
         }
 
         do {
-            try await Self.withTimeout(seconds: 10.0) {
+            try await Self.withTimeout(seconds: 8.0) {
                 try await user.delete()
             }
             GIDSignIn.sharedInstance.signOut()
@@ -585,12 +618,12 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         }
 
         let uid = user.uid
-        await Self.withTimeout(seconds: 3.0, defaultValue: ()) {
+        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
             await FirestoreService.shared.deleteUserData(userId: uid)
         }
 
         do {
-            try await Self.withTimeout(seconds: 10.0) {
+            try await Self.withTimeout(seconds: 8.0) {
                 try await user.delete()
             }
             GIDSignIn.sharedInstance.signOut()
@@ -612,37 +645,71 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         var errorDescription: String? { "Operation timed out." }
     }
 
-    private static func withTimeout<T: Sendable>(
-        seconds: TimeInterval,
-        operation: @escaping @Sendable () async throws -> T
-    ) async throws -> T {
-        try await withThrowingTaskGroup(of: T.self) { group in
-            group.addTask {
-                try await operation()
-            }
-            group.addTask {
-                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                throw AuthTimeoutError()
-            }
-            guard let result = try await group.next() else {
-                throw AuthTimeoutError()
-            }
-            group.cancelAll()
-            return result
+    private final class TimeoutLock: @unchecked Sendable {
+        private let lock = NSLock()
+        private var hasCompleted = false
+
+        func completeOnce(_ block: () -> Void) {
+            lock.lock()
+            defer { lock.unlock() }
+            guard !hasCompleted else { return }
+            hasCompleted = true
+            block()
         }
     }
 
-    private static func withTimeout<T: Sendable>(
+    static func withTimeout<T: Sendable>(
+        seconds: TimeInterval,
+        operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            let state = TimeoutLock()
+
+            let workTask = Task {
+                do {
+                    let result = try await operation()
+                    state.completeOnce {
+                        continuation.resume(returning: result)
+                    }
+                } catch {
+                    state.completeOnce {
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                state.completeOnce {
+                    workTask.cancel()
+                    continuation.resume(throwing: AuthTimeoutError())
+                }
+            }
+        }
+    }
+
+    static func withTimeout<T: Sendable>(
         seconds: TimeInterval,
         defaultValue: T,
         operation: @escaping @Sendable () async -> T
     ) async -> T {
-        do {
-            return try await withTimeout(seconds: seconds) {
-                await operation()
+        await withCheckedContinuation { continuation in
+            let state = TimeoutLock()
+
+            let workTask = Task {
+                let result = await operation()
+                state.completeOnce {
+                    continuation.resume(returning: result)
+                }
             }
-        } catch {
-            return defaultValue
+
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                state.completeOnce {
+                    workTask.cancel()
+                    continuation.resume(returning: defaultValue)
+                }
+            }
         }
     }
 
