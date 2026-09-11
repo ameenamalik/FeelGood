@@ -22,13 +22,15 @@ struct TodayModelTests {
         log: InMemorySessionLog = InMemorySessionLog(),
         progressStore: InMemorySessionProgressStore = InMemorySessionProgressStore(),
         profile: PlanProfile = Fixture.profile(),
-        sessions: [Session] = Fixture.catalog
+        sessions: [Session] = Fixture.catalog,
+        isProUser: @escaping () -> Bool = { false }
     ) -> TodayModel {
         TodayModel(
             store: store(sessions),
             profile: profile,
             log: log,
             progressStore: progressStore,
+            isProUserProvider: isProUser,
             checkIn: PlanCheckIn(energy: .steady, time: .some),
             now: Fixture.now,
             calendar: Fixture.utc
@@ -126,7 +128,6 @@ struct TodayModelTests {
 
     @Test("The free daily swap does not reset when Today is recreated")
     func freeSwapSurvivesRecreation() throws {
-        PurchasesManager.shared.debugForceProUnlocked = false
         let log = InMemorySessionLog()
         let first = model(log: log)
         let item = try #require(first.menu.items.first { first.canSwap($0, now: Fixture.now) })
@@ -316,7 +317,13 @@ struct TodayModelTests {
     @Test("Shuffling cycles back to earlier options when unseen alternatives are exhausted")
     func shufflingCyclesBackWhenOptionsAreExhausted() throws {
         let log = InMemorySessionLog()
-        let model = model(log: log)
+        // This test is about the cycle-reset behavior itself, so it needs
+        // unlimited swaps — not the free tier's one-swap-per-day cap. Pin it
+        // explicitly rather than relying on the ambient PurchasesManager
+        // singleton: that's exactly what silently broke this test into an
+        // infinite loop once a sibling test's global mutation left the
+        // shared entitlement state at "not pro".
+        let model = model(log: log, isProUser: { true })
         let main = try #require(model.menu.main)
         let firstID = main.session.id
 
@@ -326,9 +333,15 @@ struct TodayModelTests {
         let secondMain = try #require(model.menu.main)
         #expect(secondMain.session.id != firstID)
 
-        // Keep swapping until we reach the end of unseen options
+        // Keep swapping until we reach the end of unseen options. Bounded so
+        // a future regression in cycle-reset fails fast instead of hanging.
+        let catalogSize = Fixture.catalog.count
+        var swaps = 0
         while !model.isCycleReset(model.menu.main!, now: Fixture.now) {
             model.swap(model.menu.main!, now: Fixture.now)
+            swaps += 1
+            #expect(swaps <= catalogSize, "isCycleReset never became true — likely an infinite loop regression")
+            if swaps > catalogSize { break }
         }
 
         let atEnd = try #require(model.menu.main)
