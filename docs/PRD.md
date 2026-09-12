@@ -876,6 +876,7 @@ Called out in the submission because vision is rewarded and costs zero build tim
 3. **Cycle-aware planning.** Menus that shift across the menstrual cycle — high-signal for this exact audience, high-sensitivity, deserves proper research.
 4. **A creator content pipeline** so Simone publishes sessions herself, and the model extends to other trusted creators.
 5. Android, Apple Watch, widgets, and gentle non-competitive community.
+6. **Chat as a full-menu companion, not a single-card recommender.** Today the tab surfaces one `recommendationCard` at a time — whatever the last turn offered. Extend it so someone can see the whole day's menu inline and ask questions about any item in it, not just the one currently active. This is the interaction-model half of the gap §16's "still open" item 10 already names — the conversational check-in needing its own PRD section — and should be specced together with it rather than shipped as a quiet UI change.
 
 ---
 

@@ -4,6 +4,65 @@ This document tracks upcoming engineering milestones and architectural enhanceme
 
 ---
 
+## 🚀 Next Up — v2
+
+- [x] **Fix and relocate "I did something else."** Was a washed-out/grey `FGQuietButton` buried at the bottom of Today. Now merged into the "+" next to "Your menu" (`routineButtonLabel` in `TodayView.swift`) via a `confirmationDialog` offering "I did something else" or "Add your own routine" — one visible entry point instead of two. *Implemented; pending a clean build to verify (blocked by low disk space on the dev machine).*
+- [ ] **Add profile picture support.** `YouView` currently only shows a placeholder person icon in a solid-color circle. **Owned by Yusra.**
+- [ ] **Let Chat show the full menu, not one routine at a time.** `ExploreView` currently surfaces a single `recommendationCard` per turn. Extend it so someone can see today's whole menu and ask questions about any item in it, rather than being limited to whatever the last recommendation was.
+- [ ] **Tighten the paywall copy and value prop.** `FeelGoodPaywallView` wraps RevenueCat's `PaywallView`, so this is a dashboard content edit, not a code change — cut wordiness and sharpen why Pro is worth it.
+- [ ] **Admin — add Ameena's card to App Store Connect** to cover the upcoming Apple Developer Program renewal fee. (Account/billing task, not engineering — flagging here so it doesn't get lost.)
+
+### Microanimations
+
+`DesignSystem/Motion.swift` already has a reduce-motion-aware token set
+(`FGMotion.settle`, `.swap`, `.gentle`, `.settleWarm`) and a few screens
+(Today's menu entrance/stagger, the check-in aura pulse, `PlayerView`'s
+step-start/final-stretch flashes) already use it well. Extend that same
+restrained, purposeful language rather than introducing a new one:
+
+- [ ] **Tab switches (Today/Chat/You)** are an instant cut today. A soft
+  cross-fade or gentle slide would match the rest of the app's settle-in
+  feel.
+- [ ] **Marking a menu item "Done"** currently just swaps in the strikethrough
+  and `DoneMark` — no transition. Give it a small settle/checkmark moment
+  consistent with `FGMotion.settle`.
+- [ ] **Little Wins unlocking** — the grid (`LittleWinsView.swift`) has no
+  distinct "just unlocked" moment beyond the existing celebration sheet.
+  A brief in-place shimmer/pop on the card itself would sell the win before
+  the sheet even opens.
+- [ ] **Chat messages and the recommendation card** appear with no motion.
+  A gentle slide/fade-in on new messages (the typing indicator already
+  animates) would match the check-in and menu treatment.
+- [ ] **Onboarding progress bar** (`OnboardingView.swift`) snaps between
+  states instead of animating the fill — cheap, high-visibility polish.
+
+### Polish — make it perfect to share
+
+Aimed at both App Store screenshots and Shipaton build-in-public posts —
+things that make the app look finished in a still frame or a 15-second clip,
+not just functionally correct:
+
+- [ ] **Audit dark mode on every screen**, not just the ones built with
+  `FGColor` tokens. The case-study audit already flagged `ExploreView` as
+  hardcoding its own light-only hex palette instead of `FGColor`/
+  `Course.accentGradient` — that's the first place dark mode will look wrong
+  in a screenshot.
+- [ ] **Confirm every debug-only affordance is gone from Release** — the
+  long-press-for-debug-menu hooks in `TodayView`/`YouView` are already
+  commented out/`#if DEBUG`-gated; double check nothing similar slipped into
+  newer screens (Chat, MenuBuilder).
+- [ ] **A shareable moment**: a native Share Sheet for a completed session or
+  a Little Win card as a clean, on-brand image. Gives people something to
+  actually post, and doubles as free ASO/marketing content.
+- [ ] **Finish `docs/BUILD_IN_PUBLIC_LOG.md`** — still empty with 3 drafts
+  queued unposted (already flagged above under Admin-adjacent work). Screenshots/clips of the above polish are natural post material.
+- [ ] **Sanity-pass empty and first-run states** for "looks intentional, not
+  half-built": `LookBackView`'s early state is already designed for this —
+  confirm Chat's empty state and a first-time Little Wins grid read the same
+  way.
+
+---
+
 ## 🎯 Next Priority Milestone: Adaptive Contextual Bandit Recommendation Loop
 
 ### Background & Objective
