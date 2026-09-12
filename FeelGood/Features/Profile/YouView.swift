@@ -7,6 +7,7 @@
 //  and the broader library wait behind secondary controls.
 //
 
+import SwiftData
 import SwiftUI
 
 struct YouView: View {
@@ -19,6 +20,9 @@ struct YouView: View {
     @State private var isShowingSubscription = false
     @State private var isShowingAccount = false
     @State private var isShowingHiddenExercises = false
+    @State private var isChoosingAvatar = false
+    @Environment(\.modelContext) private var modelContext
+    @Environment(AuthService.self) private var authService
     #if DEBUG
     @State private var isDebugging = false
     #endif
@@ -65,6 +69,18 @@ struct YouView: View {
                 }
             }
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $isChoosingAvatar) {
+            ProfileAvatarPickerView(
+                selection: Binding(
+                    get: { profile.avatar },
+                    set: { saveAvatar($0) }
+                ),
+                background: Binding(
+                    get: { profile.avatarBackground },
+                    set: { saveAvatarBackground($0) }
+                )
+            )
         }
         #if DEBUG
         .sheet(isPresented: $isDebugging) {
@@ -179,21 +195,55 @@ struct YouView: View {
 
     private var profileHeroContent: some View {
         HStack(spacing: FGSpace.s) {
-            Circle()
-                .fill(FGColor.sage)
-                .frame(width: 40, height: 40)
-                .overlay {
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(FGColor.inkOnAccent.opacity(0.72))
-                        .accessibilityHidden(true)
-                }
+            Button {
+                isChoosingAvatar = true
+            } label: {
+                ProfileAvatarView(
+                    avatar: profile.avatar,
+                    background: profile.avatarBackground,
+                    size: 48
+                )
+                    .overlay {
+                        Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1)
+                    }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Profile mascot, \(profile.avatar.displayName)")
+            .accessibilityHint("Choose a different mascot")
 
             Text(welcomeLine)
                 .font(FGFont.body.weight(.semibold))
                 .foregroundStyle(FGColor.ink)
         }
-        .accessibilityElement(children: .combine)
+    }
+
+    private func saveAvatar(_ avatar: ProfileAvatar) {
+        guard profile.avatar != avatar else { return }
+        profile.avatar = avatar
+        try? modelContext.save()
+        Analytics.capture("profile_avatar_changed", properties: ["avatar": avatar.rawValue])
+
+        if let userID = authService.currentUser?.uid {
+            Task {
+                try? await AccountDataSyncService.syncProfile(userID: userID, profile: profile)
+            }
+        }
+    }
+
+    private func saveAvatarBackground(_ background: ProfileAvatarBackground) {
+        guard profile.avatarBackground != background else { return }
+        profile.avatarBackground = background
+        try? modelContext.save()
+        Analytics.capture(
+            "profile_avatar_background_changed",
+            properties: ["background": background.rawValue]
+        )
+
+        if let userID = authService.currentUser?.uid {
+            Task {
+                try? await AccountDataSyncService.syncProfile(userID: userID, profile: profile)
+            }
+        }
     }
 
     private var welcomeLine: String {

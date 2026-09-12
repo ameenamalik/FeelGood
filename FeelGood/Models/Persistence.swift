@@ -49,6 +49,12 @@ final class UserProfile {
     /// cosmetic, never read by the engine. Defaults to what Sign in with
     /// Apple offers on first grant, but always further editable.
     var nickname: String = ""
+    /// A stable identifier for one of the bundled fruit mascots. The literal
+    /// default keeps stores created before avatars migration-safe.
+    var avatarRaw: String = "apple"
+    /// The customizable color behind the mascot. `automatic` uses the
+    /// mascot's art-directed default and keeps older stores migration-safe.
+    var avatarBackgroundRaw: String = "automatic"
     /// Set once Sign in with Apple succeeds. Also what's handed to
     /// `PurchasesManager.logIn(appUserID:)` so RevenueCat's anonymous id
     /// swaps for a stable one tied to this Apple ID.
@@ -154,6 +160,16 @@ final class UserProfile {
     /// have typed themselves, not a fact about the Apple account.
     func signOutOfApple() {
         appleUserID = nil
+    }
+
+    var avatar: ProfileAvatar {
+        get { ProfileAvatar(rawValue: avatarRaw) ?? .defaultAvatar }
+        set { avatarRaw = newValue.rawValue }
+    }
+
+    var avatarBackground: ProfileAvatarBackground {
+        get { ProfileAvatarBackground(rawValue: avatarBackgroundRaw) ?? .automatic }
+        set { avatarBackgroundRaw = newValue.rawValue }
     }
 }
 

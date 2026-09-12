@@ -49,6 +49,27 @@ struct PersistenceTests {
         #expect(profile.planProfile.intents == [.strengthen, .calm])
     }
 
+    @Test("A profile preserves its mascot appearance and safely falls back from unknown values")
+    func profileStoresAvatar() throws {
+        let context = try context()
+        let profile = UserProfile(answers: ProfileAnswers(), now: Fixture.now)
+        context.insert(profile)
+
+        profile.avatar = .blueberry
+        #expect(profile.avatar == .blueberry)
+        #expect(profile.avatarRaw == "blueberry")
+
+        profile.avatarBackground = .sage
+        #expect(profile.avatarBackground == .sage)
+        #expect(profile.avatarBackgroundRaw == "sage")
+
+        profile.avatarRaw = "future-fruit"
+        #expect(profile.avatar == .defaultAvatar)
+
+        profile.avatarBackgroundRaw = "future-color"
+        #expect(profile.avatarBackground == .automatic)
+    }
+
     @Test("A profile preserves optional sport details")
     func profileStoresSports() throws {
         let context = try context()
