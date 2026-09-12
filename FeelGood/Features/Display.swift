@@ -182,6 +182,19 @@ nonisolated extension Session {
         pills.append(impactLabel)
         return pills
     }
+
+    /// Visual context pills excluding duration (used on menu cards where duration is already
+    /// prominently displayed in the course kicker, preventing duplicate "5 min" pills).
+    var chipsWithoutDuration: [String] {
+        if isOwn {
+            return []
+        }
+        var pills: [String] = []
+        pills.append(contentsOf: equipment.compactMap(\.label))
+        pills.append(targetLabel)
+        pills.append(impactLabel)
+        return pills
+    }
 }
 
 // MARK: The check-in
@@ -404,5 +417,10 @@ nonisolated extension PlanCheckIn {
     /// shoulder more often than anything else on the screen.
     var summaryLine: String {
         "\(energy.checkInLabel), \(time.summaryPhrase)"
+    }
+
+    /// Descriptive summary for the tuned-for-today banner on the Today screen.
+    var detailedSummaryPhrase: String {
+        "\(energy.checkInLabel) energy • \(time.summaryPhrase) target"
     }
 }

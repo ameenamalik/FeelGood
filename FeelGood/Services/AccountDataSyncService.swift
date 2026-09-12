@@ -223,7 +223,19 @@ enum AccountDataSyncService {
         FirestoreService.completionID(sessionID: sessionID, startedAt: startedAt)
     }
 
+    /// `pregnancy`, `postpartum`, and `pelvicFloor` are reproductive health
+    /// data (see CLAUDE.md and `CopyPayload.swift`). `CopyPayload` and the
+    /// PostHog mask already keep them off the LLM-copy and session-replay
+    /// channels; Firestore account sync is a third channel that needs the
+    /// same boundary, since it's what a linked identity and the privacy
+    /// manifest actually see.
+    private static let deviceOnlyWorkArounds: Set<WorkAround> = [.pregnancy, .postpartum, .pelvicFloor]
+
     private static func preferenceData(from profile: UserProfile) -> [String: Any] {
+        let syncableWorkArounds = profile.answers.workArounds
+            .subtracting(deviceOnlyWorkArounds)
+            .map(\.rawValue)
+            .sorted()
         var data: [String: Any] = [
             "activities": profile.activitiesRaw,
             "sports": profile.sportsRaw,
@@ -234,7 +246,7 @@ enum AccountDataSyncService {
             "realisticMinutes": profile.realisticMinutes,
             "bestTimeOfDay": profile.bestTimeOfDayRaw,
             "intents": profile.intentsRaw,
-            "workArounds": profile.workAroundsRaw,
+            "workArounds": syncableWorkArounds,
             "hiddenSessionIDs": profile.hiddenSessionIDsRaw,
             "nickname": profile.nickname,
             "avatarID": profile.avatar.rawValue,
@@ -259,7 +271,11 @@ enum AccountDataSyncService {
             realisticMinutes: data["realisticMinutes"] as? Int ?? current.realisticMinutes,
             bestTimeOfDay: (data["bestTimeOfDay"] as? String).flatMap(TimeOfDay.init(rawValue:)) ?? current.bestTimeOfDay,
             intents: decodedSet(data["intents"], fallback: current.intents),
-            workArounds: decodedSet(data["workArounds"], fallback: current.workArounds),
+            // Subtracting here too, not just on upload, guards against a
+            // document written before this boundary existed still carrying
+            // one of the three values.
+            workArounds: decodedSet(data["workArounds"], fallback: current.workArounds)
+                .subtracting(deviceOnlyWorkArounds),
             hiddenSessionIDs: Set((data["hiddenSessionIDs"] as? [String]) ?? Array(current.hiddenSessionIDs))
         )
         profile.apply(answers, now: Date())

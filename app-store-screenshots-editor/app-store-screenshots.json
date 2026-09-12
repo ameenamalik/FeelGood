@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 2,
+  "appName": "FeelGood",
+  "themeId": "feelgood-terracotta",
+  "connectedCanvas": false,
+  "locales": [
+    "en"
+  ],
+  "locale": "en",
+  "device": "iphone",
+  "orientation": "portrait",
+  "appIcon": "/app-icon.png",
+  "slidesByDevice": {
+    "iphone": [
+      {
+        "id": "feelgood_1",
+        "layout": "hero",
+        "label": {
+          "en": ""
+        },
+        "headline": {
+          "en": "One question, answered:\nwhat should I do today?"
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/01.png",
+        "transforms": {
+          "device": {
+            "x": 153.18224783861672,
+            "y": 1112.7839999999999,
+            "width": 1013.6355043227666,
+            "height": 2064.96,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "feelgood_2",
+        "layout": "device-top",
+        "label": {
+          "en": ""
+        },
+        "headline": {
+          "en": "Every little win counts,\nlike \"First Move.\""
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/02.png",
+        "transforms": {
+          "caption": {
+            "x": 105.60001140514677,
+            "y": 2010.2000031909383,
+            "width": 1109,
+            "height": 657,
+            "rotation": 0,
+            "zIndex": 4
+          }
+        }
+      },
+      {
+        "id": "feelgood_3",
+        "layout": "hero",
+        "label": {
+          "en": ""
+        },
+        "headline": {
+          "en": "Routines built around\nyour day."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/03.png",
+        "transforms": {
+          "caption": {
+            "x": 105.59990101834222,
+            "y": 472.1200060031524,
+            "width": 1109,
+            "height": 589,
+            "rotation": 0,
+            "zIndex": 4
+          }
+        }
+      },
+      {
+        "id": "feelgood_4",
+        "layout": "device-top",
+        "label": {
+          "en": ""
+        },
+        "headline": {
+          "en": "Step-by-step routines.\nNo doomscrolling for a workout."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/04.png",
+        "transforms": {
+          "caption": {
+            "x": 105.59985166669392,
+            "y": 2036.2000054893333,
+            "width": 1109,
+            "height": 631,
+            "rotation": 0,
+            "zIndex": 4
+          }
+        }
+      },
+      {
+        "id": "feelgood_5",
+        "layout": "hero",
+        "label": {
+          "en": ""
+        },
+        "headline": {
+          "en": "However you fit it in,\nit still counts as showing up."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/05.png"
+      },
+      {
+        "id": "feelgood_6",
+        "layout": "device-top",
+        "label": {
+          "en": ""
+        },
+        "headline": {
+          "en": "A quiet look back\nat your last two weeks."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/06.png"
+      },
+      {
+        "id": "feelgood_8",
+        "layout": "hero",
+        "label": {
+          "en": ""
+        },
+        "headline": {
+          "en": "Type how you're feeling.\nIt turns that into a plan."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/08.png"
+      },
+      {
+        "id": "feelgood_9",
+        "layout": "device-top",
+        "label": {
+          "en": ""
+        },
+        "headline": {
+          "en": "Six little wins to collect,\none session at a time."
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/09.png"
+      }
+    ],
+    "android": [],
+    "ipad": [],
+    "android-7": [],
+    "android-10": [],
+    "feature-graphic": []
+  },
+  "crossScreenMockupsByDevice": {
+    "iphone": [],
+    "ipad": [],
+    "android": [],
+    "android-7": [],
+    "android-10": [],
+    "feature-graphic": []
+  }
+}

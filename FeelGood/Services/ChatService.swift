@@ -810,9 +810,9 @@ nonisolated enum LocalStatefulChatEngine {
                     recommendation = structuredRecommendation(for: s, reason: "Standing reset to dissipate restless energy before settling down.")
                 }
             } else if lower.contains("back") {
-                message = "Yes — releasing tight hip flexors and pelvis tension takes direct pulling pressure off your lumbar spine."
+                message = "This one focuses on loosening your hips and glutes — many people feel that ease tension through the lower back."
             } else if lower.contains("why") {
-                message = "This sequence unloads spinal tension and opens tight hips without straining your joints."
+                message = "This sequence moves gently through your hips and spine, staying well within a comfortable range."
             } else {
                 message = "Here is what this sequence focuses on for your movement today."
             }

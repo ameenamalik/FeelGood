@@ -35,9 +35,5 @@
 	<string>$(REVENUECAT_API_KEY)</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>FeelGood uses today’s event times to plan around your day and, only when you enable movement recognition, checks event names on this device for workouts or classes.</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 </dict>
 </plist>
