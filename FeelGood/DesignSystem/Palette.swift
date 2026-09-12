@@ -67,6 +67,8 @@ nonisolated enum FGColor {
     static let rose = Color(light: 0xE8B0B9, dark: 0xE8B0B9)
     /// 10.2:1 behind ink. The soft middle of the cloud gradient.
     static let sage = Color(light: 0xB3D39C, dark: 0xB3D39C)
+    /// 10.8:1 behind ink. Breeze sky / periwinkle for micro-breaks & appetizers.
+    static let sky = Color(light: 0x98C7F0, dark: 0x98C7F0)
 
     /// Type sitting *on* one of the accents above.
     ///
@@ -87,6 +89,8 @@ nonisolated enum FGColor {
     static let sageDeep = Color(light: 0x395922, dark: 0xCEE1C1)
     /// 10.2:1 on white, 9.6:1 on the page.
     static let roseDeep = Color(light: 0x772230, dark: 0xE9C4CA)
+    /// 7.8:1 on white, 7.3:1 on the page.
+    static let skyDeep = Color(light: 0x1B4B75, dark: 0xA8D4FF)
 
     /// The cloud mark. Used once per screen at most, never as a background.
     static let cloud = LinearGradient(
@@ -276,8 +280,8 @@ nonisolated extension Course {
     /// way a course is identified — its name is written next to it.
     var accent: Color {
         switch self {
-        case .main: FGColor.clay
-        case .appetizer: FGColor.gold
+        case .main: FGColor.gold
+        case .appetizer: FGColor.clay
         case .side: FGColor.sage
         case .dessert: FGColor.rose
         case .special: FGColor.ink
@@ -288,10 +292,10 @@ nonisolated extension Course {
     /// `accent` so the two cannot drift apart unnoticed.
     var accentHex: UInt32 {
         switch self {
-        case .main: 0xEE8E62
-        case .appetizer: 0xF5BE58
-        case .side: 0x94BA8E
-        case .dessert: 0xD67CA2
+        case .main: 0xF3C89B
+        case .appetizer: 0xF5B4AB
+        case .side: 0xACC5AA
+        case .dessert: 0xE6B2BE
         case .special: 0x241C15
         }
     }
@@ -303,35 +307,32 @@ nonisolated extension Course {
         self == .special ? FGColor.bg : FGColor.inkOnAccent
     }
 
-    /// `accent`, deepened toward its own hue rather than toward `-Deep` —
-    /// `-Deep` is calibrated to carry *text*, dark enough that `inkOnAccent`
-    /// on top of it would fail contrast. This stays light enough that ink
-    /// stays readable across the whole gradient, verified at its darkest
-    /// point: 6.4:1 (clay), 8.2:1 (gold/appetizer), 5.6:1 (rose/dessert),
-    /// 7.7:1 (sage/side).
+    /// The authentic FeelGood warm organic gradients from Chat & CheckIn aura tiles:
+    /// Appetizer (peach coral), Main (warm apricot cream), Side (botanical sage),
+    /// Dessert (delicate rose blush).
     var accentGradient: LinearGradient {
         switch self {
         case .appetizer:
             return LinearGradient(
-                colors: [Color(light: 0xFDE4A0, dark: 0x382810), Color(light: 0xF5BE58, dark: 0x4A3514)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .side:
-            return LinearGradient(
-                colors: [Color(light: 0xD8E8D2, dark: 0x192B18), Color(light: 0x94BA8E, dark: 0x253B23)],
+                colors: [Color(light: 0xFEE4D3, dark: 0x3D261C), Color(light: 0xF5B4AB, dark: 0x4A2222)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case .main:
             return LinearGradient(
-                colors: [Color(light: 0xFCD0BC, dark: 0x381A11), Color(light: 0xEE8E62, dark: 0x4B2115)],
+                colors: [Color(light: 0xFDF1E2, dark: 0x3A2616), Color(light: 0xF3C89B, dark: 0x4A2F1B)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .side:
+            return LinearGradient(
+                colors: [Color(light: 0xE8EEE4, dark: 0x202B1D), Color(light: 0xACC5AA, dark: 0x2E422C)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         case .dessert:
             return LinearGradient(
-                colors: [Color(light: 0xF4CEE0, dark: 0x371728), Color(light: 0xD67CA2, dark: 0x491E36)],
+                colors: [Color(light: 0xFCEEF3, dark: 0x381C26), Color(light: 0xE6B2BE, dark: 0x482330)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -345,29 +346,20 @@ nonisolated extension Course {
     }
 
     /// The course tag as a soft pill rather than a saturated capsule.
-    ///
-    /// `accent` is a full-strength fill that needs `inkOnAccent` on top and
-    /// shouts on a white card next to three siblings. These are the same hues
-    /// held right back, carrying the -Deep variant as text — quiet enough that
-    /// four of them down a menu read as labels rather than as stickers.
-    ///
-    /// Unlike `accent`, these flip: the tint has to stay behind the -Deep
-    /// colour, and that colour lightens at night. Every fill/text pair below
-    /// clears 6:1 or better.
     var tagFill: Color {
         switch self {
-        case .appetizer: Color(light: 0xFDECBF, dark: 0x332510)
-        case .main: Color(light: 0xFCE0D2, dark: 0x381E15)
-        case .side: Color(light: 0xE2EDE0, dark: 0x1E2E1D)
-        case .dessert: Color(light: 0xF7DFEB, dark: 0x351B29)
+        case .appetizer: Color(light: 0xFDF0E7, dark: 0x382018)
+        case .main: Color(light: 0xFAF1DA, dark: 0x332812)
+        case .side: Color(light: 0xEDF3EB, dark: 0x1E2B1C)
+        case .dessert: Color(light: 0xFAECF1, dark: 0x331A24)
         case .special: FGColor.line
         }
     }
 
     var tagText: Color {
         switch self {
-        case .appetizer: FGColor.goldDeep
-        case .main: FGColor.clayDeep
+        case .appetizer: FGColor.clayDeep
+        case .main: FGColor.goldDeep
         case .side: FGColor.sageDeep
         case .dessert: FGColor.roseDeep
         case .special: FGColor.ink

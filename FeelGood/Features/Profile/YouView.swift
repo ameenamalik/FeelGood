@@ -16,7 +16,6 @@ struct YouView: View {
     let onProfileSaved: (ProfileAnswers) -> Void
 
     @State private var isEditingProfile = false
-    @State private var isBrowsing = false
     @State private var isShowingSubscription = false
     @State private var isShowingAccount = false
     @State private var isShowingHiddenExercises = false
@@ -31,9 +30,6 @@ struct YouView: View {
         NavigationStack {
             page
                 .toolbar(.hidden, for: .navigationBar)
-        }
-        .sheet(isPresented: $isBrowsing) {
-            LibraryView(model: model)
         }
         .sheet(isPresented: $isEditingProfile) {
             ProfileEditView(
@@ -139,12 +135,6 @@ struct YouView: View {
                     fill: FGAura.blush.core
                 ) {
                     isEditingProfile = true
-                }
-                preferencePill(
-                    "Library",
-                    fill: FGAura.butter.core
-                ) {
-                    isBrowsing = true
                 }
                 preferencePill(
                     "Plan & account",

@@ -122,13 +122,15 @@ struct TodayView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        #if DEBUG
-        // Long-press anywhere on the header to fabricate history / switch user journeys.
-        .onLongPressGesture(minimumDuration: 0.4) {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            isDebugging = true
-        }
-        #endif
+        // Disabled for now — commented out rather than removed so the debug
+        // menu (DebugMenu.swift) is still one uncomment away.
+        // #if DEBUG
+        // // Long-press anywhere on the header to fabricate history / switch user journeys.
+        // .onLongPressGesture(minimumDuration: 0.4) {
+        //     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        //     isDebugging = true
+        // }
+        // #endif
         .accessibilityElement(children: .combine)
     }
 
@@ -203,30 +205,78 @@ struct TodayView: View {
     /// they were given — the menu was built from something you could no longer
     /// see. Now the card holds the line and the action beside it changes from
     /// answering to amending.
-    private var checkInPrompt: some View {
-        Button { isCheckingIn = true } label: {
-            HStack(spacing: FGSpace.s + 2) {
-                Image(systemName: model.checkIn == nil ? "heart.fill" : "checkmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 32, height: 32)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(light: 0xEE8E62, dark: 0xEE8E62), Color(light: 0xD67CA2, dark: 0xD67CA2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        in: Circle()
+    private struct CheckInAuraPulse: View {
+        let checkIn: PlanCheckIn?
+        @State private var isPulsing = false
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+        private var auraColor: Color {
+            guard let checkIn else { return FGColor.rose }
+            switch checkIn.energy {
+            case .low: return FGColor.clay
+            case .steady: return FGColor.sageDeep
+            case .strong: return FGColor.clayDeep
+            }
+        }
+
+        var body: some View {
+            ZStack {
+                // Breathing ambient aura wave
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                (checkIn == nil ? FGColor.rose : auraColor).opacity(0.38),
+                                (checkIn == nil ? FGColor.clay : auraColor).opacity(0.18),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 4,
+                            endRadius: 22
+                        )
+                    )
+                    .frame(width: 42, height: 42)
+                    .scaleEffect(isPulsing ? 1.28 : 0.88)
+                    .opacity(isPulsing ? 0.70 : 0.30)
+                    .animation(
+                        reduceMotion ? .none : Animation.easeInOut(duration: 2.2).repeatForever(autoreverses: true),
+                        value: isPulsing
                     )
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(model.checkIn?.summaryLine ?? "Check in for today")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        .foregroundStyle(FGColor.ink)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(model.checkIn == nil ? 1 : 2)
+                // Core AuraDot
+                AuraDot(color: auraColor, size: 28)
+                    .scaleEffect(isPulsing && checkIn == nil ? 1.08 : 0.95)
+                    .animation(
+                        reduceMotion ? .none : Animation.easeInOut(duration: 2.2).repeatForever(autoreverses: true),
+                        value: isPulsing
+                    )
+            }
+            .frame(width: 34, height: 34)
+            .onAppear {
+                isPulsing = true
+            }
+        }
+    }
 
-                    if model.checkIn == nil {
+    private var checkInPrompt: some View {
+        Button { isCheckingIn = true } label: {
+            HStack(spacing: FGSpace.s + 3) {
+                CheckInAuraPulse(checkIn: model.checkIn)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    if let checkIn = model.checkIn {
+                        Text(checkIn.detailedSummaryPhrase)
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundStyle(FGColor.ink)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(2)
+                    } else {
+                        Text("Check in for today")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundStyle(FGColor.ink)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(1)
+
                         Text("Takes about 30 seconds")
                             .font(.system(size: 13, weight: .regular))
                             .foregroundStyle(FGColor.inkMuted)
@@ -239,11 +289,19 @@ struct TodayView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(FGColor.inkMuted)
                 } else {
-                    Text("Edit")
-                        .font(FGFont.body.weight(.medium))
-                        .foregroundStyle(FGColor.ink)
-                        .fixedSize()
-                        .padding(.trailing, FGSpace.s)
+                    HStack(spacing: 4) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 11, weight: .medium))
+                        Text("Edit")
+                            .font(FGFont.label.weight(.semibold))
+                    }
+                    .foregroundStyle(FGColor.inkMuted)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.white.opacity(colorScheme == .dark ? 0.12 : 0.60))
+                    .clipShape(Capsule())
+                    .fixedSize()
+                    .padding(.trailing, FGSpace.xs)
                 }
             }
             .frame(minHeight: 60)
@@ -263,7 +321,7 @@ struct TodayView: View {
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityLabel(
-            model.checkIn.map { "Today's check-in: \($0.summaryLine). Edit" }
+            model.checkIn.map { "Today's check-in: \($0.detailedSummaryPhrase). Edit" }
                 ?? "Check in for today. Takes about 30 seconds"
         )
     }
@@ -588,14 +646,30 @@ private struct MenuItemBody: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Top metadata row: Course tag, status, and shuffle
-            HStack(alignment: .center, spacing: FGSpace.s) {
-                CourseTag(course: item.course)
+            // Top metadata row: Frosted pill badges matching Chat
+            HStack(alignment: .center, spacing: 6) {
+                Text(item.course.label.uppercased())
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(FGColor.ink)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.70))
+                    .clipShape(Capsule())
+
+                Text(item.session.durationLabel.uppercased())
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(FGColor.ink)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.70))
+                    .clipShape(Capsule())
 
                 if isDone {
                     DoneMark()
+                        .padding(.leading, 2)
                 } else if isInProgress {
                     ResumeMark()
+                        .padding(.leading, 2)
                 }
 
                 Spacer(minLength: FGSpace.xs)
@@ -606,7 +680,7 @@ private struct MenuItemBody: View {
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(FGColor.ink)
                             .frame(width: 30, height: 30)
-                            .background(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.68))
+                            .background(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.70))
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -621,36 +695,47 @@ private struct MenuItemBody: View {
 
             // Session Title in SF Pro Rounded Bold
             Text(item.session.title)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.system(size: 21, weight: .bold, design: .rounded))
                 .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
                 .strikethrough(isDone, color: FGColor.clayDeep)
                 .fixedSize(horizontal: false, vertical: true)
 
-            // Visual target & context pills in frosted chat style
-            WrapRow(spacing: 6, lineSpacing: 6) {
-                ForEach(item.session.chips, id: \.self) { chip in
-                    Text(chip)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(colorScheme == .dark ? (isDone ? 0.06 : 0.16) : (isDone ? 0.45 : 0.68)))
-                        .clipShape(Capsule())
-                }
-                if item.session.isOwn {
-                    Text("Yours")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(colorScheme == .dark ? (isDone ? 0.06 : 0.16) : (isDone ? 0.45 : 0.68)))
-                        .clipShape(Capsule())
+            // Subtitle
+            if !item.session.subtitle.isEmpty {
+                Text(item.session.subtitle)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundStyle(isDone ? FGColor.inkMuted.opacity(0.8) : FGColor.ink.opacity(0.82))
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            // Visual target & context pills in frosted chat style (duration moved to top to avoid redundancy)
+            if !item.session.chipsWithoutDuration.isEmpty || item.session.isOwn {
+                WrapRow(spacing: 6, lineSpacing: 6) {
+                    ForEach(item.session.chipsWithoutDuration, id: \.self) { chip in
+                        Text(chip.uppercased())
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink.opacity(0.85))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.white.opacity(colorScheme == .dark ? (isDone ? 0.06 : 0.16) : (isDone ? 0.45 : 0.65)))
+                            .clipShape(Capsule())
+                    }
+                    if item.session.isOwn {
+                        Text("YOURS")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink.opacity(0.85))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.white.opacity(colorScheme == .dark ? (isDone ? 0.06 : 0.16) : (isDone ? 0.45 : 0.65)))
+                            .clipShape(Capsule())
+                    }
                 }
             }
 
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 18)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(

@@ -16,4 +16,11 @@ nonisolated enum LegalLinks {
     static var privacyPolicy: URL {
         URL(string: "https://feelgood-web.vercel.app/privacy")!
     }
+
+    /// Opens the user's mail client with a pre-addressed message, so there's
+    /// an in-app way to reach the developer (App Review looks for this on
+    /// paid-subscription apps).
+    static var contactSupport: URL {
+        URL(string: "mailto:ameenazara3@gmail.com?subject=FeelGood%20Support")!
+    }
 }
