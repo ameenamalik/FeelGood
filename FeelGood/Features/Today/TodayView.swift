@@ -356,14 +356,31 @@ struct TodayView: View {
 
                 Spacer(minLength: FGSpace.s)
 
-                if model.isProUser {
-                    adjustButtonLabel
-                        .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
-                        )
+                // Compact icon-only controls for routine and quick adjust.
+                // Quick adjust is a Pro feature; free users get only the +,
+                // never a lock icon that gates a control they can't see the
+                // point of yet.
+                #if compiler(>=6.2)
+                if #available(iOS 26, *) {
+                    GlassEffectContainer(spacing: FGSpace.s) {
+                        HStack(spacing: FGSpace.s) {
+                            routineButtonLabel
+                                .glassEffect(.regular.interactive(), in: Circle())
+                            if model.isProUser {
+                                adjustButtonLabel
+                                    .glassEffect(
+                                        isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
+                                        in: Circle()
+                                    )
+                            }
+                        }
+                    }
+                } else {
+                    legacyMenuControls
                 }
+                #else
+                legacyMenuControls
+                #endif
             }
 
             if isAdjusting {
