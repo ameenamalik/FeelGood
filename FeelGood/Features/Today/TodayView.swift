@@ -26,6 +26,7 @@ struct TodayView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var isAdjusting = false
     @State private var isShowingMyMenu = false
+    @State private var isShowingAddOptions = false
     @State private var selected: MenuItem?
     @State private var littleWinCelebration: LittleWinCelebration?
     #if DEBUG
@@ -48,7 +49,6 @@ struct TodayView: View {
                     menuHeading
                     calendarFitCard
                     menuItems
-                    logFooter
                 }
                 .padding(FGSpace.page)
             }
@@ -81,6 +81,14 @@ struct TodayView: View {
         }
         .sheet(isPresented: $isShowingMyMenu) {
             MyMenuView(model: model)
+        }
+        .confirmationDialog(
+            "Add to today",
+            isPresented: $isShowingAddOptions,
+            titleVisibility: .visible
+        ) {
+            Button("I did something else") { isLogging = true }
+            Button("Add your own routine") { isShowingMyMenu = true }
         }
         .sheet(item: $selected, onDismiss: presentCompletionPaywallIfNeeded) { item in
             SessionDetailView(item: item, model: model) {
@@ -385,7 +393,7 @@ struct TodayView: View {
 
     private var routineButtonLabel: some View {
         Button {
-            isShowingMyMenu = true
+            isShowingAddOptions = true
         } label: {
             Image(systemName: "plus")
                 .font(.system(size: 13, weight: .semibold))
@@ -394,7 +402,7 @@ struct TodayView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Add custom routine or view My Menu")
+        .accessibilityLabel("Log something you did, or add your own routine")
     }
 
     private var legacyMenuControls: some View {
@@ -510,14 +518,6 @@ struct TodayView: View {
         }
     }
 
-    private var logFooter: some View {
-        // Movement that happened without us. Logging it is how the engine
-        // learns what a normal week actually looks like.
-        FGQuietButton("I did something else", systemImage: "plus") {
-            isLogging = true
-        }
-        .frame(maxWidth: .infinity)
-    }
 }
 
 /// The course, named and tinted as a frosted pill consistent with Chat.
