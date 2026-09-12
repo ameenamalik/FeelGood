@@ -6,7 +6,7 @@ This document tracks upcoming engineering milestones and architectural enhanceme
 
 ## 🚀 Next Up — v2
 
-- [x] **Fix and relocate "I did something else."** Was a washed-out/grey `FGQuietButton` buried at the bottom of Today. Now merged into the "+" next to "Your menu" (`routineButtonLabel` in `TodayView.swift`) via a `confirmationDialog` offering "I did something else" or "Add your own routine" — one visible entry point instead of two. *Implemented; pending a clean build to verify (blocked by low disk space on the dev machine).*
+- [ ] **Fix and relocate "I did something else."** Still a washed-out/grey `FGQuietButton` buried at the bottom of Today. *Tried merging it into the "+" next to "Your menu" via a `confirmationDialog` ("I did something else" / "Add your own routine") — reverted, Ameena didn't like that option. Next attempt should find a different treatment, not resurrect the confirmation-dialog merge as-is.*
 - [ ] **Add profile picture support.** `YouView` currently only shows a placeholder person icon in a solid-color circle. **Owned by Yusra.**
 - [ ] **Let Chat show the full menu, not one routine at a time.** `ExploreView` currently surfaces a single `recommendationCard` per turn. Extend it so someone can see today's whole menu and ask questions about any item in it, rather than being limited to whatever the last recommendation was.
 - [ ] **Tighten the paywall copy and value prop.** `FeelGoodPaywallView` wraps RevenueCat's `PaywallView`, so this is a dashboard content edit, not a code change — cut wordiness and sharpen why Pro is worth it.
