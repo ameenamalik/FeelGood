@@ -6,8 +6,8 @@ This document tracks upcoming engineering milestones and architectural enhanceme
 
 ## 🚀 Next Up — v2
 
-- [ ] **Fix and relocate "I did something else."** Still a washed-out/grey `FGQuietButton` buried at the bottom of Today. *Tried merging it into the "+" next to "Your menu" via a `confirmationDialog` ("I did something else" / "Add your own routine") — reverted, Ameena didn't like that option. Next attempt should find a different treatment, not resurrect the confirmation-dialog merge as-is.*
-- [ ] **Add profile picture support.** `YouView` currently only shows a placeholder person icon in a solid-color circle. **Owned by Yusra.**
+- [x] **Fix and relocate "I did something else."** Prominent rounded capsule button below the menu cards matching the new clean design reference. Removed redundant "+" button on Today to eliminate user ambiguity. Shows remaining minutes inline ("14 min left") and transitions to a completion state card with checkmark and log adjustments once an activity is recorded.
+- [x] **Add profile picture support.** `YouView` currently only shows a placeholder person icon in a solid-color circle. **Owned by Yusra.**
 - [ ] **Let Chat show the full menu, not one routine at a time.** `ExploreView` currently surfaces a single `recommendationCard` per turn. Extend it so someone can see today's whole menu and ask questions about any item in it, rather than being limited to whatever the last recommendation was.
 - [ ] **Tighten the paywall copy and value prop.** `FeelGoodPaywallView` wraps RevenueCat's `PaywallView`, so this is a dashboard content edit, not a code change — cut wordiness and sharpen why Pro is worth it.
 - [ ] **Admin — add Ameena's card to App Store Connect** to cover the upcoming Apple Developer Program renewal fee. (Account/billing task, not engineering — flagging here so it doesn't get lost.)

@@ -4,7 +4,7 @@
 
 2. **Origin story (best hook available)**: Dopamine menus were trending on TikTok/Pinterest and via the ADHD community (ADDitude's dopamine-menu template) — Ameena adapted the concept for movement. Personal root: her therapist once told her "you need to just have a dance party in ur room, put on your favorite songs, get the energy and impending doom out" — free, harmless, and it works. She's a software engineer who sits all day coding and built this for people like herself and anyone who wants a wellness app without the decision paralysis.
 
-3. **Who**: Ameena, software engineering graduate from Western University, building solo (occasional "we" — worth clarifying if a co-builder is real or just voice).
+3. **Who**: Ameena, software engineering graduate from Western University. Started FeelGood solo, then a friend joined later — so "I" is accurate for the origin story and early build, "we" becomes accurate once she's on board. Exact point of handoff not yet pinned down — check before publishing posts that reference recent work.
 
 4. **Customer (for this content)**: Two audiences that overlap — (a) other indie devs / build-in-public / Shipaton community / RevenueCat (who repost tagged entries), and (b) actual target users: people who sit at a desk all day, feel doomscroll-paralyzed about what to do for their body, want a wellness app without gamification guilt.
 
