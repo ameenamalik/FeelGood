@@ -237,6 +237,8 @@ enum AccountDataSyncService {
             "workArounds": profile.workAroundsRaw,
             "hiddenSessionIDs": profile.hiddenSessionIDsRaw,
             "nickname": profile.nickname,
+            "avatarID": profile.avatar.rawValue,
+            "avatarBackgroundID": profile.avatarBackground.rawValue,
             "updatedAt": profile.updatedAt,
         ]
         if let reminderHour = profile.reminderHour {
@@ -262,6 +264,14 @@ enum AccountDataSyncService {
         )
         profile.apply(answers, now: Date())
         if let nickname = data["nickname"] as? String { profile.nickname = nickname }
+        if let avatarID = data["avatarID"] as? String,
+           ProfileAvatar(rawValue: avatarID) != nil {
+            profile.avatarRaw = avatarID
+        }
+        if let backgroundID = data["avatarBackgroundID"] as? String,
+           ProfileAvatarBackground(rawValue: backgroundID) != nil {
+            profile.avatarBackgroundRaw = backgroundID
+        }
         if let reminder = data["reminderHour"] as? Int { profile.reminderHour = reminder }
     }
 

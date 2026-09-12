@@ -271,7 +271,7 @@ struct ProductIntroView: View {
                 .frame(width: 84, height: 84)
                 .offset(x: -106, y: -62)
 
-            Image("IntentCalmBlueberry")
+            Image("IntentCalmBlueberryMascot")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 80, height: 80)

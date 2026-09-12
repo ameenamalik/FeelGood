@@ -218,9 +218,11 @@ struct ProfileHeaderView: View {
         if let user = authService.currentUser {
             VStack(alignment: .leading, spacing: FGSpace.s) {
                 HStack(spacing: FGSpace.s) {
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(FGColor.sageDeep)
+                    ProfileAvatarView(
+                        avatar: profile.avatar,
+                        background: profile.avatarBackground,
+                        size: 40
+                    )
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(user.email ?? user.displayName ?? "Signed In")
@@ -300,6 +302,8 @@ struct ProfileHeaderView: View {
     private func clearAllUserData() {
         profile.apply(ProfileAnswers(), now: Date())
         profile.nickname = ""
+        profile.avatar = .defaultAvatar
+        profile.avatarBackground = .automatic
         profile.signOutOfApple()
 
         try? modelContext.delete(model: SessionRecord.self)
