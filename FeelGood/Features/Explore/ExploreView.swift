@@ -64,6 +64,9 @@ struct ExploreView: View {
                                     ForEach(messages) { message in
                                         messageRow(for: message)
                                             .id(message.id)
+                                            .transition(
+                                                .opacity.combined(with: .move(edge: .bottom))
+                                            )
                                     }
                                 }
 
@@ -576,7 +579,7 @@ struct ExploreView: View {
         }
 
         let userMsg = ConversationMessage(role: .user, text: trimmed)
-        messages.append(userMsg)
+        withAnimation(FGMotion.settle) { messages.append(userMsg) }
         savePersistedHistory()
         inputText = ""
         isFieldFocused = false
@@ -625,10 +628,12 @@ struct ExploreView: View {
             await MainActor.run {
                 isProcessing = false
                 guard let response else {
-                    messages.append(ConversationMessage(
-                        role: .assistant,
-                        text: "Couldn't reach the companion just now — try again in a moment."
-                    ))
+                    withAnimation(FGMotion.settle) {
+                        messages.append(ConversationMessage(
+                            role: .assistant,
+                            text: "Couldn't reach the companion just now — try again in a moment."
+                        ))
+                    }
                     return
                 }
 
@@ -642,7 +647,7 @@ struct ExploreView: View {
                     text: response.message,
                     recommendation: response.recommendation
                 )
-                messages.append(assistantMsg)
+                withAnimation(FGMotion.settle) { messages.append(assistantMsg) }
                 quickReplies = response.quickReplies
                 if !purchasesManager.isProUnlocked {
                     hasUsedFreeChatExchange = true

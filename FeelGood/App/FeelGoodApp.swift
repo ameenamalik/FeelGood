@@ -326,9 +326,11 @@ private struct TodayScreen: View {
         TabView(selection: $tab) {
             Tab("Today", systemImage: "sun.max", value: Destination.today) {
                 TodayView(model: model, requestedSessionID: $requestedSessionID)
+                    .tabSettleIn()
             }
             Tab("Chat", systemImage: "bubble.left.and.bubble.right", value: Destination.explore) {
                 ExploreView(model: model)
+                    .tabSettleIn()
             }
             Tab("You", systemImage: "person", value: Destination.you) {
                 YouView(model: model, profile: profile) { answers in
@@ -342,6 +344,7 @@ private struct TodayScreen: View {
                         }
                     }
                 }
+                .tabSettleIn()
             }
         }
         .tint(FGColor.ink)

@@ -93,6 +93,7 @@ struct OnboardingView: View {
         }
         .accessibilityElement()
         .accessibilityLabel("Question \(model.card.rawValue + 1) of \(OnboardingModel.Card.allCases.count)")
+        .fgAnimation(FGMotion.gentle, value: model.card)
     }
 
     // MARK: Answers

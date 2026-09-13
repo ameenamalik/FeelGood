@@ -40,3 +40,31 @@ private struct ReducedMotionAnimation<V: Equatable>: ViewModifier {
         content.animation(reduceMotion ? .none : animation, value: value)
     }
 }
+
+extension View {
+    /// A gentle fade-in each time a destination becomes visible. `TabView`'s
+    /// own tab switch is a hard cut with no public hook to soften — the
+    /// UIKit tab bar it's backed by owns that transition — so each incoming
+    /// screen settles in on its own instead of the two screens cross-dissolving.
+    func tabSettleIn() -> some View {
+        modifier(TabSettleIn())
+    }
+}
+
+private struct TabSettleIn: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isVisible = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(isVisible ? 1 : 0)
+            .onAppear {
+                guard !reduceMotion else {
+                    isVisible = true
+                    return
+                }
+                isVisible = false
+                withAnimation(FGMotion.gentle) { isVisible = true }
+            }
+    }
+}
