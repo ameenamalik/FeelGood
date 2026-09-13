@@ -33,6 +33,7 @@ export interface ChatPayload {
   currentTimeBudget?: string;
   activeSessionID?: string;
   userContext?: UserPreferencesContext;
+  todaysMenu?: StructuredRecommendation[];
 }
 
 export interface ExtractedCheckIn {
@@ -294,9 +295,23 @@ export async function handleChat(payload: ChatPayload, env: Env): Promise<Respon
 
 function buildSystemPrompt(
   userContext?: UserPreferencesContext,
-  knowledgeContext?: string | null
+  knowledgeContext?: string | null,
+  todaysMenu?: StructuredRecommendation[],
+  activeSessionID?: string
 ): string {
   let prompt = CHAT_SYSTEM_PROMPT;
+  if (todaysMenu && todaysMenu.length > 0) {
+    const menuLines = todaysMenu
+      .map((item) => `- session_id: ${item.session_id} | course: ${item.course} | title: "${item.title}" | duration: ${item.duration_min} min | reason: ${item.reason}`)
+      .join("\n");
+    prompt += `\n\nTODAY'S MENU: this is the exact, already-decided menu the user sees on screen right now:\n${menuLines}\nIf the user's message names one of these items (by title, or by its course, e.g. "my dessert", "the side one"), your answer MUST be grounded in that exact item — return its session_id as-is and use its reason rather than inventing a new pick. Only run a fresh recommendation when the user is asking for something not on this list.`;
+    if (activeSessionID) {
+      const active = todaysMenu.find((item) => item.session_id === activeSessionID);
+      if (active) {
+        prompt += `\nThe item most recently discussed is "${active.title}" (session_id: ${active.session_id}). Treat follow-ups like "why this?" or "something shorter" as being about this item unless the user clearly asks about a different one.`;
+      }
+    }
+  }
   if (userContext) {
     if (userContext.lastFeel === "tooMuch" || userContext.recoveryOwed) {
       prompt += "\n\nUSER RECENT FEEDBACK: The user recently found a workout too demanding ('tooMuch') or is in recovery debt. Strongly favor gentler, supported floor/mat options with lower intensity.";
@@ -449,7 +464,7 @@ async function handleGeminiChat(
     parts: [{ text: payload.prompt }],
   });
 
-  const systemPrompt = buildSystemPrompt(payload.userContext, knowledgeContext);
+  const systemPrompt = buildSystemPrompt(payload.userContext, knowledgeContext, payload.todaysMenu, payload.activeSessionID);
 
   const body = {
     contents,
@@ -687,7 +702,7 @@ async function handleAnthropicChat(
     content: payload.prompt,
   });
 
-  const systemPrompt = buildSystemPrompt(payload.userContext, knowledgeContext);
+  const systemPrompt = buildSystemPrompt(payload.userContext, knowledgeContext, payload.todaysMenu, payload.activeSessionID);
 
   const response = await traceChatModel(
     {
