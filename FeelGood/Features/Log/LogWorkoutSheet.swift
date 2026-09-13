@@ -61,25 +61,37 @@ struct LogWorkoutSheet: View {
                             .foregroundStyle(FGColor.inkMuted)
                     }
 
-                    FlowRow(spacing: FGSpace.s) {
-                        ForEach(Activity.allCases, id: \.self) { option in
-                            FGChoice(title: option.label, isSelected: activity == option) {
+                    WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
+                        ForEach(Array(Activity.allCases.enumerated()), id: \.element) { index, option in
+                            FGPill(
+                                title: option.label,
+                                selectedAura: pillAura(at: index),
+                                isSelected: activity == option
+                            ) {
                                 withAnimation(FGMotion.gentle) { activity = option }
                             }
                         }
                     }
 
                     question("How long?") {
-                        ForEach(Self.durations, id: \.self) { minutes in
-                            FGChoice(title: "\(minutes) min", isSelected: durationMin == minutes) {
+                        ForEach(Array(Self.durations.enumerated()), id: \.element) { index, minutes in
+                            FGPill(
+                                title: "\(minutes) min",
+                                selectedAura: pillAura(at: index),
+                                isSelected: durationMin == minutes
+                            ) {
                                 withAnimation(FGMotion.gentle) { durationMin = minutes }
                             }
                         }
                     }
 
                     question("Where? (optional)") {
-                        ForEach([Place.home, .gym, .outdoors, .studio, .pool], id: \.self) { option in
-                            FGChoice(title: placeLabel(option), isSelected: place == option) {
+                        ForEach(Array([Place.home, .gym, .outdoors, .studio, .pool].enumerated()), id: \.element) { index, option in
+                            FGPill(
+                                title: placeLabel(option),
+                                selectedAura: pillAura(at: index),
+                                isSelected: place == option
+                            ) {
                                 withAnimation(FGMotion.gentle) {
                                     place = place == option ? nil : option
                                 }
@@ -88,8 +100,12 @@ struct LogWorkoutSheet: View {
                     }
 
                     question("How hard?") {
-                        ForEach(Self.efforts, id: \.intensity) { effort in
-                            FGChoice(title: effort.label, isSelected: intensity == effort.intensity) {
+                        ForEach(Array(Self.efforts.enumerated()), id: \.offset) { index, effort in
+                            FGPill(
+                                title: effort.label,
+                                selectedAura: pillAura(at: index),
+                                isSelected: intensity == effort.intensity
+                            ) {
                                 withAnimation(FGMotion.gentle) { intensity = effort.intensity }
                             }
                         }
@@ -162,7 +178,7 @@ struct LogWorkoutSheet: View {
             Text(title)
                 .font(FGFont.label)
                 .foregroundStyle(FGColor.inkMuted)
-            FlowRow(spacing: FGSpace.s) { content() }
+            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) { content() }
         }
     }
 
@@ -204,6 +220,12 @@ struct LogWorkoutSheet: View {
         case .studio: "Studio"
         case .pool: "Pool"
         }
+    }
+
+    private static let pillPalette: [FGAura] = [.apricot, .lilac, .blush, .sage, .butter]
+
+    private func pillAura(at index: Int) -> FGAura {
+        Self.pillPalette[index % Self.pillPalette.count]
     }
 }
 
