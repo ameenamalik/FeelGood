@@ -47,6 +47,8 @@ struct LittleWinsSection: View {
 
 private struct LittleWinCard: View {
     let progress: LittleWinProgress
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isPulsing = false
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -87,10 +89,23 @@ private struct LittleWinCard: View {
             progress.win.aura.badgeGradient,
             in: RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
+                .fill(Color.white.opacity(isPulsing ? 0.45 : 0))
+                .allowsHitTesting(false)
+        )
+        .scaleEffect(isPulsing ? 1.07 : 1.0)
         .shadow(color: FGColor.ink.opacity(0.055), radius: 10, y: 4)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(progress.win.title), \(progress.statusLine)")
         .accessibilityHint("Opens badge details")
+        .onChange(of: progress.isUnlocked) { wasUnlocked, isUnlocked in
+            // Only the live flip earns the moment — a card that opens already
+            // unlocked (a fresh load, a different day) gets no pop.
+            guard !wasUnlocked, isUnlocked, !reduceMotion else { return }
+            withAnimation(FGMotion.swap) { isPulsing = true }
+            withAnimation(FGMotion.settle.delay(0.16)) { isPulsing = false }
+        }
     }
 }
 

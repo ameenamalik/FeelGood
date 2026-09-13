@@ -365,7 +365,7 @@ struct TodayView: View {
                     GlassEffectContainer(spacing: FGSpace.s) {
                         HStack(spacing: FGSpace.s) {
                             routineButtonLabel
-                                .glassEffect(.regular.interactive(), in: Circle())
+                                .glassEffect(.regular.interactive(), in: Capsule())
                             if model.isProUser {
                                 adjustButtonLabel
                                     .glassEffect(
@@ -398,11 +398,16 @@ struct TodayView: View {
         Button {
             isShowingMyMenu = true
         } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(FGColor.ink)
-                .frame(width: 32, height: 32)
-                .contentShape(Circle())
+            HStack(spacing: 4) {
+                Image(systemName: "plus")
+                    .font(.system(size: 11, weight: .semibold))
+                Text("Add")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+            }
+            .foregroundStyle(FGColor.ink)
+            .padding(.horizontal, 10)
+            .frame(height: 32)
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add custom routine or view My Menu")
@@ -412,8 +417,8 @@ struct TodayView: View {
         HStack(spacing: FGSpace.s) {
             routineButtonLabel
                 .background(FGColor.surface)
-                .clipShape(Circle())
-                .overlay(Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1))
+                .clipShape(Capsule())
+                .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
             if model.isProUser {
                 adjustButtonLabel
                     .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
@@ -788,6 +793,7 @@ private struct MenuItemBody: View {
                 if isDone {
                     DoneMark()
                         .padding(.leading, 2)
+                        .transition(.scale(scale: 0.7).combined(with: .opacity))
                 } else if isInProgress {
                     ResumeMark()
                         .padding(.leading, 2)
@@ -851,6 +857,7 @@ private struct MenuItemBody: View {
                     lineWidth: 1
                 )
         )
+        .fgAnimation(FGMotion.settle, value: isDone)
     }
 }
 
