@@ -164,14 +164,14 @@ struct RootView: View {
             }
         }
         .confirmationDialog(
-            "Progress on this device",
+            "Choose your saved progress",
             isPresented: Binding(
                 get: { pendingExistingAccount != nil },
                 set: { if !$0 { pendingExistingAccount = nil } }
             ),
             titleVisibility: .visible
         ) {
-            Button("Add it to my account") {
+            Button("Continue with both") {
                 guard let user = pendingExistingAccount, let content else { return }
                 pendingExistingAccount = nil
                 runAccountSync {
@@ -182,7 +182,7 @@ struct RootView: View {
                     )
                 }
             }
-            Button("Use my account progress", role: .destructive) {
+            Button("Continue with account only", role: .destructive) {
                 guard let user = pendingExistingAccount else { return }
                 pendingExistingAccount = nil
                 runAccountSync {
@@ -192,12 +192,12 @@ struct RootView: View {
                     )
                 }
             }
-            Button("Keep using this device as a guest") {
+            Button("Continue as guest", role: .cancel) {
                 pendingExistingAccount = nil
                 try? authService.signOut()
             }
         } message: {
-            Text("FeelGood found guest sessions or routines here. Choose whether to add them to this account. Nothing will be merged without your choice.")
+            Text("This phone has workouts or routines saved from before you signed in. Combine them with your account, or use the account's saved progress only. Using the account only removes the guest progress from this phone.")
         }
         .alert(
             "Progress couldn't sync",
