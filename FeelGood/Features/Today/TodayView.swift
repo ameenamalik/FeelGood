@@ -674,14 +674,22 @@ private struct MenuItemCard: View {
 /// Marks something already done today. Not a score, not a count, and nothing
 /// accrues from it — it's here so a finished item stops asking to be started.
 private struct DoneMark: View {
+    /// Fires once, right after this view is inserted (see `MenuItemBody`'s
+    /// `.transition` on it) — a static checkmark landing in a scaled-in pill
+    /// reads as arrived, not achieved. The bounce is what actually sells
+    /// "you just did that."
+    @State private var hasBounced = false
+
     var body: some View {
         HStack(spacing: FGSpace.xs) {
             Image(systemName: "checkmark.circle.fill")
+                .symbolEffect(.bounce, value: hasBounced)
             Text("Done")
         }
         .font(.system(size: 13, weight: .semibold, design: .rounded))
         .foregroundStyle(FGColor.sageDeep)
         .accessibilityHidden(true)
+        .onAppear { hasBounced.toggle() }
     }
 }
 

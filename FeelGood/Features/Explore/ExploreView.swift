@@ -73,8 +73,12 @@ struct ExploreView: View {
                                 if isProcessing {
                                     typingIndicator
                                         .id("typingIndicator")
+                                        .transition(
+                                            .opacity.combined(with: .scale(scale: 0.9, anchor: .leading))
+                                        )
                                 }
                             }
+                            .animation(FGMotion.gentle, value: isProcessing)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 14)
                             .postHogMask()
@@ -534,10 +538,12 @@ struct ExploreView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .transition(.opacity.combined(with: .scale(scale: 0.85)))
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
+            .animation(FGMotion.gentle, value: replies)
         }
     }
 
