@@ -67,10 +67,34 @@ public struct FirestoreCompletionRecord: Codable, Sendable, Identifiable {
     }
 }
 
+public struct FirestoreCustomRoutinePart: Codable, Sendable, Identifiable {
+    public var id: String
+    public var title: String
+    public var durationMin: Int
+
+    public init(id: String = UUID().uuidString, title: String, durationMin: Int) {
+        self.id = id
+        self.title = title
+        self.durationMin = durationMin
+    }
+
+    init(_ part: CustomRoutinePart) {
+        id = part.id
+        title = part.title
+        durationMin = part.durationMin
+    }
+
+    var customRoutinePart: CustomRoutinePart {
+        CustomRoutinePart(id: id, title: title, durationMin: durationMin)
+    }
+}
+
 public struct FirestoreCustomWorkout: Codable, Sendable, Identifiable {
     public var id: String
     public var userId: String
     public var title: String
+    public var description: String?
+    public var parts: [FirestoreCustomRoutinePart]?
     public var durationMin: Int
     public var intensity: Int
     public var course: String?
@@ -81,6 +105,8 @@ public struct FirestoreCustomWorkout: Codable, Sendable, Identifiable {
         id: String = UUID().uuidString,
         userId: String,
         title: String,
+        description: String? = nil,
+        parts: [FirestoreCustomRoutinePart]? = nil,
         durationMin: Int,
         intensity: Int,
         course: String? = nil,
@@ -90,6 +116,8 @@ public struct FirestoreCustomWorkout: Codable, Sendable, Identifiable {
         self.id = id
         self.userId = userId
         self.title = title
+        self.description = description
+        self.parts = parts
         self.durationMin = durationMin
         self.intensity = intensity
         self.course = course
@@ -233,6 +261,8 @@ public final class FirestoreService: Sendable {
         id: String? = nil,
         userId: String,
         title: String,
+        description: String? = nil,
+        parts: [FirestoreCustomRoutinePart]? = nil,
         durationMin: Int,
         intensity: Int,
         course: String? = nil,
@@ -243,6 +273,8 @@ public final class FirestoreService: Sendable {
             id: id ?? UUID().uuidString,
             userId: userId,
             title: title,
+            description: description,
+            parts: parts,
             durationMin: durationMin,
             intensity: intensity,
             course: course,

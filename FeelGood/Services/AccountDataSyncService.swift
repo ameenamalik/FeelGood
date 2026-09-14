@@ -136,6 +136,8 @@ enum AccountDataSyncService {
                 id: routine.id,
                 userId: userID,
                 title: routine.title,
+                description: routine.sessionDescription,
+                parts: routine.parts.map(FirestoreCustomRoutinePart.init),
                 durationMin: routine.durationMin,
                 intensity: routine.intensity,
                 course: routine.courseRaw,
@@ -192,6 +194,8 @@ enum AccountDataSyncService {
             context.insert(CustomSession(
                 id: remote.id,
                 title: remote.title,
+                description: remote.description,
+                parts: remote.parts?.map(\.customRoutinePart) ?? [],
                 activity: remote.activity.flatMap(Activity.init(rawValue:)) ?? .stretching,
                 durationMin: remote.durationMin,
                 intensity: remote.intensity,

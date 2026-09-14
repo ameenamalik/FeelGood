@@ -45,9 +45,11 @@ protocol SessionLogging: AnyObject, Sendable {
 
     /// Kept so the engine can offer it back later.
     @discardableResult
-    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, course: Course?, now: Date) -> Session
+    func keep(title: String, description: String?, parts: [CustomRoutinePart], activity: Activity, durationMin: Int, intensity: Int, course: Course?, now: Date) -> Session
     func kept() -> [Session]
     /// They are somebody's own, which means they get to change their mind.
+    @discardableResult
+    func update(_ sessionID: String, title: String, description: String?, parts: [CustomRoutinePart], activity: Activity, durationMin: Int, intensity: Int, course: Course) -> Session?
     func rename(_ sessionID: String, to title: String)
     func forget(_ sessionID: String)
 
@@ -65,7 +67,12 @@ extension SessionLogging {
 
     @discardableResult
     func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, now: Date) -> Session {
-        keep(title: title, activity: activity, durationMin: durationMin, intensity: intensity, course: nil, now: now)
+        keep(title: title, description: nil, parts: [], activity: activity, durationMin: durationMin, intensity: intensity, course: nil, now: now)
+    }
+
+    @discardableResult
+    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, course: Course?, now: Date) -> Session {
+        keep(title: title, description: nil, parts: [], activity: activity, durationMin: durationMin, intensity: intensity, course: course, now: now)
     }
 }
 
@@ -212,9 +219,11 @@ final class SessionLog: SessionLogging {
     // MARK: Somebody's own workouts
 
     @discardableResult
-    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, course: Course? = nil, now: Date) -> Session {
+    func keep(title: String, description: String?, parts: [CustomRoutinePart], activity: Activity, durationMin: Int, intensity: Int, course: Course?, now: Date) -> Session {
         let kept = CustomSession(
             title: title,
+            description: description,
+            parts: parts,
             activity: activity,
             durationMin: durationMin,
             intensity: intensity,
@@ -228,6 +237,29 @@ final class SessionLog: SessionLogging {
 
     func kept() -> [Session] {
         fetch(FetchDescriptor<CustomSession>(sortBy: [SortDescriptor(\.createdAt)])).map(\.session)
+    }
+
+    @discardableResult
+    func update(
+        _ sessionID: String,
+        title: String,
+        description: String?,
+        parts: [CustomRoutinePart],
+        activity: Activity,
+        durationMin: Int,
+        intensity: Int,
+        course: Course
+    ) -> Session? {
+        guard let record = keptRecord(sessionID) else { return nil }
+        record.title = title
+        record.sessionDescription = description
+        record.parts = parts
+        record.activityRaw = activity.rawValue
+        record.durationMin = max(1, durationMin)
+        record.intensity = min(max(intensity, 1), 5)
+        record.courseRaw = course.rawValue
+        save()
+        return record.session
     }
 
     func rename(_ sessionID: String, to title: String) {
@@ -348,10 +380,12 @@ final class InMemorySessionLog: SessionLogging {
     // MARK: Somebody's own workouts
 
     @discardableResult
-    func keep(title: String, activity: Activity, durationMin: Int, intensity: Int, course: Course? = nil, now: Date) -> Session {
+    func keep(title: String, description: String?, parts: [CustomRoutinePart], activity: Activity, durationMin: Int, intensity: Int, course: Course?, now: Date) -> Session {
         let session = Session.own(
             id: "own-\(keptSessions.count)",
             title: title,
+            description: description,
+            parts: parts,
             activity: activity,
             durationMin: durationMin,
             intensity: intensity,
@@ -363,11 +397,40 @@ final class InMemorySessionLog: SessionLogging {
 
     func kept() -> [Session] { keptSessions }
 
+    @discardableResult
+    func update(
+        _ sessionID: String,
+        title: String,
+        description: String?,
+        parts: [CustomRoutinePart],
+        activity: Activity,
+        durationMin: Int,
+        intensity: Int,
+        course: Course
+    ) -> Session? {
+        guard let index = keptSessions.firstIndex(where: { $0.id == sessionID }) else { return nil }
+        let updated = Session.own(
+            id: sessionID,
+            title: title,
+            description: description,
+            parts: parts,
+            activity: activity,
+            durationMin: durationMin,
+            intensity: intensity,
+            course: course
+        )
+        keptSessions[index] = updated
+        return updated
+    }
+
     func rename(_ sessionID: String, to title: String) {
         renamed[sessionID] = title
         keptSessions = keptSessions.map { session in
             session.id == sessionID
-                ? .own(id: session.id, title: title, activity: session.activity,
+                ? .own(id: session.id, title: title,
+                       description: session.subtitle.isEmpty ? nil : session.subtitle,
+                       parts: session.customRoutineParts,
+                       activity: session.activity,
                        durationMin: session.durationMin, intensity: session.intensity, course: session.course)
                 : session
         }

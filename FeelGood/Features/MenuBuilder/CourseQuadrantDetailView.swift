@@ -14,9 +14,7 @@ struct CourseQuadrantDetailView: View {
 
     @State private var isAddingRoutine = false
     @State private var selectedSession: Session?
-    @State private var sessionToRename: Session?
-    @State private var renameText = ""
-    @State private var isShowingRenameAlert = false
+    @State private var sessionToEdit: Session?
     @State private var sessionToDelete: Session?
     @State private var isShowingDeleteConfirm = false
 
@@ -118,14 +116,8 @@ struct CourseQuadrantDetailView: View {
         .sheet(item: $selectedSession) { session in
             SessionDetailView(session: session, model: model)
         }
-        .alert("Rename Routine", isPresented: $isShowingRenameAlert) {
-            TextField("Routine name", text: $renameText)
-            Button("Save") {
-                if let s = sessionToRename {
-                    model.rename(s, to: renameText)
-                }
-            }
-            Button("Cancel", role: .cancel) {}
+        .sheet(item: $sessionToEdit) { session in
+            AddRoutineSheet(model: model, editingSession: session)
         }
         .alert("Remove Routine?", isPresented: $isShowingDeleteConfirm) {
             Button("Remove", role: .destructive) {
@@ -246,10 +238,8 @@ struct CourseQuadrantDetailView: View {
                 }
             }
 
-            Button("Rename", systemImage: "pencil") {
-                sessionToRename = session
-                renameText = session.title
-                isShowingRenameAlert = true
+            Button("Edit", systemImage: "pencil") {
+                sessionToEdit = session
             }
 
             Divider()

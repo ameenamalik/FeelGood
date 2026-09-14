@@ -10,6 +10,23 @@
 
 import Foundation
 
+/// One user-authored timed item inside a custom routine.
+nonisolated struct CustomRoutinePart: Codable, Hashable, Sendable, Identifiable {
+    let id: String
+    var title: String
+    var durationMin: Int
+
+    init(id: String = UUID().uuidString, title: String, durationMin: Int) {
+        self.id = id
+        self.title = title
+        self.durationMin = max(1, durationMin)
+    }
+
+    var step: Step {
+        Step(name: title, seconds: durationMin * 60, cue: "Move at a pace that feels good.")
+    }
+}
+
 nonisolated extension Activity {
 
     /// What this kind of movement develops. Used to place someone's own
@@ -72,6 +89,8 @@ nonisolated extension Session {
     static func own(
         id: String,
         title: String,
+        description: String? = nil,
+        parts: [CustomRoutinePart] = [],
         activity: Activity = .stretching,
         durationMin: Int,
         intensity: Int,
@@ -80,14 +99,18 @@ nonisolated extension Session {
     ) -> Session {
         let qualities = activity.typicalQualities
         let intensity = min(max(intensity, 1), 5)
-        let finalCourse = course ?? Self.course(for: durationMin)
+        let finalDuration = parts.isEmpty
+            ? max(1, durationMin)
+            : parts.reduce(0) { $0 + $1.durationMin }
+        let finalCourse = course ?? Self.course(for: finalDuration)
+        let subtitle = description?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return Session(
             id: id,
             title: title,
-            subtitle: "Yours",
+            subtitle: subtitle,
             activity: activity,
             qualities: qualities,
-            durationMin: max(1, durationMin),
+            durationMin: finalDuration,
             intensity: intensity,
             energyFit: energyFit(for: intensity),
             equipment: equipment ?? Array(activity.impliedEquipment.sorted { $0.rawValue < $1.rawValue }),
@@ -99,13 +122,23 @@ nonisolated extension Session {
             contraindications: qualities.contains(.impact) ? [.pregnancy, .postpartum, .pelvicFloor] : [],
             intents: intents(for: qualities),
             course: finalCourse,
-            source: .authored(steps: [])
+            source: .custom(steps: parts.map(\.step))
         )
     }
 
-    /// True for a session somebody logged themselves: there are no steps to
-    /// play, because nobody wrote any.
-    var isOwn: Bool { source.steps.isEmpty && !source.isVideo }
+    /// Ownership and playability are separate: a custom routine can contain
+    /// timed steps and still remain editable by the person who made it.
+    var isOwn: Bool {
+        if case .custom = source { return true }
+        return false
+    }
+
+    var customRoutineParts: [CustomRoutinePart] {
+        guard case .custom(let steps) = source else { return [] }
+        return steps.map { step in
+            CustomRoutinePart(title: step.name, durationMin: max(1, Int(ceil(Double(step.seconds) / 60))))
+        }
+    }
 
     private static func energyFit(for intensity: Int) -> [Energy] {
         switch intensity {
