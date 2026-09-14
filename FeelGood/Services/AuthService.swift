@@ -205,6 +205,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
     private func handleFirebaseUserChanged(_ user: User?) {
         guard let user else {
             self.currentUser = nil
+            Analytics.reset()
             FirestoreService.shared.stopListening()
             Task {
                 await PurchasesManager.shared.ensureAnonymousUserForSignedOutSession()
@@ -213,6 +214,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         }
         let mapped = Self.mapUser(user)
         self.currentUser = mapped
+        Self.identify(mapped)
         FirestoreService.shared.startListening(for: mapped.uid)
         Task {
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
@@ -229,6 +231,16 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         )
     }
 
+    /// Links this device's PostHog activity to who's actually signed in.
+    /// Identity only — email, display name, auth provider — never body state
+    /// or work-arounds; those stay off every analytics channel per CLAUDE.md.
+    private static func identify(_ user: AuthUser) {
+        var properties: [String: Any] = ["provider": user.providerID]
+        if let email = user.email { properties["email"] = email }
+        if let displayName = user.displayName { properties["name"] = displayName }
+        Analytics.identify(user.uid, properties: properties)
+    }
+
     // MARK: - Email Sign In & Sign Up
 
     public func signInWithEmail(email: String, password: String) async throws {
@@ -242,6 +254,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = false
             self.currentUser = mock
+            Self.identify(mock)
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
         }
@@ -251,6 +264,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let mapped = Self.mapUser(result.user)
             self.lastAuthenticationCreatedAccount = false
             self.currentUser = mapped
+            Self.identify(mapped)
             FirestoreService.shared.startListening(for: mapped.uid)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
@@ -268,6 +282,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
+            Self.identify(mock)
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
         }
@@ -277,6 +292,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let mapped = Self.mapUser(result.user)
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mapped
+            Self.identify(mapped)
             FirestoreService.shared.startListening(for: mapped.uid)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
@@ -303,6 +319,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
+            Self.identify(mock)
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
         }
@@ -318,6 +335,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let mapped = Self.mapUser(result.user)
             self.lastAuthenticationCreatedAccount = result.additionalUserInfo?.isNewUser ?? false
             self.currentUser = mapped
+            Self.identify(mapped)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
             throw AuthError.mapFirebaseError(error)
@@ -336,6 +354,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
+            Self.identify(mock)
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
         }
@@ -367,6 +386,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let mapped = Self.mapUser(result.user)
             self.lastAuthenticationCreatedAccount = result.additionalUserInfo?.isNewUser ?? false
             self.currentUser = mapped
+            Self.identify(mapped)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
             throw AuthError.mapFirebaseError(error)
@@ -395,6 +415,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         self.lastAuthenticationCreatedAccount = nil
         Task { @MainActor in
             FirestoreService.shared.stopListening()
+            Analytics.reset()
             await PurchasesManager.shared.logOut()
         }
     }
@@ -404,6 +425,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
             return
@@ -413,6 +435,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
             return
@@ -447,6 +470,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
         } catch is AuthTimeoutError {
@@ -472,6 +496,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
             return
@@ -487,6 +512,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
             return
@@ -523,6 +549,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
         } catch is AuthTimeoutError {
@@ -537,6 +564,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
             return
@@ -546,6 +574,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
             return
@@ -594,6 +623,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
         } catch is AuthTimeoutError {
@@ -608,6 +638,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
             return
@@ -617,6 +648,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
             return
@@ -646,6 +678,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.currentUser = nil
             Task { @MainActor in
                 FirestoreService.shared.stopListening()
+                Analytics.reset()
                 await PurchasesManager.shared.logOut()
             }
         } catch is AuthTimeoutError {

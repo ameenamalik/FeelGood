@@ -7,9 +7,10 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct PlayerView: View {
-    private static let readingSeconds = 5
+    private static let readingSeconds = 10
 
     let session: Session
     let onFinish: (PlayerResult) -> Void
@@ -24,6 +25,8 @@ struct PlayerView: View {
     /// A short buffer at the start of each new step. This is separate from the
     /// exercise timer so reading the cue never consumes movement time.
     @State private var readingRemaining: Int
+    /// Whether the "get ready" countdown is currently paused.
+    @State private var isReadingPaused = false
     /// Which exercise `remaining` currently belongs to. A resumed exercise
     /// keeps its saved time; moving to another one resets to its full time.
     @State private var timerIndex: Int
@@ -41,10 +44,19 @@ struct PlayerView: View {
     /// without it, the held colour shift alone is too subtle to notice.
     @State private var hasFiredFinalStretchFlash = false
     @State private var flashOpacity = 0.0
+    /// Tracks if the mid-hold side switch alert has already fired for this step.
+    @State private var hasFiredSideSwitchAlert = false
+    /// Active while the 3-second transition buffer between sides counts down.
+    @State private var isSwitchingSides = false
+    @State private var switchCountdown = 3
+    /// 1 for the first side, 2 for the second side.
+    @State private var currentSide = 1
     /// A separate, cooler pulse marking that a step has begun — every step,
     /// counted or timed. Deliberately a different hue from the ending flash
     /// (sage, not gold) so the two moments never read as the same event.
     @State private var stepStartOpacity = 0.0
+    /// Large, glanceable countdown digits scalable with Dynamic Type.
+    @ScaledMetric(relativeTo: .largeTitle) private var timerFontSize = 68.0
     /// The counter is the whole tap target, and it grows with Dynamic Type —
     /// this is used mid-movement, often without looking straight at it.
     @ScaledMetric(relativeTo: .largeTitle) private var counterHeight = 180.0
@@ -91,6 +103,16 @@ struct PlayerView: View {
             .map { initialRemaining <= $0 } ?? false
         _isInFinalStretch = State(initialValue: resumedIntoFinalStretch)
         _hasFiredFinalStretchFlash = State(initialValue: resumedIntoFinalStretch)
+
+        // Resuming already past the halfway side switch point keeps side 2
+        let activeStep = session.source.steps.indices.contains(validIndex)
+            ? session.source.steps[validIndex]
+            : nil
+        let requiresSwitch = activeStep?.requiresSideSwitch ?? false
+        let switchThreshold = activeStep.map { $0.seconds - $0.sideSwitchThresholdSeconds } ?? 0
+        let resumedPastSwitch = requiresSwitch && initialRemaining <= switchThreshold
+        _hasFiredSideSwitchAlert = State(initialValue: resumedPastSwitch)
+        _currentSide = State(initialValue: resumedPastSwitch ? 2 : 1)
     }
 
     /// The last-fifth of a held step, capped at 10 seconds so a long hold's
@@ -151,7 +173,7 @@ struct PlayerView: View {
                     SessionBreathingProgress(
                         progress: completionProgress(for: step),
                         aura: FGAura.allCases[index % FGAura.allCases.count],
-                        isActive: readingRemaining == 0 && isRunning,
+                        isActive: readingRemaining == 0 && isRunning && !isSwitchingSides,
                         startedAt: breathingStartedAt,
                         pausedAt: breathingPausedAt
                     )
@@ -159,10 +181,12 @@ struct PlayerView: View {
                     SessionLiquidProgress(
                         progress: completionProgress(for: step),
                         aura: FGAura.allCases[index % FGAura.allCases.count],
-                        isActive: readingRemaining == 0 && (step.isCounted || isRunning)
+                        isActive: readingRemaining == 0 && (step.isCounted || (isRunning && !isSwitchingSides))
                     )
                 }
                 running(step)
+            } else {
+                emptyStepView
             }
         }
         .task(id: index) {
@@ -174,19 +198,26 @@ struct PlayerView: View {
             if timerIndex != index {
                 remaining = step.seconds
                 readingRemaining = Self.readingSeconds
+                isReadingPaused = false
                 timerIndex = index
                 repsDone = 0
                 setsDone = 0
                 isInFinalStretch = false
                 hasFiredFinalStretchFlash = false
                 flashOpacity = 0
+                hasFiredSideSwitchAlert = false
+                isSwitchingSides = false
+                switchCountdown = 3
+                currentSide = 1
             }
 
             while readingRemaining > 0 && !isDone {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
                 guard readingRemaining > 0 else { break }
-                readingRemaining -= 1
+                if !isReadingPaused {
+                    readingRemaining -= 1
+                }
             }
 
             if isBreathingStep(step), breathingAnchorIndex != index {
@@ -198,8 +229,23 @@ struct PlayerView: View {
             while remaining > 0 && !isDone {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
+
+                if isSwitchingSides {
+                    if switchCountdown > 0 {
+                        switchCountdown -= 1
+                    }
+                    if switchCountdown <= 0 {
+                        withAnimation(FGMotion.gentle) {
+                            isSwitchingSides = false
+                            currentSide = 2
+                        }
+                    }
+                    continue
+                }
+
                 if isRunning {
                     remaining -= 1
+                    checkSideSwitch(for: step)
                     updateFinalStretch(for: step)
                 }
             }
@@ -237,6 +283,31 @@ struct PlayerView: View {
         guard !hasFiredFinalStretchFlash else { return }
         hasFiredFinalStretchFlash = true
         fireFinalStretchFlash()
+    }
+
+    /// Checked once per tick of the countdown. Fires the switch-sides alert
+    /// at the configured threshold (defaulting to halfway), pausing the hold
+    /// timer for a 3-second transition.
+    private func checkSideSwitch(for step: Step) {
+        guard step.requiresSideSwitch, !hasFiredSideSwitchAlert else { return }
+        let switchRemaining = step.seconds - step.sideSwitchThresholdSeconds
+        guard remaining <= switchRemaining else { return }
+
+        hasFiredSideSwitchAlert = true
+        fireSideSwitchAlert()
+    }
+
+    private func fireSideSwitchAlert() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(.warning)
+
+        fireFinalStretchFlash()
+
+        withAnimation(reduceMotion ? nil : FGMotion.gentle) {
+            switchCountdown = 3
+            isSwitchingSides = true
+        }
     }
 
     /// A photosensitivity-safe single pulse: one smooth rise, one smoother
@@ -291,6 +362,36 @@ struct PlayerView: View {
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            }
+
+            Spacer()
+
+            FGPrimaryButton(title: "Complete Workout") {
+                withAnimation(FGMotion.gentle) {
+                    isDone = true
+                }
+            }
+        }
+        .padding(FGSpace.page)
+    }
+
+    private var emptyStepView: some View {
+        VStack(spacing: FGSpace.l) {
+            HStack {
+                FGQuietButton("Leave", systemImage: "xmark") { leave() }
+                Spacer()
+            }
+
+            Spacer()
+
+            VStack(spacing: FGSpace.m) {
+                Text("No steps to play")
+                    .font(FGFont.itemTitle)
+                    .foregroundStyle(FGColor.ink)
+                Text("This session does not contain any timed or counted exercises.")
+                    .font(FGFont.body)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .multilineTextAlignment(.center)
             }
 
             Spacer()
@@ -372,28 +473,33 @@ struct PlayerView: View {
 
                 ExerciseDemoView(glossaryID: step.glossaryID)
 
-                Text(step.cue)
-                    .font(FGFont.body)
-                    .foregroundStyle(FGColor.inkMuted)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+                ScannableCueView(cue: step.cue, requiresSideSwitch: step.requiresSideSwitch)
 
                 if readingRemaining == 0 && isBreathingStep(step) {
                     BreathingPhaseLabel(
-                        isActive: isRunning,
+                        isActive: isRunning && !isSwitchingSides,
                         startedAt: breathingStartedAt,
                         pausedAt: breathingPausedAt
                     )
                 }
 
-                if readingRemaining > 0 {
+                if isSwitchingSides {
+                    switchSidesTransitionCard
+                } else if readingRemaining > 0 {
                     readingCountdown
                 } else if step.isCounted, let perSet = step.reps {
                     counter(step, perSet: perSet)
                 } else {
-                    Text(timeString)
-                        .font(.system(.largeTitle, design: .serif).monospacedDigit())
-                        .foregroundStyle(FGColor.goldDeep)
+                    VStack(spacing: FGSpace.xs) {
+                        if step.requiresSideSwitch {
+                            sideIndicatorBadge
+                        }
+                        Text(timeString)
+                            .font(.system(size: timerFontSize, weight: .bold, design: .rounded).monospacedDigit())
+                            .foregroundStyle(FGColor.goldDeep)
+                            .contentTransition(.numericText())
+                            .minimumScaleFactor(0.7)
+                    }
                 }
 
             }
@@ -401,9 +507,18 @@ struct PlayerView: View {
             Spacer()
 
             VStack(spacing: FGSpace.s) {
-                if readingRemaining > 0 {
+                if isSwitchingSides {
+                    FGPrimaryButton(title: "Ready for side 2") {
+                        withAnimation(FGMotion.gentle) {
+                            switchCountdown = 0
+                            isSwitchingSides = false
+                            currentSide = 2
+                        }
+                    }
+                } else if readingRemaining > 0 {
                     FGPrimaryButton(title: "Start now") {
                         readingRemaining = 0
+                        isReadingPaused = false
                         if isBreathingStep(step) { restartBreathingCycle() }
                     }
                 } else if !step.isCounted {
@@ -432,18 +547,114 @@ struct PlayerView: View {
     }
 
     private var readingCountdown: some View {
-        VStack(spacing: FGSpace.xs) {
-            Text("Get ready")
-                .font(FGFont.label)
-                .foregroundStyle(FGColor.inkMuted)
+        VStack(spacing: FGSpace.s) {
+            VStack(spacing: FGSpace.xs) {
+                Text(isReadingPaused ? "Paused" : "Get ready")
+                    .font(FGFont.label)
+                    .foregroundStyle(FGColor.inkMuted)
 
-            Text("\(readingRemaining)")
-                .font(.system(.largeTitle, design: .rounded).weight(.bold).monospacedDigit())
-                .foregroundStyle(FGColor.goldDeep)
-                .contentTransition(.numericText())
+                Text("\(readingRemaining)")
+                    .font(.system(size: 56, weight: .bold, design: .rounded).monospacedDigit())
+                    .foregroundStyle(FGColor.goldDeep)
+                    .contentTransition(.numericText())
+            }
+
+            HStack(spacing: FGSpace.m) {
+                Button {
+                    withAnimation(FGMotion.gentle) {
+                        readingRemaining += 5
+                    }
+                } label: {
+                    Label("+5s", systemImage: "plus")
+                        .font(FGFont.label)
+                        .foregroundStyle(FGColor.ink)
+                        .padding(.horizontal, FGSpace.m)
+                        .padding(.vertical, FGSpace.xs + 2)
+                        .background(
+                            Capsule().fill(FGColor.surface)
+                        )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    isReadingPaused.toggle()
+                } label: {
+                    Label(
+                        isReadingPaused ? "Resume" : "Pause",
+                        systemImage: isReadingPaused ? "play.fill" : "pause.fill"
+                    )
+                    .font(FGFont.label)
+                    .foregroundStyle(FGColor.ink)
+                    .padding(.horizontal, FGSpace.m)
+                    .padding(.vertical, FGSpace.xs + 2)
+                    .background(
+                        Capsule().fill(FGColor.surface)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Starting in \(readingRemaining) seconds")
+        .accessibilityLabel("Starting in \(readingRemaining) seconds\(isReadingPaused ? ", paused" : "")")
+    }
+
+    private var sideIndicatorBadge: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "arrow.left.and.right")
+                .font(.caption2)
+            Text("Side \(currentSide) of 2")
+                .font(FGFont.label)
+        }
+        .foregroundStyle(FGColor.inkMuted)
+        .padding(.horizontal, FGSpace.s)
+        .padding(.vertical, 3)
+        .background(
+            Capsule()
+                .fill(FGColor.surface)
+        )
+    }
+
+    private var switchSidesTransitionCard: some View {
+        VStack(spacing: FGSpace.s) {
+            HStack(spacing: FGSpace.xs) {
+                Image(systemName: "arrow.left.and.right")
+                    .font(FGFont.itemTitle)
+                    .foregroundStyle(FGColor.goldDeep)
+                Text("Switch sides")
+                    .font(FGFont.itemTitle)
+                    .foregroundStyle(FGColor.ink)
+            }
+
+            Text("\(switchCountdown)")
+                .font(.system(size: 52, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(FGColor.goldDeep)
+                .contentTransition(.numericText())
+
+            Button {
+                withAnimation(FGMotion.gentle) {
+                    switchCountdown = 0
+                    isSwitchingSides = false
+                    currentSide = 2
+                }
+            } label: {
+                Text("Ready now")
+                    .font(FGFont.label)
+                    .foregroundStyle(FGColor.ink)
+                    .padding(.horizontal, FGSpace.m)
+                    .padding(.vertical, FGSpace.xs + 2)
+                    .background(
+                        Capsule().fill(FGColor.surface)
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(FGSpace.m)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                .fill(FGColor.surface.opacity(0.85))
+        )
+        .transition(.scale.combined(with: .opacity))
     }
 
     /// This session's completion tint, or the screen's long-standing butter
@@ -704,6 +915,11 @@ struct PlayerView: View {
                     isInFinalStretch = false
                     hasFiredFinalStretchFlash = false
                     flashOpacity = 0
+                    hasFiredSideSwitchAlert = false
+                    isSwitchingSides = false
+                    switchCountdown = 3
+                    currentSide = 1
+                    isReadingPaused = false
                 }
                 isDone = false
             } else if index > steps.startIndex {

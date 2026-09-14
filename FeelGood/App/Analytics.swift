@@ -11,9 +11,11 @@ import PostHog
 /// offline in tests and previews, and — since `check_in_completed` started
 /// carrying check-in state — so a test can see what a call site handed over
 /// without a network round trip.
-protocol AnalyticsSink {
+nonisolated protocol AnalyticsSink {
     func capture(_ event: String, properties: [String: Any])
     func log(_ message: String, level: PostHogLogSeverity, attributes: [String: Any])
+    func identify(_ userID: String, properties: [String: Any])
+    func reset()
 }
 
 /// The real one. Both methods no-op until the project is configured, which is
@@ -40,6 +42,23 @@ struct PostHogAnalyticsSink: AnalyticsSink {
         guard isConfigured else { return }
         PostHogSDK.shared.captureLog(message, level: level, attributes: attributes)
     }
+
+    /// Links every event and replay this device has already sent — under its
+    /// anonymous distinct ID — to the signed-in person, so `Persons` and
+    /// Session Replay show someone real instead of an anonymous UUID.
+    func identify(_ userID: String, properties: [String: Any]) {
+        guard isConfigured else { return }
+        PostHogSDK.shared.identify(userID, userProperties: properties)
+    }
+
+    /// Ends the identity link on sign-out, so whatever the device does next —
+    /// a different person signing in on a shared device, or nobody signed in
+    /// at all — goes back to being anonymous rather than attributed to
+    /// whoever last signed in.
+    func reset() {
+        guard isConfigured else { return }
+        PostHogSDK.shared.reset()
+    }
 }
 
 @MainActor
@@ -64,5 +83,18 @@ enum Analytics {
     /// coarse state) — never `PlanCheckIn.body` or `PlanProfile.workArounds`.
     static func log(_ message: String, level: PostHogLogSeverity = .info, attributes: [String: Any] = [:]) {
         sink.log(message, level: level, attributes: attributes)
+    }
+
+    /// Call once someone is signed in — identity only (email, display name,
+    /// auth provider), never health/body data, same allow-list discipline as
+    /// `capture`.
+    static func identify(_ userID: String, properties: [String: Any] = [:]) {
+        sink.identify(userID, properties: properties)
+    }
+
+    /// Call on sign-out so a shared device doesn't keep attributing the next
+    /// person's activity to whoever signed out.
+    static func reset() {
+        sink.reset()
     }
 }
