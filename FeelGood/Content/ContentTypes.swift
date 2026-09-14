@@ -170,6 +170,12 @@ nonisolated struct Step: Codable, Hashable, Sendable {
     /// How many sets of `reps`. Absent means one set, which is what a single
     /// authored block of repetitions has always meant.
     let sets: Int?
+    /// Whether this step explicitly switches sides halfway (or at `switchAfterSeconds`).
+    /// When `nil`, inferred from cue keywords (e.g. "switch sides", "each side").
+    let switchSides: Bool?
+    /// Number of seconds from the start of the exercise when the person should switch sides.
+    /// Defaults to halfway (`seconds / 2`) if absent.
+    let switchAfterSeconds: Int?
 
     /// Counted rather than timed. Zero or negative is treated as untimed
     /// authoring noise rather than a step nobody can finish.
@@ -179,13 +185,56 @@ nonisolated struct Step: Codable, Hashable, Sendable {
     /// set rather than a step that can never end.
     var setCount: Int { max(1, sets ?? 1) }
 
+    /// Whether this exercise requires switching sides mid-hold.
+    /// Evaluates explicit `switchSides` first; otherwise infers from cue text
+    /// for timed exercises.
+    var requiresSideSwitch: Bool {
+        guard !isCounted, seconds >= 10 else { return false }
+        if let switchSides {
+            return switchSides
+        }
+        let lowerName = name.lowercased()
+        if lowerName.contains("(right)") || lowerName.contains("(left)") {
+            return false
+        }
+        let lowerCue = cue.lowercased()
+        let sideKeywords = [
+            "switch sides",
+            "switch legs",
+            "switch arms",
+            "switch to the other",
+            "repeat on the other side",
+            "other side",
+            "each side",
+            "both sides"
+        ]
+        return sideKeywords.contains { lowerCue.contains($0) }
+    }
+
+    /// The number of seconds after which to alert the person to switch sides.
+    /// Defaults to halfway through the hold (`seconds / 2`).
+    var sideSwitchThresholdSeconds: Int {
+        if let switchAfterSeconds, switchAfterSeconds > 0, switchAfterSeconds < seconds {
+            return switchAfterSeconds
+        }
+        let lowerCue = cue.lowercased()
+        if lowerCue.contains("after 2 minutes") || lowerCue.contains("2 minutes each side") {
+            if seconds > 120 { return 120 }
+        } else if lowerCue.contains("ninety seconds each side") || lowerCue.contains("90 seconds each side") {
+            if seconds > 90 { return 90 }
+        }
+        return max(1, seconds / 2)
+    }
+
     init(
         name: String,
         seconds: Int,
         cue: String,
         glossaryID: String? = nil,
         reps: Int? = nil,
-        sets: Int? = nil
+        sets: Int? = nil,
+        switchSides: Bool? = nil,
+        switchAfterSeconds: Int? = nil
     ) {
         self.name = name
         self.seconds = seconds
@@ -193,6 +242,8 @@ nonisolated struct Step: Codable, Hashable, Sendable {
         self.glossaryID = glossaryID
         self.reps = reps
         self.sets = sets
+        self.switchSides = switchSides
+        self.switchAfterSeconds = switchAfterSeconds
     }
 }
 

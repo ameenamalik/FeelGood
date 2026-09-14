@@ -28,8 +28,61 @@ struct CatalogTests {
         let step = try JSONDecoder().decode(Step.self, from: json)
         #expect(step.reps == nil)
         #expect(step.sets == nil)
+        #expect(step.switchSides == nil)
+        #expect(step.switchAfterSeconds == nil)
         #expect(step.isCounted == false)
         #expect(step.seconds == 40)
+    }
+
+    @Test("A step with explicit switchSides and switchAfterSeconds decodes correctly")
+    func stepWithSwitchSidesDecodes() throws {
+        let json = Data("""
+        {"name": "Side plank", "seconds": 60, "cue": "Lift hips.", "switchSides": true, "switchAfterSeconds": 30}
+        """.utf8)
+        let step = try JSONDecoder().decode(Step.self, from: json)
+        #expect(step.switchSides == true)
+        #expect(step.switchAfterSeconds == 30)
+        #expect(step.requiresSideSwitch == true)
+        #expect(step.sideSwitchThresholdSeconds == 30)
+    }
+
+    @Test("Cue text inference correctly identifies side-switch exercises and thresholds")
+    func cueTextInferenceDetectsSideSwitch() throws {
+        // "Switch sides halfway."
+        let step1 = Step(name: "Figure 4", seconds: 60, cue: "Lean forward gently. Switch sides halfway.")
+        #expect(step1.requiresSideSwitch == true)
+        #expect(step1.sideSwitchThresholdSeconds == 30)
+
+        // "after 2 minutes"
+        let step2 = Step(name: "Runner lunge", seconds: 240, cue: "Step into a runner lunge. Switch sides after 2 minutes.")
+        #expect(step2.requiresSideSwitch == true)
+        #expect(step2.sideSwitchThresholdSeconds == 120)
+
+        // "Ninety seconds each side"
+        let step3 = Step(name: "Leg stretch", seconds: 180, cue: "Strap, towel or hands. Ninety seconds each side.")
+        #expect(step3.requiresSideSwitch == true)
+        #expect(step3.sideSwitchThresholdSeconds == 90)
+
+        // Single-side step with "(Right)" should not switch mid-hold
+        let step4 = Step(name: "Figure four (Right)", seconds: 60, cue: "Breathe, then switch sides.")
+        #expect(step4.requiresSideSwitch == false)
+
+        // Counted step should not switch timed
+        let step5 = Step(name: "Lunges", seconds: 60, cue: "Switch sides halfway.", reps: 10)
+        #expect(step5.requiresSideSwitch == false)
+    }
+
+    @Test("CueBreakdown parses lead action and tips, filtering inline switch notice when alert is handled")
+    func cueBreakdownParsesCorrectly() {
+        let cue = "Sit on the edge of your chair, cross right ankle over left knee. Gently lean forward with a flat back. Switch sides halfway."
+        let breakdown = CueBreakdown(raw: cue, requiresSideSwitch: true)
+        #expect(breakdown.leadAction == "Sit on the edge of your chair, cross right ankle over left knee")
+        #expect(breakdown.tips == ["Gently lean forward with a flat back"])
+
+        let singleSentenceCue = "Hold onto desk for balance and breathe deep."
+        let breakdown2 = CueBreakdown(raw: singleSentenceCue, requiresSideSwitch: false)
+        #expect(breakdown2.leadAction == "Hold onto desk for balance and breathe deep")
+        #expect(breakdown2.tips.isEmpty)
     }
 
     @Test("A counted step decodes and reports itself as counted")

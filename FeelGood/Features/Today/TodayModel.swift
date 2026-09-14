@@ -908,15 +908,14 @@ final class TodayModel {
         store.term(id: step.glossaryID)
     }
 
-    /// "Thursday morning" — a place in the week, never a count of days.
+    /// "This morning" — a place in the day, never a count of days.
     func greeting(now: Date = Date()) -> String {
-        let weekday = now.formatted(.dateTime.weekday(.wide))
         let part = switch calendar.component(.hour, from: now) {
         case ..<11: "morning"
         case ..<16: "afternoon"
         default: "evening"
         }
-        return "\(weekday) \(part)"
+        return "This \(part)"
     }
 }
 

@@ -119,6 +119,23 @@ struct AnalyticsPayloadTests {
         #expect(call?.properties["energy"] as? String == Energy.strong.rawValue)
         #expect(call?.properties["body"] == nil)
     }
+
+    @MainActor
+    @Test("identify and reset reach the sink")
+    func identifyAndResetReachTheSink() {
+        let sink = FakeAnalyticsSink()
+        let original = Analytics.sink
+        Analytics.sink = sink
+        defer { Analytics.sink = original }
+
+        Analytics.identify("uid-123", properties: ["email": "a@b.com"])
+        Analytics.reset()
+
+        #expect(sink.identified.count == 1)
+        #expect(sink.identified.first?.userID == "uid-123")
+        #expect(sink.identified.first?.properties["email"] as? String == "a@b.com")
+        #expect(sink.resetCount == 1)
+    }
 }
 
 // MARK: - Fake
@@ -138,4 +155,15 @@ private final class FakeAnalyticsSink: AnalyticsSink {
     }
 
     func log(_: String, level _: PostHogLogSeverity, attributes _: [String: Any]) {}
+
+    private(set) var identified: [(userID: String, properties: [String: Any])] = []
+    private(set) var resetCount = 0
+
+    func identify(_ userID: String, properties: [String: Any]) {
+        identified.append((userID, properties))
+    }
+
+    func reset() {
+        resetCount += 1
+    }
 }

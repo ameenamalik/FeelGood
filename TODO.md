@@ -13,18 +13,18 @@ This document tracks upcoming engineering milestones and architectural enhanceme
 
 **Owned by Ameena.**
 
-- [ ] **Mid-hold "switch sides" alert.** For timed exercises done on both
+- [x] **Mid-hold "switch sides" alert.** For timed exercises done on both
   sides, add an explicit alert partway through the hold (haptic/visual, not
   just a silent timer, and not something buried at the end of the cue
   paragraph) telling someone to switch sides — right now `PlayerView` has
   no concept of a side switch mid-step, so the only way to know is to have
   already read to the end of `step.cue`.
-- [ ] **Bigger countdown digits.** The running timer (`timeString` in
+- [x] **Bigger countdown digits.** The running timer (`timeString` in
   `PlayerView.running(_:)`) is too small to read at a glance mid-movement.
-- [ ] **Let the 5-second "get ready" countdown be paused, skipped, or made
+- [x] **Let the 5-second "get ready" countdown be paused, skipped, or made
   longer.** `readingCountdown` currently only offers "Start now" (skip) —
   no way to pause it, and 5 seconds is too short to actually get ready.
-- [ ] **Make the exercise cue easier to digest mid-workout.** `step.cue` renders
+- [x] **Make the exercise cue easier to digest mid-workout.** `step.cue` renders
   as one body-text paragraph; nobody reads a paragraph while working out —
   needs a shorter/more scannable format.
 

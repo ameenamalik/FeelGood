@@ -94,19 +94,6 @@ struct YouView: View {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     profileHeader
 
-                    VStack(alignment: .leading, spacing: FGSpace.s) {
-                        Text("You, lately.")
-                            .font(FGFont.display)
-                            .foregroundStyle(FGColor.ink)
-                            .accessibilityAddTraits(.isHeader)
-
-                        Text("A quiet look at your last two weeks.")
-                            .font(FGFont.body)
-                            .foregroundStyle(FGColor.inkMuted)
-                    }
-
-                    LookBackView(reflection: model.lookBack(now: .now))
-
                     LittleWinsSection(progress: model.littleWins)
 
                     Text("FeelGood provides general wellness recommendations and is not a substitute for medical advice or physical therapy.")
