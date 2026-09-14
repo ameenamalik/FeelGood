@@ -604,31 +604,6 @@ struct TodayView: View {
 
     private var logFooter: some View {
         VStack(spacing: FGSpace.s) {
-            Button {
-                isLogging = true
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus.circle")
-                        .font(.system(size: 17, weight: .medium))
-                    Text("I did something else")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                }
-                .foregroundStyle(FGColor.ink)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    Capsule()
-                        .fill(Color(light: 0xEDE9E1, dark: 0x241E18))
-                )
-                .overlay(
-                    Capsule()
-                        .strokeBorder(Color(light: 0xDFD9CE, dark: 0x362F27), lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("I did something else")
-            .accessibilityHint("Log an activity or workout done outside today's menu")
-
             if showMenuAnyway && model.shouldShowCompletionState {
                 Button {
                     withAnimation(FGMotion.settle) {
