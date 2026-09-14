@@ -907,16 +907,6 @@ final class TodayModel {
     func term(for step: Step) -> ExerciseTerm? {
         store.term(id: step.glossaryID)
     }
-
-    /// "This morning" — a place in the day, never a count of days.
-    func greeting(now: Date = Date()) -> String {
-        let part = switch calendar.component(.hour, from: now) {
-        case ..<11: "morning"
-        case ..<16: "afternoon"
-        default: "evening"
-        }
-        return "This \(part)"
-    }
 }
 
 extension Menu {
@@ -935,3 +925,4 @@ extension Menu {
         )
     }
 }
+
