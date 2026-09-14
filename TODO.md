@@ -13,6 +13,29 @@ This document tracks upcoming engineering milestones and architectural enhanceme
 - [ ] **Admin — add Ameena's card to App Store Connect** to cover the upcoming Apple Developer Program renewal fee. (Account/billing task, not engineering — flagging here so it doesn't get lost.)
 - [x] **Write 2-3 posts in Simone's-audience voice, not indie-dev voice.** Everything queued in `content-drafts.md` right now (origin story, submission story, paywall admission) is pitched to an ADHD/indie-dev/build-in-public audience — good for Shipaton judging, but not the "woman with 47 tabs open" persona from her brief (PRD §5). Drafts #3 ("you don't need a workout plan") and #5 (the settings tour) are the closest templates: decision fatigue, guilt-free consistency, real-life scheduling — no dopamine-menu/ADHD framing. Done as `content-drafts.md` §6 (6a–6c) — needs your read before posting, and 6b specifically waits on the paywall copy fix above so the post stays true.
 
+### PlayerView feedback (handwritten notes, 2026-09-14)
+
+- [ ] **Mid-hold "switch sides" alert.** For timed exercises done on both
+  sides, add a cue partway through the hold (haptic/visual, not just a
+  silent timer) telling someone to switch sides — right now `PlayerView`
+  has no concept of a side switch mid-step.
+- [ ] **Bigger countdown digits.** The running timer (`timeString` in
+  `PlayerView.running(_:)`) is too small to read at a glance mid-movement.
+- [ ] **Let the 5-second "get ready" countdown be paused.** `readingCountdown`
+  only offers "Start now" (skip) — no way to pause it if not ready yet.
+- [ ] **Make the exercise cue easier to digest mid-workout.** `step.cue` renders
+  as one body-text paragraph; nobody reads a paragraph while working out —
+  needs a shorter/more scannable format.
+
+Open questions to resolve with Ameena before scoping further (unclear from
+notes, don't guess):
+- [ ] Audit exercise step lengths — are current durations right?
+- [ ] Do we need captions or sound cues during a session?
+- [ ] Why does starting/running a session take multiple screens — can it be
+  consolidated?
+- [ ] What does "exercises listed above" refer to — a preview list of
+  upcoming exercises before/during a session?
+
 ### Microanimations
 
 `DesignSystem/Motion.swift` already has a reduce-motion-aware token set
@@ -52,9 +75,12 @@ not just functionally correct:
   long-press-for-debug-menu hooks in `TodayView`/`YouView` are already
   commented out/`#if DEBUG`-gated; double check nothing similar slipped into
   newer screens (Chat, MenuBuilder).
-- [ ] **A shareable moment**: a native Share Sheet for a completed session or
-  a Little Win card as a clean, on-brand image. Gives people something to
-  actually post, and doubles as free ASO/marketing content.
+- [x] **A shareable moment — Little Win card.** `LittleWinsView.swift` now
+  wraps `UIActivityViewController` to share an unlocked badge as a clean,
+  on-brand image. **Owned by Yusra.**
+- [ ] **A shareable moment — completed session.** Same treatment still needed
+  for a just-finished session, not just Little Win badges. Gives people
+  something to post from their daily practice too, not only milestones.
 - [ ] **Finish `docs/BUILD_IN_PUBLIC_LOG.md`** — still empty with 3 drafts
   queued unposted (already flagged above under Admin-adjacent work). Screenshots/clips of the above polish are natural post material.
 - [ ] **Sanity-pass empty and first-run states** for "looks intentional, not
