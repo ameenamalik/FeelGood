@@ -115,10 +115,6 @@ struct TodayView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
-            Text(model.greeting())
-                .font(FGFont.label)
-                .foregroundStyle(FGColor.inkMuted)
-
             Text(model.upgradedHeadline ?? model.menu.headline)
                 .font(FGFont.display)
                 .tracking(-0.8)
@@ -684,10 +680,11 @@ private struct DoneMark: View {
         HStack(spacing: FGSpace.xs) {
             Image(systemName: "checkmark.circle.fill")
                 .symbolEffect(.bounce, value: hasBounced)
+                .foregroundStyle(FGColor.sageDeep)
             Text("Done")
+                .foregroundStyle(FGColor.sageDeep)
         }
         .font(.system(size: 13, weight: .semibold, design: .rounded))
-        .foregroundStyle(FGColor.sageDeep)
         .accessibilityHidden(true)
         .onAppear { hasBounced.toggle() }
     }
@@ -697,10 +694,11 @@ private struct ResumeMark: View {
     var body: some View {
         HStack(spacing: FGSpace.xs) {
             Image(systemName: "play.circle.fill")
+                .foregroundStyle(FGColor.ink)
             Text("Resume")
+                .foregroundStyle(FGColor.ink)
         }
         .font(.system(size: 13, weight: .semibold, design: .rounded))
-        .foregroundStyle(FGColor.ink)
         .accessibilityHidden(true)
     }
 }
@@ -759,7 +757,7 @@ private struct MenuItemBody: View {
             HStack(alignment: .center, spacing: 6) {
                 Text(item.course.label.uppercased())
                     .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(FGColor.ink)
+                    .foregroundStyle(item.course.accentText)
                     .padding(.horizontal, 11)
                     .padding(.vertical, 5)
                     .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
@@ -767,7 +765,7 @@ private struct MenuItemBody: View {
 
                 Text(item.session.durationLabel.uppercased())
                     .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(FGColor.ink)
+                    .foregroundStyle(item.course.accentText)
                     .padding(.horizontal, 11)
                     .padding(.vertical, 5)
                     .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
@@ -788,7 +786,7 @@ private struct MenuItemBody: View {
                     Button(action: onSwap) {
                         Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(FGColor.ink)
+                            .foregroundStyle(item.course.accentText)
                             .frame(width: 30, height: 30)
                             .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
                             .clipShape(Circle())
@@ -806,7 +804,7 @@ private struct MenuItemBody: View {
             // Session Title in SF Pro Rounded Bold
             Text(item.session.title)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
+                .foregroundStyle(isDone ? FGColor.inkMuted : item.course.accentText)
                 .strikethrough(isDone, color: FGColor.clayDeep)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -815,7 +813,7 @@ private struct MenuItemBody: View {
             if !subtitleText.isEmpty {
                 Text(subtitleText)
                     .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(isDone ? FGColor.inkMuted.opacity(0.8) : FGColor.ink.opacity(0.78))
+                    .foregroundStyle(isDone ? FGColor.inkMuted.opacity(0.8) : item.course.accentText.opacity(0.78))
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -824,11 +822,7 @@ private struct MenuItemBody: View {
         .padding(.horizontal, 20)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(
-                    isDone
-                        ? AnyShapeStyle(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.65))
-                        : AnyShapeStyle(item.course.accentGradient)
-                )
+                .fill(item.course.accentGradient)
                 .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.25 : 0.04), radius: 10, x: 0, y: 3)
         )
         .overlay(
@@ -858,3 +852,4 @@ private struct MenuItemBody: View {
         )
     )
 }
+
