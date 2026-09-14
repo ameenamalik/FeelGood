@@ -742,6 +742,55 @@ final class TodayModel {
         completedToday.contains(item.session.id)
     }
 
+    func completedEntriesToday(now: Date = Date()) -> [HistoryEntry] {
+        let today = calendar.startOfDay(for: now)
+        return history
+            .filter { $0.wasCompleted && calendar.startOfDay(for: $0.date) == today }
+            .sorted { $0.date > $1.date }
+    }
+
+    var completedEntriesToday: [HistoryEntry] {
+        completedEntriesToday()
+    }
+
+    var hasCompletedActivityToday: Bool {
+        !completedEntriesToday.isEmpty
+    }
+
+    func hasCompletedSomethingElseToday(now: Date = Date()) -> Bool {
+        completedEntriesToday(now: now).contains { entry in
+            if let session = everything.first(where: { $0.id == entry.sessionID }) {
+                return session.isOwn
+            }
+            return !menu.items.contains(where: { $0.session.id == entry.sessionID })
+        }
+    }
+
+    var hasCompletedSomethingElseToday: Bool {
+        hasCompletedSomethingElseToday()
+    }
+
+    var isMenuCompletedToday: Bool {
+        !menu.items.isEmpty && menu.items.allSatisfy { isCompleted($0) }
+    }
+
+    var shouldShowCompletionState: Bool {
+        hasCompletedSomethingElseToday || isMenuCompletedToday
+    }
+
+    var remainingDurationMin: Int {
+        menu.items
+            .filter { !isCompleted($0) }
+            .reduce(0) { $0 + $1.session.durationMin }
+    }
+
+    func title(for entry: HistoryEntry) -> String {
+        if let session = everything.first(where: { $0.id == entry.sessionID }) {
+            return session.title
+        }
+        return entry.activity.label
+    }
+
     private func refreshCompletedToday(now: Date) {
         let today = calendar.startOfDay(for: now)
         completedToday = Set(

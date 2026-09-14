@@ -446,14 +446,19 @@ struct PlayerView: View {
         .accessibilityLabel("Starting in \(readingRemaining) seconds")
     }
 
+    /// This session's completion tint, or the screen's long-standing butter
+    /// glow for activities with no single clear family — see
+    /// `Activity.completionAura`.
+    private var completionAura: FGAura { session.activity.completionAura ?? .butter }
+
     private var completion: some View {
         VStack(spacing: FGSpace.l) {
             Spacer()
             ZStack {
                 // The echo of the final-stretch flash, settling out for good.
-                // Sits behind "Done." only — never behind any one Feel
+                // Sits behind the headline only — never behind any one Feel
                 // choice below, so it can't read as nudging an answer.
-                FGAura.butter.core
+                completionAura.core
                     .opacity(0.55)
                     .frame(width: 280, height: 220)
                     .blur(radius: 46)
@@ -461,7 +466,7 @@ struct PlayerView: View {
                     .accessibilityHidden(true)
 
                 VStack(spacing: FGSpace.l) {
-                    Text("Done.")
+                    Text(session.activity.completionHeadline)
                         .font(FGFont.display)
                         .foregroundStyle(FGColor.ink)
                     Text("How did that feel?")
@@ -711,7 +716,7 @@ struct PlayerView: View {
         switch feel {
         case .lovedIt: "heart"
         case .fine: "hand.thumbsup"
-        case .tooMuch: "tortoise"
+        case .tooMuch: "battery.25percent"
         }
     }
 
@@ -719,7 +724,7 @@ struct PlayerView: View {
         switch feel {
         case .lovedIt: "Loved it"
         case .fine: "Fine"
-        case .tooMuch: "Too much"
+        case .tooMuch: "A lot"
         }
     }
 }

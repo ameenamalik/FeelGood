@@ -26,6 +26,7 @@ struct TodayView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var isAdjusting = false
     @State private var isShowingMyMenu = false
+    @State private var showMenuAnyway = false
     @State private var selected: MenuItem?
     @State private var littleWinCelebration: LittleWinCelebration?
     #if DEBUG
@@ -47,8 +48,12 @@ struct TodayView: View {
                     checkInPrompt
                     menuHeading
                     calendarFitCard
-                    menuItems
-                    logFooter
+                    if model.shouldShowCompletionState && !showMenuAnyway {
+                        completedSummaryCard
+                    } else {
+                        menuItems
+                        logFooter
+                    }
                 }
                 .padding(FGSpace.page)
             }
@@ -326,19 +331,25 @@ struct TodayView: View {
         )
     }
 
-    /// "Your menu", sum of duration, and collapsible quick adjust drawer.
+    /// "Your menu", remaining minutes, and collapsible quick adjust drawer.
     private var menuHeading: some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
             HStack(alignment: .center, spacing: FGSpace.s) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text("Your menu")
-                        .font(FGFont.sectionTitle)
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundStyle(FGColor.ink)
                         .accessibilityAddTraits(.isHeader)
 
-                    Text("• \(model.menu.items.reduce(0) { $0 + $1.session.durationMin }) min")
-                        .font(FGFont.label)
-                        .foregroundStyle(FGColor.inkMuted)
+                    if model.remainingDurationMin > 0 {
+                        Text("\(model.remainingDurationMin) min left")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundStyle(FGColor.inkMuted)
+                    } else if model.hasCompletedActivityToday {
+                        Text("Completed")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundStyle(FGColor.sageDeep)
+                    }
                 }
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
@@ -354,7 +365,7 @@ struct TodayView: View {
                     GlassEffectContainer(spacing: FGSpace.s) {
                         HStack(spacing: FGSpace.s) {
                             routineButtonLabel
-                                .glassEffect(.regular.interactive(), in: Circle())
+                                .glassEffect(.regular.interactive(), in: Capsule())
                             if model.isProUser {
                                 adjustButtonLabel
                                     .glassEffect(
@@ -387,11 +398,16 @@ struct TodayView: View {
         Button {
             isShowingMyMenu = true
         } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(FGColor.ink)
-                .frame(width: 32, height: 32)
-                .contentShape(Circle())
+            HStack(spacing: 4) {
+                Image(systemName: "plus")
+                    .font(.system(size: 11, weight: .semibold))
+                Text("Add")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+            }
+            .foregroundStyle(FGColor.ink)
+            .padding(.horizontal, 10)
+            .frame(height: 32)
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Add custom routine or view My Menu")
@@ -401,8 +417,8 @@ struct TodayView: View {
         HStack(spacing: FGSpace.s) {
             routineButtonLabel
                 .background(FGColor.surface)
-                .clipShape(Circle())
-                .overlay(Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1))
+                .clipShape(Capsule())
+                .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
             if model.isProUser {
                 adjustButtonLabel
                     .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
@@ -510,13 +526,98 @@ struct TodayView: View {
         }
     }
 
-    private var logFooter: some View {
-        // Movement that happened without us. Logging it is how the engine
-        // learns what a normal week actually looks like.
-        FGQuietButton("I did something else", systemImage: "plus") {
-            isLogging = true
+    private var completedSummaryCard: some View {
+        VStack(spacing: FGSpace.m) {
+            VStack(alignment: .leading, spacing: FGSpace.s) {
+                HStack(alignment: .top, spacing: FGSpace.m) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 32, weight: .semibold))
+                        .foregroundStyle(FGColor.sageDeep)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Done for today")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundStyle(FGColor.ink)
+
+                        if let latest = model.completedEntriesToday.first {
+                            let title = model.title(for: latest)
+                            Text("\(title) • \(latest.durationMin) min")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(FGColor.inkMuted)
+                        } else {
+                            Text("All routines completed")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(FGColor.inkMuted)
+                        }
+
+                        Text("Great job taking time for yourself today.")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundStyle(FGColor.inkMuted.opacity(0.85))
+                            .padding(.top, 2)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(FGSpace.l)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Color.white.opacity(colorScheme == .dark ? 0.10 : 0.85))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.15 : 0.6), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.04), radius: 10, x: 0, y: 3)
+            )
+
+            HStack(spacing: FGSpace.m) {
+                Button {
+                    isLogging = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("Log another activity")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                    }
+                    .foregroundStyle(FGColor.inkMuted)
+                }
+                .buttonStyle(.plain)
+
+                Text("•")
+                    .foregroundStyle(FGColor.lineStrong.opacity(0.5))
+
+                Button {
+                    withAnimation(FGMotion.settle) {
+                        showMenuAnyway = true
+                    }
+                } label: {
+                    Text("View today's menu")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundStyle(FGColor.inkMuted)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private var logFooter: some View {
+        VStack(spacing: FGSpace.s) {
+            if showMenuAnyway && model.shouldShowCompletionState {
+                Button {
+                    withAnimation(FGMotion.settle) {
+                        showMenuAnyway = false
+                    }
+                } label: {
+                    Text("Hide menu")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundStyle(FGColor.inkMuted)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+            }
+        }
     }
 }
 
@@ -573,14 +674,22 @@ private struct MenuItemCard: View {
 /// Marks something already done today. Not a score, not a count, and nothing
 /// accrues from it — it's here so a finished item stops asking to be started.
 private struct DoneMark: View {
+    /// Fires once, right after this view is inserted (see `MenuItemBody`'s
+    /// `.transition` on it) — a static checkmark landing in a scaled-in pill
+    /// reads as arrived, not achieved. The bounce is what actually sells
+    /// "you just did that."
+    @State private var hasBounced = false
+
     var body: some View {
         HStack(spacing: FGSpace.xs) {
             Image(systemName: "checkmark.circle.fill")
+                .symbolEffect(.bounce, value: hasBounced)
             Text("Done")
         }
         .font(.system(size: 13, weight: .semibold, design: .rounded))
         .foregroundStyle(FGColor.sageDeep)
         .accessibilityHidden(true)
+        .onAppear { hasBounced.toggle() }
     }
 }
 
@@ -646,27 +755,28 @@ private struct MenuItemBody: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Top metadata row: Frosted pill badges matching Chat
+            // Top metadata row: White pill badges matching design reference
             HStack(alignment: .center, spacing: 6) {
                 Text(item.course.label.uppercased())
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .foregroundStyle(FGColor.ink)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 11)
                     .padding(.vertical, 5)
-                    .background(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.70))
+                    .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
                     .clipShape(Capsule())
 
                 Text(item.session.durationLabel.uppercased())
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .foregroundStyle(FGColor.ink)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 11)
                     .padding(.vertical, 5)
-                    .background(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.70))
+                    .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
                     .clipShape(Capsule())
 
                 if isDone {
                     DoneMark()
                         .padding(.leading, 2)
+                        .transition(.scale(scale: 0.7).combined(with: .opacity))
                 } else if isInProgress {
                     ResumeMark()
                         .padding(.leading, 2)
@@ -680,7 +790,7 @@ private struct MenuItemBody: View {
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(FGColor.ink)
                             .frame(width: 30, height: 30)
-                            .background(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.70))
+                            .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -695,47 +805,23 @@ private struct MenuItemBody: View {
 
             // Session Title in SF Pro Rounded Bold
             Text(item.session.title)
-                .font(.system(size: 21, weight: .bold, design: .rounded))
+                .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink)
                 .strikethrough(isDone, color: FGColor.clayDeep)
                 .fixedSize(horizontal: false, vertical: true)
 
             // Subtitle
-            if !item.session.subtitle.isEmpty {
-                Text(item.session.subtitle)
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundStyle(isDone ? FGColor.inkMuted.opacity(0.8) : FGColor.ink.opacity(0.82))
+            let subtitleText = !item.session.subtitle.isEmpty ? item.session.subtitle : item.reasonText
+            if !subtitleText.isEmpty {
+                Text(subtitleText)
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundStyle(isDone ? FGColor.inkMuted.opacity(0.8) : FGColor.ink.opacity(0.78))
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
-
-            // Visual target & context pills in frosted chat style (duration moved to top to avoid redundancy)
-            if !item.session.chipsWithoutDuration.isEmpty || item.session.isOwn {
-                WrapRow(spacing: 6, lineSpacing: 6) {
-                    ForEach(item.session.chipsWithoutDuration, id: \.self) { chip in
-                        Text(chip.uppercased())
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink.opacity(0.85))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(Color.white.opacity(colorScheme == .dark ? (isDone ? 0.06 : 0.16) : (isDone ? 0.45 : 0.65)))
-                            .clipShape(Capsule())
-                    }
-                    if item.session.isOwn {
-                        Text("YOURS")
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundStyle(isDone ? FGColor.inkMuted : FGColor.ink.opacity(0.85))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(Color.white.opacity(colorScheme == .dark ? (isDone ? 0.06 : 0.16) : (isDone ? 0.45 : 0.65)))
-                            .clipShape(Capsule())
-                    }
-                }
-            }
-
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 18)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 20)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(
@@ -754,6 +840,7 @@ private struct MenuItemBody: View {
                     lineWidth: 1
                 )
         )
+        .fgAnimation(FGMotion.settle, value: isDone)
     }
 }
 

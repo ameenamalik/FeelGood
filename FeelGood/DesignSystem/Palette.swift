@@ -261,6 +261,34 @@ nonisolated extension PlaceIntent {
     }
 }
 
+// MARK: - Session completion, one colour per activity family
+
+nonisolated extension Activity {
+    /// The completion screen's glow, grouped by the `Intent` an activity most
+    /// often serves — the same aura-per-intent association already used for
+    /// onboarding's intent tiles, so finishing a yoga flow and having chosen
+    /// "Mobility" during onboarding land on the same sage. `nil` for
+    /// activities with no single clear family (see `completionHeadline`) —
+    /// those keep the screen's plain, untinted glow rather than being forced
+    /// into a family that doesn't really fit.
+    var completionAura: FGAura? {
+        switch self {
+        case .yoga, .stretching, .pilates: .sage // mobilize
+        case .qigong, .breathwork: .blush // calm
+        case .strength: .lilac // strengthen
+        case .walking, .biking, .swimming, .jumpRope: .apricot // energize
+        case .dance: .butter // joy / play
+        case .agility, .carries, .racquet, .climbing, .martialArts, .skating: nil
+        }
+    }
+
+    /// "Done." reads fine once there's a colour story backing it up. Without
+    /// one, it's worth saying the plainer, warmer thing instead.
+    var completionHeadline: String {
+        completionAura == nil ? "Still good." : "Done."
+    }
+}
+
 nonisolated extension BodyState {
     var checkInAccent: FGAccent { .rose }
 
