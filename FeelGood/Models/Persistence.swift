@@ -444,6 +444,11 @@ final class AffinityRecord {
 final class CustomSession {
     @Attribute(.unique) var id: String
     var title: String
+    /// Optional copy written by the person who created the routine.
+    var sessionDescription: String? = nil
+    /// JSON keeps the ordered value-type parts together without another model
+    /// relationship. `nil` is the migration-safe shape for older routines.
+    var partsData: Data? = nil
     var activityRaw: String
     var durationMin: Int
     /// 1...5, from three words on the log sheet rather than a number.
@@ -454,6 +459,8 @@ final class CustomSession {
     init(
         id: String = "own-\(UUID().uuidString)",
         title: String,
+        description: String? = nil,
+        parts: [CustomRoutinePart] = [],
         activity: Activity,
         durationMin: Int,
         intensity: Int,
@@ -462,6 +469,8 @@ final class CustomSession {
     ) {
         self.id = id
         self.title = title
+        sessionDescription = description
+        partsData = try? JSONEncoder().encode(parts)
         activityRaw = activity.rawValue
         self.durationMin = durationMin
         self.intensity = intensity
@@ -471,9 +480,25 @@ final class CustomSession {
 
     var activity: Activity { Activity(rawValue: activityRaw) ?? .strength }
     var course: Course? { courseRaw.flatMap(Course.init(rawValue:)) }
+    var parts: [CustomRoutinePart] {
+        get {
+            guard let partsData else { return [] }
+            return (try? JSONDecoder().decode([CustomRoutinePart].self, from: partsData)) ?? []
+        }
+        set { partsData = try? JSONEncoder().encode(newValue) }
+    }
 
     var session: Session {
-        .own(id: id, title: title, activity: activity, durationMin: durationMin, intensity: intensity, course: course)
+        .own(
+            id: id,
+            title: title,
+            description: sessionDescription,
+            parts: parts,
+            activity: activity,
+            durationMin: durationMin,
+            intensity: intensity,
+            course: course
+        )
     }
 }
 

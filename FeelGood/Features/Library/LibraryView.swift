@@ -70,18 +70,26 @@ struct LibraryView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
+                if session.isOwn && !session.subtitle.isEmpty {
+                    Text(session.subtitle)
+                        .font(FGFont.caption)
+                        .foregroundStyle(FGColor.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 WrapRow(spacing: FGSpace.xs, lineSpacing: FGSpace.xs) {
                     ForEach(session.chips, id: \.self) { FGChip(text: $0) }
-                    if session.isOwn {
-                        FGChip(text: "Yours")
-                    }
                 }
             }
         }
         .contentShape(Rectangle())
         .onTapGesture { selected = session }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(session.title). \(session.chips.joined(separator: ", "))")
+        .accessibilityLabel(
+            ([session.title, session.subtitle] + session.chips)
+                .filter { !$0.isEmpty }
+                .joined(separator: ". ")
+        )
         .accessibilityAddTraits(.isButton)
     }
 }

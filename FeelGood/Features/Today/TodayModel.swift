@@ -536,6 +536,87 @@ final class TodayModel {
         rebuildEngine()
     }
 
+    /// Changes a kept routine without replacing its identity or losing its history.
+    @discardableResult
+    func updateCustomRoutine(
+        _ session: Session,
+        title: String,
+        description: String?,
+        parts: [CustomRoutinePart],
+        activity: Activity,
+        durationMin: Int,
+        intensity: Int,
+        course: Course,
+        addToToday: Bool,
+        now: Date = Date()
+    ) -> Session? {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty,
+              ownSessions.contains(where: { $0.id == session.id }) else { return nil }
+        let trimmedDescription = description?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let finalDescription = trimmedDescription.flatMap { $0.isEmpty ? nil : $0 }
+        let oldCourse = session.course
+
+        guard let updated = log.update(
+            session.id,
+            title: trimmedTitle,
+            description: finalDescription,
+            parts: parts,
+            activity: activity,
+            durationMin: durationMin,
+            intensity: intensity,
+            course: course
+        ) else { return nil }
+
+        ownSessions = log.kept()
+        rebuildEngine()
+
+        let overrideCourse = todayCustomOverrides.first { $0.value.id == session.id }?.key
+        let appearsOnMenu = menu.items.contains { $0.session.id == session.id }
+
+        if let overrideCourse {
+            todayCustomOverrides.removeValue(forKey: overrideCourse)
+            if addToToday {
+                todayCustomOverrides[course] = updated
+            }
+        } else if addToToday {
+            todayCustomOverrides[course] = updated
+        }
+
+        let needsMenuRebuild = oldCourse != course || (overrideCourse != nil && !addToToday)
+        if !needsMenuRebuild, appearsOnMenu || overrideCourse != nil || addToToday {
+            menu = menu.replacing(course: course, with: updated)
+            log.save(menu, generatedAt: now)
+            publishSnapshot(now: now)
+        } else if appearsOnMenu || overrideCourse != nil || addToToday {
+            menu = engine.makeMenu(input(now: now))
+            for (overrideCourse, overrideSession) in todayCustomOverrides {
+                menu = menu.replacing(course: overrideCourse, with: overrideSession)
+            }
+            log.save(menu, generatedAt: now)
+            publishSnapshot(now: now)
+            requestCopyUpgrade(now: now)
+        }
+
+        if let userId = AuthService.shared.currentUser?.uid {
+            Task {
+                try? await FirestoreService.shared.saveCustomWorkout(
+                    id: updated.id,
+                    userId: userId,
+                    title: updated.title,
+                    description: finalDescription,
+                    parts: parts.map(FirestoreCustomRoutinePart.init),
+                    durationMin: updated.durationMin,
+                    intensity: updated.intensity,
+                    course: updated.course.rawValue,
+                    activity: updated.activity.rawValue
+                )
+            }
+        }
+
+        return updated
+    }
+
     /// Removing a kept workout removes it from what can be offered. It does not
     /// remove the fact that it was done.
     func forget(_ session: Session, now: Date = Date()) {
@@ -564,6 +645,8 @@ final class TodayModel {
     @discardableResult
     func addCustomRoutine(
         title: String,
+        description: String? = nil,
+        parts: [CustomRoutinePart] = [],
         activity: Activity = .stretching,
         durationMin: Int,
         intensity: Int = 3,
@@ -573,6 +656,8 @@ final class TodayModel {
     ) -> Session {
         let session = log.keep(
             title: title,
+            description: description,
+            parts: parts,
             activity: activity,
             durationMin: durationMin,
             intensity: intensity,
@@ -592,6 +677,8 @@ final class TodayModel {
                     id: session.id,
                     userId: userId,
                     title: title,
+                    description: description,
+                    parts: parts.map(FirestoreCustomRoutinePart.init),
                     durationMin: durationMin,
                     intensity: intensity,
                     course: course.rawValue,
@@ -648,6 +735,8 @@ final class TodayModel {
                 let course = workout.course.flatMap(Course.init(rawValue:))
                 log.keep(
                     title: workout.title,
+                    description: workout.description,
+                    parts: workout.parts?.map(\.customRoutinePart) ?? [],
                     activity: act,
                     durationMin: workout.durationMin,
                     intensity: workout.intensity,

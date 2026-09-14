@@ -14,8 +14,7 @@
 import SwiftUI
 
 struct SessionDetailView: View {
-    let session: Session
-    let course: Course
+    @State private var session: Session
     let model: TodayModel
     let onCompleted: () -> Void
 
@@ -24,8 +23,7 @@ struct SessionDetailView: View {
     @State private var startedAt = Date()
     @State private var explaining: ExerciseTerm?
     @State private var isShowingSteps = false
-    @State private var isRenaming = false
-    @State private var newTitle = ""
+    @State private var isEditing = false
     @State private var isConfirmingRemoval = false
     @State private var isConfirmingHide = false
     @State private var littleWinCelebration: LittleWinCelebration?
@@ -34,16 +32,14 @@ struct SessionDetailView: View {
 
     /// From the menu, where something chose it.
     init(item: MenuItem, model: TodayModel, onCompleted: @escaping () -> Void = {}) {
-        session = item.session
-        course = item.course
+        _session = State(initialValue: item.session)
         self.model = model
         self.onCompleted = onCompleted
     }
 
     /// From the Library, where nobody chose it and somebody went looking.
     init(session: Session, model: TodayModel, onCompleted: @escaping () -> Void = {}) {
-        self.session = session
-        course = session.course
+        _session = State(initialValue: session)
         self.model = model
         self.onCompleted = onCompleted
     }
@@ -79,19 +75,26 @@ struct SessionDetailView: View {
                         }
                     }
 
-                    // Somebody's own workout has no steps to play, because
-                    // nobody wrote any. It gets the honest button instead.
+                    // Custom routines remain editable whether they are a
+                    // simple after-the-fact log or a playable list of parts.
                     if session.isOwn {
                         VStack(spacing: FGSpace.s) {
-                            FGPrimaryButton(title: "I did this") {
-                                Analytics.capture("workout_completed", properties: workoutProperties)
-                                model.complete(session, startedAt: Date(), feel: nil)
-                                presentLittleWinOrFinish()
+                            if session.source.steps.isEmpty {
+                                FGPrimaryButton(title: "I did this") {
+                                    Analytics.capture("workout_completed", properties: workoutProperties)
+                                    model.complete(session, startedAt: Date(), feel: nil)
+                                    presentLittleWinOrFinish()
+                                }
+                            } else {
+                                FGPrimaryButton(title: savedProgress == nil ? "Start" : "Resume") {
+                                    Analytics.capture("workout_started", properties: workoutProperties)
+                                    startedAt = savedProgress?.startedAt ?? Date()
+                                    isPlaying = true
+                                }
                             }
                             HStack(spacing: FGSpace.m) {
-                                FGQuietButton("Rename", systemImage: "pencil") {
-                                    newTitle = session.title
-                                    isRenaming = true
+                                FGQuietButton("Edit", systemImage: "pencil") {
+                                    isEditing = true
                                 }
                                 FGQuietButton("Remove", systemImage: "minus.circle") {
                                     isConfirmingRemoval = true
@@ -143,10 +146,10 @@ struct SessionDetailView: View {
         .sheet(item: $explaining) { term in
             GlossarySheet(term: term)
         }
-        .alert("Name this one", isPresented: $isRenaming) {
-            TextField("Name", text: $newTitle)
-            Button("Save") { model.rename(session, to: newTitle) }
-            Button("Cancel", role: .cancel) {}
+        .sheet(isPresented: $isEditing) {
+            AddRoutineSheet(model: model, editingSession: session) { updated in
+                session = updated
+            }
         }
         .confirmationDialog(
             "Remove \(session.title)?",
@@ -181,6 +184,8 @@ struct SessionDetailView: View {
     private var savedProgress: SessionProgress? {
         model.progress(for: session)
     }
+
+    private var course: Course { session.course }
 
     private func handlePlayerDismiss() {
         guard shouldCloseAfterPlayer else { return }
@@ -245,6 +250,13 @@ struct SessionDetailView: View {
                 .font(FGFont.display)
                 .foregroundStyle(FGColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if !session.subtitle.isEmpty {
+                Text(session.subtitle)
+                    .font(FGFont.reason)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)

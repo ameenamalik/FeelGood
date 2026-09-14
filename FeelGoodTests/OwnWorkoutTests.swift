@@ -60,6 +60,41 @@ struct OwnWorkoutTests {
         #expect(own(.strength).source.steps.isEmpty)
     }
 
+    @Test("A custom description replaces the generic Yours subtitle")
+    func optionalDescription() {
+        let described = Session.own(
+            id: "own-described",
+            title: "Desk reset",
+            description: "Loosen my shoulders after work",
+            activity: .stretching,
+            durationMin: 10,
+            intensity: 2
+        )
+
+        #expect(described.subtitle == "Loosen my shoulders after work")
+        #expect(own(.strength).subtitle.isEmpty)
+    }
+
+    @Test("A custom routine with parts remains owned and becomes playable")
+    func customPartsBecomeTimedSteps() {
+        let session = Session.own(
+            id: "own-morning",
+            title: "Morning stretch",
+            parts: [
+                CustomRoutinePart(title: "Lunges", durationMin: 1),
+                CustomRoutinePart(title: "Arm stretch", durationMin: 2),
+                CustomRoutinePart(title: "Walking", durationMin: 1),
+            ],
+            activity: .stretching,
+            durationMin: 4,
+            intensity: 2
+        )
+
+        #expect(session.isOwn)
+        #expect(session.source.steps.map(\.name) == ["Lunges", "Arm stretch", "Walking"])
+        #expect(session.source.steps.map(\.seconds) == [60, 120, 60])
+    }
+
     @Test("Explicit course overrides length inference")
     func explicitCourseOverridesLength() {
         let session = Session.own(
@@ -145,5 +180,57 @@ struct OwnWorkoutTests {
         #expect(desserts.count == 1)
         #expect(desserts.first?.title == "Fun Dance")
         #expect(mains.isEmpty)
+    }
+
+    @Test("Editing a custom routine keeps its identity and updates every field")
+    @MainActor
+    func editingCustomRoutine() throws {
+        let store = ContentStore(catalog: ContentCatalog(version: 1, sessions: Fixture.catalog, glossary: []))
+        let model = TodayModel(
+            store: store,
+            profile: Fixture.profile(),
+            log: InMemorySessionLog(),
+            now: Fixture.now,
+            calendar: Fixture.utc
+        )
+        let original = model.addCustomRoutine(
+            title: "Quick Reset",
+            parts: [CustomRoutinePart(title: "Breathe", durationMin: 5)],
+            activity: .stretching,
+            durationMin: 5,
+            intensity: 2,
+            course: .appetizer,
+            addToToday: true,
+            now: Fixture.now
+        )
+
+        let updated = try #require(model.updateCustomRoutine(
+            original,
+            title: "Evening Reset",
+            description: "Unwind after work",
+            parts: [
+                CustomRoutinePart(title: "Fold", durationMin: 5),
+                CustomRoutinePart(title: "Twist", durationMin: 10),
+            ],
+            activity: .yoga,
+            durationMin: 15,
+            intensity: 3,
+            course: .side,
+            addToToday: true,
+            now: Fixture.now
+        ))
+
+        #expect(updated.id == original.id)
+        #expect(updated.title == "Evening Reset")
+        #expect(updated.subtitle == "Unwind after work")
+        #expect(updated.activity == .yoga)
+        #expect(updated.durationMin == 15)
+        #expect(updated.intensity == 3)
+        #expect(updated.course == .side)
+        #expect(updated.source.steps.map(\.name) == ["Fold", "Twist"])
+        #expect(model.customRoutines(for: .appetizer).isEmpty)
+        #expect(model.customRoutines(for: .side).first == updated)
+        #expect(model.todayCustomOverrides[.appetizer] == nil)
+        #expect(model.todayCustomOverrides[.side] == updated)
     }
 }

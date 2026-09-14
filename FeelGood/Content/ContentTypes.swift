@@ -200,6 +200,7 @@ nonisolated struct Step: Codable, Hashable, Sendable {
 /// video sessions require a connection and can never sit behind the paywall.
 nonisolated enum SessionSource: Codable, Hashable, Sendable {
     case authored(steps: [Step])
+    case custom(steps: [Step])
     case youtube(videoID: String, channel: String)
 
     var isVideo: Bool {
@@ -208,20 +209,24 @@ nonisolated enum SessionSource: Codable, Hashable, Sendable {
     }
 
     var steps: [Step] {
-        if case .authored(let steps) = self { return steps }
-        return []
+        switch self {
+        case .authored(let steps), .custom(let steps): steps
+        case .youtube: []
+        }
     }
 
     // Hand-authored JSON stays readable with an explicit discriminator rather
     // than Swift's synthesised single-key-per-case shape.
     private enum CodingKeys: String, CodingKey { case type, steps, videoID, channel }
-    private enum Kind: String, Codable { case authored, youtube }
+    private enum Kind: String, Codable { case authored, custom, youtube }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         switch try c.decode(Kind.self, forKey: .type) {
         case .authored:
             self = .authored(steps: try c.decode([Step].self, forKey: .steps))
+        case .custom:
+            self = .custom(steps: try c.decode([Step].self, forKey: .steps))
         case .youtube:
             self = .youtube(
                 videoID: try c.decode(String.self, forKey: .videoID),
@@ -235,6 +240,9 @@ nonisolated enum SessionSource: Codable, Hashable, Sendable {
         switch self {
         case .authored(let steps):
             try c.encode(Kind.authored, forKey: .type)
+            try c.encode(steps, forKey: .steps)
+        case .custom(let steps):
+            try c.encode(Kind.custom, forKey: .type)
             try c.encode(steps, forKey: .steps)
         case .youtube(let videoID, let channel):
             try c.encode(Kind.youtube, forKey: .type)

@@ -145,11 +145,22 @@ struct PersistenceTests {
         let context = try context()
         let log = SessionLog(context: context, calendar: Fixture.utc)
 
-        let session = log.keep(title: "My gym session", activity: .strength, durationMin: 30, intensity: 3, now: Fixture.now)
+        let session = log.keep(
+            title: "My gym session",
+            description: "Weights, then a long stretch",
+            parts: [CustomRoutinePart(title: "Lift", durationMin: 20)],
+            activity: .strength,
+            durationMin: 30,
+            intensity: 3,
+            course: nil,
+            now: Fixture.now
+        )
 
         #expect(log.kept().count == 1)
         #expect(log.kept().first == session)
         #expect(try context.fetch(FetchDescriptor<CustomSession>()).first?.title == "My gym session")
+        #expect(try context.fetch(FetchDescriptor<CustomSession>()).first?.sessionDescription == "Weights, then a long stretch")
+        #expect(log.kept().first?.subtitle == "Weights, then a long stretch")
     }
 
     @Test("Renaming and forgetting are somebody's own to do")
@@ -163,6 +174,39 @@ struct PersistenceTests {
 
         log.forget(session.id)
         #expect(log.kept().isEmpty)
+    }
+
+    @Test("Editing a kept workout persists all editable details")
+    func keptWorkoutDetailsCanBeEdited() throws {
+        let context = try context()
+        let log = SessionLog(context: context, calendar: Fixture.utc)
+        let session = log.keep(title: "Mine", activity: .strength, durationMin: 30, intensity: 3, now: Fixture.now)
+
+        let updated = try #require(log.update(
+            session.id,
+            title: "After-work reset",
+            description: "Easy hips and shoulders",
+            parts: [
+                CustomRoutinePart(title: "Hips", durationMin: 8),
+                CustomRoutinePart(title: "Shoulders", durationMin: 7),
+            ],
+            activity: .yoga,
+            durationMin: 15,
+            intensity: 2,
+            course: .side
+        ))
+
+        #expect(updated.id == session.id)
+        #expect(log.kept().first == updated)
+        let stored = try #require(context.fetch(FetchDescriptor<CustomSession>()).first)
+        #expect(stored.title == "After-work reset")
+        #expect(stored.sessionDescription == "Easy hips and shoulders")
+        #expect(stored.activity == .yoga)
+        #expect(stored.durationMin == 15)
+        #expect(stored.intensity == 2)
+        #expect(stored.course == .side)
+        #expect(stored.parts.map(\.title) == ["Hips", "Shoulders"])
+        #expect(updated.source.steps.map(\.seconds) == [480, 420])
     }
 
     @Test("Today's answers come back on the same day and not on the next one")
