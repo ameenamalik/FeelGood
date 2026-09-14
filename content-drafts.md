@@ -232,12 +232,133 @@ Same as the cleaned draft above — IG's the natural home for the full bullet-li
 
 ---
 
+## 6. Persona-voice rewrites — Simone's audience, not build-in-public
+
+Drafts 1, 2, and 4 above are written for the indie-dev/Shipaton crowd — "we built,"
+"software engineer," ADDitude-style "dopamine menu" framing. Good for judging,
+wrong for Simone's actual audience: the "woman with 47 tabs open" (PRD §5) —
+35–54, working/running something/parenting, has downloaded and deleted four
+fitness apps already. She doesn't care how the app got built; she cares whether
+it will meet her at 7:14am with fifteen minutes and a kid asking for cereal.
+
+These three drop the dopamine-menu/ADHD vocabulary and the build-in-public
+meta-narrative entirely, following the template `#3` and `#5` already set:
+decision fatigue, guilt-free consistency, real-life scheduling. No mention of
+Simone by name or implied endorsement — she isn't signed off to be quoted or
+credited yet.
+
+**Platform**: Instagram (@ameeenazara) primary, repurposed below · **Status**: draft, needs your read before posting
+
+### 6a. One less decision (reframes the dance-party origin story)
+
+> the best advice i ever got about moving my body had nothing to do with fitness.
+>
+> a friend once told me: put on your favorite songs and have a dance party in your room. that's it. no plan, no equipment, no 45 minutes you don't have.
+>
+> the real block was never motivation. it's that by 7pm you're too tired to pick between six different workouts you don't have time for anyway — so you just don't move at all.
+>
+> feelgood is built around that: tell it how you're feeling and what you've got right now — fifteen minutes, home, outside, whatever — and it hands you one thing to do. some days that's a dance party. some days it's a walk around the block. some days it's stretching on the floor while everyone else in the house needs something from you.
+>
+> no streaks to keep. no rings to close. no guilt if today's a skip. just one less decision standing between you and moving.
+>
+> save this for the next time you've got fifteen minutes and zero idea what to do with them.
+>
+> #wellnessapp #selfcareroutine #movementnotworkout
+
+**Repurposed: TikTok version**
+
+On-screen text cards:
+1. the best advice i ever got about moving my body had nothing to do with fitness
+2. a friend told me: put on your favorite songs and have a dance party in your room. no plan, no equipment, no 45 minutes you don't have
+3. the real block was never motivation — it's that by 7pm you're too tired to pick between six workouts you don't have time for, so you just don't move
+4. feelgood asks how you're feeling + what you've got (15 min, home, outside, whatever) and gives you one thing to do
+5. some days that's a dance party. some days a walk around the block. some days stretching while someone needs something from you 💫
+6. no streaks, no rings, no guilt if today's a skip. just one less decision
+7. save this for the next time you've got fifteen minutes and no idea what to do with them
+
+**Caption**: one less decision, that's the whole app 💫 #wellnessapp #selfcareroutine #fyp
+
+**Repurposed: Twitter/X version (2-tweet thread, no hashtags)**
+
+**Tweet 1**: the best advice i ever got about moving my body had nothing to do with fitness — put on your favorite songs and have a dance party in your room. no plan, no equipment needed.
+
+**Tweet 2 (reply)**: the real block was never motivation, it's that by 7pm you're too tired to pick between six workouts you don't have time for anyway. feelgood just gives you one thing to do based on how you feel + what you've got.
+
+**Filming note**: same as the original origin-story post — screen-record opening the check-in while the cards play, no new visual needed.
+
+### 6b. What pro actually gives you (reframes the paywall admission as a direct value prop, no meta-commentary about the confusing launch)
+
+> what you're actually paying for with feelgood pro (it's not more workouts)
+>
+> pro doesn't unlock a bigger library. it unlocks not having to think about it — the full menu, every time, no matter how you're feeling or what you've got that day.
+>
+> free gives you a taste. pro means every single day — the good ones and the wiped-out ones — you open the app and there's already something there for you. no browsing, no "which of these 40 videos," no decision fatigue at the exact moment you have the least capacity for it.
+>
+> fewer decisions, not more content. that's the whole point.
+>
+> #wellnessapp #selfcareroutine
+
+**Repurposed: TikTok version**
+
+On-screen text cards:
+1. what you're actually paying for with feelgood pro — it's not more workouts
+2. pro doesn't unlock a bigger library
+3. it unlocks not having to think about it at all
+4. the full menu, every time, no matter how you're feeling or what you've got that day
+5. free gives you a taste. pro means even on the wiped-out days, there's already something there for you
+6. no browsing, no "which of these 40 videos," no decision fatigue right when you have the least capacity for it
+7. fewer decisions, not more content. that's the whole app 💛
+
+**Caption**: what pro actually gives you (hint: it's not more videos) 💛 #wellnessapp #fyp
+
+**Repurposed: Twitter/X version (2-tweet thread, no hashtags)**
+
+**Tweet 1**: what feelgood pro actually gives you: not more workouts. not having to think about it at all.
+
+**Tweet 2 (reply)**: free gives you a taste. pro means every day — good or wiped-out — there's already something there for you. no browsing, no decision fatigue right when you have zero capacity for it.
+
+**Note**: this is a straight value-prop post, not an admission that the launch copy was confusing — that meta-narrative belongs to draft 4's build-in-public audience, not this one. Hold this until the paywall copy itself is actually fixed (same TODO item), so the post matches what people see.
+
+### 6c. Two minutes counts (net-new, from PRD §4 principle "the smallest version always exists")
+
+> two minutes counts. actually.
+>
+> most fitness apps quietly tell you that if you can't do the full 45, don't bother logging in. feelgood doesn't work that way — the smallest version of showing up is still showing up.
+>
+> got two minutes between meetings? there's something for that. got fifteen with a kid asking for cereal? there's something for that too. the plan changes to fit the day you actually have, not the day an app assumes you have.
+>
+> no streaks to protect, so there's nothing to lose by doing less than you planned. just move a little, or don't, and come back whenever you come back.
+>
+> #wellnessapp #selfcareroutine
+
+**Repurposed: TikTok version**
+
+On-screen text cards:
+1. two minutes counts. actually.
+2. most fitness apps quietly tell you if you can't do the full 45, don't bother
+3. feelgood doesn't work that way — the smallest version of showing up is still showing up
+4. two minutes between meetings? there's something for that
+5. fifteen minutes with a kid asking for cereal? there's something for that too
+6. the plan changes to fit the day you actually have, not the day an app assumes you have
+7. no streaks to protect, so there's nothing to lose by doing less than planned 🌼
+
+**Caption**: the smallest version still counts 🌼 #wellnessapp #fyp
+
+**Repurposed: Twitter/X version (2-tweet thread, no hashtags)**
+
+**Tweet 1**: two minutes counts. actually. most fitness apps quietly tell you if you can't do the full 45, don't bother.
+
+**Tweet 2 (reply)**: feelgood changes the plan to fit the day you actually have — two minutes between meetings, fifteen with a kid asking for cereal, whatever you've got. no streak to protect means nothing to lose by doing less.
+
+---
+
 ## Suggested posting order
 
 1. Origin story (resets the whole build-in-public thread)
 2. Submission story (a few days later, keeps momentum)
 3. Paywall admission (whenever you're ready to actually act on the fix, so the post is true when it goes up)
 4. User-facing IG post (independent of the above three — can go up anytime you have the visual ready)
+5. Persona-voice rewrites (6a–6c) — a separate track for @ameeenazara, not tied to the build-in-public sequence above. 6a can go up anytime. Hold 6b until the paywall copy fix actually ships.
 
 ## Open items
 
