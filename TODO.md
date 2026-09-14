@@ -11,6 +11,8 @@ This document tracks upcoming engineering milestones and architectural enhanceme
 
 ### PlayerView feedback (handwritten notes, 2026-09-14)
 
+**Owned by Ameena.**
+
 - [ ] **Mid-hold "switch sides" alert.** For timed exercises done on both
   sides, add an explicit alert partway through the hold (haptic/visual, not
   just a silent timer, and not something buried at the end of the cue
@@ -57,7 +59,8 @@ notes, don't guess):
   user-toggleable — a mute/unmute affordance like Google Maps' voice
   toggle (tap to cancel, icon reflects on/off state), for people doing a
   session with others around or who just don't want audio.
-- [ ] **Split combined exercise steps in the catalog.** Some catalog steps
+- [ ] **Split combined exercise steps in the catalog.** **Owned by Yusra**
+  (after the custom-routine cluster below). Some catalog steps
   merge two distinct exercises into one step/cue, e.g. in
   `main-desk-worker-posture-flow` ([`catalog.json:3004`](FeelGood/Content/catalog.json:3004)):
   "Chest opener & wall angels" (`catalog.json:3043`), "Low lunge pulses &
@@ -66,7 +69,8 @@ notes, don't guess):
   `PlayerView` rendering fix — each should become two separate `Step`
   entries with proportioned durations. Needs a pass over the rest of
   `catalog.json` for the same pattern, not just this one session.
-- [ ] **Let a custom ("own") session take an optional description**, instead
+- [ ] **Let a custom ("own") session take an optional description**, **Owned
+  by Yusra**, instead
   of always showing the literal word "Yours". Root cause confirmed:
   [`OwnSession.swift:87`](FeelGood/Content/OwnSession.swift:87) hardcodes
   `subtitle: "Yours"` on every session `Session.own(...)` builds — there's
@@ -77,7 +81,8 @@ notes, don't guess):
   "Yours" when left blank.
   - [ ] **Later version:** let a custom session also take an optional photo.
 - [ ] **A custom routine added to today's menu has no "Start" button and no
-  internal timed parts — only "I did this."** Two pieces of the same gap:
+  internal timed parts — only "I did this."** **Owned by Yusra.** Two pieces
+  of the same gap:
   - Root cause confirmed: [`SessionDetailView.swift:84-100`](FeelGood/Features/Session/SessionDetailView.swift:84)
     deliberately shows "I did this" instead of "Start"/"Resume" whenever
     `session.isOwn` is true, and `isOwn` ([`OwnSession.swift:108`](FeelGood/Content/OwnSession.swift:108))
