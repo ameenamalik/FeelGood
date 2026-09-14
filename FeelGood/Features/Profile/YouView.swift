@@ -129,21 +129,21 @@ struct YouView: View {
         VStack(alignment: .leading, spacing: FGSpace.m) {
             profileHero
 
-            HStack(spacing: 6) {
+            HStack(spacing: FGSpace.s) {
                 preferencePill(
-                    "My Preferences",
+                    "My preferences",
                     fill: FGAura.blush.core
                 ) {
                     isEditingProfile = true
                 }
                 preferencePill(
-                    "Plan & account",
+                    "My account",
                     fill: FGAura.sage.core
                 ) {
                     isShowingAccount = true
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity)
         }
     }
 
@@ -155,18 +155,17 @@ struct YouView: View {
     ) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundStyle(FGColor.inkOnAccent)
                 .lineLimit(1)
                 .minimumScaleFactor(0.88)
-                .padding(.horizontal, 12)
-                .frame(height: 34)
+                .padding(.horizontal, FGSpace.s)
+                .frame(maxWidth: .infinity, minHeight: 40)
                 .background(Capsule().fill(fill))
         }
         .buttonStyle(.plain)
-        .frame(minHeight: FGSize.minTouchTarget)
+        .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
         .contentShape(Rectangle())
-        .fixedSize(horizontal: true, vertical: false)
     }
 
     @ViewBuilder
@@ -202,7 +201,7 @@ struct YouView: View {
             .accessibilityHint("Choose a different mascot")
 
             Text(welcomeLine)
-                .font(FGFont.body.weight(.semibold))
+                .font(FGFont.sectionTitle)
                 .foregroundStyle(FGColor.ink)
         }
     }
