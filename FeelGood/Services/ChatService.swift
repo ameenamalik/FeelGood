@@ -320,7 +320,8 @@ nonisolated protocol ChatProviding: Sendable {
         prompt: String,
         history: [WireChatMessage],
         activeSessionID: String?,
-        userContext: ChatUserContext?
+        userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation]
     ) async -> ChatResponse?
 }
 
@@ -328,9 +329,10 @@ extension ChatProviding {
     func describeDay(
         prompt: String,
         history: [WireChatMessage] = [],
-        activeSessionID: String? = nil
+        activeSessionID: String? = nil,
+        todaysMenu: [StructuredRecommendation] = []
     ) async -> ChatResponse? {
-        await describeDay(prompt: prompt, history: history, activeSessionID: activeSessionID, userContext: nil)
+        await describeDay(prompt: prompt, history: history, activeSessionID: activeSessionID, userContext: nil, todaysMenu: todaysMenu)
     }
 }
 
@@ -342,6 +344,7 @@ nonisolated protocol ChatTransport: Sendable {
         history: [WireChatMessage],
         activeSessionID: String?,
         userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation],
         timeout: TimeInterval
     ) async throws -> ChatResponse
 }
@@ -353,6 +356,7 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
         history: [WireChatMessage],
         activeSessionID: String?,
         userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation],
         timeout: TimeInterval
     ) async throws -> ChatResponse {
         guard let chatURL = WorkerConstants.chatURL else {
@@ -369,7 +373,8 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
             subscriberID: subscriberID,
             history: history.isEmpty ? nil : history,
             activeSessionID: activeSessionID,
-            userContext: userContext
+            userContext: userContext,
+            todaysMenu: todaysMenu.isEmpty ? nil : todaysMenu
         )
         request.httpBody = try JSONEncoder().encode(payload)
 
@@ -402,6 +407,7 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
         let history: [WireChatMessage]?
         let activeSessionID: String?
         let userContext: ChatUserContext?
+        let todaysMenu: [StructuredRecommendation]?
 
         enum CodingKeys: String, CodingKey {
             case prompt
@@ -409,6 +415,7 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
             case history
             case activeSessionID
             case userContext = "user_context"
+            case todaysMenu = "todays_menu"
         }
     }
 
@@ -503,7 +510,8 @@ actor ChatService: ChatProviding {
         prompt: String,
         history: [WireChatMessage] = [],
         activeSessionID: String? = nil,
-        userContext: ChatUserContext? = nil
+        userContext: ChatUserContext? = nil,
+        todaysMenu: [StructuredRecommendation] = []
     ) async -> ChatResponse? {
         let sanitized = redactor.sanitize(prompt.trimmingCharacters(in: .whitespacesAndNewlines))
         guard !sanitized.isEmpty else { return nil }
@@ -513,7 +521,7 @@ actor ChatService: ChatProviding {
         // The on-device fallback stays available for previews and offline use,
         // but only a verified Pro subscriber may reach the paid edge service.
         guard await isProUnlocked() else {
-            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext)
+            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext, todaysMenu: todaysMenu)
         }
 
         guard let response = try? await transport.sendChat(
@@ -522,10 +530,11 @@ actor ChatService: ChatProviding {
             history: history,
             activeSessionID: activeSessionID,
             userContext: userContext,
+            todaysMenu: todaysMenu,
             timeout: timeout
         ) else {
             // Fall back to on-device stateful heuristic engine if offline / network fails
-            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext)
+            return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext, todaysMenu: todaysMenu)
         }
 
         return response
@@ -633,11 +642,36 @@ nonisolated enum LocalStatefulChatEngine {
         )
     }
 
+    /// Course names as someone would actually type them, in menu order —
+    /// checked before the generic catalog search so "what's my dessert
+    /// today?" answers with the dessert that's actually on screen, not a
+    /// fresh pick that happens to score well.
+    private static func menuLookup(prompt: String, todaysMenu: [StructuredRecommendation]) -> StructuredRecommendation? {
+        guard !todaysMenu.isEmpty else { return nil }
+        let lower = prompt.lowercased()
+
+        let courseNames: [(String, String)] = [
+            ("appetizer", "appetizer"), ("side", "side"), ("dessert", "dessert"),
+            ("special", "special"), ("main", "main")
+        ]
+        for (keyword, course) in courseNames where lower.contains(keyword) {
+            if let match = todaysMenu.first(where: { $0.course == course }) {
+                return match
+            }
+        }
+
+        return todaysMenu.first { item in
+            let titleWords = item.title.lowercased().split(separator: " ").filter { $0.count > 3 }
+            return titleWords.contains { lower.contains($0) }
+        }
+    }
+
     static func orchestrate(
         prompt: String,
         history: [WireChatMessage] = [],
         activeSessionID: String? = nil,
-        userContext: ChatUserContext? = nil
+        userContext: ChatUserContext? = nil,
+        todaysMenu: [StructuredRecommendation] = []
     ) -> ChatResponse {
         let trimmedLower = prompt.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let vaguePhrases = [
@@ -853,6 +887,15 @@ nonisolated enum LocalStatefulChatEngine {
             }
 
         case .newRoutineRequest, .generalCheckIn:
+            // A question about something already on today's menu is answered
+            // from that exact item — its real, already-computed reason —
+            // rather than treated as a request for a fresh recommendation.
+            if let menuItem = menuLookup(prompt: prompt, todaysMenu: todaysMenu) {
+                message = menuItem.reason
+                recommendation = menuItem
+                break
+            }
+
             // Explicit Dopamine Menu & targeted micro-action triggers
             if lower.contains("shake") || lower.contains("restless") || lower.contains("overwhelm") {
                 if let s = sessionById("app-shake-out-five") {
@@ -986,8 +1029,9 @@ nonisolated struct InMemoryChatService: ChatProviding {
         prompt: String,
         history: [WireChatMessage] = [],
         activeSessionID: String? = nil,
-        userContext: ChatUserContext? = nil
+        userContext: ChatUserContext? = nil,
+        todaysMenu: [StructuredRecommendation] = []
     ) async -> ChatResponse? {
-        response ?? LocalStatefulChatEngine.orchestrate(prompt: prompt, history: history, activeSessionID: activeSessionID, userContext: userContext)
+        response ?? LocalStatefulChatEngine.orchestrate(prompt: prompt, history: history, activeSessionID: activeSessionID, userContext: userContext, todaysMenu: todaysMenu)
     }
 }

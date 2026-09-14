@@ -6,11 +6,35 @@ This document tracks upcoming engineering milestones and architectural enhanceme
 
 ## 🚀 Next Up — v2
 
-- [ ] **Fix and relocate "I did something else."** Still a washed-out/grey `FGQuietButton` buried at the bottom of Today. *Tried merging it into the "+" next to "Your menu" via a `confirmationDialog` ("I did something else" / "Add your own routine") — reverted, Ameena didn't like that option. Next attempt should find a different treatment, not resurrect the confirmation-dialog merge as-is.*
-- [ ] **Add profile picture support.** `YouView` currently only shows a placeholder person icon in a solid-color circle. **Owned by Yusra.**
-- [ ] **Let Chat show the full menu, not one routine at a time.** `ExploreView` currently surfaces a single `recommendationCard` per turn. Extend it so someone can see today's whole menu and ask questions about any item in it, rather than being limited to whatever the last recommendation was.
+- [x] **Fix and relocate "I did something else."** Prominent rounded capsule button below the menu cards matching the new clean design reference. Keeps the "+" button next to "Your menu" for the dopamine menu / routine builder, shows remaining minutes inline ("14 min left"), and transitions to a completion state card with checkmark and log adjustments once an activity is recorded.
+- [x] **Add profile picture support.** `YouView` currently only shows a placeholder person icon in a solid-color circle. **Owned by Yusra.**
+- [x] **Let Chat show the full menu, not one routine at a time.** `ExploreView` currently surfaces a single `recommendationCard` per turn. Extend it so someone can see today's whole menu and ask questions about any item in it, rather than being limited to whatever the last recommendation was.
 - [ ] **Tighten the paywall copy and value prop.** `FeelGoodPaywallView` wraps RevenueCat's `PaywallView`, so this is a dashboard content edit, not a code change — cut wordiness and sharpen why Pro is worth it.
 - [ ] **Admin — add Ameena's card to App Store Connect** to cover the upcoming Apple Developer Program renewal fee. (Account/billing task, not engineering — flagging here so it doesn't get lost.)
+- [x] **Write 2-3 posts in Simone's-audience voice, not indie-dev voice.** Everything queued in `content-drafts.md` right now (origin story, submission story, paywall admission) is pitched to an ADHD/indie-dev/build-in-public audience — good for Shipaton judging, but not the "woman with 47 tabs open" persona from her brief (PRD §5). Drafts #3 ("you don't need a workout plan") and #5 (the settings tour) are the closest templates: decision fatigue, guilt-free consistency, real-life scheduling — no dopamine-menu/ADHD framing. Done as `content-drafts.md` §6 (6a–6c) — needs your read before posting, and 6b specifically waits on the paywall copy fix above so the post stays true.
+
+### PlayerView feedback (handwritten notes, 2026-09-14)
+
+- [ ] **Mid-hold "switch sides" alert.** For timed exercises done on both
+  sides, add a cue partway through the hold (haptic/visual, not just a
+  silent timer) telling someone to switch sides — right now `PlayerView`
+  has no concept of a side switch mid-step.
+- [ ] **Bigger countdown digits.** The running timer (`timeString` in
+  `PlayerView.running(_:)`) is too small to read at a glance mid-movement.
+- [ ] **Let the 5-second "get ready" countdown be paused.** `readingCountdown`
+  only offers "Start now" (skip) — no way to pause it if not ready yet.
+- [ ] **Make the exercise cue easier to digest mid-workout.** `step.cue` renders
+  as one body-text paragraph; nobody reads a paragraph while working out —
+  needs a shorter/more scannable format.
+
+Open questions to resolve with Ameena before scoping further (unclear from
+notes, don't guess):
+- [ ] Audit exercise step lengths — are current durations right?
+- [ ] Do we need captions or sound cues during a session?
+- [ ] Why does starting/running a session take multiple screens — can it be
+  consolidated?
+- [ ] What does "exercises listed above" refer to — a preview list of
+  upcoming exercises before/during a session?
 
 ### Microanimations
 
@@ -20,21 +44,24 @@ This document tracks upcoming engineering milestones and architectural enhanceme
 step-start/final-stretch flashes) already use it well. Extend that same
 restrained, purposeful language rather than introducing a new one:
 
-- [ ] **Tab switches (Today/Chat/You)** are an instant cut today. A soft
-  cross-fade or gentle slide would match the rest of the app's settle-in
-  feel.
-- [ ] **Marking a menu item "Done"** currently just swaps in the strikethrough
-  and `DoneMark` — no transition. Give it a small settle/checkmark moment
-  consistent with `FGMotion.settle`.
-- [ ] **Little Wins unlocking** — the grid (`LittleWinsView.swift`) has no
-  distinct "just unlocked" moment beyond the existing celebration sheet.
-  A brief in-place shimmer/pop on the card itself would sell the win before
-  the sheet even opens.
-- [ ] **Chat messages and the recommendation card** appear with no motion.
-  A gentle slide/fade-in on new messages (the typing indicator already
-  animates) would match the check-in and menu treatment.
-- [ ] **Onboarding progress bar** (`OnboardingView.swift`) snaps between
-  states instead of animating the fill — cheap, high-visibility polish.
+- [x] **Tab switches (Today/Chat/You)** now settle in with opacity + a small
+  scale/rise (`TabSettleIn` in `Motion.swift`) instead of a flat fade, and it
+  re-arms on every switch rather than firing once. **Needs a visual pass on
+  a physical device/simulator tap-through** — could only verify by build +
+  static screenshot, not interactively (no Accessibility/Screen Recording
+  permission for computer control in this session).
+- [x] **Marking a menu item "Done"** — `DoneMark`'s checkmark now has a
+  `.symbolEffect(.bounce)` on insertion, layered onto the existing
+  scale/opacity capsule transition.
+- [x] **Little Wins unlocking** — the card's existing pulse now pairs with a
+  quick tilt-and-settle spring on the mascot image itself
+  (`LittleWinsView.swift`), timed just under the pulse so they read as one
+  gesture.
+- [x] **Chat messages and the recommendation card** already transitioned in;
+  added transitions for the typing indicator (scale+fade) and quick-reply
+  chips (scale+fade when the set changes) in `ExploreView.swift`.
+- [x] **Onboarding progress bar** (`OnboardingView.swift`) now fills
+  left-to-right per segment instead of snapping.
 
 ### Polish — make it perfect to share
 
@@ -51,9 +78,12 @@ not just functionally correct:
   long-press-for-debug-menu hooks in `TodayView`/`YouView` are already
   commented out/`#if DEBUG`-gated; double check nothing similar slipped into
   newer screens (Chat, MenuBuilder).
-- [ ] **A shareable moment**: a native Share Sheet for a completed session or
-  a Little Win card as a clean, on-brand image. Gives people something to
-  actually post, and doubles as free ASO/marketing content.
+- [x] **A shareable moment — Little Win card.** `LittleWinsView.swift` now
+  wraps `UIActivityViewController` to share an unlocked badge as a clean,
+  on-brand image. **Owned by Yusra.**
+- [ ] **A shareable moment — completed session.** Same treatment still needed
+  for a just-finished session, not just Little Win badges. Gives people
+  something to post from their daily practice too, not only milestones.
 - [ ] **Finish `docs/BUILD_IN_PUBLIC_LOG.md`** — still empty with 3 drafts
   queued unposted (already flagged above under Admin-adjacent work). Screenshots/clips of the above polish are natural post material.
 - [ ] **Sanity-pass empty and first-run states** for "looks intentional, not

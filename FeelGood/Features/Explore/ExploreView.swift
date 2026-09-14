@@ -64,14 +64,21 @@ struct ExploreView: View {
                                     ForEach(messages) { message in
                                         messageRow(for: message)
                                             .id(message.id)
+                                            .transition(
+                                                .opacity.combined(with: .move(edge: .bottom))
+                                            )
                                     }
                                 }
 
                                 if isProcessing {
                                     typingIndicator
                                         .id("typingIndicator")
+                                        .transition(
+                                            .opacity.combined(with: .scale(scale: 0.9, anchor: .leading))
+                                        )
                                 }
                             }
+                            .animation(FGMotion.gentle, value: isProcessing)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 14)
                             .postHogMask()
@@ -200,27 +207,62 @@ struct ExploreView: View {
     private var initialCuratedThread: some View {
         VStack(alignment: .leading, spacing: 18) {
             // Dynamic Welcome from Assistant
-            let firstItem = model.menu.items.first ?? model.menu.main
-            if let firstItem {
+            if model.menu.items.isEmpty {
+                assistantTextBubble(text: "How is your body feeling today? Tell me what you need, or tap an option below.")
+            } else {
                 assistantTextBubble(text: "Here is your plan for today (\(activeTimeLabel)). How is your body feeling?")
 
-                recommendationCard(
-                    recommendation: StructuredRecommendation(
-                        sessionID: firstItem.session.id,
-                        title: firstItem.session.title,
-                        subtitle: firstItem.session.subtitle,
-                        durationMin: firstItem.session.durationMin,
-                        intensity: firstItem.session.intensity <= 2 ? "gentle" : "moderate",
-                        course: firstItem.session.course.rawValue,
-                        reason: "Curated for your daily routine.",
-                        tags: [firstItem.session.course.rawValue.capitalized, "\(firstItem.session.durationMin) min"] + firstItem.session.chips
-                    ),
-                    messageID: nil
-                )
-            } else {
-                assistantTextBubble(text: "How is your body feeling today? Tell me what you need, or tap an option below.")
+                VStack(spacing: 14) {
+                    ForEach(model.menu.items) { item in
+                        menuOverviewRow(for: item)
+                    }
+                }
             }
         }
+    }
+
+    /// A reference card for one item of today's menu — every course, not just
+    /// the one the old single-card opener singled out. Sized and dressed like
+    /// `recommendationCard` (frosted tags, big title) so the opening turn
+    /// doesn't read as a downgrade from a mid-conversation recommendation;
+    /// it just skips the Start/Add/Why-this actions, since five of those
+    /// stacked at once would be a lot of repeated buttons. Tapping opens the
+    /// same `SessionDetailView` a tap on a recommendation card would.
+    private func menuOverviewRow(for item: MenuItem) -> some View {
+        let palette = cardPalette(for: item.course.rawValue)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                ForEach([item.course.label, "\(item.session.durationMin) min"], id: \.self) { tag in
+                    Text(tag)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(palette.tagText)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(FGColor.surface.opacity(0.68))
+                        .clipShape(Capsule())
+                }
+            }
+
+            Text(item.session.title)
+                .font(.custom("SFProRounded-Bold", size: 22))
+                .foregroundStyle(palette.titleText)
+
+            Text(item.reasonText)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundStyle(palette.subtitleText)
+                .lineSpacing(3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(palette.gradient, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            selectedSession = item.session
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(item.course.label), \(item.session.title), \(item.session.durationMin) minutes")
+        .accessibilityHint("Opens session details")
     }
 
     // MARK: - Message Rows
@@ -496,10 +538,12 @@ struct ExploreView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .transition(.opacity.combined(with: .scale(scale: 0.85)))
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
+            .animation(FGMotion.gentle, value: replies)
         }
     }
 
@@ -576,7 +620,7 @@ struct ExploreView: View {
         }
 
         let userMsg = ConversationMessage(role: .user, text: trimmed)
-        messages.append(userMsg)
+        withAnimation(FGMotion.settle) { messages.append(userMsg) }
         savePersistedHistory()
         inputText = ""
         isFieldFocused = false
@@ -613,22 +657,28 @@ struct ExploreView: View {
         }
 
         let currentActiveID = messages.reversed().compactMap(\.recommendation?.sessionID).first ?? model.menu.main?.session.id
+        let todaysMenu = model.menu.items.map {
+            LocalStatefulChatEngine.structuredRecommendation(for: $0.session, reason: $0.reasonText)
+        }
 
         Task {
             let response = await service.describeDay(
                 prompt: trimmed,
                 history: wireHistory,
                 activeSessionID: currentActiveID,
-                userContext: userContext
+                userContext: userContext,
+                todaysMenu: todaysMenu
             )
 
             await MainActor.run {
                 isProcessing = false
                 guard let response else {
-                    messages.append(ConversationMessage(
-                        role: .assistant,
-                        text: "Couldn't reach the companion just now — try again in a moment."
-                    ))
+                    withAnimation(FGMotion.settle) {
+                        messages.append(ConversationMessage(
+                            role: .assistant,
+                            text: "Couldn't reach the companion just now — try again in a moment."
+                        ))
+                    }
                     return
                 }
 
@@ -642,7 +692,7 @@ struct ExploreView: View {
                     text: response.message,
                     recommendation: response.recommendation
                 )
-                messages.append(assistantMsg)
+                withAnimation(FGMotion.settle) { messages.append(assistantMsg) }
                 quickReplies = response.quickReplies
                 if !purchasesManager.isProUnlocked {
                     hasUsedFreeChatExchange = true

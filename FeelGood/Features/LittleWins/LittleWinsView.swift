@@ -47,6 +47,11 @@ struct LittleWinsSection: View {
 
 private struct LittleWinCard: View {
     let progress: LittleWinProgress
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isPulsing = false
+    /// A few degrees either side of upright — a full spin would read as a
+    /// loading state, not a celebration, so this only ever wiggles.
+    @State private var mascotTilt = 0.0
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -57,6 +62,7 @@ private struct LittleWinCard: View {
                     .saturation(progress.isUnlocked ? 1 : 0)
                     .opacity(progress.isUnlocked ? 1 : 0.48)
                     .frame(width: 64, height: 64)
+                    .rotationEffect(.degrees(mascotTilt))
 
                 Text(progress.win.title)
                     .font(FGFont.itemTitle)
@@ -87,10 +93,33 @@ private struct LittleWinCard: View {
             progress.win.aura.badgeGradient,
             in: RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
+                .fill(Color.white.opacity(isPulsing ? 0.45 : 0))
+                .allowsHitTesting(false)
+        )
+        .scaleEffect(isPulsing ? 1.07 : 1.0)
         .shadow(color: FGColor.ink.opacity(0.055), radius: 10, y: 4)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(progress.win.title), \(progress.statusLine)")
         .accessibilityHint("Opens badge details")
+        .onChange(of: progress.isUnlocked) { wasUnlocked, isUnlocked in
+            // Only the live flip earns the moment — a card that opens already
+            // unlocked (a fresh load, a different day) gets no pop.
+            guard !wasUnlocked, isUnlocked, !reduceMotion else { return }
+            withAnimation(FGMotion.swap) { isPulsing = true }
+            withAnimation(FGMotion.settle.delay(0.16)) { isPulsing = false }
+
+            // A quick tilt-and-settle on the mascot itself, timed just under
+            // the card's own pulse so the two moments read as one gesture
+            // rather than two separate animations firing side by side.
+            withAnimation(.interpolatingSpring(stiffness: 220, damping: 8)) {
+                mascotTilt = -12
+            }
+            withAnimation(.interpolatingSpring(stiffness: 180, damping: 9).delay(0.12)) {
+                mascotTilt = 0
+            }
+        }
     }
 }
 

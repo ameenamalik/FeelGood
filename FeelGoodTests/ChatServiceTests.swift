@@ -250,6 +250,42 @@ struct ChatServiceTests {
         #expect(negation.message.contains("skipping hips") || negation.message.contains("no hips"))
     }
 
+    @Test("Local stateful engine answers questions about a specific menu item from its own data")
+    func localStatefulEngineAnswersFromTodaysMenu() {
+        let todaysMenu = [
+            StructuredRecommendation(
+                sessionID: "dessert-gratitude-scan-five",
+                title: "Gratitude Body Scan",
+                subtitle: "Five minutes of appreciation",
+                durationMin: 5,
+                course: "dessert",
+                reason: "Purely because you want to, in 5 minutes.",
+                tags: ["Dessert", "5 min"]
+            ),
+            StructuredRecommendation(
+                sessionID: "main-brisk-walk-ten",
+                title: "Brisk Walk",
+                subtitle: "Clear the fog",
+                durationMin: 10,
+                course: "main",
+                reason: "Today's main thing.",
+                tags: ["Main", "10 min"]
+            )
+        ]
+
+        let byCourse = LocalStatefulChatEngine.orchestrate(prompt: "what's my dessert today?", todaysMenu: todaysMenu)
+        #expect(byCourse.recommendation?.sessionID == "dessert-gratitude-scan-five")
+        #expect(byCourse.message == "Purely because you want to, in 5 minutes.")
+
+        let byTitle = LocalStatefulChatEngine.orchestrate(prompt: "tell me about the brisk walk", todaysMenu: todaysMenu)
+        #expect(byTitle.recommendation?.sessionID == "main-brisk-walk-ten")
+
+        // With no matching menu item, falls through to the normal catalog search.
+        let noMatch = LocalStatefulChatEngine.orchestrate(prompt: "15 min gentle floor stretch", todaysMenu: todaysMenu)
+        #expect(noMatch.recommendation?.sessionID != "dessert-gratitude-scan-five")
+        #expect(noMatch.recommendation?.sessionID != "main-brisk-walk-ten")
+    }
+
     @Test("Local stateful engine strictly excludes hidden sessions")
     func localStatefulEngineExcludesHiddenSessions() {
         // Find what matches normally for a 5 min low intensity session
@@ -283,6 +319,7 @@ private actor FakeChatTransport: ChatTransport {
         history: [WireChatMessage],
         activeSessionID: String?,
         userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation],
         timeout: TimeInterval
     ) async throws -> ChatResponse {
         lastPromptReceived = prompt
