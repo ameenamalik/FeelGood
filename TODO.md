@@ -44,21 +44,24 @@ notes, don't guess):
 step-start/final-stretch flashes) already use it well. Extend that same
 restrained, purposeful language rather than introducing a new one:
 
-- [ ] **Tab switches (Today/Chat/You)** are an instant cut today. A soft
-  cross-fade or gentle slide would match the rest of the app's settle-in
-  feel.
-- [ ] **Marking a menu item "Done"** currently just swaps in the strikethrough
-  and `DoneMark` — no transition. Give it a small settle/checkmark moment
-  consistent with `FGMotion.settle`.
-- [ ] **Little Wins unlocking** — the grid (`LittleWinsView.swift`) has no
-  distinct "just unlocked" moment beyond the existing celebration sheet.
-  A brief in-place shimmer/pop on the card itself would sell the win before
-  the sheet even opens.
-- [ ] **Chat messages and the recommendation card** appear with no motion.
-  A gentle slide/fade-in on new messages (the typing indicator already
-  animates) would match the check-in and menu treatment.
-- [ ] **Onboarding progress bar** (`OnboardingView.swift`) snaps between
-  states instead of animating the fill — cheap, high-visibility polish.
+- [x] **Tab switches (Today/Chat/You)** now settle in with opacity + a small
+  scale/rise (`TabSettleIn` in `Motion.swift`) instead of a flat fade, and it
+  re-arms on every switch rather than firing once. **Needs a visual pass on
+  a physical device/simulator tap-through** — could only verify by build +
+  static screenshot, not interactively (no Accessibility/Screen Recording
+  permission for computer control in this session).
+- [x] **Marking a menu item "Done"** — `DoneMark`'s checkmark now has a
+  `.symbolEffect(.bounce)` on insertion, layered onto the existing
+  scale/opacity capsule transition.
+- [x] **Little Wins unlocking** — the card's existing pulse now pairs with a
+  quick tilt-and-settle spring on the mascot image itself
+  (`LittleWinsView.swift`), timed just under the pulse so they read as one
+  gesture.
+- [x] **Chat messages and the recommendation card** already transitioned in;
+  added transitions for the typing indicator (scale+fade) and quick-reply
+  chips (scale+fade when the set changes) in `ExploreView.swift`.
+- [x] **Onboarding progress bar** (`OnboardingView.swift`) now fills
+  left-to-right per segment instead of snapping.
 
 ### Polish — make it perfect to share
 
