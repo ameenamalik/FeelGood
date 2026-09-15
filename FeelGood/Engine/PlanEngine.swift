@@ -124,16 +124,21 @@ nonisolated struct PlanEngine: Sendable {
         // and `neverFailsAcrossTheCheckInMatrix` guarantee one exists no
         // matter how little time or access someone has, so it can never be
         // skipped outright the way a side or dessert can. Try first for one
-        // that fits what's left of the budget; only reach for something that
-        // doesn't fit when nothing shorter is available, so "always offer
-        // something" wins over the total when the two genuinely conflict.
-        func appetizerCandidate(maxDuration: Int?) -> MenuItem? {
-            first(from: scored, course: .appetizer, excluding: taken, excludingActivities: takenActivities, maxDuration: maxDuration)
-                ?? first(from: scored, course: .appetizer, excluding: taken, excludingActivities: heroActivities, maxDuration: maxDuration)
-                ?? first(from: scored, course: .appetizer, excluding: taken, maxDuration: maxDuration)
-                ?? guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: taken, maxDuration: maxDuration)
-        }
-        let appetizer = appetizerCandidate(maxDuration: max(0, budget - usedMinutes)) ?? appetizerCandidate(maxDuration: nil)
+        // that fits what's left of the budget; only when nothing does, fall
+        // straight to `guaranteedAppetizer` — a specifically small,
+        // no-equipment session by design — rather than re-trying the same
+        // top-scored `scored` pool with no duration cap at all. That
+        // distinction matters: `scored` entries are only bounded by the
+        // *whole* budget (`isEligible`), so an uncapped retry of `first(from:
+        // scored, ...)` could hand back something nearly as long as the full
+        // budget on top of what was already used — which is exactly how a
+        // 35-minute check-in was landing at 48 minutes.
+        let remainingForAppetizer = max(0, budget - usedMinutes)
+        let appetizer = first(from: scored, course: .appetizer, excluding: taken, excludingActivities: takenActivities, maxDuration: remainingForAppetizer)
+            ?? first(from: scored, course: .appetizer, excluding: taken, excludingActivities: heroActivities, maxDuration: remainingForAppetizer)
+            ?? first(from: scored, course: .appetizer, excluding: taken, maxDuration: remainingForAppetizer)
+            ?? guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: taken, maxDuration: remainingForAppetizer)
+            ?? guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: taken)
         if let appetizer {
             taken.insert(appetizer.session.id)
             takenActivities.insert(appetizer.session.activity)
@@ -141,18 +146,18 @@ nonisolated struct PlanEngine: Sendable {
         }
 
         // `guaranteedDessertIsAlwaysOfferable` holds the dessert to the same
-        // "always something to offer" floor as the appetizer, so it gets the
-        // same two-phase treatment: prefer whatever still fits the budget,
-        // and only fall back to an unconstrained pick — which in practice
-        // means the guaranteed fallback, a small session by design — when
-        // nothing fits what's left.
-        func dessertCandidate(maxDuration: Int?) -> MenuItem? {
-            first(from: scored, course: .dessert, excluding: taken, excludingActivities: takenActivities, maxDuration: maxDuration)
-                ?? first(from: scored, course: .dessert, excluding: taken, excludingActivities: heroActivities, maxDuration: maxDuration)
-                ?? first(from: scored, course: .dessert, excluding: taken, maxDuration: maxDuration)
-                ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken, maxDuration: maxDuration)
-        }
-        let dessert = dessertCandidate(maxDuration: max(0, budget - usedMinutes)) ?? dessertCandidate(maxDuration: nil)
+        // floor as the appetizer. Try what fits the remaining budget first;
+        // when nothing does, `guaranteedDessert(maxDuration: nil)` now picks
+        // the *shortest* eligible dessert rather than the first one in
+        // catalog order or anything bounded by the whole original budget —
+        // that shortest-match behavior is what keeps this bounded to a few
+        // minutes of overshoot instead of the up-to-20-minute catalog max.
+        let remainingForDessert = max(0, budget - usedMinutes)
+        let dessert = first(from: scored, course: .dessert, excluding: taken, excludingActivities: takenActivities, maxDuration: remainingForDessert)
+            ?? first(from: scored, course: .dessert, excluding: taken, excludingActivities: heroActivities, maxDuration: remainingForDessert)
+            ?? first(from: scored, course: .dessert, excluding: taken, maxDuration: remainingForDessert)
+            ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken, maxDuration: remainingForDessert)
+            ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken)
         if let dessert {
             taken.insert(dessert.session.id)
             takenActivities.insert(dessert.session.activity)
@@ -548,25 +553,42 @@ nonisolated struct PlanEngine: Sendable {
     /// The floor of the whole product: a day where you did two minutes is a day
     /// you showed up, so there is always something to offer. Ignores activity
     /// availability (you always have your own breath) but never safety.
+    ///
+    /// When `maxDuration` is nil — nothing fit what was actually left of the
+    /// budget — this falls back to the *whole* check-in budget as its ceiling
+    /// (never higher; `neverFailsAcrossTheCheckInMatrix` requires every
+    /// non-special item, guaranteed ones included, to individually respect
+    /// `time.maxMinutes`) and picks the *shortest* eligible match under that
+    /// ceiling, rather than the first one in catalog order. The guarantee is
+    /// allowed to push past what's left of the budget — that's the point of
+    /// a floor — but never past the original whole-budget ceiling, and by as
+    /// little as the catalog allows.
     private func guaranteedAppetizer(_ input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats, excluding: Set<String>, maxDuration: Int? = nil) -> MenuItem? {
-        let fallback = catalog.first {
+        let cap = maxDuration ?? checkIn.time.maxMinutes
+        let eligible = catalog.filter {
             $0.course == .appetizer
                 && $0.needsNoEquipment
                 && $0.worksAtHome
-                && (maxDuration == nil || $0.durationMin <= maxDuration!)
+                && $0.durationMin <= cap
                 && !$0.source.isVideo
                 && !excluding.contains($0.id)
                 && !input.profile.hiddenSessionIDs.contains($0.id)
                 && Set($0.contraindications).isDisjoint(with: input.profile.workArounds)
         }
+        let fallback = maxDuration == nil ? eligible.min(by: { $0.durationMin < $1.durationMin }) : eligible.first
         return fallback.map { candidate(for: $0, input: input, checkIn: checkIn, stats: stats).item }
     }
 
     /// A dessert must always be offerable: zero equipment, home-friendly, safe,
-    /// purely for the joy of it.
+    /// purely for the joy of it. Same whole-budget-ceiling, shortest-match
+    /// fallback as the appetizer when `maxDuration` is nil — see its doc
+    /// comment. Unlike the appetizer there's no test requiring a dessert
+    /// survive every budget — when nothing in the catalog fits even the
+    /// whole budget (a real possibility here since desserts run longer),
+    /// this returns nil and the menu simply has no dessert.
     private func guaranteedDessert(_ input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats, excluding: Set<String>, maxDuration: Int? = nil) -> MenuItem? {
         let cap = maxDuration ?? checkIn.time.maxMinutes
-        let fallback = catalog.first {
+        let eligible = catalog.filter {
             $0.course == .dessert
                 && $0.needsNoEquipment
                 && $0.worksAtHome
@@ -576,6 +598,7 @@ nonisolated struct PlanEngine: Sendable {
                 && !input.profile.hiddenSessionIDs.contains($0.id)
                 && Set($0.contraindications).isDisjoint(with: input.profile.workArounds)
         }
+        let fallback = maxDuration == nil ? eligible.min(by: { $0.durationMin < $1.durationMin }) : eligible.first
         return fallback.map { candidate(for: $0, input: input, checkIn: checkIn, stats: stats).item }
     }
 }
