@@ -30,6 +30,42 @@ struct PlanEngineTests {
         #expect(!menu.items.isEmpty)
     }
 
+    @Test("A 35-minute budget doesn't balloon into 48 minutes")
+    func totalMenuDurationStaysNearBudget() {
+        // Reported live, 2026-09-15: a 35-minute check-in produced a menu
+        // totaling 48 minutes. Root cause was two-fold — `makeMenu` picked
+        // the main, every side, the appetizer, and the dessert each only
+        // checked against the *whole* budget individually, with no running
+        // total; and the guaranteed appetizer/dessert fallback (the "always
+        // something to offer" floor) could reach for whatever the top-scored
+        // or first-in-catalog-order candidate was, up to the full budget in
+        // size, rather than the smallest eligible one. `.strong` energy and
+        // a 30-minute main (m-pilates-30 / m-strength-30, both energy-fit for
+        // `.strong`) reproduces the shape of the original report: a main
+        // that alone consumes nearly the whole budget, leaving sides,
+        // appetizer, and dessert to compete for whatever's left.
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .strong, time: .thirtyFiveMinutes),
+            context: Fixture.context()
+        )
+        let menu = Fixture.engine.makeMenu(input)
+        let budget = TimeBudget.thirtyFiveMinutes.maxMinutes
+
+        let total = menu.items
+            .filter { $0.course != .special }
+            .reduce(0) { $0 + $1.session.durationMin }
+
+        // Not a strict `<= budget`: the appetizer and dessert each carry a
+        // "there's always something to offer" floor guarantee (see
+        // `alwaysOffersAnAppetizer`) that's allowed to push past what's left
+        // of the budget once the main and sides have claimed it. In the
+        // Fixture catalog that floor is a-breath at 2 minutes and a 10-minute
+        // dessert, so the worst case is budget + 12; 15 gives a little
+        // headroom without being loose enough to miss a real regression.
+        #expect(total <= budget + 15, "menu totaled \(total) minutes against a \(budget)-minute budget")
+    }
+
     @Test("A skipped check-in still produces a menu")
     func skippedCheckInStillProducesAMenu() {
         let input = PlanInput(profile: Fixture.profile(), checkIn: nil, context: Fixture.context())

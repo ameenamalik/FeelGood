@@ -28,32 +28,50 @@ This document tracks upcoming engineering milestones and architectural enhanceme
   as one body-text paragraph; nobody reads a paragraph while working out —
   needs a shorter/more scannable format.
 
-Open questions to resolve with Ameena before scoping further (unclear from
-notes, don't guess):
-- [ ] Audit exercise step lengths — are current durations right?
-- [ ] Why does starting/running a session take multiple screens — can it be
-  consolidated?
-- [ ] What does "exercises listed above" refer to — a preview list of
-  upcoming exercises before/during a session?
+Resolved with Ameena, 2026-09-15:
+- [x] Session-start flow (Today → `SessionDetailView` → `PlayerView`) stays
+  as multiple screens — intentional, `SessionDetailView` (steps preview,
+  rename/hide, start/resume) is doing real work distinct from the player.
+  No change.
+- [x] "Exercises listed above" confirmed to mean `SessionDetailView`'s
+  preview list of steps before starting — already exists, nothing to build.
+- [ ] **Cap/split held steps over ~2 minutes.** Ameena, verbatim: "the ones
+  that are longer than 2 min, bc i keep looking at the screen to see if
+  its done. its not rlly normal for someone to do an exercise STRAIGHT for
+  3 min." Not a general audit — a specific, actionable pattern: any
+  `catalog.json` step with `seconds > 120` should either be split into two
+  shorter steps or capped around 90-120s. Needs a pass over `catalog.json`
+  to find every step over that line (same shape of work as the "split
+  combined exercise steps" item below — likely worth doing together).
 
 ### Voice notes feedback, 2026-09-14 (new)
 
-- [x] **Fix menus exceeding the time budget** (reported both as "5 minutes
-  available" giving 3-4 items, and live on 2026-09-15 as a 30-minute target
-  giving 55 minutes — appetizer 5 + main 30 + side 20). Root cause
-  confirmed and fixed: `isEligible` only ever checked each candidate
-  individually against `checkIn.time.maxMinutes`, so `makeMenu` could stack
-  a main, `sideCount` sides, a guaranteed appetizer, and a guaranteed
-  dessert that each fit alone but blew way past the budget combined.
-  `makeMenu` ([`PlanEngine.swift`](FeelGood/Engine/PlanEngine.swift:61)) now
-  tracks a running `usedMinutes` total and bounds sides and course
-  selection against what's actually left, not the original ceiling.
-  Specials still ignore the budget (intentional — planned ahead). The
-  appetizer and dessert keep their "always something to offer" floor
-  guarantee — `alwaysOffersAnAppetizer`, `neverFailsAcrossTheCheckInMatrix`,
-  `guaranteedDessertIsAlwaysOfferable` — by preferring something that fits
-  what's left and only falling back to the guaranteed (small) item when
-  nothing does. All 42 `PlanEngineTests` pass.
+- [x] **Fix menus exceeding the time budget.** Reported three times as the
+  same underlying bug got progressively narrowed: "5 minutes available"
+  giving 3-4 items; a 30-minute target giving 55 minutes (appetizer 5 +
+  main 30 + side 20); and after the first round of fixes, a 35-minute
+  target still giving 48 minutes. Two distinct root causes, both in
+  `makeMenu` ([`PlanEngine.swift`](FeelGood/Engine/PlanEngine.swift:61)):
+  1. `isEligible` only ever checked each candidate individually against
+     `checkIn.time.maxMinutes`, so a main, `sideCount` sides, a guaranteed
+     appetizer, and a guaranteed dessert that each fit alone could stack
+     past the budget combined. Fixed with a running `usedMinutes` total
+     that bounds sides and course selection against what's actually left.
+  2. Once that was fixed, the "always something to offer" floor fallback
+     for the appetizer/dessert (`guaranteedAppetizer`/`guaranteedDessert`)
+     still reached for the *first* catalog match (or, briefly, the
+     top-scored match with no duration cap at all) rather than the
+     *shortest* eligible one — so hitting that fallback could add up to a
+     whole dessert's worth of unrelated overshoot. Fixed: the fallback now
+     picks the shortest eligible item under a ceiling of the *whole*
+     check-in budget (never the original ceiling, but allowed to exceed
+     what's merely left of it — that's the guarantee's whole point).
+  Specials still ignore the budget entirely (intentional — planned ahead).
+  `alwaysOffersAnAppetizer` and `neverFailsAcrossTheCheckInMatrix` still
+  hold (an appetizer is always offered); dessert has no such promise and
+  can now legitimately be absent when nothing fits. Locked in with a new
+  regression test, `totalMenuDurationStaysNearBudget` — all 43
+  `PlanEngineTests` pass.
 - [ ] **Allow "0 minutes available" as a check-in option**, for rest/recovery
   days. `TimeBudget` ([`PlanTypes.swift:125`](FeelGood/Engine/PlanTypes.swift:125))
   has no zero case — `.fiveMinutes` is the floor — so the picker at
@@ -64,7 +82,8 @@ notes, don't guess):
 - [ ] **Optional sound/voice cues in `PlayerView`**, off by default or
   user-toggleable — a mute/unmute affordance like Google Maps' voice
   toggle (tap to cancel, icon reflects on/off state), for people doing a
-  session with others around or who just don't want audio.
+  session with others around or who just don't want audio. Confirmed
+  2026-09-15: still wanted, not urgent — keep queued, no rush.
 - [ ] **Split combined exercise steps in the catalog.** **Owned by Yusra** —
   next up now that the custom-routine cluster above is done. Some catalog steps
   merge two distinct exercises into one step/cue, e.g. in
@@ -90,15 +109,38 @@ notes, don't guess):
   `SessionDetailView` now shows Start/Resume → `PlayerView` for a custom
   routine with parts, keeping "I did this" only for the old zero-step log.
   Covered by new tests in `OwnWorkoutTests.swift` and `PersistenceTests.swift`.
-- [ ] **Rework the "You" page's insights/metrics section.** Badges and the
-  top section are working; the metrics section reads flat and needs a
-  redesign — but it has to stay inside the no-tracking/no-guilt rules
-  already locked in `CLAUDE.md` ("No data visualisation — no charts,
-  rings, or bars," "Never render a gap"). **Resolved direction:** a
-  generated text-based pattern summary — e.g. "You've been leaning into
-  strength and stretching lately" — built from recent session qualities.
-  No numbers, no chart shape, no axis; reads as an observation, not a
-  score or a streak.
+- [ ] **Rework the "You" page's insights/metrics section**, discussed
+  2026-09-15. This isn't unbuilt — `LookBackView`/`Reflection`
+  ([`LookBack.swift`](FeelGood/Engine/LookBack.swift),
+  [`LookBackView.swift`](FeelGood/Features/LookBack/LookBackView.swift))
+  already does the "generated text observation, no numbers/charts" thing
+  and is fully wired, just hidden from `YouView` since `318dad5`
+  (2026-09-14, "temporarily remove insights/LookBackView section").
+  Ameena's read on the real copy ("Seven times in the last two weeks." /
+  "You move in the morning, mostly." / "Pilates and stretching, mostly." /
+  "You keep coming back to the stretching sessions." / "And you make room
+  for the gentle ones."), verbatim: **"literally all of those [problems] —
+  these are so vague I hate it. users try tapping on them, it does
+  nothing, too much reading. most of them are vague and do not add
+  value."**
+  - **Resolved direction (supersedes the old one):**
+    1. **One consolidated insight, not five cards.** Pick the single most
+       interesting true thing from `Reflection.notes` and show only that —
+       needs a "best note" ranking, not the current "show everything
+       `reflect()` found" behavior in `LookBackView.notes`.
+    2. **Name real things, not just activity categories.** "Pilates and
+       stretching, mostly" is still a category-level statement — prefer
+       referencing an actual session (title from `HistoryEntry.sessionID`)
+       where the underlying note supports it, e.g. `keepsReturningTo`
+       naming the specific session rather than the `Activity` case.
+    3. **Make it actionable.** People already try tapping the card and
+       nothing happens — that mismatch is worse than a flat card would be.
+       Wire a tap to go somewhere real (e.g. `keepsReturningTo` opens that
+       activity/session in the Library), rather than flattening the
+       styling to look less tappable.
+  - Still has to stay inside `CLAUDE.md`'s no-tracking/no-guilt rules — no
+    charts, rings, bars, streaks, scores, or rendered gaps. All of that
+    holds; only the copy, cardinality, and interactivity are changing.
 
 ### Microanimations
 
@@ -118,20 +160,22 @@ not just functionally correct:
   `FGColor` tokens. The case-study audit already flagged `ExploreView` as
   hardcoding its own light-only hex palette instead of `FGColor`/
   `Course.accentGradient` — that's the first place dark mode will look wrong
-  in a screenshot.
+  in a screenshot. Confirmed 2026-09-15: still wanted, not urgent.
 - [ ] **Confirm every debug-only affordance is gone from Release** — the
   long-press-for-debug-menu hooks in `TodayView`/`YouView` are already
   commented out/`#if DEBUG`-gated; double check nothing similar slipped into
-  newer screens (Chat, MenuBuilder).
+  newer screens (Chat, MenuBuilder). Confirmed 2026-09-15: worth doing.
 - [ ] **A shareable moment — completed session.** Same treatment still needed
   for a just-finished session, not just Little Win badges. Gives people
   something to post from their daily practice too, not only milestones.
+  Confirmed 2026-09-15: worth building.
 - [ ] **Finish `docs/BUILD_IN_PUBLIC_LOG.md`** — still empty with 3 drafts
   queued unposted (already flagged above under Admin-adjacent work). Screenshots/clips of the above polish are natural post material.
+  Confirmed 2026-09-15: worth finishing.
 - [ ] **Sanity-pass empty and first-run states** for "looks intentional, not
   half-built": `LookBackView`'s early state is already designed for this —
   confirm Chat's empty state and a first-time Little Wins grid read the same
-  way.
+  way. Confirmed 2026-09-15: worth doing.
 
 ---
 
