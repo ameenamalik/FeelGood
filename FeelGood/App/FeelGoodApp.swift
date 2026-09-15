@@ -83,6 +83,7 @@ struct FeelGoodApp: App {
         content = try? ContentStore.bundled()
         // Must run before any view reads PurchasesManager.shared.isProUnlocked / offerings.
         PurchasesManager.shared.configure()
+        OneSignalManager.shared.initialize(appId: OneSignalConstants.appID)
     }
 
     var body: some Scene {
@@ -114,6 +115,9 @@ struct RootView: View {
     @State private var accountReloadID = UUID()
     @State private var accountSyncError: String?
     @State private var isSyncingAccount = false
+    @State private var showOneSignalIntegrationCompleteAlert = false
+    // OneSignal retains this weakly — held here so it isn't deallocated before it fires.
+    @State private var oneSignalPushObserver: OneSignalManager.PushSubscriptionObserver?
 
     var body: some View {
         Group {
@@ -212,6 +216,26 @@ struct RootView: View {
         }
         .onOpenURL { url in
             _ = GIDSignIn.sharedInstance.handle(url)
+        }
+        .onAppear {
+            guard oneSignalPushObserver == nil else { return }
+            let observer = OneSignalManager.PushSubscriptionObserver {
+                showOneSignalIntegrationCompleteAlert = true
+            }
+            oneSignalPushObserver = observer
+            OneSignalManager.shared.addPushSubscriptionObserver(observer)
+            // The id may already be server-assigned before this observer attached.
+            observer.evaluate(OneSignalManager.shared.currentPushSubscriptionId)
+        }
+        .alert(
+            "Your OneSignal SDK integration is complete!",
+            isPresented: $showOneSignalIntegrationCompleteAlert
+        ) {
+            Button("Got it") {
+                OneSignalManager.shared.requestPushPermission { _ in }
+            }
+        } message: {
+            Text("You can now send Push Notifications & In-App Messages through OneSignal. Tap below to enable push notifications.")
         }
         #if DEBUG
         .onAppear {

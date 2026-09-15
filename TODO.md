@@ -6,6 +6,15 @@ This document tracks upcoming engineering milestones and architectural enhanceme
 
 ## 🚀 Next Up — v2
 
+- [x] **Fix `aps-environment` for release.** [`FeelGood.entitlements`](FeelGood/FeelGood.entitlements) was
+  set to `development`, which would have silently broken push notifications
+  for real users. Flipped to `production` (2026-09-15). Note: the same
+  entitlements file is shared by both the Debug and Release build configs
+  (`CODE_SIGN_ENTITLEMENTS` in `project.pbxproj`), so local Debug runs from
+  Xcode will no longer receive dev-environment pushes — if that's needed
+  again, split into `FeelGood-Debug.entitlements` /
+  `FeelGood-Release.entitlements` and wire them per config instead of
+  flipping this back.
 - [ ] **Tighten the paywall copy and value prop.** `FeelGoodPaywallView` wraps RevenueCat's `PaywallView`, so this is a dashboard content edit, not a code change — cut wordiness and sharpen why Pro is worth it.
 - [ ] **Admin — add Ameena's card to App Store Connect** to cover the upcoming Apple Developer Program renewal fee. (Account/billing task, not engineering — flagging here so it doesn't get lost.)
 
@@ -149,6 +158,31 @@ Resolved with Ameena, 2026-09-15:
 (Today's menu entrance/stagger, the check-in aura pulse, `PlayerView`'s
 step-start/final-stretch flashes) already use it well. Extend that same
 restrained, purposeful language rather than introducing a new one:
+
+- [x] **Player visuals: one slot, one rule.** (2026-09-15) The breathing
+  orb was a full-screen background layer that overlapped the card and cue;
+  it now lives in the card's visual slot like the drawn demos, breathing
+  steps declare themselves (and their cadence, so box breathing is
+  4-4-4-4 rather than 4-in/6-out) via `visual` in `catalog.json`, the
+  name-sniffing heuristic and the orb's progress ring are gone.
+- [x] **Player visuals, phase 2: glossary breadth.** (2026-09-15) Glossary
+  went from 32 to 149 entries with plain-language instructions; 22 catalog
+  steps now link to a drawing that matches their pose; `ATTRIBUTION.md`
+  lists every bundled set. Nothing pruned — Ameena's call, the gym art
+  stays for sessions not yet written.
+- [x] **Custom routines get visuals too.** (2026-09-15) Typed part titles
+  are matched to the glossary and breathing vocabulary when played, so a
+  My Menu "Box breathing" routine gets the orb and "Push-ups" gets the
+  drawing. Touches custom-routine territory (Yusra's) but only at play
+  time in `PlayerView`; the builder and persistence are untouched.
+- [x] **Show the "what's this?" sheet for matched custom steps.** (2026-09-15)
+  `TodayModel.term(for:)` now falls back to `CustomStepMatcher` when a step
+  has no authored `glossaryID`, so a custom "Push-ups" part gets the same
+  explanation sheet on the detail screen that it already got in the player.
+- [ ] **Player visuals, phase 3: new art for qigong, shake-outs, yoga flow,
+  PMR.** Authoring plan (4–6 frame PNG sets in the house line-art style,
+  Lottie only for a few whole-body loops) is in
+  `docs/PLAYER_ANIMATION_PLAN.md`.
 
 ### Polish — make it perfect to share
 

@@ -904,8 +904,15 @@ final class TodayModel {
         return engine.cyclicAlternative(for: item, onMenu: menu, input: currentInput) != nil
     }
 
+    /// Authored steps carry their own `glossaryID`. A custom step typed by
+    /// somebody has none, so it gets the same title match `PlayerView` uses
+    /// to pick its visual — same matcher, so the "what's this?" sheet and
+    /// the drawing on screen always agree.
     func term(for step: Step) -> ExerciseTerm? {
-        store.term(id: step.glossaryID)
+        if let id = step.glossaryID {
+            return store.term(id: id)
+        }
+        return store.term(id: CustomStepMatcher.glossaryID(for: step.name, in: store.glossary))
     }
 }
 

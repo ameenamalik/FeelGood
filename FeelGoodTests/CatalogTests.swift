@@ -176,6 +176,88 @@ struct CatalogTests {
         }
     }
 
+    @Test("A step without a visual decodes as a plain card")
+    func stepWithoutVisualDecodes() throws {
+        let json = Data("""
+        {"name": "Warm up", "seconds": 60, "cue": "Easy pace."}
+        """.utf8)
+        let step = try JSONDecoder().decode(Step.self, from: json)
+        #expect(step.visual == nil)
+    }
+
+    @Test("A breathing visual decodes its cadence and fills in what it leaves out")
+    func breathingVisualDecodes() throws {
+        let explicit = try JSONDecoder().decode(Step.self, from: Data("""
+        {"name": "Box breathing", "seconds": 60, "cue": "In, hold, out, hold.",
+         "visual": {"type": "breathing", "inhale": 4, "holdIn": 4, "exhale": 4, "holdOut": 4}}
+        """.utf8))
+        #expect(explicit.visual?.breathingCadence == BreathingCadence(inhale: 4, holdIn: 4, exhale: 4, holdOut: 4))
+
+        let bare = try JSONDecoder().decode(Step.self, from: Data("""
+        {"name": "Breathe", "seconds": 60, "cue": "Nothing to do.", "visual": {"type": "breathing"}}
+        """.utf8))
+        #expect(bare.visual?.breathingCadence == .default)
+        #expect(BreathingCadence.default.cycleSeconds == 10)
+
+        // Round-trips, so a custom routine that carries one survives being saved.
+        let encoded = try JSONEncoder().encode(explicit)
+        #expect(try JSONDecoder().decode(Step.self, from: encoded) == explicit)
+    }
+
+    @Test("Every paced breathing step has a cadence that fits inside it")
+    func breathingStepsHaveUsableCadences() throws {
+        var paced = 0
+        for session in try store().sessions {
+            for step in session.source.steps {
+                guard let cadence = step.visual?.breathingCadence else { continue }
+                paced += 1
+                let label = "\(session.id) / \(step.name)"
+                #expect(cadence.inhale > 0 && cadence.exhale > 0, "\(label) has no in or out breath")
+                #expect(cadence.holdIn >= 0 && cadence.holdOut >= 0, "\(label) has a negative hold")
+                #expect(cadence.cycleSeconds <= step.seconds, "\(label) can't complete one breath")
+            }
+        }
+        #expect(paced > 0, "no breathing step is paced at all")
+    }
+
+    @Test("Box breathing is paced four-four-four-four, not the resting default")
+    func boxBreathingCarriesItsCadence() throws {
+        // The cue says "in for four, hold for four, out for four, hold for
+        // four"; the orb used to animate all of these as four in, six out.
+        let box = BreathingCadence(inhale: 4, holdIn: 4, exhale: 4, holdOut: 4)
+        let sessions = try store().sessions
+        let rounds = try #require(sessions.first { $0.id == "app-box-breathing" })
+            .source.steps.filter { $0.name.hasPrefix("Round") }
+        #expect(rounds.count == 4)
+        for round in rounds {
+            #expect(round.visual?.breathingCadence == box, "app-box-breathing / \(round.name)")
+        }
+        let barefoot = try #require(sessions.first { $0.id == "dessert-barefoot-breath" })
+            .source.steps.first { $0.name == "Box breathing" }
+        #expect(barefoot?.visual?.breathingCadence == box)
+    }
+
+    @Test("A recovery gap that mentions breath is a rest, not a breathing exercise")
+    func recoveryGapsAreNotPaced() throws {
+        // These used to get the orb because their names contain "breath".
+        // Content decides now, and a rest between two bursts is a plain card.
+        let rests: [(session: String, step: String)] = [
+            ("app-jumping-jacks-two", "Breathe & recover"),
+            ("app-shake-out-five", "Catch your breath"),
+            ("app-power-explosions", "Active recovery breath"),
+            ("side-gym-carry-the-floor", "Set down and breathe"),
+        ]
+        let sessions = try store().sessions
+        for rest in rests {
+            let steps = try #require(sessions.first { $0.id == rest.session }).source.steps
+            let matches = steps.filter { $0.name == rest.step }
+            #expect(!matches.isEmpty, "\(rest.session) no longer has \(rest.step)")
+            for step in matches {
+                #expect(step.visual == nil, "\(rest.session) / \(rest.step) is paced")
+            }
+        }
+    }
+
     @Test("Gym taxonomy never reaches the glossary text")
     func glossaryAvoidsShameVocabulary() throws {
         // "Expert" next to a move someone is about to try is a shame vector, and
