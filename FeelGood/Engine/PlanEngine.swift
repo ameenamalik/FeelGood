@@ -67,10 +67,25 @@ nonisolated struct PlanEngine: Sendable {
         var taken: Set<String> = special.map { [$0.session.id] } ?? []
         var takenActivities: Set<Activity> = special.map { [$0.session.activity] } ?? []
 
+        // Each course was previously eligible only if it individually fit the
+        // whole check-in budget (`isEligible`'s `durationMin <= maxMinutes`),
+        // with no running total across the main, every side, the appetizer,
+        // and the dessert — so a 30-minute main plus a 20-minute side plus a
+        // 5-minute appetizer could all individually pass and still add up to
+        // 55 minutes against a 30-minute budget. `usedMinutes` tracks the
+        // cumulative total as courses are added so the rest of assembly can
+        // respect what's actually left, not just the original ceiling.
+        // Specials are exempt — `isEligible` already lets them ignore today's
+        // time budget because they're planned ahead — so they don't count
+        // against it here either.
+        let budget = checkIn.time.maxMinutes
+        var usedMinutes = 0
+
         let main = first(from: scored, course: .main, excluding: taken)
         if let main {
             taken.insert(main.session.id)
             takenActivities.insert(main.session.activity)
+            usedMinutes += main.session.durationMin
         }
 
         // When every activity on the menu is already spoken for, the
@@ -92,29 +107,56 @@ nonisolated struct PlanEngine: Sendable {
             for candidate in scored where candidate.session.course == .side {
                 guard !taken.contains(candidate.session.id) else { continue }
                 if takenActivities.contains(candidate.session.activity) { continue }
+                // A side that individually fits the budget can still blow it
+                // once stacked on the main — only take it if it fits what's
+                // actually left, and keep scanning for a shorter one instead
+                // of stopping at the first (highest-scored) candidate.
+                guard candidate.session.durationMin <= budget - usedMinutes else { continue }
                 sides.append(candidate.item)
                 taken.insert(candidate.session.id)
                 takenActivities.insert(candidate.session.activity)
+                usedMinutes += candidate.session.durationMin
                 if sides.count == sideCount { break }
             }
         }
 
-        let appetizer = first(from: scored, course: .appetizer, excluding: taken, excludingActivities: takenActivities)
-            ?? first(from: scored, course: .appetizer, excluding: taken, excludingActivities: heroActivities)
-            ?? first(from: scored, course: .appetizer, excluding: taken)
-            ?? guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: taken)
+        // The appetizer is the floor of the product — `alwaysOffersAnAppetizer`
+        // and `neverFailsAcrossTheCheckInMatrix` guarantee one exists no
+        // matter how little time or access someone has, so it can never be
+        // skipped outright the way a side or dessert can. Try first for one
+        // that fits what's left of the budget; only reach for something that
+        // doesn't fit when nothing shorter is available, so "always offer
+        // something" wins over the total when the two genuinely conflict.
+        func appetizerCandidate(maxDuration: Int?) -> MenuItem? {
+            first(from: scored, course: .appetizer, excluding: taken, excludingActivities: takenActivities, maxDuration: maxDuration)
+                ?? first(from: scored, course: .appetizer, excluding: taken, excludingActivities: heroActivities, maxDuration: maxDuration)
+                ?? first(from: scored, course: .appetizer, excluding: taken, maxDuration: maxDuration)
+                ?? guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: taken, maxDuration: maxDuration)
+        }
+        let appetizer = appetizerCandidate(maxDuration: max(0, budget - usedMinutes)) ?? appetizerCandidate(maxDuration: nil)
         if let appetizer {
             taken.insert(appetizer.session.id)
             takenActivities.insert(appetizer.session.activity)
+            usedMinutes += appetizer.session.durationMin
         }
 
-        let dessert = first(from: scored, course: .dessert, excluding: taken, excludingActivities: takenActivities)
-            ?? first(from: scored, course: .dessert, excluding: taken, excludingActivities: heroActivities)
-            ?? first(from: scored, course: .dessert, excluding: taken)
-            ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken)
+        // `guaranteedDessertIsAlwaysOfferable` holds the dessert to the same
+        // "always something to offer" floor as the appetizer, so it gets the
+        // same two-phase treatment: prefer whatever still fits the budget,
+        // and only fall back to an unconstrained pick — which in practice
+        // means the guaranteed fallback, a small session by design — when
+        // nothing fits what's left.
+        func dessertCandidate(maxDuration: Int?) -> MenuItem? {
+            first(from: scored, course: .dessert, excluding: taken, excludingActivities: takenActivities, maxDuration: maxDuration)
+                ?? first(from: scored, course: .dessert, excluding: taken, excludingActivities: heroActivities, maxDuration: maxDuration)
+                ?? first(from: scored, course: .dessert, excluding: taken, maxDuration: maxDuration)
+                ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken, maxDuration: maxDuration)
+        }
+        let dessert = dessertCandidate(maxDuration: max(0, budget - usedMinutes)) ?? dessertCandidate(maxDuration: nil)
         if let dessert {
             taken.insert(dessert.session.id)
             takenActivities.insert(dessert.session.activity)
+            usedMinutes += dessert.session.durationMin
         }
 
         // Trim to one screen. The appetizer and the main are the two things the
@@ -474,11 +516,12 @@ nonisolated struct PlanEngine: Sendable {
 
     // MARK: - Assembly helpers
 
-    private func first(from scored: [Candidate], course: Course, excluding: Set<String>, excludingActivities: Set<Activity> = []) -> MenuItem? {
+    private func first(from scored: [Candidate], course: Course, excluding: Set<String>, excludingActivities: Set<Activity> = [], maxDuration: Int? = nil) -> MenuItem? {
         scored.first {
             $0.session.course == course
                 && !excluding.contains($0.session.id)
                 && !excludingActivities.contains($0.session.activity)
+                && (maxDuration == nil || $0.session.durationMin <= maxDuration!)
         }?.item
     }
 
@@ -505,11 +548,12 @@ nonisolated struct PlanEngine: Sendable {
     /// The floor of the whole product: a day where you did two minutes is a day
     /// you showed up, so there is always something to offer. Ignores activity
     /// availability (you always have your own breath) but never safety.
-    private func guaranteedAppetizer(_ input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats, excluding: Set<String>) -> MenuItem? {
+    private func guaranteedAppetizer(_ input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats, excluding: Set<String>, maxDuration: Int? = nil) -> MenuItem? {
         let fallback = catalog.first {
             $0.course == .appetizer
                 && $0.needsNoEquipment
                 && $0.worksAtHome
+                && (maxDuration == nil || $0.durationMin <= maxDuration!)
                 && !$0.source.isVideo
                 && !excluding.contains($0.id)
                 && !input.profile.hiddenSessionIDs.contains($0.id)
@@ -520,12 +564,13 @@ nonisolated struct PlanEngine: Sendable {
 
     /// A dessert must always be offerable: zero equipment, home-friendly, safe,
     /// purely for the joy of it.
-    private func guaranteedDessert(_ input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats, excluding: Set<String>) -> MenuItem? {
+    private func guaranteedDessert(_ input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats, excluding: Set<String>, maxDuration: Int? = nil) -> MenuItem? {
+        let cap = maxDuration ?? checkIn.time.maxMinutes
         let fallback = catalog.first {
             $0.course == .dessert
                 && $0.needsNoEquipment
                 && $0.worksAtHome
-                && $0.durationMin <= checkIn.time.maxMinutes
+                && $0.durationMin <= cap
                 && !$0.source.isVideo
                 && !excluding.contains($0.id)
                 && !input.profile.hiddenSessionIDs.contains($0.id)
