@@ -38,16 +38,22 @@ notes, don't guess):
 
 ### Voice notes feedback, 2026-09-14 (new)
 
-- [ ] **Fix "5 minutes available" producing 3-4 items instead of a ~5-minute
-  menu.** Root cause confirmed: [`PlanEngine.swift`](FeelGood/Engine/PlanEngine.swift:282)'s
-  `isEligible` only checks each candidate session individually against
-  `checkIn.time.maxMinutes` — there's no running total. `makeMenu` then
-  independently adds a main, `sideCount` sides (default 1), a guaranteed
-  appetizer, and a guaranteed dessert regardless of how much time is left,
-  so a 5-minute budget can yield 3-4 separate ~5-minute items (15-20+ min
-  total). Fix: track cumulative `durationMin` across selected items in
-  `makeMenu` and stop adding courses once the running total meets/exceeds
-  the budget, instead of bounding each item in isolation.
+- [x] **Fix menus exceeding the time budget** (reported both as "5 minutes
+  available" giving 3-4 items, and live on 2026-09-15 as a 30-minute target
+  giving 55 minutes — appetizer 5 + main 30 + side 20). Root cause
+  confirmed and fixed: `isEligible` only ever checked each candidate
+  individually against `checkIn.time.maxMinutes`, so `makeMenu` could stack
+  a main, `sideCount` sides, a guaranteed appetizer, and a guaranteed
+  dessert that each fit alone but blew way past the budget combined.
+  `makeMenu` ([`PlanEngine.swift`](FeelGood/Engine/PlanEngine.swift:61)) now
+  tracks a running `usedMinutes` total and bounds sides and course
+  selection against what's actually left, not the original ceiling.
+  Specials still ignore the budget (intentional — planned ahead). The
+  appetizer and dessert keep their "always something to offer" floor
+  guarantee — `alwaysOffersAnAppetizer`, `neverFailsAcrossTheCheckInMatrix`,
+  `guaranteedDessertIsAlwaysOfferable` — by preferring something that fits
+  what's left and only falling back to the guaranteed (small) item when
+  nothing does. All 42 `PlanEngineTests` pass.
 - [ ] **Allow "0 minutes available" as a check-in option**, for rest/recovery
   days. `TimeBudget` ([`PlanTypes.swift:125`](FeelGood/Engine/PlanTypes.swift:125))
   has no zero case — `.fiveMinutes` is the floor — so the picker at
@@ -59,8 +65,8 @@ notes, don't guess):
   user-toggleable — a mute/unmute affordance like Google Maps' voice
   toggle (tap to cancel, icon reflects on/off state), for people doing a
   session with others around or who just don't want audio.
-- [ ] **Split combined exercise steps in the catalog.** **Owned by Yusra**
-  (after the custom-routine cluster below). Some catalog steps
+- [ ] **Split combined exercise steps in the catalog.** **Owned by Yusra** —
+  next up now that the custom-routine cluster above is done. Some catalog steps
   merge two distinct exercises into one step/cue, e.g. in
   `main-desk-worker-posture-flow` ([`catalog.json:3004`](FeelGood/Content/catalog.json:3004)):
   "Chest opener & wall angels" (`catalog.json:3043`), "Low lunge pulses &
@@ -69,44 +75,21 @@ notes, don't guess):
   `PlayerView` rendering fix — each should become two separate `Step`
   entries with proportioned durations. Needs a pass over the rest of
   `catalog.json` for the same pattern, not just this one session.
-- [ ] **Let a custom ("own") session take an optional description**, **Owned
-  by Yusra**, instead
-  of always showing the literal word "Yours". Root cause confirmed:
-  [`OwnSession.swift:87`](FeelGood/Content/OwnSession.swift:87) hardcodes
-  `subtitle: "Yours"` on every session `Session.own(...)` builds — there's
-  no description field anywhere in the creation flow (`LoggedWorkout` /
-  the "I did something else" form in `TodayModel.swift`). Add an optional
-  note field to the form and `LoggedWorkout`, thread it through as the
-  session's subtitle, falling back to something better than a bare
-  "Yours" when left blank.
+- [x] **Let a custom ("own") session take an optional description**, **Owned
+  by Yusra.** Done in `5664143` (2026-09-14) — `Session.own(...)` takes a
+  `description` param that becomes the subtitle, falling back to an empty
+  string instead of the hardcoded "Yours".
   - [ ] **Later version:** let a custom session also take an optional photo.
-- [ ] **A custom routine added to today's menu has no "Start" button and no
-  internal timed parts — only "I did this."** **Owned by Yusra.** Two pieces
-  of the same gap:
-  - Root cause confirmed: [`SessionDetailView.swift:84-100`](FeelGood/Features/Session/SessionDetailView.swift:84)
-    deliberately shows "I did this" instead of "Start"/"Resume" whenever
-    `session.isOwn` is true, and `isOwn` ([`OwnSession.swift:108`](FeelGood/Content/OwnSession.swift:108))
-    is defined as *having no steps* (`source.steps.isEmpty`). This is
-    intentional today — "Somebody's own workout has no steps to play,
-    because nobody wrote any" — but it means picking a duration for a
-    custom routine (e.g. a 5-minute "morning stretch") never gets a real
-    running timer, only an honesty-system log-after-the-fact button.
-  - What's actually wanted: let a custom routine be built from parts, the
-    way authored sessions already are (`Step` — name + `seconds` + cue,
-    [`ContentTypes.swift:147`](FeelGood/Content/ContentTypes.swift:147)),
-    e.g. "1 min lunges, 2 min arm stretch, 1 min walking" inside one
-    "morning stretch" appetizer, each part getting its own time the same
-    way `SessionDetailView`'s `lineup`/`firstUpSection` shows authored
-    session steps today.
-  - UI shape requested: no upfront "how many parts?" question — a simple
-    add-as-you-go flow, Reminders-app style: name the routine, then
-    repeatedly add one item at a time (title + duration), each appearing
-    in a running list as it's added, done whenever.
-  - Once a custom session has real steps, `isOwn` naturally becomes
-    `false` and the existing Start/Resume → `PlayerView` path in
-    `SessionDetailView` should just work — this doesn't need new
-    start/resume branching, only a step-authoring flow that populates
-    `source.steps` for custom sessions instead of leaving it empty.
+- [x] **A custom routine added to today's menu has no "Start" button and no
+  internal timed parts — only "I did this."** **Owned by Yusra.** Done in
+  `5664143` (2026-09-14): added `CustomRoutinePart` and a new
+  `SessionSource.custom(steps:)` case ([`OwnSession.swift`](FeelGood/Content/OwnSession.swift)),
+  so `isOwn` now means "editable by its author," not "has no steps."
+  `AddRoutineSheet.swift` got the requested add-as-you-go flow (name the
+  routine, add one timed part at a time, Reminders-style), and
+  `SessionDetailView` now shows Start/Resume → `PlayerView` for a custom
+  routine with parts, keeping "I did this" only for the old zero-step log.
+  Covered by new tests in `OwnWorkoutTests.swift` and `PersistenceTests.swift`.
 - [ ] **Rework the "You" page's insights/metrics section.** Badges and the
   top section are working; the metrics section reads flat and needs a
   redesign — but it has to stay inside the no-tracking/no-guilt rules
@@ -231,6 +214,16 @@ The goal of this milestone is to elevate this system into a **Dual-Objective Ada
 
 ## ✅ Completed
 
+- [x] **Redesign `PlayerView`'s running screen.** **Owned by Ameena**, `90ddc60`
+  (2026-09-14): countdown/counter moved to its own centered row under the
+  top bar instead of sitting mid-screen; the exercise illustration replaced
+  with a warm aura-gradient card (same soft pastel language as check-in
+  tiles) that cycles color per step; Pause/Back/Next redone as three
+  evenly-weighted circular buttons instead of a full-width Pause button
+  plus a separate Back/Next row; one pause control now covers both the
+  get-ready countdown and the hold, so the separate +5s button is gone.
+  Also added crossfade transitions between steps and into the completion
+  screen — folds into the Microanimations work below.
 - [x] **Fix and relocate "I did something else."** Prominent rounded capsule button below the menu cards matching the new clean design reference. Keeps the "+" button next to "Your menu" for the dopamine menu / routine builder, shows remaining minutes inline ("14 min left"), and transitions to a completion state card with checkmark and log adjustments once an activity is recorded.
 - [x] **Add profile picture support.** `YouView` currently only shows a placeholder person icon in a solid-color circle. **Owned by Yusra.**
 - [x] **Let Chat show the full menu, not one routine at a time.** `ExploreView` currently surfaces a single `recommendationCard` per turn. Extend it so someone can see today's whole menu and ask questions about any item in it, rather than being limited to whatever the last recommendation was.
