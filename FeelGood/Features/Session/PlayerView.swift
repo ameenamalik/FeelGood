@@ -166,8 +166,10 @@ struct PlayerView: View {
 
             if isDone {
                 completion
+                    .transition(.opacity)
             } else if case .youtube(let videoID, let channel) = session.source {
                 videoPlayer(videoID: videoID, channel: channel)
+                    .transition(.opacity)
             } else if let step {
                 if isBreathingStep(step) {
                     SessionBreathingProgress(
@@ -185,8 +187,10 @@ struct PlayerView: View {
                     )
                 }
                 running(step)
+                    .transition(.opacity)
             } else {
                 emptyStepView
+                    .transition(.opacity)
             }
         }
         .task(id: index) {
@@ -463,15 +467,24 @@ struct PlayerView: View {
                     .foregroundStyle(FGColor.inkMuted)
             }
 
+            // The countdown/counter/switch-sides status is the one thing
+            // worth glancing at without looking away from the movement, so
+            // it gets its own row right under the top bar rather than being
+            // buried mid-scroll behind the cue text.
+            //
+            // `.id(index)` + `.transition(.opacity)`: without a distinct
+            // identity per step, SwiftUI just mutates the existing text in
+            // place and there is nothing to cross-fade. `advance`/`goBack`
+            // already wrap the index change in `withAnimation`, so the old
+            // step's identity fades out as the new one fades in.
+            statusHero(step)
+                .id(index)
+                .transition(.opacity)
+
             Spacer()
 
             VStack(spacing: FGSpace.m) {
-                Text(step.name)
-                    .font(FGFont.display)
-                    .foregroundStyle(FGColor.ink)
-                    .multilineTextAlignment(.center)
-
-                ExerciseDemoView(glossaryID: step.glossaryID)
+                exerciseCard(step)
 
                 ScannableCueView(cue: step.cue, requiresSideSwitch: step.requiresSideSwitch)
 
@@ -482,117 +495,183 @@ struct PlayerView: View {
                         pausedAt: breathingPausedAt
                     )
                 }
-
-                if isSwitchingSides {
-                    switchSidesTransitionCard
-                } else if readingRemaining > 0 {
-                    readingCountdown
-                } else if step.isCounted, let perSet = step.reps {
-                    counter(step, perSet: perSet)
-                } else {
-                    VStack(spacing: FGSpace.xs) {
-                        if step.requiresSideSwitch {
-                            sideIndicatorBadge
-                        }
-                        Text(timeString)
-                            .font(.system(size: timerFontSize, weight: .bold, design: .rounded).monospacedDigit())
-                            .foregroundStyle(FGColor.goldDeep)
-                            .contentTransition(.numericText())
-                            .minimumScaleFactor(0.7)
-                    }
-                }
-
             }
+            .id(index)
+            .transition(.opacity)
 
             Spacer()
 
-            VStack(spacing: FGSpace.s) {
-                if isSwitchingSides {
-                    FGPrimaryButton(title: "Ready for side 2") {
-                        withAnimation(FGMotion.gentle) {
-                            switchCountdown = 0
-                            isSwitchingSides = false
-                            currentSide = 2
-                        }
-                    }
-                } else if readingRemaining > 0 {
-                    FGPrimaryButton(title: "Start now") {
-                        readingRemaining = 0
-                        isReadingPaused = false
-                        if isBreathingStep(step) { restartBreathingCycle() }
-                    }
-                } else if !step.isCounted {
-                    FGPrimaryButton(title: isRunning ? "Pause" : "Resume") {
-                        toggleRunning(for: step)
-                    }
-                } else if repsDone > 0 || setsDone > 0 {
-                    // Counting is only trustworthy if it is reversible. A
-                    // thumb catches the card twice and the count is worse
-                    // than useless without a way back — including back into
-                    // the set before this one.
-                    FGQuietButton("Undo one", systemImage: "arrow.uturn.backward") {
-                        undoOne(step)
-                    }
-                }
-                HStack {
-                    if index > steps.startIndex {
-                        FGQuietButton("Back", systemImage: "backward.end") { goBack() }
-                    }
-                    Spacer()
-                    FGQuietButton("Next", systemImage: "forward.end") { advance() }
-                }
-            }
+            controls(step)
         }
         .padding(FGSpace.page)
     }
 
-    private var readingCountdown: some View {
-        VStack(spacing: FGSpace.s) {
-            VStack(spacing: FGSpace.xs) {
-                Text(isReadingPaused ? "Paused" : "Get ready")
-                    .font(FGFont.label)
-                    .foregroundStyle(FGColor.inkMuted)
-
-                Text("\(readingRemaining)")
-                    .font(.system(size: 56, weight: .bold, design: .rounded).monospacedDigit())
-                    .foregroundStyle(FGColor.goldDeep)
-                    .contentTransition(.numericText())
-            }
-
-            HStack(spacing: FGSpace.m) {
-                Button {
-                    withAnimation(FGMotion.gentle) {
-                        readingRemaining += 5
+    /// The countdown, rep counter, or side-switch card — whichever is the
+    /// current step's one live number. Pulled out of `running` so it can sit
+    /// in its own row at the top instead of the bottom.
+    private func statusHero(_ step: Step) -> some View {
+        Group {
+            if isSwitchingSides {
+                switchSidesTransitionCard
+            } else if readingRemaining > 0 {
+                readingCountdown
+            } else if step.isCounted, let perSet = step.reps {
+                counter(step, perSet: perSet)
+            } else {
+                VStack(spacing: FGSpace.xs) {
+                    if step.requiresSideSwitch {
+                        sideIndicatorBadge
                     }
-                } label: {
-                    Label("+5s", systemImage: "plus")
-                        .font(FGFont.label)
-                        .foregroundStyle(FGColor.ink)
-                        .padding(.horizontal, FGSpace.m)
-                        .padding(.vertical, FGSpace.xs + 2)
-                        .background(
-                            Capsule().fill(FGColor.surface)
-                        )
+                    Text(timeString)
+                        .font(.system(size: timerFontSize, weight: .bold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(FGColor.goldDeep)
+                        .contentTransition(.numericText())
+                        .minimumScaleFactor(0.7)
                 }
-                .buttonStyle(.plain)
-
-                Button {
-                    isReadingPaused.toggle()
-                } label: {
-                    Label(
-                        isReadingPaused ? "Resume" : "Pause",
-                        systemImage: isReadingPaused ? "play.fill" : "pause.fill"
-                    )
-                    .font(FGFont.label)
-                    .foregroundStyle(FGColor.ink)
-                    .padding(.horizontal, FGSpace.m)
-                    .padding(.vertical, FGSpace.xs + 2)
-                    .background(
-                        Capsule().fill(FGColor.surface)
-                    )
-                }
-                .buttonStyle(.plain)
             }
+        }
+    }
+
+    /// The exercise's name and (if bundled) its looping line-art demo, on a
+    /// warm aura card rather than bare on the page — the same soft gradient
+    /// language as a check-in tile, spread across the session's steps by
+    /// index so neighbouring exercises don't repeat the same hue.
+    ///
+    /// `inkOnAccent`, not `ink`: the card fill doesn't flip with the
+    /// appearance, so the title on it can't either — see `FGColor.inkOnAccent`.
+    private func exerciseCard(_ step: Step) -> some View {
+        let aura = FGAura.allCases[index % FGAura.allCases.count]
+        return VStack(spacing: FGSpace.s) {
+            Text(step.name)
+                .font(FGFont.display)
+                .foregroundStyle(FGColor.inkOnAccent)
+                .multilineTextAlignment(.center)
+
+            ExerciseDemoView(glossaryID: step.glossaryID)
+        }
+        .padding(FGSpace.l)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                .fill(LinearGradient(colors: [aura.core, aura.mid], startPoint: .topLeading, endPoint: .bottomTrailing))
+        )
+    }
+
+    /// Back / pause / next as three evenly-weighted circles rather than a
+    /// full-width primary button plus a separate row underneath — the three
+    /// things someone can do mid-step read as one family of actions instead
+    /// of one important one and two afterthoughts.
+    private func controls(_ step: Step) -> some View {
+        VStack(spacing: FGSpace.m) {
+            if isSwitchingSides {
+                FGPrimaryButton(title: "Ready for side 2") {
+                    withAnimation(FGMotion.gentle) {
+                        switchCountdown = 0
+                        isSwitchingSides = false
+                        currentSide = 2
+                    }
+                }
+            } else if readingRemaining > 0 {
+                FGPrimaryButton(title: "Start now") {
+                    readingRemaining = 0
+                    isReadingPaused = false
+                    if isBreathingStep(step) { restartBreathingCycle() }
+                }
+            } else if step.isCounted, repsDone > 0 || setsDone > 0 {
+                // Counting is only trustworthy if it is reversible. A
+                // thumb catches the card twice and the count is worse
+                // than useless without a way back — including back into
+                // the set before this one.
+                FGQuietButton("Undo one", systemImage: "arrow.uturn.backward") {
+                    undoOne(step)
+                }
+            }
+
+            HStack(spacing: FGSpace.l) {
+                if index > steps.startIndex {
+                    circleButton(systemImage: "chevron.left", accessibilityLabel: "Back") { goBack() }
+                } else {
+                    // A fixed-size placeholder, not an absent view: keeps the
+                    // pause circle centred on step one the same as everywhere
+                    // else, instead of drifting toward Next.
+                    Color.clear.frame(width: 52, height: 52)
+                }
+
+                Spacer()
+
+                // No pause concept mid-count: reps advance by tapping the
+                // counter itself, not a running timer. It still appears
+                // during that step's own get-ready countdown, which is a
+                // timer like any other.
+                if !isSwitchingSides, !step.isCounted || readingRemaining > 0 {
+                    primaryCircleButton(
+                        systemImage: isPaused ? "play.fill" : "pause.fill",
+                        accessibilityLabel: isPaused ? "Resume" : "Pause"
+                    ) {
+                        togglePause(for: step)
+                    }
+                }
+
+                Spacer()
+
+                circleButton(systemImage: "chevron.right", accessibilityLabel: "Next") { advance() }
+            }
+        }
+    }
+
+    /// A secondary circular control — Back and Next.
+    private func circleButton(systemImage: String, accessibilityLabel: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(FGColor.ink)
+                .frame(width: 52, height: 52)
+                .background(Circle().fill(FGColor.surface))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    /// The one primary circular control — Pause/Resume, larger and filled so
+    /// it still reads as the default action among three equal-looking circles.
+    private func primaryCircleButton(systemImage: String, accessibilityLabel: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(FGColor.bg)
+                .frame(width: 80, height: 80)
+                .background(Circle().fill(FGColor.ink))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    /// Whichever clock is currently live — the get-ready buffer before a step
+    /// starts, or the step's own hold — is what "paused" means right now.
+    /// There is deliberately one pause control for both rather than the
+    /// get-ready countdown owning a separate pause of its own.
+    private var isPaused: Bool {
+        readingRemaining > 0 ? isReadingPaused : !isRunning
+    }
+
+    private func togglePause(for step: Step) {
+        if readingRemaining > 0 {
+            isReadingPaused.toggle()
+        } else {
+            toggleRunning(for: step)
+        }
+    }
+
+    private var readingCountdown: some View {
+        VStack(spacing: FGSpace.xs) {
+            Text(isReadingPaused ? "Paused" : "Get ready")
+                .font(FGFont.label)
+                .foregroundStyle(FGColor.inkMuted)
+
+            Text("\(readingRemaining)")
+                .font(.system(size: 56, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(FGColor.goldDeep)
+                .contentTransition(.numericText())
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Starting in \(readingRemaining) seconds\(isReadingPaused ? ", paused" : "")")
