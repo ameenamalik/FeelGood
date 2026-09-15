@@ -123,6 +123,7 @@ struct SessionDetailView: View {
             PlayerView(
                 session: session,
                 progress: savedProgress,
+                glossary: model.store.glossary,
                 onFinish: { result in
                     switch result {
                     case .completed(let feel):
