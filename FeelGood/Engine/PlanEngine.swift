@@ -81,7 +81,35 @@ nonisolated struct PlanEngine: Sendable {
         let budget = checkIn.time.maxMinutes
         var usedMinutes = 0
 
-        let main = first(from: scored, course: .main, excluding: taken)
+        // The appetizer and dessert both carry a floor guarantee — "always
+        // something to offer" — and honoring that after the main and sides
+        // have already spent the whole budget is what pushed a 30-minute
+        // target to 36: the floor items aren't optional, so they landed on
+        // top instead. Reserve room for them *before* picking the main, so
+        // the common case never needs their overshoot-prone fallback at all.
+        // `floorDuration` mirrors `guaranteedAppetizer`/`guaranteedDessert`'s
+        // own filter (safe, no-equipment, home-friendly, not hidden) so the
+        // reservation reflects what could actually be guaranteed, not an
+        // arbitrary constant.
+        func floorDuration(course: Course) -> Int {
+            catalog.filter {
+                $0.course == course
+                    && $0.needsNoEquipment
+                    && $0.worksAtHome
+                    && !$0.source.isVideo
+                    && !taken.contains($0.id)
+                    && !input.profile.hiddenSessionIDs.contains($0.id)
+                    && Set($0.contraindications).isDisjoint(with: input.profile.workArounds)
+            }.map(\.durationMin).min() ?? 0
+        }
+        let reservedFloor = floorDuration(course: .appetizer) + floorDuration(course: .dessert)
+        // What's left for the main and sides to actually work with. Can be 0
+        // (or even negative before clamping) on a very tight budget, in which
+        // case no main is chosen at all — the same graceful "just the floor
+        // items" degradation `alwaysOffersAnAppetizer` already covers.
+        let mainAndSidesBudget = max(0, budget - reservedFloor)
+
+        let main = first(from: scored, course: .main, excluding: taken, maxDuration: mainAndSidesBudget)
         if let main {
             taken.insert(main.session.id)
             takenActivities.insert(main.session.activity)
@@ -109,9 +137,12 @@ nonisolated struct PlanEngine: Sendable {
                 if takenActivities.contains(candidate.session.activity) { continue }
                 // A side that individually fits the budget can still blow it
                 // once stacked on the main — only take it if it fits what's
-                // actually left, and keep scanning for a shorter one instead
-                // of stopping at the first (highest-scored) candidate.
-                guard candidate.session.durationMin <= budget - usedMinutes else { continue }
+                // actually left of the main-and-sides pool (not the whole
+                // remaining budget, which would eat into room reserved for
+                // the appetizer/dessert floor above), and keep scanning for
+                // a shorter one instead of stopping at the first
+                // (highest-scored) candidate.
+                guard candidate.session.durationMin <= mainAndSidesBudget - usedMinutes else { continue }
                 sides.append(candidate.item)
                 taken.insert(candidate.session.id)
                 takenActivities.insert(candidate.session.activity)

@@ -172,3 +172,88 @@ nonisolated extension Session {
         }
     }
 }
+
+// MARK: - Matching typed steps to what the app can show
+
+nonisolated extension Step {
+    /// A step somebody typed themselves, matched to what the app already
+    /// knows how to draw. Authored catalog steps are tagged by hand and are
+    /// returned untouched; a custom part has no author to tag it, so its
+    /// title is the only thing to go on. Applied when the routine is played,
+    /// not when it is saved, so routines saved before this existed get the
+    /// same treatment and a glossary that grows later is picked up for free.
+    func inferringVisual(from glossary: [ExerciseTerm]) -> Step {
+        guard glossaryID == nil, visual == nil else { return self }
+        return Step(
+            name: name,
+            seconds: seconds,
+            cue: cue,
+            glossaryID: CustomStepMatcher.glossaryID(for: name, in: glossary),
+            visual: CustomStepMatcher.breathingVisual(for: name),
+            reps: reps,
+            sets: sets,
+            switchSides: switchSides,
+            switchAfterSeconds: switchAfterSeconds
+        )
+    }
+}
+
+/// Pure string matching, kept out of the views so it can be tested with a
+/// list of titles. Deliberately conservative: a wrong figure on the card is
+/// worse than none, so a title has to contain a glossary name or alias as
+/// whole words, and the longest such name wins ("knee push-ups" is the knee
+/// version, not the plain one).
+nonisolated enum CustomStepMatcher {
+    static func glossaryID(for title: String, in glossary: [ExerciseTerm]) -> String? {
+        let normalizedTitle = normalized(title)
+        guard !normalizedTitle.isEmpty else { return nil }
+        var best: (id: String, length: Int)?
+        for term in glossary {
+            for candidate in [term.name] + term.aka {
+                let normalizedCandidate = normalized(candidate)
+                guard !normalizedCandidate.isEmpty,
+                      normalizedCandidate.count > (best?.length ?? 0),
+                      contains(normalizedTitle, wholeWords: normalizedCandidate)
+                else { continue }
+                best = (term.id, normalizedCandidate.count)
+            }
+        }
+        return best?.id
+    }
+
+    /// Box and square breathing are four-four-four-four; a named 4-7-8 is
+    /// itself; anything else that mentions breath gets the resting default.
+    static func breathingVisual(for title: String) -> StepVisual? {
+        let normalizedTitle = normalized(title)
+        if normalizedTitle.contains("box breath") || normalizedTitle.contains("square breath") {
+            return .breathing(BreathingCadence(inhale: 4, holdIn: 4, exhale: 4, holdOut: 4))
+        }
+        if normalizedTitle.contains("4 7 8") {
+            return .breathing(BreathingCadence(inhale: 4, holdIn: 7, exhale: 8, holdOut: 0))
+        }
+        let breathWords = ["breath", "pranayama", "inhale", "exhale"]
+        if breathWords.contains(where: normalizedTitle.contains) {
+            return .breathing(.default)
+        }
+        return nil
+    }
+
+    /// Lowercased, letters and digits only, single spaces. "Knee Push-Ups
+    /// (Right)" becomes "knee push ups right".
+    static func normalized(_ text: String) -> String {
+        let lowered = text.lowercased()
+        let kept = lowered.map { $0.isLetter || $0.isNumber ? $0 : " " }
+        return String(kept)
+            .split(separator: " ", omittingEmptySubsequences: true)
+            .joined(separator: " ")
+    }
+
+    /// Whole-word containment, forgiving a plural on the candidate's last
+    /// word so "push ups" still finds "push up".
+    private static func contains(_ title: String, wholeWords candidate: String) -> Bool {
+        let padded = " \(title) "
+        return padded.contains(" \(candidate) ")
+            || padded.contains(" \(candidate)s ")
+            || padded.contains(" \(candidate)es ")
+    }
+}

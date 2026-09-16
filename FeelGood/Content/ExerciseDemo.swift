@@ -21,6 +21,12 @@
 import Foundation
 
 nonisolated enum ExerciseDemo {
+    /// Whether anything is bundled for this id. A `Bundle` path lookup, not
+    /// a decode, so callers can reserve layout for it synchronously.
+    static func hasDemo(for glossaryID: String?) -> Bool {
+        lottieURL(for: glossaryID) != nil || !frameURLs(for: glossaryID).isEmpty
+    }
+
     /// A bundled Lottie animation for a glossary id, if one has been drawn.
     static func lottieURL(for glossaryID: String?) -> URL? {
         guard let glossaryID else { return nil }

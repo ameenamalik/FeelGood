@@ -32,9 +32,7 @@ struct ExerciseDemoView: View {
     /// state changes has, in practice, sometimes never grown at all — so
     /// steps with a demo reserve it up front, and steps without one never
     /// reserve anything.
-    private var hasDemo: Bool {
-        ExerciseDemo.lottieURL(for: glossaryID) != nil || !ExerciseDemo.frameURLs(for: glossaryID).isEmpty
-    }
+    private var hasDemo: Bool { ExerciseDemo.hasDemo(for: glossaryID) }
 
     var body: some View {
         ZStack {
@@ -69,7 +67,10 @@ struct ExerciseDemoView: View {
                     .transition(.opacity)
             }
         }
-        .frame(maxWidth: hasDemo ? 220 : 0, maxHeight: hasDemo ? 220 : 0)
+        .frame(
+            maxWidth: hasDemo ? StepVisualView.slotSize : 0,
+            maxHeight: hasDemo ? StepVisualView.slotSize : 0
+        )
         .task(id: glossaryID) {
             // Lottie is preferred; only load the PNG flipbook when no
             // Lottie file exists for this id.
