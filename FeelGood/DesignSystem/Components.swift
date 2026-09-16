@@ -65,18 +65,13 @@ struct FGPrimaryButton: View {
                 .foregroundStyle(isEnabled ? FGColor.bg : FGColor.inkMuted)
                 .frame(maxWidth: .infinity, minHeight: 56)
                 .contentShape(Capsule())
+                .background(
+                    Capsule()
+                        .fill(isEnabled ? FGColor.ink : FGColor.line)
+                )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.feelGoodPress)
         .disabled(!isEnabled)
-        // The fill sits *outside* the button on purpose. `.disabled` makes the
-        // plain button style render its whole label at about half opacity, so a
-        // fill drawn inside it lets the page through — over the brand wash that
-        // came out muddy brown. Out here the fill stays opaque and only the
-        // label dims, which is what a disabled control should do anyway.
-        .background(
-            Capsule()
-                .fill(isEnabled ? FGColor.ink : FGColor.line)
-        )
     }
 }
 
@@ -453,7 +448,7 @@ struct FGPill: View {
                 )
                 .contentShape(Capsule())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.feelGoodPress)
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 

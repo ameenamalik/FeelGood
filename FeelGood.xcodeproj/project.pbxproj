@@ -20,6 +20,7 @@
 		FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FEE1DA000000000000000002 /* FeelGoodWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		05E1DA000000000000000011 /* OneSignalFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 05E1DA00000000000000000F /* OneSignalFramework */; };
 		05E1DA000000000000000012 /* OneSignalExtension in Frameworks */ = {isa = PBXBuildFile; productRef = 05E1DA000000000000000010 /* OneSignalExtension */; };
+		05E1DA000000000000000013 /* OneSignalInAppMessages in Frameworks */ = {isa = PBXBuildFile; productRef = 05E1DA000000000000000014 /* OneSignalInAppMessages */; };
 		05E1DA00000000000000000D /* OneSignalNotificationServiceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 05E1DA000000000000000001 /* OneSignalNotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -160,6 +161,7 @@
 				B90FDB8D235A87FD6444FBD5 /* GoogleSignInSwift in Frameworks */,
 				35DFAC65D6CBD54F3615AFF2 /* FirebaseFirestore in Frameworks */,
 				05E1DA000000000000000011 /* OneSignalFramework in Frameworks */,
+				05E1DA000000000000000013 /* OneSignalInAppMessages in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -255,6 +257,7 @@
 				AAA8FD465B3465A2B40A38CB /* GoogleSignInSwift */,
 				96D6C9945F36E52002EE148E /* FirebaseFirestore */,
 				05E1DA00000000000000000F /* OneSignalFramework */,
+				05E1DA000000000000000014 /* OneSignalInAppMessages */,
 			);
 			productName = FeelGood;
 			productReference = 43A871C43033C6D300DD35A1 /* FeelGood.app */;
@@ -1079,6 +1082,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 05E1DA00000000000000000E /* XCRemoteSwiftPackageReference "OneSignal-XCFramework" */;
 			productName = OneSignalExtension;
+		};
+		05E1DA000000000000000014 /* OneSignalInAppMessages */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05E1DA00000000000000000E /* XCRemoteSwiftPackageReference "OneSignal-XCFramework" */;
+			productName = OneSignalInAppMessages;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

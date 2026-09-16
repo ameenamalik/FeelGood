@@ -20,6 +20,7 @@ struct PlayerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var index = 0
     @State private var remaining = 0
     /// A short buffer at the start of each new step. This is separate from the
@@ -62,6 +63,7 @@ struct PlayerView: View {
     @ScaledMetric(relativeTo: .largeTitle) private var counterHeight = 180.0
     @State private var isRunning = true
     @State private var isDone = false
+    @State private var haveFeelChoicesLanded = false
     @State private var breathingStartedAt = Date()
     @State private var breathingPausedAt: Date?
     @State private var breathingAnchorIndex: Int?
@@ -756,51 +758,95 @@ struct PlayerView: View {
     private var completionAura: FGAura { session.activity.completionAura ?? .butter }
 
     private var completion: some View {
-        VStack(spacing: FGSpace.l) {
-            Spacer()
-            ZStack {
-                // The echo of the final-stretch flash, settling out for good.
-                // Sits behind the headline only — never behind any one Feel
-                // choice below, so it can't read as nudging an answer.
-                completionAura.core
-                    .opacity(0.55)
-                    .frame(width: 280, height: 220)
-                    .blur(radius: 46)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(spacing: 0) {
+                    Color.clear
+                        .frame(
+                            height: typeSize.isAccessibilitySize
+                                ? FGSpace.l
+                                : max(96, proxy.size.height * 0.24)
+                        )
+                        .accessibilityHidden(true)
 
-                VStack(spacing: FGSpace.l) {
-                    Text(session.activity.completionHeadline)
-                        .font(FGFont.display)
-                        .foregroundStyle(FGColor.ink)
-                    Text("How did that feel?")
-                        .font(FGFont.body)
-                        .foregroundStyle(FGColor.inkMuted)
+                    ZStack {
+                        // The echo of the final-stretch flash, settling out for
+                        // good. It stays with the headline rather than sitting
+                        // behind any response and biasing an answer.
+                        completionAura.core
+                            .opacity(0.62)
+                            .frame(width: 240, height: 120)
+                            .blur(radius: 42)
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+
+                        VStack(spacing: FGSpace.m) {
+                            Text(session.activity.completionHeadline)
+                                .font(FGFont.display)
+                                .foregroundStyle(FGColor.ink)
+                                .multilineTextAlignment(.center)
+
+                            Text("How did that feel?")
+                                .font(FGFont.body)
+                                .foregroundStyle(FGColor.inkMuted)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+
+                    feelChoices
+                        .padding(.top, typeSize.isAccessibilitySize ? FGSpace.m : FGSpace.l)
+
+                    Spacer(minLength: FGSpace.xl)
+
+                    HStack(spacing: FGSpace.m) {
+                        FGQuietButton("Back", systemImage: "arrow.left") {
+                            goBack()
+                        }
+
+                        Spacer(minLength: FGSpace.s)
+
+                        FGQuietButton("Skip feedback") {
+                            onFinish(.completed(nil))
+                        }
+                    }
+                    .padding(.bottom, FGSpace.l)
                 }
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: proxy.size.height)
+                .padding(.horizontal, FGSpace.page)
             }
-
-            feelChoices
-            FGQuietButton("Back to last exercise", systemImage: "backward.end") {
-                goBack()
-            }
-            FGQuietButton("Skip") { onFinish(.completed(nil)) }
-            Spacer()
+            .scrollBounceBehavior(.basedOnSize)
         }
-        .padding(FGSpace.page)
-        // Full bleed here: this is the only screen empty enough to carry it,
-        // and the only one where decoration is the point.
         .background(FGBrandWash().ignoresSafeArea())
     }
 
-    /// Three related selection controls over the full-bleed wash.
+    /// Three equal choices at ordinary sizes, one per row for accessibility
+    /// Dynamic Type so neither labels nor tap targets get squeezed.
     private var feelChoices: some View {
-        HStack(spacing: FGSpace.m) {
-            ForEach(Feel.allCases, id: \.self) { feel in
+        FlowRow.choices(isAccessibilitySize: typeSize.isAccessibilitySize) {
+            ForEach(Array(Feel.allCases.enumerated()), id: \.element) { index, feel in
                 feelChoiceLabel(feel)
-                    .background(
-                        RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                            .fill(FGColor.surface)
+                    .opacity(reduceMotion || haveFeelChoicesLanded ? 1 : 0)
+                    .scaleEffect(reduceMotion || haveFeelChoicesLanded ? 1 : 0.88)
+                    .offset(y: reduceMotion || haveFeelChoicesLanded ? 0 : 18)
+                    .animation(
+                        reduceMotion
+                            ? .none
+                            : .spring(response: 0.48, dampingFraction: 0.68)
+                                .delay(Double(index) * 0.08),
+                        value: haveFeelChoicesLanded
                     )
+            }
+        }
+        .onAppear {
+            guard !reduceMotion else {
+                haveFeelChoicesLanded = true
+                return
+            }
+            haveFeelChoicesLanded = false
+            Task { @MainActor in
+                await Task.yield()
+                haveFeelChoicesLanded = true
             }
         }
     }
@@ -809,16 +855,30 @@ struct PlayerView: View {
         Button {
             onFinish(.completed(feel))
         } label: {
-            VStack(spacing: FGSpace.xs) {
+            VStack(spacing: FGSpace.s) {
                 Image(systemName: symbol(for: feel))
-                    .font(.title)
+                    .font(.system(size: 26, weight: .medium))
                 Text(label(for: feel))
-                    .font(FGFont.caption)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .multilineTextAlignment(.center)
             }
-            .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget + 24)
+            .frame(maxWidth: .infinity, minHeight: typeSize.isAccessibilitySize ? 76 : 92)
+            .padding(.horizontal, FGSpace.s)
             .foregroundStyle(FGColor.ink)
+            .background(
+                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                    .fill(FGColor.surface.opacity(0.92))
+                    .shadow(
+                        color: completionAura.edge.opacity(0.12),
+                        radius: 16,
+                        x: 0,
+                        y: 8
+                    )
+            )
+            .contentShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.feelGoodPress)
+        .accessibilityLabel(label(for: feel))
     }
 
     /// Counting reps, not counting down. Deliberately not a progress bar:
@@ -1019,7 +1079,7 @@ struct PlayerView: View {
         switch feel {
         case .lovedIt: "heart"
         case .fine: "hand.thumbsup"
-        case .tooMuch: "battery.25percent"
+        case .tooMuch: "hand.raised"
         }
     }
 
@@ -1027,7 +1087,7 @@ struct PlayerView: View {
         switch feel {
         case .lovedIt: "Loved it"
         case .fine: "Fine"
-        case .tooMuch: "A lot"
+        case .tooMuch: "Too much"
         }
     }
 }

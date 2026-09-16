@@ -115,6 +115,9 @@ struct ProfileAvatarPickerView: View {
     @Binding var selection: ProfileAvatar
     @Binding var background: ProfileAvatarBackground
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var hoppingAvatar: ProfileAvatar?
+    @State private var hopID: UUID?
 
     private let columns = [
         GridItem(.adaptive(minimum: 92), spacing: FGSpace.s)
@@ -136,8 +139,10 @@ struct ProfileAvatarPickerView: View {
 
                     LazyVGrid(columns: columns, spacing: FGSpace.m) {
                         ForEach(ProfileAvatar.allCases) { avatar in
+                            let isSelected = selection == avatar
+
                             Button {
-                                selection = avatar
+                                selectAvatar(avatar)
                             } label: {
                                 VStack(spacing: FGSpace.xs) {
                                     ProfileAvatarView(
@@ -145,6 +150,9 @@ struct ProfileAvatarPickerView: View {
                                         background: background,
                                         size: 76
                                     )
+                                    .scaleEffect(hoppingAvatar == avatar ? 1.04 : 1)
+                                    .rotationEffect(.degrees(hoppingAvatar == avatar ? -3 : 0))
+                                    .offset(y: hoppingAvatar == avatar ? -6 : 0)
 
                                     Text(avatar.displayName)
                                         .font(FGFont.caption.weight(.semibold))
@@ -157,14 +165,31 @@ struct ProfileAvatarPickerView: View {
                                 .overlay {
                                     RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
                                         .strokeBorder(
-                                            selection == avatar ? FGColor.ink : FGColor.lineStrong,
-                                            lineWidth: selection == avatar ? 2 : 1
+                                            isSelected ? FGColor.ink : FGColor.lineStrong,
+                                            lineWidth: isSelected ? 2 : 1
+                                        )
+                                }
+                                .overlay(alignment: .topTrailing) {
+                                    selectionCheckmark
+                                        .scaleEffect(isSelected ? 1 : 0.35)
+                                        .opacity(isSelected ? 1 : 0)
+                                        .padding(FGSpace.xs)
+                                        .animation(
+                                            reduceMotion
+                                                ? .none
+                                                : .spring(response: 0.34, dampingFraction: 0.56),
+                                            value: isSelected
                                         )
                                 }
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.feelGoodPress)
+                            .scaleEffect(isSelected ? 1.025 : 1)
+                            .offset(y: isSelected ? -3 : 0)
+                            .zIndex(isSelected ? 1 : 0)
+                            .fgAnimation(FGMotion.settle, value: isSelected)
+                            .fgAnimation(FGMotion.settle, value: hoppingAvatar)
                             .accessibilityLabel(avatar.displayName)
-                            .accessibilityAddTraits(selection == avatar ? .isSelected : [])
+                            .accessibilityAddTraits(isSelected ? .isSelected : [])
                         }
                     }
 
@@ -181,6 +206,8 @@ struct ProfileAvatarPickerView: View {
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+        .sensoryFeedback(.selection, trigger: selection)
+        .sensoryFeedback(.selection, trigger: background)
     }
 
     private var backgroundPicker: some View {
@@ -191,8 +218,10 @@ struct ProfileAvatarPickerView: View {
 
             LazyVGrid(columns: columns, spacing: FGSpace.s) {
                 ForEach(ProfileAvatarBackground.allCases) { choice in
+                    let isSelected = background == choice
+
                     Button {
-                        background = choice
+                        selectBackground(choice)
                     } label: {
                         VStack(spacing: FGSpace.xs) {
                             Circle()
@@ -201,17 +230,25 @@ struct ProfileAvatarPickerView: View {
                                 .overlay {
                                     Circle()
                                         .strokeBorder(
-                                            background == choice ? FGColor.ink : FGColor.lineStrong,
-                                            lineWidth: background == choice ? 3 : 1
+                                            isSelected ? FGColor.ink : FGColor.lineStrong,
+                                            lineWidth: isSelected ? 3 : 1
                                         )
                                 }
                                 .overlay {
-                                    if background == choice {
-                                        Image(systemName: "checkmark")
-                                            .font(.caption.weight(.bold))
-                                            .foregroundStyle(FGColor.inkOnAccent)
-                                    }
+                                    Image(systemName: "checkmark")
+                                        .font(.caption.weight(.bold))
+                                        .foregroundStyle(FGColor.inkOnAccent)
+                                        .scaleEffect(isSelected ? 1 : 0.25)
+                                        .opacity(isSelected ? 1 : 0)
+                                        .animation(
+                                            reduceMotion
+                                                ? .none
+                                                : .spring(response: 0.34, dampingFraction: 0.56),
+                                            value: isSelected
+                                        )
                                 }
+                                .fgAnimation(FGMotion.gentle, value: background)
+                                .fgAnimation(FGMotion.gentle, value: selection)
 
                             Text(choice.displayName)
                                 .font(FGFont.caption.weight(.semibold))
@@ -220,11 +257,54 @@ struct ProfileAvatarPickerView: View {
                         }
                         .frame(maxWidth: .infinity, minHeight: 82)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.feelGoodPress)
+                    .scaleEffect(isSelected ? 1.04 : 1)
+                    .offset(y: isSelected ? -2 : 0)
+                    .zIndex(isSelected ? 1 : 0)
+                    .fgAnimation(FGMotion.settle, value: isSelected)
                     .accessibilityLabel("\(choice.displayName) background")
-                    .accessibilityAddTraits(background == choice ? .isSelected : [])
+                    .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }
             }
+        }
+    }
+
+    private var selectionCheckmark: some View {
+        Image(systemName: "checkmark")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(FGColor.bg)
+            .frame(width: 24, height: 24)
+            .background(FGColor.ink, in: Circle())
+    }
+
+    private func selectAvatar(_ avatar: ProfileAvatar) {
+        guard selection != avatar else { return }
+
+        withAnimation(reduceMotion ? nil : FGMotion.settle) {
+            selection = avatar
+        }
+
+        guard !reduceMotion else { return }
+        let id = UUID()
+        hopID = id
+
+        withAnimation(.spring(response: 0.22, dampingFraction: 0.62)) {
+            hoppingAvatar = avatar
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(150))
+            guard hopID == id else { return }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
+                hoppingAvatar = nil
+            }
+        }
+    }
+
+    private func selectBackground(_ choice: ProfileAvatarBackground) {
+        guard background != choice else { return }
+        withAnimation(reduceMotion ? nil : FGMotion.gentle) {
+            background = choice
         }
     }
 }

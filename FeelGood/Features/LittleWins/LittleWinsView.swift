@@ -31,7 +31,7 @@ struct LittleWinsSection: View {
                     Button { selected = item } label: {
                         LittleWinCard(progress: item)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.feelGoodPress)
                 }
             }
         }
@@ -99,7 +99,6 @@ private struct LittleWinCard: View {
                 .allowsHitTesting(false)
         )
         .scaleEffect(isPulsing ? 1.07 : 1.0)
-        .shadow(color: FGColor.ink.opacity(0.055), radius: 10, y: 4)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(progress.win.title), \(progress.statusLine)")
         .accessibilityHint("Opens badge details")
@@ -165,9 +164,8 @@ struct LittleWinDetailView: View {
                             .frame(width: 220, height: 50)
                             .background(FGColor.surface)
                             .clipShape(Capsule())
-                            .shadow(color: FGColor.ink.opacity(0.06), radius: 8, y: 3)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.feelGoodPress)
                 }
             }
             .padding(FGSpace.page)
@@ -259,7 +257,7 @@ struct LittleWinCelebrationView: View {
                             .background(FGColor.line)
                             .clipShape(Capsule())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.feelGoodPress)
 
                     FGPrimaryButton(title: "Nice") { dismiss() }
                         .frame(maxWidth: .infinity)

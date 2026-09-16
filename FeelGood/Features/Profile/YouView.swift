@@ -150,7 +150,7 @@ struct YouView: View {
                 .frame(maxWidth: .infinity, minHeight: 40)
                 .background(Capsule().fill(fill))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.feelGoodPress)
         .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
         .contentShape(Rectangle())
     }
@@ -183,7 +183,7 @@ struct YouView: View {
                         Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1)
                     }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.feelGoodPress)
             .accessibilityLabel("Profile mascot, \(profile.avatar.displayName)")
             .accessibilityHint("Choose a different mascot")
 

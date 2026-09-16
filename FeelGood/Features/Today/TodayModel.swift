@@ -155,6 +155,8 @@ final class TodayModel {
     private(set) var dailySwapsCount: Int = 0
     var isProUser: Bool { isProUserProvider() }
     var hasRemainingSwaps: Bool { isProUser || dailySwapsCount < 1 }
+    var completedSessionCount: Int { history.filter(\.wasCompleted).count }
+    var hasCustomRoutine: Bool { !ownSessions.isEmpty }
 
     private func input(now: Date) -> PlanInput {
         let memory: PlanMemory = isProUser
@@ -932,4 +934,3 @@ extension Menu {
         )
     }
 }
-

@@ -216,6 +216,10 @@ struct SessionDetailView: View {
     }
 
     private func finishCompletedSession() {
+        OneSignalManager.shared.setInAppTrigger(
+            key: "session_completed",
+            value: "true"
+        )
         onCompleted()
         dismiss()
     }

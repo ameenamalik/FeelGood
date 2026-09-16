@@ -89,7 +89,7 @@ struct CourseQuadrantDetailView: View {
                                     .strokeBorder(course.tagText.opacity(0.12), lineWidth: 1)
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.feelGoodPress)
                         .padding(.top, FGSpace.xs)
                     }
                 }
@@ -220,9 +220,8 @@ struct CourseQuadrantDetailView: View {
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
                     .strokeBorder(course.tagText.opacity(0.12), lineWidth: 1)
             )
-            .shadow(color: FGColor.ink.opacity(0.025), radius: 5, y: 2)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.feelGoodPress)
         .contextMenu {
             if isTodayOverride {
                 Button("Remove from Today's menu", systemImage: "minus.circle") {

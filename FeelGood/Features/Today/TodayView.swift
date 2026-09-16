@@ -10,6 +10,36 @@ import SwiftUI
 import UIKit
 import PostHog
 
+private struct PendingCheckInUpdate {
+    let checkIn: PlanCheckIn
+    let calendarOpening: CalendarOpening?
+    let completedMovementPlan: CalendarMovementPlan?
+}
+
+/// A quiet, check-in-colored glow behind today's rebuilt menu. Replacing the
+/// keyed view lets the old and new colors cross-fade instead of snapping.
+private struct MenuPersonalizationAura: View {
+    let aura: FGAura
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        GeometryReader { proxy in
+            RadialGradient(
+                colors: [
+                    aura.core.opacity(colorScheme == .dark ? 0.16 : 0.38),
+                    aura.mid.opacity(colorScheme == .dark ? 0.10 : 0.22),
+                    Color.clear,
+                ],
+                center: UnitPoint(x: 0.5, y: 0.62),
+                startRadius: 0,
+                endRadius: max(proxy.size.width, proxy.size.height) * 0.68
+            )
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
 struct TodayView: View {
     @State var model: TodayModel
     /// Set by a widget tap. Consumed here and cleared, so the same link does
@@ -29,6 +59,11 @@ struct TodayView: View {
     @State private var showMenuAnyway = false
     @State private var selected: MenuItem?
     @State private var littleWinCelebration: LittleWinCelebration?
+    @State private var pendingCheckInUpdate: PendingCheckInUpdate?
+    @State private var isRegeneratingMenu = false
+    @State private var isMenuCompressed = false
+    @State private var visibleMenuCardCount = Int.max
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     #if DEBUG
     @State private var isDebugging = false
     #endif
@@ -40,6 +75,15 @@ struct TodayView: View {
             // Rises through the space below the menu. The cards keep a plain
             // page behind them and still read as cards.
             FGBrandWash(reach: 0.62)
+                .ignoresSafeArea()
+
+            MenuPersonalizationAura(aura: currentMenuAura)
+                .id(currentMenuAuraID)
+                .transition(.opacity)
+                .animation(
+                    reduceMotion ? .none : .easeInOut(duration: 0.65),
+                    value: currentMenuAuraID
+                )
                 .ignoresSafeArea()
 
             ScrollView {
@@ -61,7 +105,7 @@ struct TodayView: View {
             // text is large enough to need it.
             .scrollBounceBehavior(.basedOnSize)
         }
-        .sheet(isPresented: $isCheckingIn, onDismiss: presentPendingLittleWinCelebration) {
+        .sheet(isPresented: $isCheckingIn, onDismiss: handleCheckInDismissal) {
             CheckInSheet(
                 current: model.checkIn,
                 currentCalendarOpening: model.calendarOpening,
@@ -69,10 +113,11 @@ struct TodayView: View {
                 preferredTime: model.profile.bestTimeOfDay,
                 realisticMinutes: model.profile.realisticMinutes
             ) { checkIn, calendarOpening, completedMovementPlan in
-                model.apply(checkIn, calendarOpening: calendarOpening)
-                if let completedMovementPlan {
-                    model.log(completedMovementPlan)
-                }
+                pendingCheckInUpdate = PendingCheckInUpdate(
+                    checkIn: checkIn,
+                    calendarOpening: calendarOpening,
+                    completedMovementPlan: completedMovementPlan
+                )
                 isCheckingIn = false
             }
         }
@@ -84,7 +129,7 @@ struct TodayView: View {
         .sheet(isPresented: $isShowingPaywall) {
             FeelGoodPaywallView()
         }
-        .sheet(isPresented: $isShowingMyMenu) {
+        .sheet(isPresented: $isShowingMyMenu, onDismiss: syncOneSignalDiscoveryTriggers) {
             MyMenuView(model: model)
         }
         .sheet(item: $selected, onDismiss: presentCompletionPaywallIfNeeded) { item in
@@ -105,6 +150,17 @@ struct TodayView: View {
         }
         .onChange(of: requestedSessionID.wrappedValue, initial: true) { _, id in
             openRequestedSession(id)
+        }
+        .onAppear {
+            syncOneSignalDiscoveryTriggers()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .oneSignalOpenMyMenu)) { _ in
+            // Let OneSignal's overlay finish dismissing before presenting the
+            // My Menu sheet; competing presentations can otherwise drop it.
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(250))
+                isShowingMyMenu = true
+            }
         }
         #if DEBUG
         .sheet(isPresented: $isDebugging) {
@@ -138,6 +194,8 @@ struct TodayView: View {
     private var menuItems: some View {
         VStack(spacing: FGSpace.s) {
             ForEach(Array(model.menu.items.enumerated()), id: \.element.id) { index, item in
+                let isVisible = index < visibleMenuCardCount
+
                 Group {
                     if item.course == .main {
                         MenuItemCard(
@@ -179,10 +237,20 @@ struct TodayView: View {
                         )
                     }
                 }
+                .opacity(isVisible ? 1 : 0)
+                .scaleEffect(isVisible ? 1 : 0.96, anchor: .top)
+                .offset(y: isVisible ? 0 : 10)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
                 .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: item.id)
+                .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: isVisible)
             }
         }
+        .opacity(isMenuCompressed ? 0 : 1)
+        .scaleEffect(
+            x: isMenuCompressed ? 0.985 : 1,
+            y: isMenuCompressed ? 0.94 : 1,
+            anchor: .top
+        )
     }
 
 
@@ -341,6 +409,13 @@ struct TodayView: View {
                         Text("\(model.remainingDurationMin) min left")
                             .font(.system(size: 16, weight: .regular))
                             .foregroundStyle(FGColor.inkMuted)
+                            .contentTransition(
+                                .numericText(value: Double(model.remainingDurationMin))
+                            )
+                            .animation(
+                                reduceMotion ? .none : .easeInOut(duration: 0.35),
+                                value: model.remainingDurationMin
+                            )
                     } else if model.hasCompletedActivityToday {
                         Text("Completed")
                             .font(.system(size: 16, weight: .regular))
@@ -456,8 +531,11 @@ struct TodayView: View {
 
     private func quickFilterButtonLabel(_ filter: QuickFilter) -> some View {
         Button {
-            withAnimation(FGMotion.settle) {
-                model.applyQuickFilter(filter)
+            guard !isRegeneratingMenu else { return }
+            Task { @MainActor in
+                await regenerateMenu {
+                    model.applyQuickFilter(filter)
+                }
             }
         } label: {
             HStack(spacing: 5) {
@@ -473,9 +551,84 @@ struct TodayView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .disabled(isRegeneratingMenu)
+    }
+
+    private var currentMenuAura: FGAura {
+        (model.checkIn ?? model.menu.assumedCheckIn).energy.checkInAura
+    }
+
+    private var currentMenuAuraID: String {
+        (model.checkIn ?? model.menu.assumedCheckIn).energy.rawValue
+    }
+
+    private func handleCheckInDismissal() {
+        guard let update = pendingCheckInUpdate else {
+            presentPendingLittleWinCelebration()
+            return
+        }
+        pendingCheckInUpdate = nil
+
+        let didChange = model.checkIn != update.checkIn
+            || model.calendarOpening != update.calendarOpening
+
+        Task { @MainActor in
+            if didChange {
+                await regenerateMenu {
+                    apply(update)
+                }
+            } else {
+                apply(update)
+            }
+            presentPendingLittleWinCelebration()
+        }
+    }
+
+    private func apply(_ update: PendingCheckInUpdate) {
+        model.apply(update.checkIn, calendarOpening: update.calendarOpening)
+        if let completedMovementPlan = update.completedMovementPlan {
+            model.log(completedMovementPlan)
+        }
+    }
+
+    @MainActor
+    private func regenerateMenu(_ update: @MainActor () -> Void) async {
+        guard !isRegeneratingMenu else {
+            update()
+            return
+        }
+        isRegeneratingMenu = true
+
+        guard !reduceMotion else {
+            update()
+            visibleMenuCardCount = Int.max
+            isRegeneratingMenu = false
+            return
+        }
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            isMenuCompressed = true
+        }
+        try? await Task.sleep(for: .milliseconds(210))
+
+        visibleMenuCardCount = 0
+        withAnimation(.easeInOut(duration: 0.65)) {
+            update()
+        }
+        isMenuCompressed = false
+
+        // Let SwiftUI install the rebuilt, hidden card tree before revealing it.
+        try? await Task.sleep(for: .milliseconds(40))
+        visibleMenuCardCount = model.menu.items.count
+
+        let settleTime = 560 + (model.menu.items.count * 60)
+        try? await Task.sleep(for: .milliseconds(settleTime))
+        visibleMenuCardCount = Int.max
+        isRegeneratingMenu = false
     }
 
     private func presentCompletionPaywallIfNeeded() {
+        syncOneSignalDiscoveryTriggers()
         guard shouldOfferProAfterDismissal else { return }
         shouldOfferProAfterDismissal = false
 
@@ -492,6 +645,13 @@ struct TodayView: View {
 
     private func presentPendingLittleWinCelebration() {
         littleWinCelebration = model.takePendingLittleWinCelebration()
+    }
+
+    private func syncOneSignalDiscoveryTriggers() {
+        OneSignalManager.shared.setInAppTriggers([
+            "completed_count": String(model.completedSessionCount),
+            "has_custom_routine": model.hasCustomRoutine ? "true" : "false",
+        ])
     }
 
     @ViewBuilder
@@ -643,18 +803,24 @@ private struct MenuItemCard: View {
     let onSwap: () -> Void
 
     var body: some View {
-        // All courses share uniform clean styling
-        MenuItemBody(
-            item: item,
-            isDone: isDone,
-            isInProgress: isInProgress,
-            canSwap: canSwap,
-            isReset: isReset,
-            isHighlighted: false,
-            onSwap: onSwap
-        )
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onOpen)
+        ZStack(alignment: .topTrailing) {
+            Button(action: onOpen) {
+                MenuItemBody(
+                    item: item,
+                    isDone: isDone,
+                    isInProgress: isInProgress,
+                    isHighlighted: false
+                )
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.feelGoodPress)
+
+            if canSwap {
+                MenuSwapButton(item: item, isReset: isReset, action: onSwap)
+                    .padding(.top, 18)
+                    .padding(.trailing, 20)
+            }
+        }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
             "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : isInProgress ? "In progress. Resume. " : "")"
@@ -714,19 +880,24 @@ private struct MenuItemRow: View {
     let onSwap: () -> Void
 
     var body: some View {
-        // Identical to the Main's card but for the highlight — every course is
-        // the same row, so nothing but the border says which one matters most.
-        MenuItemBody(
-            item: item,
-            isDone: isDone,
-            isInProgress: isInProgress,
-            canSwap: canSwap,
-            isReset: isReset,
-            isHighlighted: false,
-            onSwap: onSwap
-        )
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onOpen)
+        ZStack(alignment: .topTrailing) {
+            Button(action: onOpen) {
+                MenuItemBody(
+                    item: item,
+                    isDone: isDone,
+                    isInProgress: isInProgress,
+                    isHighlighted: false
+                )
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.feelGoodPress)
+
+            if canSwap {
+                MenuSwapButton(item: item, isReset: isReset, action: onSwap)
+                    .padding(.top, 18)
+                    .padding(.trailing, 20)
+            }
+        }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
             "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : isInProgress ? "In progress. Resume. " : "")"
@@ -745,10 +916,7 @@ private struct MenuItemBody: View {
     let item: MenuItem
     let isDone: Bool
     let isInProgress: Bool
-    let canSwap: Bool
-    let isReset: Bool
     let isHighlighted: Bool
-    let onSwap: () -> Void
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -780,25 +948,7 @@ private struct MenuItemBody: View {
                         .padding(.leading, 2)
                 }
 
-                Spacer(minLength: FGSpace.xs)
-
-                if canSwap {
-                    Button(action: onSwap) {
-                        Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(item.course.accentText)
-                            .frame(width: 30, height: 30)
-                            .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(isReset ? "Start over" : "Shuffle")
-                    .accessibilityHint(
-                        isReset
-                            ? "Cycles back to the first \(item.course.label.lowercased()) options"
-                            : "Swaps in a different \(item.course.label.lowercased()); doesn't skip it"
-                    )
-                }
+                Spacer(minLength: 30)
             }
 
             // Session Title in SF Pro Rounded Bold
@@ -823,7 +973,6 @@ private struct MenuItemBody: View {
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(item.course.accentGradient)
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.25 : 0.04), radius: 10, x: 0, y: 3)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -835,6 +984,31 @@ private struct MenuItemBody: View {
                 )
         )
         .fgAnimation(FGMotion.settle, value: isDone)
+    }
+}
+
+private struct MenuSwapButton: View {
+    let item: MenuItem
+    let isReset: Bool
+    let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(item.course.accentText)
+                .frame(width: 30, height: 30)
+                .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
+                .clipShape(Circle())
+        }
+        .buttonStyle(.feelGoodPress)
+        .accessibilityLabel(isReset ? "Start over" : "Shuffle")
+        .accessibilityHint(
+            isReset
+                ? "Cycles back to the first \(item.course.label.lowercased()) options"
+                : "Swaps in a different \(item.course.label.lowercased()); doesn't skip it"
+        )
     }
 }
 
@@ -852,4 +1026,3 @@ private struct MenuItemBody: View {
         )
     )
 }
-
