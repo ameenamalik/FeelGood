@@ -187,7 +187,12 @@ struct LittleWinDetailView: View {
 struct LittleWinCelebrationView: View {
     let celebration: LittleWinCelebration
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shareItems: ShareItems?
+    @State private var mascotScale = 0.72
+    @State private var mascotRotation = -7.0
+    @State private var mascotOpacity = 0.0
+    @State private var didCelebrate = false
 
     var body: some View {
         ZStack {
@@ -221,6 +226,9 @@ struct LittleWinCelebrationView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 118, height: 118)
+                        .scaleEffect(mascotScale)
+                        .rotationEffect(.degrees(mascotRotation))
+                        .opacity(mascotOpacity)
                 }
 
                 VStack(spacing: FGSpace.s) {
@@ -267,6 +275,25 @@ struct LittleWinCelebrationView: View {
             .shadow(color: FGColor.ink.opacity(0.11), radius: 24, y: 10)
             .padding(FGSpace.page)
         }
+        .sensoryFeedback(.success, trigger: didCelebrate)
+        .onAppear {
+            didCelebrate = true
+
+            guard !reduceMotion else {
+                mascotScale = 1
+                mascotRotation = 0
+                mascotOpacity = 1
+                return
+            }
+
+            // One spring supplies the pop and its natural settle. A second
+            // bounce made the badge feel toy-like rather than warmly earned.
+            withAnimation(.spring(response: 0.58, dampingFraction: 0.58)) {
+                mascotScale = 1
+                mascotRotation = 0
+                mascotOpacity = 1
+            }
+        }
         .interactiveDismissDisabled()
         .sheet(item: $shareItems) { items in
             ActivityShareSheet(items: items.items)
@@ -276,34 +303,97 @@ struct LittleWinCelebrationView: View {
 }
 
 private struct LittleWinConfetti: View {
-    private let pieces: [(x: CGFloat, y: CGFloat, rotation: Double, color: Color)] = [
-        (0.08, 0.10, -18, FGColor.rose),
-        (0.22, 0.05, 28, FGColor.sage),
-        (0.78, 0.07, -32, FGColor.clay),
-        (0.92, 0.14, 18, FGColor.gold),
-        (0.06, 0.34, 36, FGColor.gold),
-        (0.94, 0.39, -24, FGColor.sage),
-        (0.08, 0.72, 16, FGColor.clay),
-        (0.92, 0.68, 34, FGColor.rose),
-        (0.18, 0.91, -28, FGColor.sage),
-        (0.82, 0.92, 22, FGColor.gold),
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private let pieces: [LittleWinConfettiPiece] = [
+        .init(id: 0, x: 0.08, y: 0.12, rotation: -28, spin: -95, fall: 96, delay: 0.00, color: FGColor.rose),
+        .init(id: 1, x: 0.21, y: 0.06, rotation: 32, spin: 120, fall: 82, delay: 0.03, color: FGColor.sage),
+        .init(id: 2, x: 0.36, y: 0.10, rotation: -12, spin: -80, fall: 106, delay: 0.07, color: FGColor.gold),
+        .init(id: 3, x: 0.64, y: 0.09, rotation: 18, spin: 85, fall: 92, delay: 0.05, color: FGColor.clay),
+        .init(id: 4, x: 0.79, y: 0.06, rotation: -34, spin: -130, fall: 84, delay: 0.02, color: FGColor.rose),
+        .init(id: 5, x: 0.92, y: 0.15, rotation: 24, spin: 105, fall: 102, delay: 0.08, color: FGColor.gold),
+        .init(id: 6, x: 0.05, y: 0.35, rotation: 38, spin: 125, fall: 116, delay: 0.10, color: FGColor.gold),
+        .init(id: 7, x: 0.95, y: 0.38, rotation: -30, spin: -110, fall: 112, delay: 0.12, color: FGColor.sage),
+        .init(id: 8, x: 0.10, y: 0.63, rotation: 20, spin: 90, fall: 126, delay: 0.05, color: FGColor.clay),
+        .init(id: 9, x: 0.90, y: 0.64, rotation: 35, spin: 140, fall: 122, delay: 0.09, color: FGColor.rose),
+        .init(id: 10, x: 0.18, y: 0.79, rotation: -25, spin: -100, fall: 108, delay: 0.13, color: FGColor.sage),
+        .init(id: 11, x: 0.82, y: 0.80, rotation: 28, spin: 115, fall: 104, delay: 0.15, color: FGColor.gold),
     ]
 
     var body: some View {
         GeometryReader { proxy in
-            ForEach(Array(pieces.enumerated()), id: \.offset) { _, piece in
-                Capsule()
-                    .fill(piece.color)
-                    .frame(width: 9, height: 22)
-                    .rotationEffect(.degrees(piece.rotation))
-                    .position(
-                        x: proxy.size.width * piece.x,
-                        y: proxy.size.height * piece.y
-                    )
+            ForEach(pieces) { piece in
+                LittleWinConfettiPieceView(
+                    piece: piece,
+                    canvasSize: proxy.size,
+                    reduceMotion: reduceMotion
+                )
             }
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+}
+
+private struct LittleWinConfettiPiece: Identifiable {
+    let id: Int
+    let x: CGFloat
+    let y: CGFloat
+    let rotation: Double
+    let spin: Double
+    let fall: CGFloat
+    let delay: Double
+    let color: Color
+}
+
+private struct LittleWinConfettiPieceView: View {
+    let piece: LittleWinConfettiPiece
+    let canvasSize: CGSize
+    let reduceMotion: Bool
+
+    @State private var didBurst = false
+    @State private var didFall = false
+
+    var body: some View {
+        Capsule()
+            .fill(piece.color)
+            .frame(width: 9, height: 22)
+            .scaleEffect(didBurst ? 1 : 0.18)
+            .rotationEffect(
+                .degrees((didBurst ? piece.rotation : 0) + (didFall ? piece.spin : 0))
+            )
+            .position(
+                x: didBurst ? canvasSize.width * piece.x : canvasSize.width * 0.5,
+                y: (didBurst ? canvasSize.height * piece.y : canvasSize.height * 0.42)
+                    + (didFall ? piece.fall : 0)
+            )
+            .opacity(reduceMotion ? (didBurst ? 0.72 : 0) : (didFall ? 0 : didBurst ? 1 : 0))
+            .task {
+                guard !reduceMotion else {
+                    didBurst = true
+                    return
+                }
+
+                do {
+                    try await Task.sleep(for: .seconds(piece.delay))
+                } catch {
+                    return
+                }
+
+                withAnimation(.spring(response: 0.52, dampingFraction: 0.72)) {
+                    didBurst = true
+                }
+
+                do {
+                    try await Task.sleep(for: .milliseconds(520))
+                } catch {
+                    return
+                }
+
+                withAnimation(.easeIn(duration: 0.92)) {
+                    didFall = true
+                }
+            }
     }
 }
 
