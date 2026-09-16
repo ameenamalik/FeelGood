@@ -844,7 +844,12 @@ nonisolated enum LocalStatefulChatEngine {
                     recommendation = structuredRecommendation(for: s, reason: "Standing reset to dissipate restless energy before settling down.")
                 }
             } else if lower.contains("back") {
-                message = "This one focuses on loosening your hips and glutes — many people feel that ease tension through the lower back."
+                // A direct yes/no question ("will this help with my back
+                // problem") deserves a direct answer, not just a description
+                // of what the session does — the old copy never actually
+                // said yes. Framed as movement, not treatment: no diagnosis,
+                // no promise, just what the sequence moves through.
+                message = "Yes — this moves gently through your hips and spine, and many people feel that ease tension through the lower back too."
             } else if lower.contains("why") {
                 message = "This sequence moves gently through your hips and spine, staying well within a comfortable range."
             } else {

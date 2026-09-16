@@ -66,12 +66,16 @@ struct PlayerView: View {
     @State private var breathingPausedAt: Date?
     @State private var breathingAnchorIndex: Int?
 
-    private var steps: [Step] { session.source.steps }
+    /// Authored steps as written; a custom routine's steps matched to the
+    /// glossary and breathing vocabulary, so what somebody typed as "Box
+    /// breathing" gets the same orb the catalog's does.
+    private let steps: [Step]
     private var step: Step? { steps.indices.contains(index) ? steps[index] : nil }
 
     init(
         session: Session,
         progress: SessionProgress? = nil,
+        glossary: [ExerciseTerm] = [],
         onFinish: @escaping (PlayerResult) -> Void,
         startedAt: Date
     ) {
@@ -79,16 +83,21 @@ struct PlayerView: View {
         self.onFinish = onFinish
         self.startedAt = startedAt
 
-        let validIndex = progress.map { min(max($0.stepIndex, 0), max(session.source.steps.count - 1, 0)) } ?? 0
-        let fullDuration = session.source.steps.indices.contains(validIndex)
-            ? session.source.steps[validIndex].seconds
+        let steps = session.isOwn
+            ? session.source.steps.map { $0.inferringVisual(from: glossary) }
+            : session.source.steps
+        self.steps = steps
+
+        let validIndex = progress.map { min(max($0.stepIndex, 0), max(steps.count - 1, 0)) } ?? 0
+        let fullDuration = steps.indices.contains(validIndex)
+            ? steps[validIndex].seconds
             : 0
         let initialRemaining = progress.map { min(max($0.remainingSeconds, 1), max(fullDuration, 1)) }
             ?? fullDuration
         _index = State(initialValue: validIndex)
         _remaining = State(initialValue: initialRemaining)
         _readingRemaining = State(
-            initialValue: progress == nil && !session.source.steps.isEmpty
+            initialValue: progress == nil && !steps.isEmpty
                 ? Self.readingSeconds
                 : 0
         )
@@ -105,8 +114,8 @@ struct PlayerView: View {
         _hasFiredFinalStretchFlash = State(initialValue: resumedIntoFinalStretch)
 
         // Resuming already past the halfway side switch point keeps side 2
-        let activeStep = session.source.steps.indices.contains(validIndex)
-            ? session.source.steps[validIndex]
+        let activeStep = steps.indices.contains(validIndex)
+            ? steps[validIndex]
             : nil
         let requiresSwitch = activeStep?.requiresSideSwitch ?? false
         let switchThreshold = activeStep.map { $0.seconds - $0.sideSwitchThresholdSeconds } ?? 0
@@ -171,15 +180,12 @@ struct PlayerView: View {
                 videoPlayer(videoID: videoID, channel: channel)
                     .transition(.opacity)
             } else if let step {
-                if isBreathingStep(step) {
-                    SessionBreathingProgress(
-                        progress: completionProgress(for: step),
-                        aura: FGAura.allCases[index % FGAura.allCases.count],
-                        isActive: readingRemaining == 0 && isRunning && !isSwitchingSides,
-                        startedAt: breathingStartedAt,
-                        pausedAt: breathingPausedAt
-                    )
-                } else {
+                // The one full-screen layer. Anything with a shape — a
+                // figure, the breathing orb — lives inside the card's visual
+                // slot instead (see `StepVisualView`), so it can never end up
+                // drawn behind the cue. A breathing step is the orb alone:
+                // two things moving at once is the opposite of the point.
+                if !isBreathingStep(step) {
                     SessionLiquidProgress(
                         progress: completionProgress(for: step),
                         aura: FGAura.allCases[index % FGAura.allCases.count],
@@ -488,8 +494,9 @@ struct PlayerView: View {
 
                 ScannableCueView(cue: step.cue, requiresSideSwitch: step.requiresSideSwitch)
 
-                if readingRemaining == 0 && isBreathingStep(step) {
+                if readingRemaining == 0, let cadence = step.visual?.breathingCadence {
                     BreathingPhaseLabel(
+                        cadence: cadence,
                         isActive: isRunning && !isSwitchingSides,
                         startedAt: breathingStartedAt,
                         pausedAt: breathingPausedAt
@@ -532,10 +539,11 @@ struct PlayerView: View {
         }
     }
 
-    /// The exercise's name and (if bundled) its looping line-art demo, on a
-    /// warm aura card rather than bare on the page — the same soft gradient
-    /// language as a check-in tile, spread across the session's steps by
-    /// index so neighbouring exercises don't repeat the same hue.
+    /// The exercise's name and its visual — a looping line-art demo if one
+    /// is bundled, the paced orb for a breathing step, otherwise nothing —
+    /// on a warm aura card rather than bare on the page — the same soft
+    /// gradient language as a check-in tile, spread across the session's
+    /// steps by index so neighbouring exercises don't repeat the same hue.
     ///
     /// `inkOnAccent`, not `ink`: the card fill doesn't flip with the
     /// appearance, so the title on it can't either — see `FGColor.inkOnAccent`.
@@ -547,7 +555,13 @@ struct PlayerView: View {
                 .foregroundStyle(FGColor.inkOnAccent)
                 .multilineTextAlignment(.center)
 
-            ExerciseDemoView(glossaryID: step.glossaryID)
+            StepVisualView(
+                step: step,
+                aura: aura,
+                isBreathingActive: readingRemaining == 0 && isRunning && !isSwitchingSides,
+                breathingStartedAt: breathingStartedAt,
+                breathingPausedAt: breathingPausedAt
+            )
         }
         .padding(FGSpace.l)
         .frame(maxWidth: .infinity)
@@ -911,17 +925,11 @@ struct PlayerView: View {
         return min(max(1 - (Double(remaining) / Double(duration)), 0), 1)
     }
 
-    /// Breathing gets a paced visual only when it is the exercise itself.
-    /// Looking only at the cue would incorrectly turn ordinary stretches into
-    /// breathing exercises because many of them casually say "keep breathing."
+    /// Breathing is paced only when the content says the step *is* the
+    /// breathing — never guessed from wording. Plenty of stretches say "keep
+    /// breathing", and "catch your breath" between two bursts is a rest.
     private func isBreathingStep(_ step: Step) -> Bool {
-        let name = step.name.lowercased()
-        let breathingNames = ["breath", "breathe", "breathing", "inhale", "exhale"]
-        if breathingNames.contains(where: name.contains) { return true }
-
-        let cue = step.cue.lowercased()
-        let explicitCadences = ["inhale for", "exhale for", "4-in", "4-out"]
-        return explicitCadences.contains(where: cue.contains)
+        step.visual?.breathingCadence != nil
     }
 
     private func restartBreathingCycle() {
@@ -1022,153 +1030,6 @@ struct PlayerView: View {
         case .tooMuch: "A lot"
         }
     }
-}
-
-/// A breathing-specific alternative to the rising waterline. The orb grows
-/// for a four-second inhale and softens back over a longer six-second exhale;
-/// the asymmetry keeps it calm rather than feeling like a metronome. The thin
-/// outer arc still shows overall exercise progress independently of each breath.
-private struct SessionBreathingProgress: View {
-    let progress: Double
-    let aura: FGAura
-    let isActive: Bool
-    let startedAt: Date
-    let pausedAt: Date?
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        GeometryReader { geometry in
-            TimelineView(
-                .animation(
-                    minimumInterval: 1.0 / 60.0,
-                    paused: reduceMotion || !isActive
-                )
-            ) { timeline in
-                let state = breathingCycleState(
-                    at: timeline.date,
-                    isActive: isActive,
-                    reduceMotion: reduceMotion,
-                    startedAt: startedAt,
-                    pausedAt: pausedAt
-                )
-                let diameter = min(geometry.size.width * 0.82, geometry.size.height * 0.46)
-
-                ZStack {
-                    Circle()
-                        .fill(aura.edge.opacity(0.16))
-                        .frame(width: diameter * 0.92, height: diameter * 0.92)
-                        .blur(radius: 24)
-                        .scaleEffect(state.scale * 1.08)
-
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    aura.core.opacity(0.82),
-                                    aura.mid.opacity(0.56),
-                                    aura.edge.opacity(0.25),
-                                ],
-                                center: .topLeading,
-                                startRadius: 8,
-                                endRadius: diameter * 0.58
-                            )
-                        )
-                        .overlay {
-                            Circle()
-                                .stroke(FGColor.surface.opacity(0.55), lineWidth: 2)
-                                .blur(radius: 0.5)
-                        }
-                        .frame(width: diameter, height: diameter)
-                        .scaleEffect(state.scale)
-                        .shadow(color: aura.edge.opacity(0.24), radius: 24, y: 12)
-
-                    Circle()
-                        .trim(from: 0, to: min(max(progress, 0), 1))
-                        .stroke(
-                            aura.edge.opacity(0.72),
-                            style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                        )
-                        .frame(width: diameter * 1.06, height: diameter * 1.06)
-                        .rotationEffect(.degrees(-90))
-                }
-                .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
-            }
-        }
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-}
-
-/// Text and animation share the same clock, so "Breathe in" always appears
-/// while the orb is expanding and "Breathe out" while it is contracting.
-private struct BreathingPhaseLabel: View {
-    let isActive: Bool
-    let startedAt: Date
-    let pausedAt: Date?
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        TimelineView(
-            .animation(
-                minimumInterval: 1.0 / 30.0,
-                paused: reduceMotion || !isActive
-            )
-        ) { timeline in
-            let state = breathingCycleState(
-                at: timeline.date,
-                isActive: isActive,
-                reduceMotion: reduceMotion,
-                startedAt: startedAt,
-                pausedAt: pausedAt
-            )
-
-            Label(
-                isActive && !reduceMotion ? state.label : (isActive ? "Breathe slowly" : "Paused"),
-                systemImage: state.isInhaling ? "arrow.up" : "arrow.down"
-            )
-            .font(FGFont.label)
-            .foregroundStyle(FGColor.goldDeep)
-            .contentTransition(.opacity)
-            .accessibilityLabel(
-                isActive && !reduceMotion ? state.label : (isActive ? "Breathe slowly" : "Paused")
-            )
-        }
-    }
-}
-
-private struct BreathingCycleState {
-    let scale: CGFloat
-    let isInhaling: Bool
-
-    var label: String { isInhaling ? "Breathe in" : "Breathe out" }
-}
-
-/// Four seconds in, six seconds out. Cosine easing has zero velocity at both
-/// ends of the breath, avoiding the mechanical snap of a linear reversal.
-private func breathingCycleState(
-    at date: Date,
-    isActive: Bool,
-    reduceMotion: Bool,
-    startedAt: Date,
-    pausedAt: Date?
-) -> BreathingCycleState {
-    guard !reduceMotion else {
-        return BreathingCycleState(scale: 0.62, isInhaling: true)
-    }
-
-    let sampleDate = isActive ? date : (pausedAt ?? date)
-    let elapsed = max(sampleDate.timeIntervalSince(startedAt), 0)
-        .truncatingRemainder(dividingBy: 10)
-    let isInhaling = elapsed < 4
-    let linearProgress = isInhaling ? elapsed / 4 : (elapsed - 4) / 6
-    let easedProgress = 0.5 - (0.5 * cos(.pi * linearProgress))
-    let fullness = isInhaling ? easedProgress : 1 - easedProgress
-    let scale = 0.56 + (CGFloat(fullness) * 0.44)
-
-    return BreathingCycleState(scale: scale, isInhaling: isInhaling)
 }
 
 /// A quiet, full-screen progress signal that can be understood without

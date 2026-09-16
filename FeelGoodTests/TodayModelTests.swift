@@ -14,8 +14,8 @@ import Foundation
 @MainActor
 struct TodayModelTests {
 
-    private func store(_ sessions: [Session] = Fixture.catalog) -> ContentStore {
-        ContentStore(catalog: ContentCatalog(version: 1, sessions: sessions, glossary: []))
+    private func store(_ sessions: [Session] = Fixture.catalog, glossary: [ExerciseTerm] = []) -> ContentStore {
+        ContentStore(catalog: ContentCatalog(version: 1, sessions: sessions, glossary: glossary))
     }
 
     private func model(
@@ -23,10 +23,11 @@ struct TodayModelTests {
         progressStore: InMemorySessionProgressStore = InMemorySessionProgressStore(),
         profile: PlanProfile = Fixture.profile(),
         sessions: [Session] = Fixture.catalog,
+        glossary: [ExerciseTerm] = [],
         isProUser: @escaping () -> Bool = { false }
     ) -> TodayModel {
         TodayModel(
-            store: store(sessions),
+            store: store(sessions, glossary: glossary),
             profile: profile,
             log: log,
             progressStore: progressStore,
@@ -352,5 +353,36 @@ struct TodayModelTests {
         model.swap(atEnd, now: Fixture.now)
         let cycledMain = try #require(model.menu.main)
         #expect(cycledMain.session.id != atEnd.session.id)
+    }
+
+    // MARK: - Glossary resolution
+
+    @Test("An authored step resolves its glossary term by ID, matcher untouched")
+    func authoredStepResolvesByGlossaryID() {
+        let term = ExerciseTerm(id: "push-up", name: "Push-up", aka: [], instructions: ["x"], muscles: [])
+        let model = model(glossary: [term])
+        let step = Step(name: "Anything typed here", seconds: 30, cue: "", glossaryID: "push-up", visual: nil, reps: nil, sets: nil, switchSides: nil, switchAfterSeconds: nil)
+
+        #expect(model.term(for: step)?.id == "push-up")
+    }
+
+    @Test("A custom step with no authored glossaryID falls back to the title matcher")
+    func customStepFallsBackToTitleMatch() {
+        let term = ExerciseTerm(id: "push-up", name: "Push-up", aka: [], instructions: ["x"], muscles: [])
+        let model = model(glossary: [term])
+        let step = Step(name: "Push-ups", seconds: 30, cue: "", glossaryID: nil, visual: nil, reps: nil, sets: nil, switchSides: nil, switchAfterSeconds: nil)
+
+        // Same matcher PlayerView uses to pick the on-screen drawing, so the
+        // "what's this?" sheet and the player never disagree about a step.
+        #expect(model.term(for: step)?.id == "push-up")
+    }
+
+    @Test("A custom step that names nothing in the glossary gets no sheet")
+    func customStepWithNoMatchGetsNoTerm() {
+        let term = ExerciseTerm(id: "push-up", name: "Push-up", aka: [], instructions: ["x"], muscles: [])
+        let model = model(glossary: [term])
+        let step = Step(name: "Round one", seconds: 30, cue: "", glossaryID: nil, visual: nil, reps: nil, sets: nil, switchSides: nil, switchAfterSeconds: nil)
+
+        #expect(model.term(for: step) == nil)
     }
 }

@@ -18,6 +18,9 @@
 		C9A4756F90D3FAA7DF176DA5 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 378D96DFB6B72F152DA61DD7 /* Lottie */; };
 		D58111500000000000000001 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = D58111500000000000000002 /* PostHog */; };
 		FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FEE1DA000000000000000002 /* FeelGoodWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		05E1DA000000000000000011 /* OneSignalFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 05E1DA00000000000000000F /* OneSignalFramework */; };
+		05E1DA000000000000000012 /* OneSignalExtension in Frameworks */ = {isa = PBXBuildFile; productRef = 05E1DA000000000000000010 /* OneSignalExtension */; };
+		05E1DA00000000000000000D /* OneSignalNotificationServiceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 05E1DA000000000000000001 /* OneSignalNotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,6 +45,13 @@
 			remoteGlobalIDString = FEE1DA000000000000000001;
 			remoteInfo = FeelGoodWidget;
 		};
+		05E1DA00000000000000000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 43A871BC3033C6D300DD35A1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 05E1DA000000000000000002;
+			remoteInfo = OneSignalNotificationServiceExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -52,6 +62,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				FEE1DA00000000000000000B /* FeelGoodWidget.appex in Embed Foundation Extensions */,
+				05E1DA00000000000000000D /* OneSignalNotificationServiceExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -64,6 +75,7 @@
 		43A871DF3033C6D600DD35A1 /* FeelGoodUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FeelGoodUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC8257D6E4BF67D0C7C641DC /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; name = "GoogleService-Info.plist"; path = "FeelGood/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FEE1DA000000000000000002 /* FeelGoodWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FeelGoodWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		05E1DA000000000000000001 /* OneSignalNotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OneSignalNotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -80,6 +92,14 @@
 				Info.plist,
 			);
 			target = FEE1DA000000000000000001 /* FeelGoodWidget */;
+		};
+		05E1DA00000000000000000A /* Exceptions for "OneSignalNotificationServiceExtension" folder in "OneSignalNotificationServiceExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				OneSignalNotificationServiceExtension.entitlements,
+			);
+			target = 05E1DA000000000000000002 /* OneSignalNotificationServiceExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -115,6 +135,14 @@
 			path = FeelGoodShared;
 			sourceTree = "<group>";
 		};
+		05E1DA000000000000000009 /* OneSignalNotificationServiceExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				05E1DA00000000000000000A /* Exceptions for "OneSignalNotificationServiceExtension" folder in "OneSignalNotificationServiceExtension" target */,
+			);
+			path = OneSignalNotificationServiceExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -131,6 +159,7 @@
 				72D9AB5C65D5803E64FA91FC /* GoogleSignIn in Frameworks */,
 				B90FDB8D235A87FD6444FBD5 /* GoogleSignInSwift in Frameworks */,
 				35DFAC65D6CBD54F3615AFF2 /* FirebaseFirestore in Frameworks */,
+				05E1DA000000000000000011 /* OneSignalFramework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -155,6 +184,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		05E1DA000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				05E1DA000000000000000012 /* OneSignalExtension in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -166,6 +203,7 @@
 				43A871E23033C6D600DD35A1 /* FeelGoodUITests */,
 				FEE1DA00000000000000000F /* FeelGoodShared */,
 				FEE1DA000000000000000003 /* FeelGoodWidget */,
+				05E1DA000000000000000009 /* OneSignalNotificationServiceExtension */,
 				43A871C53033C6D300DD35A1 /* Products */,
 				AC8257D6E4BF67D0C7C641DC /* GoogleService-Info.plist */,
 			);
@@ -178,6 +216,7 @@
 				43A871D53033C6D600DD35A1 /* FeelGoodTests.xctest */,
 				43A871DF3033C6D600DD35A1 /* FeelGoodUITests.xctest */,
 				FEE1DA000000000000000002 /* FeelGoodWidget.appex */,
+				05E1DA000000000000000001 /* OneSignalNotificationServiceExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -198,6 +237,7 @@
 			);
 			dependencies = (
 				FEE1DA00000000000000000C /* PBXTargetDependency */,
+				05E1DA00000000000000000C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				43A871C63033C6D300DD35A1 /* FeelGood */,
@@ -214,6 +254,7 @@
 				5780FF0605A9D9FCDC82C6DD /* GoogleSignIn */,
 				AAA8FD465B3465A2B40A38CB /* GoogleSignInSwift */,
 				96D6C9945F36E52002EE148E /* FirebaseFirestore */,
+				05E1DA00000000000000000F /* OneSignalFramework */,
 			);
 			productName = FeelGood;
 			productReference = 43A871C43033C6D300DD35A1 /* FeelGood.app */;
@@ -284,6 +325,29 @@
 			productReference = FEE1DA000000000000000002 /* FeelGoodWidget.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		05E1DA000000000000000002 /* OneSignalNotificationServiceExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 05E1DA000000000000000006 /* Build configuration list for PBXNativeTarget "OneSignalNotificationServiceExtension" */;
+			buildPhases = (
+				05E1DA000000000000000003 /* Sources */,
+				05E1DA000000000000000004 /* Frameworks */,
+				05E1DA000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				05E1DA000000000000000009 /* OneSignalNotificationServiceExtension */,
+			);
+			name = OneSignalNotificationServiceExtension;
+			packageProductDependencies = (
+				05E1DA000000000000000010 /* OneSignalExtension */,
+			);
+			productName = OneSignalNotificationServiceExtension;
+			productReference = 05E1DA000000000000000001 /* OneSignalNotificationServiceExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -308,6 +372,9 @@
 					FEE1DA000000000000000001 = {
 						CreatedOnToolsVersion = 26.6;
 					};
+					05E1DA000000000000000002 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 				};
 			};
 			buildConfigurationList = 43A871BF3033C6D300DD35A1 /* Build configuration list for PBXProject "FeelGood" */;
@@ -325,6 +392,7 @@
 				D58111500000000000000003 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 				EF5816A7EA747327E544ABD5 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				3FCADDBD8CE535A049666762 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				05E1DA00000000000000000E /* XCRemoteSwiftPackageReference "OneSignal-XCFramework" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 43A871C53033C6D300DD35A1 /* Products */;
@@ -335,6 +403,7 @@
 				43A871D43033C6D600DD35A1 /* FeelGoodTests */,
 				43A871DE3033C6D600DD35A1 /* FeelGoodUITests */,
 				FEE1DA000000000000000001 /* FeelGoodWidget */,
+				05E1DA000000000000000002 /* OneSignalNotificationServiceExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -363,6 +432,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		FEE1DA000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		05E1DA000000000000000005 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -400,6 +476,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		05E1DA000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -417,6 +500,11 @@
 			isa = PBXTargetDependency;
 			target = FEE1DA000000000000000001 /* FeelGoodWidget */;
 			targetProxy = FEE1DA00000000000000000D /* PBXContainerItemProxy */;
+		};
+		05E1DA00000000000000000C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 05E1DA000000000000000002 /* OneSignalNotificationServiceExtension */;
+			targetProxy = 05E1DA00000000000000000B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -444,6 +532,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				ONESIGNAL_APP_ID = "65f8a2e5-4f8a-458d-877f-856cb7612491";
 				OTHER_LDFLAGS = "-ObjC";
 				POSTHOG_HOST = "https://us.i.posthog.com";
 				POSTHOG_PROJECT_TOKEN = phc_rgqb5fDVAprLkw9SoJb4XjuwP72WUgREMSYzUEQv373W;
@@ -485,6 +574,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				ONESIGNAL_APP_ID = "65f8a2e5-4f8a-458d-877f-856cb7612491";
 				OTHER_LDFLAGS = "-ObjC";
 				POSTHOG_HOST = "https://us.i.posthog.com";
 				POSTHOG_PROJECT_TOKEN = phc_rgqb5fDVAprLkw9SoJb4XjuwP72WUgREMSYzUEQv373W;
@@ -770,6 +860,60 @@
 			};
 			name = Release;
 		};
+		05E1DA000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = OneSignalNotificationServiceExtension/OneSignalNotificationServiceExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 13;
+				DEVELOPMENT_TEAM = 322ZGVD4Z7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OneSignalNotificationServiceExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = OneSignalNotificationServiceExtension;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ameenamalik.FeelGood.OneSignalNotificationServiceExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		05E1DA000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = OneSignalNotificationServiceExtension/OneSignalNotificationServiceExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 13;
+				DEVELOPMENT_TEAM = 322ZGVD4Z7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OneSignalNotificationServiceExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = OneSignalNotificationServiceExtension;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ameenamalik.FeelGood.OneSignalNotificationServiceExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -818,6 +962,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		05E1DA000000000000000006 /* Build configuration list for PBXNativeTarget "OneSignalNotificationServiceExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				05E1DA000000000000000007 /* Debug */,
+				05E1DA000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -859,6 +1012,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 11.9.0;
+			};
+		};
+		05E1DA00000000000000000E /* XCRemoteSwiftPackageReference "OneSignal-XCFramework" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/OneSignal/OneSignal-XCFramework";
+			requirement = {
+				kind = exactVersion;
+				version = 5.5.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -908,6 +1069,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D58111500000000000000003 /* XCRemoteSwiftPackageReference "posthog-ios" */;
 			productName = PostHog;
+		};
+		05E1DA00000000000000000F /* OneSignalFramework */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05E1DA00000000000000000E /* XCRemoteSwiftPackageReference "OneSignal-XCFramework" */;
+			productName = OneSignalFramework;
+		};
+		05E1DA000000000000000010 /* OneSignalExtension */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05E1DA00000000000000000E /* XCRemoteSwiftPackageReference "OneSignal-XCFramework" */;
+			productName = OneSignalExtension;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

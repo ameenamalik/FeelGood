@@ -143,6 +143,77 @@ nonisolated struct Creator: Codable, Hashable, Sendable {
     let channelURL: URL
 }
 
+/// The rhythm a breathing step is paced to, in whole seconds per phase. A
+/// zero-length hold is simply skipped, so "four in, six out" and box
+/// breathing are the same type with different numbers.
+nonisolated struct BreathingCadence: Codable, Hashable, Sendable {
+    let inhale: Int
+    let holdIn: Int
+    let exhale: Int
+    let holdOut: Int
+
+    /// Four in, six out, no holds. The longer out-breath is what makes it
+    /// read as settling rather than a metronome; it is the pace for any
+    /// breathing step whose cue doesn't name its own count.
+    static let `default` = BreathingCadence()
+
+    var cycleSeconds: Int { inhale + holdIn + exhale + holdOut }
+
+    init(inhale: Int = 4, holdIn: Int = 0, exhale: Int = 6, holdOut: Int = 0) {
+        self.inhale = inhale
+        self.holdIn = holdIn
+        self.exhale = exhale
+        self.holdOut = holdOut
+    }
+}
+
+/// What the player draws in the card's visual slot when a step has no drawn
+/// demo. Declared by the content, never inferred from the step's wording:
+/// "catch your breath" between two bursts is a rest, not a breathing
+/// exercise, and only the author knows which one they meant.
+///
+/// Hand-authored JSON carries an explicit `type` discriminator, the same
+/// shape as `SessionSource`, so a cadence reads as
+/// `{"type": "breathing", "inhale": 4, "holdIn": 4, "exhale": 4, "holdOut": 4}`
+/// and any count left out falls back to `BreathingCadence.default`.
+nonisolated enum StepVisual: Codable, Hashable, Sendable {
+    case breathing(BreathingCadence)
+
+    var breathingCadence: BreathingCadence? {
+        if case .breathing(let cadence) = self { return cadence }
+        return nil
+    }
+
+    private enum CodingKeys: String, CodingKey { case type, inhale, holdIn, exhale, holdOut }
+    private enum Kind: String, Codable { case breathing }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        switch try c.decode(Kind.self, forKey: .type) {
+        case .breathing:
+            let fallback = BreathingCadence.default
+            self = .breathing(BreathingCadence(
+                inhale: try c.decodeIfPresent(Int.self, forKey: .inhale) ?? fallback.inhale,
+                holdIn: try c.decodeIfPresent(Int.self, forKey: .holdIn) ?? fallback.holdIn,
+                exhale: try c.decodeIfPresent(Int.self, forKey: .exhale) ?? fallback.exhale,
+                holdOut: try c.decodeIfPresent(Int.self, forKey: .holdOut) ?? fallback.holdOut
+            ))
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .breathing(let cadence):
+            try c.encode(Kind.breathing, forKey: .type)
+            try c.encode(cadence.inhale, forKey: .inhale)
+            try c.encode(cadence.holdIn, forKey: .holdIn)
+            try c.encode(cadence.exhale, forKey: .exhale)
+            try c.encode(cadence.holdOut, forKey: .holdOut)
+        }
+    }
+}
+
 /// One step inside an authored micro-session.
 nonisolated struct Step: Codable, Hashable, Sendable {
     let name: String
@@ -150,6 +221,11 @@ nonisolated struct Step: Codable, Hashable, Sendable {
     let cue: String
     /// Resolves to an `ExerciseTerm`. `nil` means no "what's this?" affordance.
     let glossaryID: String?
+    /// What fills the card's visual slot when there is no drawn demo for
+    /// `glossaryID`. A drawn demo always wins; this is the paced orb for a
+    /// breathing step. Absent (the shape of every step authored before this
+    /// existed) decodes as `nil`: a plain card.
+    let visual: StepVisual?
     /// Repetitions in **one set**, not across the step. When set, the step is
     /// counted rather than timed: the player waits for the person to tap
     /// through the set instead of running a clock. Keeping count is the thing
@@ -231,6 +307,7 @@ nonisolated struct Step: Codable, Hashable, Sendable {
         seconds: Int,
         cue: String,
         glossaryID: String? = nil,
+        visual: StepVisual? = nil,
         reps: Int? = nil,
         sets: Int? = nil,
         switchSides: Bool? = nil,
@@ -240,6 +317,7 @@ nonisolated struct Step: Codable, Hashable, Sendable {
         self.seconds = seconds
         self.cue = cue
         self.glossaryID = glossaryID
+        self.visual = visual
         self.reps = reps
         self.sets = sets
         self.switchSides = switchSides
