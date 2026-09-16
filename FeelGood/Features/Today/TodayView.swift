@@ -331,24 +331,11 @@ struct TodayView: View {
     private var menuHeading: some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
             HStack(alignment: .center, spacing: FGSpace.s) {
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text("Your menu")
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundStyle(FGColor.ink)
-                        .accessibilityAddTraits(.isHeader)
-
-                    if model.remainingDurationMin > 0 {
-                        Text("\(model.remainingDurationMin) min left")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(FGColor.inkMuted)
-                    } else if model.hasCompletedActivityToday {
-                        Text("Completed")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(FGColor.sageDeep)
-                    }
-                }
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
+                Text("Your menu")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(FGColor.ink)
+                    .accessibilityAddTraits(.isHeader)
+                    .lineLimit(1)
 
                 Spacer(minLength: FGSpace.s)
 
@@ -379,6 +366,20 @@ struct TodayView: View {
                 #endif
             }
 
+            // On its own line rather than crowding the title row — that row
+            // already has to fit "Your menu" plus the Add/adjust controls,
+            // and this is the one piece that's safe to wrap onto a second
+            // line without anything else needing to shrink or truncate.
+            if model.remainingDurationMin > 0 {
+                Text("Room for \(model.remainingDurationMin) min")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(FGColor.inkMuted)
+            } else if model.hasCompletedActivityToday {
+                Text("Completed")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(FGColor.sageDeep)
+            }
+
             if isAdjusting {
                 ScrollView(.horizontal, showsIndicators: false) {
                     quickFilterRow
@@ -399,7 +400,9 @@ struct TodayView: View {
                     .font(.system(size: 11, weight: .semibold))
                 Text("Add")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .lineLimit(1)
             }
+            .fixedSize()
             .foregroundStyle(FGColor.ink)
             .padding(.horizontal, 10)
             .frame(height: 32)
@@ -805,7 +808,6 @@ private struct MenuItemBody: View {
             Text(item.session.title)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(isDone ? FGColor.inkMuted : item.course.accentText)
-                .strikethrough(isDone, color: FGColor.clayDeep)
                 .fixedSize(horizontal: false, vertical: true)
 
             // Subtitle
@@ -834,6 +836,9 @@ private struct MenuItemBody: View {
                     lineWidth: 1
                 )
         )
+        // Done reads as "chosen, not crossed off" — a quieter card rather
+        // than a strikethrough, which read like a to-do list item.
+        .opacity(isDone ? 0.6 : 1)
         .fgAnimation(FGMotion.settle, value: isDone)
     }
 }

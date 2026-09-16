@@ -338,7 +338,7 @@
     },
     {
       "id": "app-farmers-carry",
-      "title": "Carry something heavy",
+      "title": "Farmer's carry",
       "subtitle": "Three minutes that your grip will thank you for",
       "activity": "carries",
       "qualities": [
@@ -585,42 +585,42 @@
           },
           {
             "name": "The hundred",
-            "seconds": 150,
+            "seconds": 120,
             "cue": "Pump the arms, breathe in for five, out for five.",
             "glossaryID": "the-hundred"
           },
           {
             "name": "Roll ups",
-            "seconds": 180,
+            "seconds": 120,
             "cue": "Slow up, slower down. Use the exhale."
           },
           {
             "name": "Single leg stretch",
-            "seconds": 180,
+            "seconds": 120,
             "cue": "Switch legs smoothly, shoulders off the mat if it's comfortable.",
             "glossaryID": "single-leg-stretch"
           },
           {
             "name": "Dead bug",
-            "seconds": 150,
+            "seconds": 120,
             "cue": "Opposite arm and leg, lower back heavy.",
             "glossaryID": "dead-bug"
           },
           {
             "name": "Bridge series",
-            "seconds": 180,
+            "seconds": 120,
             "cue": "Peel up, hold, roll down. Three times.",
             "glossaryID": "glute-bridge"
           },
           {
             "name": "Side plank (Right)",
-            "seconds": 150,
+            "seconds": 120,
             "cue": "Knees down is a full version, not a lesser one.",
             "glossaryID": "side-plank"
           },
           {
             "name": "Side plank (Left)",
-            "seconds": 150,
+            "seconds": 120,
             "cue": "Match it.",
             "glossaryID": "side-plank"
           },
@@ -681,44 +681,100 @@
           },
           {
             "name": "The hundred",
-            "seconds": 180,
+            "seconds": 120,
             "cue": "Set the tone. Steady breath.",
             "glossaryID": "the-hundred"
           },
           {
-            "name": "Roll ups and roll overs",
-            "seconds": 240,
-            "cue": "Slow through every vertebra."
+            "name": "Roll ups",
+            "seconds": 120,
+            "cue": "Slow through every vertebra.",
+            "switchSides": false
           },
           {
-            "name": "Leg series",
-            "seconds": 300,
-            "cue": "Single leg stretch, double leg stretch, scissors.",
-            "glossaryID": "single-leg-stretch"
+            "name": "Roll overs",
+            "seconds": 120,
+            "cue": "Legs overhead, then roll back down with control.",
+            "switchSides": false
           },
           {
-            "name": "Bridge series",
-            "seconds": 240,
+            "name": "Single leg stretch",
+            "seconds": 100,
+            "cue": "Pull one knee in at a time, switch smoothly.",
+            "glossaryID": "single-leg-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Double leg stretch",
+            "seconds": 100,
+            "cue": "Both knees in, reach long, circle back.",
+            "switchSides": false
+          },
+          {
+            "name": "Scissors",
+            "seconds": 100,
+            "cue": "Legs open and switch in the air, steady breath.",
+            "switchSides": false
+          },
+          {
+            "name": "Bridge series — part 1",
+            "seconds": 120,
             "cue": "Add single-leg lifts if it feels good.",
-            "glossaryID": "glute-bridge"
+            "glossaryID": "glute-bridge",
+            "switchSides": false
           },
           {
-            "name": "Side series",
-            "seconds": 300,
-            "cue": "Leg lifts, circles, side plank. Both sides.",
-            "glossaryID": "side-plank"
+            "name": "Bridge series — part 2",
+            "seconds": 120,
+            "cue": "Keep lifting through the hips. A few more.",
+            "glossaryID": "glute-bridge",
+            "switchSides": false
           },
           {
-            "name": "Front support",
-            "seconds": 180,
-            "cue": "Plank, then down to child's pose. Twice.",
-            "glossaryID": "plank"
+            "name": "Leg lifts",
+            "seconds": 100,
+            "cue": "Top leg lifts, both sides.",
+            "switchSides": false
           },
           {
-            "name": "Spine stretch and twist",
-            "seconds": 180,
+            "name": "Circles",
+            "seconds": 100,
+            "cue": "Small circles with the top leg, both directions.",
+            "switchSides": false
+          },
+          {
+            "name": "Side plank",
+            "seconds": 100,
+            "cue": "Hold on each side. Modify on the knees if you like.",
+            "glossaryID": "side-plank",
+            "switchSides": false
+          },
+          {
+            "name": "Plank",
+            "seconds": 90,
+            "cue": "Hold steady, ribs knitting in.",
+            "glossaryID": "plank",
+            "switchSides": false
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 90,
+            "cue": "Sink back and breathe. Then once more.",
+            "glossaryID": "childs-pose",
+            "switchSides": false
+          },
+          {
+            "name": "Spine stretch",
+            "seconds": 90,
             "cue": "Long, open, unhurried.",
-            "glossaryID": "seated-forward-fold-stretch"
+            "glossaryID": "seated-forward-fold-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Twist",
+            "seconds": 90,
+            "cue": "Rotate from the waist, both sides.",
+            "switchSides": false
           },
           {
             "name": "Finish",
@@ -1017,28 +1073,60 @@
             }
           },
           {
-            "name": "Hamstrings",
-            "seconds": 240,
-            "cue": "Strap, towel or hands. Ninety seconds each side.",
-            "glossaryID": "supine-hamstring-stretch"
+            "name": "Hamstrings — right",
+            "seconds": 120,
+            "cue": "Strap, towel or hands.",
+            "glossaryID": "supine-hamstring-stretch",
+            "switchSides": false
           },
           {
-            "name": "Figure four",
-            "seconds": 240,
-            "cue": "Both sides, slow.",
-            "glossaryID": "figure-four-stretch"
+            "name": "Hamstrings — left",
+            "seconds": 120,
+            "cue": "Switch sides. Same slow stretch.",
+            "glossaryID": "supine-hamstring-stretch",
+            "switchSides": false
           },
           {
-            "name": "Low lunge",
-            "seconds": 240,
+            "name": "Figure four — right",
+            "seconds": 120,
+            "cue": "One ankle over the opposite knee, draw in slowly.",
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Figure four — left",
+            "seconds": 120,
+            "cue": "Switch sides.",
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Low lunge — right",
+            "seconds": 120,
             "cue": "Hips forward, breathe into the front of the back leg.",
-            "glossaryID": "low-lunge"
+            "glossaryID": "low-lunge",
+            "switchSides": false
           },
           {
-            "name": "Thoracic opening",
-            "seconds": 210,
+            "name": "Low lunge — left",
+            "seconds": 120,
+            "cue": "Switch sides.",
+            "glossaryID": "low-lunge",
+            "switchSides": false
+          },
+          {
+            "name": "Thoracic opening — right",
+            "seconds": 105,
             "cue": "Side-lying book openers. Follow your hand with your eyes.",
-            "glossaryID": "thoracic-rotation"
+            "glossaryID": "thoracic-rotation",
+            "switchSides": false
+          },
+          {
+            "name": "Thoracic opening — left",
+            "seconds": 105,
+            "cue": "Switch sides.",
+            "glossaryID": "thoracic-rotation",
+            "switchSides": false
           },
           {
             "name": "Child's pose",
@@ -1049,7 +1137,7 @@
           {
             "name": "Legs up the wall",
             "seconds": 180,
-            "cue": "Finish here if there's a wall nearby.",
+            "cue": "Hips close to the wall, let gravity do the work.",
             "glossaryID": "legs-up-the-wall"
           }
         ]
@@ -1225,15 +1313,30 @@
             "cue": "Whatever shape you know. Hold each one for five breaths."
           },
           {
-            "name": "Balance",
-            "seconds": 180,
+            "name": "Balance — right",
+            "seconds": 90,
             "cue": "One leg. Wobbling is the work.",
-            "glossaryID": "tree-pose"
+            "glossaryID": "tree-pose",
+            "switchSides": false
           },
           {
-            "name": "Twists",
-            "seconds": 180,
-            "cue": "Seated, both sides."
+            "name": "Balance — left",
+            "seconds": 90,
+            "cue": "Switch legs. Same wobble, same work.",
+            "glossaryID": "tree-pose",
+            "switchSides": false
+          },
+          {
+            "name": "Twists — right",
+            "seconds": 90,
+            "cue": "Seated, right side first.",
+            "switchSides": false
+          },
+          {
+            "name": "Twists — left",
+            "seconds": 90,
+            "cue": "Switch to the left.",
+            "switchSides": false
           },
           {
             "name": "Final rest (Savasana)",
@@ -1737,7 +1840,7 @@
           {
             "name": "Legs up the wall",
             "seconds": 240,
-            "cue": "Five quiet minutes before bed.",
+            "cue": "Hips close to the wall, let gravity do the work.",
             "glossaryID": "legs-up-the-wall"
           }
         ]
@@ -2373,14 +2476,22 @@
           {
             "name": "Child's pose",
             "seconds": 180,
-            "cue": "Knees wide, forehead down, let your shoulders go.",
+            "cue": "Knees wide, arms long.",
             "glossaryID": "childs-pose"
           },
           {
-            "name": "Figure four",
-            "seconds": 240,
+            "name": "Figure four — right",
+            "seconds": 120,
             "cue": "One ankle over the opposite knee, draw the legs in until you feel it.",
-            "glossaryID": "figure-four-stretch"
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Figure four — left",
+            "seconds": 120,
+            "cue": "Switch sides.",
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
           }
         ]
       },
@@ -2428,7 +2539,7 @@
           },
           {
             "name": "Knees to chest",
-            "seconds": 180,
+            "seconds": 120,
             "cue": "Gentle rock side to side."
           },
           {
@@ -2591,13 +2702,20 @@
           {
             "name": "Child's pose",
             "seconds": 240,
-            "cue": "Sit back on your heels, reach forward softly.",
+            "cue": "Knees wide, arms long.",
             "glossaryID": "childs-pose"
           },
           {
-            "name": "Seated side reach",
-            "seconds": 240,
-            "cue": "Right arm up and over, then left."
+            "name": "Seated side reach — right",
+            "seconds": 120,
+            "cue": "Right arm up and over.",
+            "switchSides": false
+          },
+          {
+            "name": "Seated side reach — left",
+            "seconds": 120,
+            "cue": "Switch. Left arm up and over.",
+            "switchSides": false
           },
           {
             "name": "Quiet stillness",
@@ -2646,14 +2764,22 @@
             "cue": "Sit tall, feet flat on the grass or path."
           },
           {
-            "name": "Seated figure four",
-            "seconds": 240,
+            "name": "Seated figure four — right",
+            "seconds": 120,
             "cue": "Ankle over knee, gentle lean forward.",
-            "glossaryID": "figure-four-stretch"
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Seated figure four — left",
+            "seconds": 120,
+            "cue": "Switch sides.",
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
           },
           {
             "name": "Chest opener",
-            "seconds": 240,
+            "seconds": 120,
             "cue": "Hands behind bench, open the collarbones."
           },
           {
@@ -3104,27 +3230,57 @@
         "type": "authored",
         "steps": [
           {
-            "name": "Chest opener & wall angels",
-            "seconds": 180,
-            "cue": "Back flat against the wall, elbows bent at 90 degrees. Slide arms overhead while keeping ribcage down to undo rounded shoulders.",
-            "glossaryID": "doorway-chest-stretch"
+            "name": "Chest opener",
+            "seconds": 90,
+            "cue": "Back flat against the wall, elbows bent at 90 degrees.",
+            "glossaryID": "doorway-chest-stretch",
+            "switchSides": false
           },
           {
-            "name": "Supported deep squat hold & hip pry",
-            "seconds": 180,
-            "cue": "Hold onto a desk or doorframe, sink into a deep squat, and shift weight side to side to open ankles and hips."
+            "name": "Wall angels",
+            "seconds": 90,
+            "cue": "Slide arms overhead while keeping contact with the wall.",
+            "switchSides": false
           },
           {
-            "name": "Low lunge pulses & thoracic twists",
-            "seconds": 240,
-            "cue": "Step into a runner's lunge, drop back knee, reach same-side arm toward ceiling for a gentle twist. Switch sides after 2 minutes.",
-            "glossaryID": "low-lunge"
+            "name": "Supported deep squat hold",
+            "seconds": 90,
+            "cue": "Hold onto a desk or doorframe, sink into a deep squat.",
+            "switchSides": false
           },
           {
-            "name": "Glute bridge holds & pelvic tilts",
-            "seconds": 180,
-            "cue": "Lie on the floor or mat, drive through heels to lift hips into bridge, and hold for 5 seconds at the top to wake up dormant glutes.",
-            "glossaryID": "glute-bridge"
+            "name": "Hip pry",
+            "seconds": 90,
+            "cue": "Shift weight side to side, pressing gently into each hip.",
+            "switchSides": false
+          },
+          {
+            "name": "Low lunge pulses",
+            "seconds": 120,
+            "cue": "Step into a runner's lunge, drop the back knee, small pulses.",
+            "glossaryID": "low-lunge",
+            "switchSides": false
+          },
+          {
+            "name": "Thoracic twists",
+            "seconds": 120,
+            "cue": "Reach the same-side arm toward the ceiling and rotate.",
+            "glossaryID": "thoracic-rotation",
+            "switchSides": false
+          },
+          {
+            "name": "Glute bridge holds",
+            "seconds": 90,
+            "cue": "Lie on the floor or mat, drive through heels to lift hips, and hold.",
+            "glossaryID": "glute-bridge",
+            "switchSides": false
+          },
+          {
+            "name": "Pelvic tilts",
+            "seconds": 90,
+            "cue": "Small tilts at the top, then lower slowly.",
+            "glossaryID": "pelvic-tilt",
+            "switchSides": false
           },
           {
             "name": "Standing quad stretch & side body reach",
@@ -3552,9 +3708,8 @@
           },
           {
             "name": "Gentle standing twists",
-            "seconds": 150,
-            "cue": "Let your arms swing loosely around your torso in rhythm with the fresh scent.",
-            "glossaryID": "torso-twist-stretch"
+            "seconds": 120,
+            "cue": "Let your arms swing loosely around your torso in rhythm with the fresh scent."
           },
           {
             "name": "Step into motion",
@@ -3792,14 +3947,28 @@
             "cue": "Downward dog to lunges, Warrior II pulses, and open heart openers. Move smoothly without rushing."
           },
           {
-            "name": "Deep Yin hip openers",
-            "seconds": 480,
-            "cue": "Settle into Pigeon or Lizard pose on both sides. Surrender into the stretch and breathe into tightness."
+            "name": "Deep Yin hip openers — right",
+            "seconds": 240,
+            "cue": "Settle into Pigeon or Lizard pose. Surrender into the stretch and breathe into tightness.",
+            "switchSides": false
           },
           {
-            "name": "Reclined spinal twists",
-            "seconds": 180,
-            "cue": "Lie on your back, draw knees to chest, and drop them gently to each side."
+            "name": "Deep Yin hip openers — left",
+            "seconds": 240,
+            "cue": "Switch sides. Same surrender, same breath.",
+            "switchSides": false
+          },
+          {
+            "name": "Reclined spinal twists — right",
+            "seconds": 90,
+            "cue": "Lie on your back, draw knees to chest, and drop them gently to one side.",
+            "switchSides": false
+          },
+          {
+            "name": "Reclined spinal twists — left",
+            "seconds": 90,
+            "cue": "Switch. Drop your knees to the other side.",
+            "switchSides": false
           },
           {
             "name": "Savasana still integration",
@@ -3811,7 +3980,7 @@
     },
     {
       "id": "main-sweat-investment",
-      "title": "Sweat investment circuit",
+      "title": "Full-body strength circuit",
       "subtitle": "30-minute targeted kettlebell circuit or high-intensity bodyweight strength",
       "activity": "strength",
       "qualities": [
@@ -3858,22 +4027,28 @@
           {
             "name": "Block 1: Power & legs",
             "seconds": 480,
-            "cue": "Alternate between 10 kettlebell / dumbbell goblet squats and 15 explosive hip swings. 3 rounds."
+            "cue": "Alternate between 10 kettlebell / dumbbell goblet squats and 15 explosive hip swings. 3 rounds. Take breaks whenever you need them."
           },
           {
             "name": "Block 2: Upper body push-pull",
             "seconds": 480,
-            "cue": "Push-ups or dumbbell overhead presses paired with bent-over rows. Smooth control on every rep."
+            "cue": "Push-ups or dumbbell overhead presses paired with bent-over rows. Smooth control on every rep. Take breaks whenever you need them."
           },
           {
             "name": "Block 3: Core & lunge burn",
             "seconds": 420,
-            "cue": "Alternating reverse lunges into 45-second hollow body or forearm plank holds."
+            "cue": "Alternating reverse lunges into 45-second hollow body or forearm plank holds. Take breaks whenever you need them."
           },
           {
-            "name": "Cool-down & deep recovery",
-            "seconds": 180,
-            "cue": "Child's pose and standing quad stretches. Let your heart rate glide back down to baseline."
+            "name": "Child's pose",
+            "seconds": 90,
+            "cue": "Let your heart rate glide back down to baseline.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Standing quad stretch",
+            "seconds": 90,
+            "cue": "Both sides, easy hold."
           }
         ]
       }
@@ -3976,19 +4151,41 @@
             "cue": "Pick exactly one 15-minute video reward, prop your screen up, and place your foam roller on the mat."
           },
           {
-            "name": "Calves & hamstrings rolling",
-            "seconds": 240,
-            "cue": "Slow passes along the lower legs. Pause and breathe gently over any tender trigger points."
+            "name": "Calves rolling",
+            "seconds": 120,
+            "cue": "Slow passes along the lower legs. Pause over any tender spots.",
+            "switchSides": false
           },
           {
-            "name": "Glutes & piriformis release",
-            "seconds": 240,
-            "cue": "Cross one ankle over the opposite knee on the roller. Lean slightly into the outer hip."
+            "name": "Hamstrings rolling",
+            "seconds": 120,
+            "cue": "Roll up the back of the thighs, breathing gently.",
+            "switchSides": false
           },
           {
-            "name": "Upper back & thoracic roll",
-            "seconds": 240,
-            "cue": "Support your head with your hands, roller across mid-back. Gently arch and roll upper ribs."
+            "name": "Glutes release",
+            "seconds": 120,
+            "cue": "Cross one ankle over the opposite knee on the roller.",
+            "switchSides": false
+          },
+          {
+            "name": "Piriformis release",
+            "seconds": 120,
+            "cue": "Lean slightly into the outer hip, breathe through it.",
+            "switchSides": false
+          },
+          {
+            "name": "Upper back roll",
+            "seconds": 120,
+            "cue": "Support your head with your hands, roller across mid-back.",
+            "switchSides": false
+          },
+          {
+            "name": "Thoracic roll",
+            "seconds": 120,
+            "cue": "Gently arch and roll along the mid-spine.",
+            "glossaryID": "thoracic-rotation",
+            "switchSides": false
           },
           {
             "name": "Lying flat integration",

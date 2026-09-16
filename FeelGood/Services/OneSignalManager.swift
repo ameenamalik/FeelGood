@@ -51,6 +51,24 @@ nonisolated final class OneSignalManager: Sendable {
         OneSignal.User.removeTag(key)
     }
 
+    /// Local-only condition an In-App Message can require, e.g. "days since
+    /// last session >= 5" configured against `engagementTriggerKey` in the
+    /// OneSignal dashboard. Unlike `setTag`, this never syncs to OneSignal's
+    /// servers or the dashboard's user record — it only controls what the SDK
+    /// is willing to show while someone is already in the app, so it can't be
+    /// used for push segmentation (push re-engagement instead targets
+    /// OneSignal's own built-in "Last Session" condition, which needs no
+    /// client-side trigger at all).
+    static let engagementTriggerKey = "days_since_last_session"
+
+    func setEngagementTrigger(daysSinceLast: Int?) {
+        guard let daysSinceLast else {
+            OneSignal.InAppMessages.removeTrigger(Self.engagementTriggerKey)
+            return
+        }
+        OneSignal.InAppMessages.addTrigger(Self.engagementTriggerKey, withValue: String(daysSinceLast))
+    }
+
     /// A real, server-assigned subscription ID is non-empty and not the SDK's
     /// `local-` placeholder, which is assigned before the device registers.
     var currentPushSubscriptionId: String? {

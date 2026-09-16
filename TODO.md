@@ -17,6 +17,86 @@ This document tracks upcoming engineering milestones and architectural enhanceme
   flipping this back.
 - [ ] **Tighten the paywall copy and value prop.** `FeelGoodPaywallView` wraps RevenueCat's `PaywallView`, so this is a dashboard content edit, not a code change — cut wordiness and sharpen why Pro is worth it.
 - [ ] **Admin — add Ameena's card to App Store Connect** to cover the upcoming Apple Developer Program renewal fee. (Account/billing task, not engineering — flagging here so it doesn't get lost.)
+- [ ] **Configure the OneSignal dashboard side of gentle re-engagement**, 2026-09-16. Client-side plumbing is done (`OneSignalManager.setEngagementTrigger`, wired from `TodayModel.requestCopyUpgrade` off the same `HistoryStats.daysSinceLastCompleted` `CopyPayload` already sends). Two dashboard pieces remain, both content/config, not code:
+  1. **Push (Automated Message / Journey)** targeting OneSignal's built-in "Last Session" condition — no client trigger needed for this half, OneSignal tracks it natively per subscribed device.
+  2. **In-App Message** gated on the local trigger key `days_since_last_session >= 5` (`OneSignalManager.engagementTriggerKey`; `5` matches `PlanEngine.reentryGapDays`, the same threshold the engine already uses for a shorter/warmer re-entry menu — one definition of "gap" everywhere).
+  Copy for both, confirmed with Ameena: no reference to absence at all (no "we miss you" / "it's been a while") — per `CLAUDE.md`'s no-gap rule, an invitation, not a callout of time passed.
+
+### Pre-submission polish pass (product review feedback, 2026-09-16)
+
+Scoped with Ameena via AskUserQuestion, 2026-09-16. Three independent items —
+UI, catalog/copy microcopy, and check-in — kept separate below since they
+touch different layers (view, content, Engine types).
+
+- [x] **Replace the completed-item strikethrough with opacity + checkmark
+  badge.** (2026-09-16) `TodayView.swift:808` dropped
+  `.strikethrough(isDone, color: FGColor.clayDeep)` on the session title.
+  `MenuItemBody` already had a checkmark badge (`DoneMark`, a
+  checkmark.circle.fill + "Done" pair) sitting in the top metadata row, so
+  no new component was needed there — added `.opacity(isDone ? 0.6 : 1)` on
+  the whole card instead for the "quieter, not crossed off" read.
+- [x] **Microcopy/catalog audit pass — hustle-culture language and
+  countdown-anxiety phrasing.** (2026-09-16) Ran a full grep pass over
+  `catalog.json` titles/subtitles/step names/cues for
+  circuit/sweat/grind/crush/burn/beast/hardcore/shred/killer/intense/
+  brutal/torch/blast/smash/destroy/hustle/grit-type language. Two real
+  hits, both fixed; everything else that matched ("Blast your favorite
+  track" — literally playing music loud; "Core & lunge burn" and sauna
+  "sweating" — accurate physical-sensation language inside a session
+  someone chose at "Energized"/strong intensity, not guilt framing) was
+  left alone as correctly describing real content, not hustle-coding it.
+  - `catalog.json:3982` `main-sweat-investment` → title now **"Full-body
+    strength circuit"** (was "Sweat investment circuit"). Checked the
+    session's actual steps first — it's a real 30-min kettlebell/bodyweight
+    circuit (intensity 4, `energyFit: strong`, full/lowerBody/core focus),
+    not low-impact, so the reviewer's "Low-impact core & sculpt" suggestion
+    didn't fit the content; kept a name that's still accurate. `id` left
+    unchanged (not referenced elsewhere, but no reason to churn it).
+  - `catalog.json:341` `app-farmers-carry` → title now **"Farmer's carry"**
+    (was "Carry something heavy"). Judgment call: this is a real,
+    distinct exercise (grip/strength `qualities`, its own subtitle "Three
+    minutes that your grip will thank you for") — not a desk-strain
+    catalog gap, so it was renamed for clarity rather than swapped out for
+    "Shoulder & neck drop"/"Wall angels", which are a different movement
+    pattern and already exist in `main-desk-worker-posture-flow`. Flagging
+    in case Ameena actually meant "delete this exercise, add those two
+    instead" rather than "this title reads gym-bro."
+  - `Display.swift:424` `detailedSummaryPhrase` — "target" → **"window"**.
+  - `TodayView.swift:341` — `"\(min) min left"` → **"Room for \(min) min"**.
+  - Out of scope, left untouched: `ChatService.swift`'s `QuickFilter
+    .canNotLeave` chip also reads "Staying in" — that's a different type
+    (chat quick-pivot, not the check-in's `PlaceIntent`) in a more casual
+    context; not touched since the ask was about the check-in screen.
+- [x] **Check-in copy pass — energy label, location labels, no engine
+  changes.** (2026-09-16) `Energy` ([`PlanTypes.swift`](FeelGood/Engine/PlanTypes.swift))
+  was already a 3-case enum (`.low`/`.steady`/`.strong`) matching the
+  chosen 3-point scale — no new case needed. Relabeled in
+  [`Display.swift:208`](FeelGood/Features/Display.swift:208):
+  `checkInLabel` `"Empty"` → **"Depleted"** (`.steady`/`.strong` labels
+  already matched "Steady"/"Energized"). Also fixed the
+  `ChoiceGridPreview` in `Components.swift` which had stale/inconsistent
+  preview labels ("Empty"/"Strong") — now "Depleted"/"Steady"/"Energized"
+  to match.
+  - **"Where are you" relabel — done for the 3 labels, one gap left open.**
+    `PlaceIntent` ([`Display.swift:286`](FeelGood/Features/Display.swift:286))
+    relabeled: `.stayingIn` → **"Living room / Mat"**, `.happyToGoOut` →
+    **"Outdoors"**, `.atTheGym` → **"Gym / Studio"**. **Still open, needs
+    Ameena's call:** the requested 4th category "Desk / Office" has no
+    existing `PlaceIntent` case — decide whether to fold it into
+    `.stayingIn`'s label (lose the desk-specific tag) or add a genuine 4th
+    case (touches `PlaceIntent.places`, `PlanEngine` matching, and
+    `EngineBoundaryTests`/`PlanEngineTests`, not just a label). Not
+    implemented either way yet.
+  - **Body check-in granularity — deferred, separate Engine ticket.**
+    `BodyState` ([`PlanTypes.swift:179`](FeelGood/Engine/PlanTypes.swift:179))
+    is `sore, stiff, stressed, cramping, good` — no distinct
+    neck/shoulders, low-back/pelvic, overstimulated, or low-sleep cases.
+    `cramping` already exists and, per `CLAUDE.md`'s allow-list rule, must
+    stay filtered as a work-around and never surface as a `ReasonCode` —
+    any new case (esp. anything pelvic-floor-adjacent) needs the same
+    privacy review before it ships, not just a UI add. Do **not** bundle
+    this into the pre-submission pass; track separately once the allow-list
+    impact is scoped.
 
 ### PlayerView feedback (handwritten notes, 2026-09-14)
 
@@ -44,14 +124,29 @@ Resolved with Ameena, 2026-09-15:
   No change.
 - [x] "Exercises listed above" confirmed to mean `SessionDetailView`'s
   preview list of steps before starting — already exists, nothing to build.
-- [ ] **Cap/split held steps over ~2 minutes.** Ameena, verbatim: "the ones
+- [x] **Cap/split held steps over ~2 minutes.** Ameena, verbatim: "the ones
   that are longer than 2 min, bc i keep looking at the screen to see if
   its done. its not rlly normal for someone to do an exercise STRAIGHT for
-  3 min." Not a general audit — a specific, actionable pattern: any
-  `catalog.json` step with `seconds > 120` should either be split into two
-  shorter steps or capped around 90-120s. Needs a pass over `catalog.json`
-  to find every step over that line (same shape of work as the "split
-  combined exercise steps" item below — likely worth doing together).
+  3 min." Scoped to static holds/exercises only (confirmed with Ameena) —
+  continuous cardio/activity blocks (walk, bike, swim, climb, hike) and
+  passive soaks (sauna, shower) keep their long single steps by design, and
+  rep-counted strength/gym sets (`reps`/`sets` present) were left alone
+  since `PlayerView` already renders those as a tap-through counter, not a
+  countdown clock, so the "staring at the screen" complaint doesn't apply.
+  Split 45 steps across 14 sessions (`main-pilates-core-20`,
+  `main-pilates-full-30`, `main-mobility-20`, `main-yoga-flow-20`,
+  `main-desk-worker-posture-flow`, `main-sweat-investment`,
+  `des-guided-foam-rolling`, and standalone dessert/side stretch steps) so
+  every timed step is ≤120s, preserving `glossaryID` per sub-step and
+  setting `switchSides: false` explicitly on the new steps to avoid
+  double-firing the existing mid-hold switch-sides alert. Splitting
+  `main-desk-worker-posture-flow`'s combined-name steps ("Chest opener &
+  wall angels", "Low lunge pulses & thoracic twists", "Glute bridge holds &
+  pelvic tilts") also incidentally does half of Yusra's separate "split
+  combined exercise steps" item below for this session — "Standing quad
+  stretch & side body reach" (`catalog.json:3064`) is untouched since it
+  was already under 120s, still Yusra's to split. All 275 `FeelGoodTests`
+  pass.
 
 ### Voice notes feedback, 2026-09-14 (new)
 
