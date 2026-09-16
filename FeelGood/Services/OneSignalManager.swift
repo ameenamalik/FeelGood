@@ -3,16 +3,34 @@
 //  FeelGood
 //
 //  Centralized wrapper around the OneSignal SDK (push notifications + In-App
-//  Messages). No other file may import OneSignalFramework directly — every
-//  OneSignal call, including the push subscription observer used for the
-//  post-integration verification dialog, is isolated here.
+//  Messages). No other file may import OneSignalFramework directly, keeping
+//  initialization, identity, targeting, and message triggers in one place.
 //
 
 import Foundation
+import OneSignalCore
 import OneSignalFramework
+
+extension Notification.Name {
+    static let oneSignalOpenMyMenu = Notification.Name("OneSignalOpenMyMenu")
+}
+
+/// Converts OneSignal dashboard action IDs into app navigation requests.
+/// The SDK may invoke this listener away from the main thread, so UI work is
+/// handed back through NotificationCenter on the main queue.
+nonisolated private final class OneSignalInAppClickListener: NSObject, OSInAppMessageClickListener, @unchecked Sendable {
+    func onClick(event: OSInAppMessageClickEvent) {
+        guard event.result.actionId == "open_my_menu" else { return }
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .oneSignalOpenMyMenu, object: nil)
+        }
+    }
+}
 
 nonisolated final class OneSignalManager: Sendable {
     static let shared = OneSignalManager()
+
+    private let inAppClickListener = OneSignalInAppClickListener()
 
     private init() {}
 
@@ -25,6 +43,7 @@ nonisolated final class OneSignalManager: Sendable {
         #endif
         // SwiftUI app lifecycle has no `launchOptions` to forward.
         OneSignal.initialize(appId, withLaunchOptions: nil)
+        OneSignal.InAppMessages.addClickListener(inAppClickListener)
     }
 
     func login(externalId: String) {
@@ -51,59 +70,15 @@ nonisolated final class OneSignalManager: Sendable {
         OneSignal.User.removeTag(key)
     }
 
-    /// A real, server-assigned subscription ID is non-empty and not the SDK's
-    /// `local-` placeholder, which is assigned before the device registers.
-    var currentPushSubscriptionId: String? {
-        OneSignal.User.pushSubscription.id
+    /// Makes a dashboard-defined In-App Message eligible. Trigger names and
+    /// values are case-sensitive and must exactly match the OneSignal rule.
+    func setInAppTrigger(key: String, value: String) {
+        OneSignal.InAppMessages.addTrigger(key, withValue: value)
     }
 
-    func addPushSubscriptionObserver(_ observer: PushSubscriptionObserver) {
-        OneSignal.User.pushSubscription.addObserver(observer)
-    }
-
-    func requestPushPermission(completion: @escaping @Sendable (Bool) -> Void) {
-        OneSignal.Notifications.requestPermission(completion, fallbackToSettings: true)
-    }
-
-    /// Fires once, the first time the push subscription id becomes a real
-    /// server-assigned value, so `RootView` can show the "integration
-    /// complete" dialog and ask for permission on tap.
-    ///
-    /// OneSignal retains observers weakly — the caller must hold a strong
-    /// reference (e.g. SwiftUI `@State`) for as long as it wants callbacks.
-    ///
-    /// `nonisolated`: OneSignal invokes `onPushSubscriptionDidChange` on its
-    /// own background thread, not the main actor. Letting this class inherit
-    /// the project's default MainActor isolation reproduces the
-    /// `UIColor(dynamicProvider:)` SIGTRAP documented in CLAUDE.md — a
-    /// callback from outside Swift concurrency hitting a MainActor executor
-    /// assert. `evaluate` hops to the main queue itself before touching UI state.
-    ///
-    /// `@unchecked Sendable`: `hasFired` is mutable, but every read and write
-    /// of it is confined to `DispatchQueue.main`, so the two SDK entry points
-    /// (`onPushSubscriptionDidChange` from an arbitrary thread, `evaluate`
-    /// called synchronously right after registering) can't race on it.
-    nonisolated final class PushSubscriptionObserver: NSObject, OSPushSubscriptionObserver, @unchecked Sendable {
-        private let onRegistered: @Sendable () -> Void
-        private var hasFired = false
-
-        init(onRegistered: @escaping @Sendable () -> Void) {
-            self.onRegistered = onRegistered
-        }
-
-        func onPushSubscriptionDidChange(state: OSPushSubscriptionChangedState) {
-            evaluate(state.current.id)
-        }
-
-        /// Call immediately after registering, in case the id was already
-        /// server-assigned before this observer attached.
-        func evaluate(_ subscriptionId: String?) {
-            guard let subscriptionId, !subscriptionId.isEmpty, !subscriptionId.hasPrefix("local-") else { return }
-            DispatchQueue.main.async { [weak self] in
-                guard let self, !self.hasFired else { return }
-                self.hasFired = true
-                self.onRegistered()
-            }
-        }
+    /// Adds related values together so OneSignal never evaluates a message
+    /// against a half-updated set of conditions.
+    func setInAppTriggers(_ triggers: [String: String]) {
+        OneSignal.InAppMessages.addTriggers(triggers)
     }
 }

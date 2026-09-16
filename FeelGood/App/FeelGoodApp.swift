@@ -115,9 +115,6 @@ struct RootView: View {
     @State private var accountReloadID = UUID()
     @State private var accountSyncError: String?
     @State private var isSyncingAccount = false
-    @State private var showOneSignalIntegrationCompleteAlert = false
-    // OneSignal retains this weakly — held here so it isn't deallocated before it fires.
-    @State private var oneSignalPushObserver: OneSignalManager.PushSubscriptionObserver?
 
     var body: some View {
         Group {
@@ -146,7 +143,16 @@ struct RootView: View {
             }
         }
         .onChange(of: authService.currentUser?.uid, initial: true) { _, userID in
-            guard let userID, let user = authService.currentUser, let content else { return }
+            guard let userID else {
+                OneSignalManager.shared.logout()
+                return
+            }
+
+            // Keep OneSignal's user identity aligned with Firebase so a person's
+            // notification history and targeting follow their account, not a device.
+            OneSignalManager.shared.login(externalId: userID)
+
+            guard let user = authService.currentUser, let content else { return }
             Task {
                 // Firebase's auth-state listener and the interactive method can
                 // finish in either order. A brief debounce lets the method publish
@@ -216,26 +222,6 @@ struct RootView: View {
         }
         .onOpenURL { url in
             _ = GIDSignIn.sharedInstance.handle(url)
-        }
-        .onAppear {
-            guard oneSignalPushObserver == nil else { return }
-            let observer = OneSignalManager.PushSubscriptionObserver {
-                showOneSignalIntegrationCompleteAlert = true
-            }
-            oneSignalPushObserver = observer
-            OneSignalManager.shared.addPushSubscriptionObserver(observer)
-            // The id may already be server-assigned before this observer attached.
-            observer.evaluate(OneSignalManager.shared.currentPushSubscriptionId)
-        }
-        .alert(
-            "Your OneSignal SDK integration is complete!",
-            isPresented: $showOneSignalIntegrationCompleteAlert
-        ) {
-            Button("Got it") {
-                OneSignalManager.shared.requestPushPermission { _ in }
-            }
-        } message: {
-            Text("You can now send Push Notifications & In-App Messages through OneSignal. Tap below to enable push notifications.")
         }
         #if DEBUG
         .onAppear {

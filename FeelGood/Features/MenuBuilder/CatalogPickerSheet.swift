@@ -67,7 +67,7 @@ struct CatalogPickerSheet: View {
                                         Capsule().strokeBorder(selectedCourse == course ? course.tagText.opacity(0.3) : FGColor.line, lineWidth: 1)
                                     )
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(.feelGoodPress)
                             }
                         }
                         .padding(.horizontal, FGSpace.page)
@@ -155,7 +155,7 @@ struct CatalogPickerSheet: View {
                                             }
                                         }
                                     }
-                                    .buttonStyle(.plain)
+                                    .buttonStyle(.feelGoodPress)
                                 }
                             }
                         }

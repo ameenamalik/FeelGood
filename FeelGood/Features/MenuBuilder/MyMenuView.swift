@@ -150,9 +150,8 @@ struct MyMenuView: View {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .strokeBorder(course.tagText.opacity(0.05), lineWidth: 0.75)
             )
-            .shadow(color: FGColor.ink.opacity(0.05), radius: 8, y: 4)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.feelGoodPress)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(course.label), \(routines.count) routines")
         .accessibilityAddTraits(.isButton)
