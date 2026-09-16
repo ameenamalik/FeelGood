@@ -488,9 +488,9 @@ private struct ChoiceGridPreview: View {
     @State private var selected = "Steady"
 
     private let options = [
-        ("Empty", "cloud"),
+        ("Depleted", "cloud"),
         ("Steady", "cloud.sun"),
-        ("Strong", "sun.max")
+        ("Energized", "sun.max")
     ]
 
     var body: some View {

@@ -26,6 +26,13 @@ final class TodayModel {
     /// entitlement state instead of depending on ambient global state that a
     /// concurrently-run test elsewhere in the suite might mutate.
     private let isProUserProvider: () -> Bool
+    /// Same DI pattern as `isProUserProvider` — a thin seam around
+    /// `OneSignalManager.shared`, the one external call this file is allowed
+    /// to make (CLAUDE.md: every external call sits behind a protocol/closure
+    /// with a fake). Fed `HistoryStats.daysSinceLastCompleted`, the same
+    /// already-coarsened value `CopyPayload` sends the copy Worker — one
+    /// definition of "days since last", reused rather than recomputed.
+    private let syncEngagementTrigger: (Int?) -> Void
     /// In flight while the copy layer upgrades the headline. Cancelled and
     /// restarted whenever the menu changes underneath it, so a slow response
     /// can never land on a headline it no longer describes.
@@ -72,6 +79,7 @@ final class TodayModel {
         copy: any CopyProviding = InMemoryCopyService(),
         progressStore: any SessionProgressStoring = UserDefaultsSessionProgressStore(),
         isProUserProvider: @escaping () -> Bool = { PurchasesManager.shared.isProUnlocked },
+        syncEngagementTrigger: @escaping (Int?) -> Void = { OneSignalManager.shared.setEngagementTrigger(daysSinceLast: $0) },
         checkIn: PlanCheckIn? = nil,
         calendarOpening: CalendarOpening? = nil,
         now: Date,
@@ -91,6 +99,7 @@ final class TodayModel {
         self.copy = copy
         self.progressStore = progressStore
         self.isProUserProvider = isProUserProvider
+        self.syncEngagementTrigger = syncEngagementTrigger
         var activeProfile = profile
         activeProfile.hiddenSessionIDs.formUnion(log.hiddenSessionIDs())
         self.profile = activeProfile
@@ -793,6 +802,7 @@ final class TodayModel {
         let requestedMenu = menu
         let requestedCheckIn = checkIn ?? menu.assumedCheckIn
         let stats = HistoryStats(input: input(now: now))
+        syncEngagementTrigger(stats.daysSinceLastCompleted)
         let copy = copy
 
         copyTask = Task { @MainActor [weak self] in
