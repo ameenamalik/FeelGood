@@ -205,7 +205,7 @@ nonisolated extension Session {
 nonisolated extension Energy {
     var checkInLabel: String {
         switch self {
-        case .low: "Empty"
+        case .low: "Depleted"
         case .steady: "Steady"
         case .strong: "Energized"
         }
@@ -283,9 +283,9 @@ nonisolated extension TimeBudget {
 extension PlaceIntent {
     var checkInLabel: String {
         switch self {
-        case .stayingIn: "Staying in"
-        case .happyToGoOut: "Going out"
-        case .atTheGym: "The gym"
+        case .stayingIn: "Living room / Mat"
+        case .happyToGoOut: "Outdoors"
+        case .atTheGym: "Gym / Studio"
         }
     }
 
@@ -420,7 +420,9 @@ nonisolated extension PlanCheckIn {
     }
 
     /// Descriptive summary for the tuned-for-today banner on the Today screen.
+    /// "Window," not "target" — a target is missed or hit; a window is just
+    /// open.
     var detailedSummaryPhrase: String {
-        "\(energy.checkInLabel) energy • \(time.summaryPhrase) target"
+        "\(energy.checkInLabel) energy • \(time.summaryPhrase) window"
     }
 }

@@ -6,81 +6,38 @@ This document tracks upcoming engineering milestones and architectural enhanceme
 
 ## 🚀 Next Up — v2
 
-- [x] **Fix `aps-environment` for release.** [`FeelGood.entitlements`](FeelGood/FeelGood.entitlements) was
-  set to `development`, which would have silently broken push notifications
-  for real users. Flipped to `production` (2026-09-15). Note: the same
-  entitlements file is shared by both the Debug and Release build configs
-  (`CODE_SIGN_ENTITLEMENTS` in `project.pbxproj`), so local Debug runs from
-  Xcode will no longer receive dev-environment pushes — if that's needed
-  again, split into `FeelGood-Debug.entitlements` /
-  `FeelGood-Release.entitlements` and wire them per config instead of
-  flipping this back.
 - [ ] **Tighten the paywall copy and value prop.** `FeelGoodPaywallView` wraps RevenueCat's `PaywallView`, so this is a dashboard content edit, not a code change — cut wordiness and sharpen why Pro is worth it.
 - [ ] **Admin — add Ameena's card to App Store Connect** to cover the upcoming Apple Developer Program renewal fee. (Account/billing task, not engineering — flagging here so it doesn't get lost.)
+- [ ] **Configure the OneSignal dashboard side of gentle re-engagement**, 2026-09-16. Client-side plumbing is done (`OneSignalManager.setEngagementTrigger`, wired from `TodayModel.requestCopyUpgrade` off the same `HistoryStats.daysSinceLastCompleted` `CopyPayload` already sends). Two dashboard pieces remain, both content/config, not code:
+  1. **Push (Automated Message / Journey)** targeting OneSignal's built-in "Last Session" condition — no client trigger needed for this half, OneSignal tracks it natively per subscribed device.
+  2. **In-App Message** gated on the local trigger key `days_since_last_session >= 5` (`OneSignalManager.engagementTriggerKey`; `5` matches `PlanEngine.reentryGapDays`, the same threshold the engine already uses for a shorter/warmer re-entry menu — one definition of "gap" everywhere).
+  Copy for both, confirmed with Ameena: no reference to absence at all (no "we miss you" / "it's been a while") — per `CLAUDE.md`'s no-gap rule, an invitation, not a callout of time passed.
 
-### PlayerView feedback (handwritten notes, 2026-09-14)
+### Pre-submission polish pass — open follow-ups (product review feedback, 2026-09-16)
 
-**Owned by Ameena.**
+The UI, catalog/copy, and check-in items from this pass are done (see Completed).
+Two threads it surfaced are still unresolved:
 
-- [x] **Mid-hold "switch sides" alert.** For timed exercises done on both
-  sides, add an explicit alert partway through the hold (haptic/visual, not
-  just a silent timer, and not something buried at the end of the cue
-  paragraph) telling someone to switch sides — right now `PlayerView` has
-  no concept of a side switch mid-step, so the only way to know is to have
-  already read to the end of `step.cue`.
-- [x] **Bigger countdown digits.** The running timer (`timeString` in
-  `PlayerView.running(_:)`) is too small to read at a glance mid-movement.
-- [x] **Let the 5-second "get ready" countdown be paused, skipped, or made
-  longer.** `readingCountdown` currently only offers "Start now" (skip) —
-  no way to pause it, and 5 seconds is too short to actually get ready.
-- [x] **Make the exercise cue easier to digest mid-workout.** `step.cue` renders
-  as one body-text paragraph; nobody reads a paragraph while working out —
-  needs a shorter/more scannable format.
+- [ ] **Decide the "Desk / Office" 4th `PlaceIntent` case.** The check-in
+  relabel covered the existing 3 `PlaceIntent` cases
+  ([`Display.swift:286`](FeelGood/Features/Display.swift:286)), but the
+  requested 4th category "Desk / Office" has no existing case. Needs
+  Ameena's call: fold it into `.stayingIn`'s label (lose the desk-specific
+  tag) or add a genuine 4th case (touches `PlaceIntent.places`,
+  `PlanEngine` matching, and `EngineBoundaryTests`/`PlanEngineTests`, not
+  just a label).
+- [ ] **Body check-in granularity — separate Engine ticket.** `BodyState`
+  ([`PlanTypes.swift:179`](FeelGood/Engine/PlanTypes.swift:179)) is `sore,
+  stiff, stressed, cramping, good` — no distinct neck/shoulders,
+  low-back/pelvic, overstimulated, or low-sleep cases. `cramping` already
+  exists and, per `CLAUDE.md`'s allow-list rule, must stay filtered as a
+  work-around and never surface as a `ReasonCode` — any new case (esp.
+  anything pelvic-floor-adjacent) needs the same privacy review before it
+  ships, not just a UI add. Do **not** bundle this into UI work; scope the
+  allow-list impact first.
 
-Resolved with Ameena, 2026-09-15:
-- [x] Session-start flow (Today → `SessionDetailView` → `PlayerView`) stays
-  as multiple screens — intentional, `SessionDetailView` (steps preview,
-  rename/hide, start/resume) is doing real work distinct from the player.
-  No change.
-- [x] "Exercises listed above" confirmed to mean `SessionDetailView`'s
-  preview list of steps before starting — already exists, nothing to build.
-- [ ] **Cap/split held steps over ~2 minutes.** Ameena, verbatim: "the ones
-  that are longer than 2 min, bc i keep looking at the screen to see if
-  its done. its not rlly normal for someone to do an exercise STRAIGHT for
-  3 min." Not a general audit — a specific, actionable pattern: any
-  `catalog.json` step with `seconds > 120` should either be split into two
-  shorter steps or capped around 90-120s. Needs a pass over `catalog.json`
-  to find every step over that line (same shape of work as the "split
-  combined exercise steps" item below — likely worth doing together).
+### Voice notes feedback, 2026-09-14 (open items)
 
-### Voice notes feedback, 2026-09-14 (new)
-
-- [x] **Fix menus exceeding the time budget.** Reported three times as the
-  same underlying bug got progressively narrowed: "5 minutes available"
-  giving 3-4 items; a 30-minute target giving 55 minutes (appetizer 5 +
-  main 30 + side 20); and after the first round of fixes, a 35-minute
-  target still giving 48 minutes. Two distinct root causes, both in
-  `makeMenu` ([`PlanEngine.swift`](FeelGood/Engine/PlanEngine.swift:61)):
-  1. `isEligible` only ever checked each candidate individually against
-     `checkIn.time.maxMinutes`, so a main, `sideCount` sides, a guaranteed
-     appetizer, and a guaranteed dessert that each fit alone could stack
-     past the budget combined. Fixed with a running `usedMinutes` total
-     that bounds sides and course selection against what's actually left.
-  2. Once that was fixed, the "always something to offer" floor fallback
-     for the appetizer/dessert (`guaranteedAppetizer`/`guaranteedDessert`)
-     still reached for the *first* catalog match (or, briefly, the
-     top-scored match with no duration cap at all) rather than the
-     *shortest* eligible one — so hitting that fallback could add up to a
-     whole dessert's worth of unrelated overshoot. Fixed: the fallback now
-     picks the shortest eligible item under a ceiling of the *whole*
-     check-in budget (never the original ceiling, but allowed to exceed
-     what's merely left of it — that's the guarantee's whole point).
-  Specials still ignore the budget entirely (intentional — planned ahead).
-  `alwaysOffersAnAppetizer` and `neverFailsAcrossTheCheckInMatrix` still
-  hold (an appetizer is always offered); dessert has no such promise and
-  can now legitimately be absent when nothing fits. Locked in with a new
-  regression test, `totalMenuDurationStaysNearBudget` — all 43
-  `PlanEngineTests` pass.
 - [ ] **Allow "0 minutes available" as a check-in option**, for rest/recovery
   days. `TimeBudget` ([`PlanTypes.swift:125`](FeelGood/Engine/PlanTypes.swift:125))
   has no zero case — `.fiveMinutes` is the floor — so the picker at
@@ -94,30 +51,19 @@ Resolved with Ameena, 2026-09-15:
   session with others around or who just don't want audio. Confirmed
   2026-09-15: still wanted, not urgent — keep queued, no rush.
 - [ ] **Split combined exercise steps in the catalog.** **Owned by Yusra** —
-  next up now that the custom-routine cluster above is done. Some catalog steps
+  next up now that the custom-routine cluster is done. Some catalog steps
   merge two distinct exercises into one step/cue, e.g. in
   `main-desk-worker-posture-flow` ([`catalog.json:3004`](FeelGood/Content/catalog.json:3004)):
-  "Chest opener & wall angels" (`catalog.json:3043`), "Low lunge pulses &
-  thoracic twists" (`catalog.json:3053`), "Standing quad stretch & side
-  body reach" (`catalog.json:3064`). This is a content fix, not a
-  `PlayerView` rendering fix — each should become two separate `Step`
-  entries with proportioned durations. Needs a pass over the rest of
-  `catalog.json` for the same pattern, not just this one session.
-- [x] **Let a custom ("own") session take an optional description**, **Owned
-  by Yusra.** Done in `5664143` (2026-09-14) — `Session.own(...)` takes a
-  `description` param that becomes the subtitle, falling back to an empty
-  string instead of the hardcoded "Yours".
-  - [ ] **Later version:** let a custom session also take an optional photo.
-- [x] **A custom routine added to today's menu has no "Start" button and no
-  internal timed parts — only "I did this."** **Owned by Yusra.** Done in
-  `5664143` (2026-09-14): added `CustomRoutinePart` and a new
-  `SessionSource.custom(steps:)` case ([`OwnSession.swift`](FeelGood/Content/OwnSession.swift)),
-  so `isOwn` now means "editable by its author," not "has no steps."
-  `AddRoutineSheet.swift` got the requested add-as-you-go flow (name the
-  routine, add one timed part at a time, Reminders-style), and
-  `SessionDetailView` now shows Start/Resume → `PlayerView` for a custom
-  routine with parts, keeping "I did this" only for the old zero-step log.
-  Covered by new tests in `OwnWorkoutTests.swift` and `PersistenceTests.swift`.
+  "Standing quad stretch & side body reach" (`catalog.json:3064`) is the
+  one remaining instance in that session (the other two combined-name
+  steps in it were split incidentally while fixing the 2-minute hold cap —
+  see Completed). This is a content fix, not a `PlayerView` rendering fix
+  — each should become two separate `Step` entries with proportioned
+  durations. Needs a pass over the rest of `catalog.json` for the same
+  pattern, not just this one session.
+- [ ] **Later version: let a custom ("own") session also take an optional
+  photo.** **Owned by Yusra.** Description support already shipped
+  (`5664143`, see Completed) — this is the follow-on for a photo field.
 - [ ] **Rework the "You" page's insights/metrics section**, discussed
   2026-09-15. This isn't unbuilt — `LookBackView`/`Reflection`
   ([`LookBack.swift`](FeelGood/Engine/LookBack.swift),
@@ -153,32 +99,10 @@ Resolved with Ameena, 2026-09-15:
 
 ### Microanimations
 
-`DesignSystem/Motion.swift` already has a reduce-motion-aware token set
-(`FGMotion.settle`, `.swap`, `.gentle`, `.settleWarm`) and a few screens
-(Today's menu entrance/stagger, the check-in aura pulse, `PlayerView`'s
-step-start/final-stretch flashes) already use it well. Extend that same
-restrained, purposeful language rather than introducing a new one:
+`DesignSystem/Motion.swift` has a reduce-motion-aware token set
+(`FGMotion.settle`, `.swap`, `.gentle`, `.settleWarm`). Phases 1 and 2 of
+the player-visuals work are done (see Completed); one phase remains:
 
-- [x] **Player visuals: one slot, one rule.** (2026-09-15) The breathing
-  orb was a full-screen background layer that overlapped the card and cue;
-  it now lives in the card's visual slot like the drawn demos, breathing
-  steps declare themselves (and their cadence, so box breathing is
-  4-4-4-4 rather than 4-in/6-out) via `visual` in `catalog.json`, the
-  name-sniffing heuristic and the orb's progress ring are gone.
-- [x] **Player visuals, phase 2: glossary breadth.** (2026-09-15) Glossary
-  went from 32 to 149 entries with plain-language instructions; 22 catalog
-  steps now link to a drawing that matches their pose; `ATTRIBUTION.md`
-  lists every bundled set. Nothing pruned — Ameena's call, the gym art
-  stays for sessions not yet written.
-- [x] **Custom routines get visuals too.** (2026-09-15) Typed part titles
-  are matched to the glossary and breathing vocabulary when played, so a
-  My Menu "Box breathing" routine gets the orb and "Push-ups" gets the
-  drawing. Touches custom-routine territory (Yusra's) but only at play
-  time in `PlayerView`; the builder and persistence are untouched.
-- [x] **Show the "what's this?" sheet for matched custom steps.** (2026-09-15)
-  `TodayModel.term(for:)` now falls back to `CustomStepMatcher` when a step
-  has no authored `glossaryID`, so a custom "Push-ups" part gets the same
-  explanation sheet on the detail screen that it already got in the player.
 - [ ] **Player visuals, phase 3: new art for qigong, shake-outs, yoga flow,
   PMR.** Authoring plan (4–6 frame PNG sets in the house line-art style,
   Lottie only for a few whole-body loops) is in
@@ -292,6 +216,172 @@ The goal of this milestone is to elevate this system into a **Dual-Objective Ada
 
 ## ✅ Completed
 
+- [x] **Fix `aps-environment` for release.** [`FeelGood.entitlements`](FeelGood/FeelGood.entitlements) was
+  set to `development`, which would have silently broken push notifications
+  for real users. Flipped to `production` (2026-09-15). Note: the same
+  entitlements file is shared by both the Debug and Release build configs
+  (`CODE_SIGN_ENTITLEMENTS` in `project.pbxproj`), so local Debug runs from
+  Xcode will no longer receive dev-environment pushes — if that's needed
+  again, split into `FeelGood-Debug.entitlements` /
+  `FeelGood-Release.entitlements` and wire them per config instead of
+  flipping this back.
+- [x] **Replace the completed-item strikethrough with opacity + checkmark
+  badge.** (2026-09-16) `TodayView.swift:808` dropped
+  `.strikethrough(isDone, color: FGColor.clayDeep)` on the session title.
+  `MenuItemBody` already had a checkmark badge (`DoneMark`, a
+  checkmark.circle.fill + "Done" pair) sitting in the top metadata row, so
+  no new component was needed there — added `.opacity(isDone ? 0.6 : 1)` on
+  the whole card instead for the "quieter, not crossed off" read.
+- [x] **Microcopy/catalog audit pass — hustle-culture language and
+  countdown-anxiety phrasing.** (2026-09-16) Ran a full grep pass over
+  `catalog.json` titles/subtitles/step names/cues for
+  circuit/sweat/grind/crush/burn/beast/hardcore/shred/killer/intense/
+  brutal/torch/blast/smash/destroy/hustle/grit-type language. Two real
+  hits, both fixed; everything else that matched ("Blast your favorite
+  track" — literally playing music loud; "Core & lunge burn" and sauna
+  "sweating" — accurate physical-sensation language inside a session
+  someone chose at "Energized"/strong intensity, not guilt framing) was
+  left alone as correctly describing real content, not hustle-coding it.
+  - `catalog.json:3982` `main-sweat-investment` → title now **"Full-body
+    strength circuit"** (was "Sweat investment circuit"). Checked the
+    session's actual steps first — it's a real 30-min kettlebell/bodyweight
+    circuit (intensity 4, `energyFit: strong`, full/lowerBody/core focus),
+    not low-impact, so the reviewer's "Low-impact core & sculpt" suggestion
+    didn't fit the content; kept a name that's still accurate. `id` left
+    unchanged (not referenced elsewhere, but no reason to churn it).
+  - `catalog.json:341` `app-farmers-carry` → title now **"Farmer's carry"**
+    (was "Carry something heavy"). Judgment call: this is a real,
+    distinct exercise (grip/strength `qualities`, its own subtitle "Three
+    minutes that your grip will thank you for") — not a desk-strain
+    catalog gap, so it was renamed for clarity rather than swapped out for
+    "Shoulder & neck drop"/"Wall angels", which are a different movement
+    pattern and already exist in `main-desk-worker-posture-flow`. Flagging
+    in case Ameena actually meant "delete this exercise, add those two
+    instead" rather than "this title reads gym-bro."
+  - `Display.swift:424` `detailedSummaryPhrase` — "target" → **"window"**.
+  - `TodayView.swift:341` — `"\(min) min left"` → **"Room for \(min) min"**.
+  - Out of scope, left untouched: `ChatService.swift`'s `QuickFilter
+    .canNotLeave` chip also reads "Staying in" — that's a different type
+    (chat quick-pivot, not the check-in's `PlaceIntent`) in a more casual
+    context; not touched since the ask was about the check-in screen.
+- [x] **Check-in copy pass — energy label, location labels, no engine
+  changes.** (2026-09-16) `Energy` ([`PlanTypes.swift`](FeelGood/Engine/PlanTypes.swift))
+  was already a 3-case enum (`.low`/`.steady`/`.strong`) matching the
+  chosen 3-point scale — no new case needed. Relabeled in
+  [`Display.swift:208`](FeelGood/Features/Display.swift:208):
+  `checkInLabel` `"Empty"` → **"Depleted"** (`.steady`/`.strong` labels
+  already matched "Steady"/"Energized"). Also fixed the
+  `ChoiceGridPreview` in `Components.swift` which had stale/inconsistent
+  preview labels ("Empty"/"Strong") — now "Depleted"/"Steady"/"Energized"
+  to match. "Where are you" relabeled for the 3 existing
+  `PlaceIntent` cases ([`Display.swift:286`](FeelGood/Features/Display.swift:286)):
+  `.stayingIn` → **"Living room / Mat"**, `.happyToGoOut` → **"Outdoors"**,
+  `.atTheGym` → **"Gym / Studio"**. The requested 4th category
+  ("Desk / Office") and a separate body-check-in granularity ask came out
+  of this pass as their own open items — see "Pre-submission polish pass —
+  open follow-ups" above.
+- [x] **Mid-hold "switch sides" alert.** **Owned by Ameena.** For timed
+  exercises done on both sides, added an explicit alert partway through
+  the hold (haptic/visual, not just a silent timer) telling someone to
+  switch sides.
+- [x] **Bigger countdown digits.** **Owned by Ameena.** The running timer
+  (`timeString` in `PlayerView.running(_:)`) is now readable at a glance
+  mid-movement.
+- [x] **Let the 5-second "get ready" countdown be paused, skipped, or made
+  longer.** **Owned by Ameena.** `readingCountdown` previously only offered
+  "Start now" (skip).
+- [x] **Make the exercise cue easier to digest mid-workout.** **Owned by
+  Ameena.** `step.cue` no longer renders as one body-text paragraph.
+- [x] **Session-start flow (Today → `SessionDetailView` → `PlayerView`)
+  stays as multiple screens** — resolved with Ameena, 2026-09-15:
+  intentional, `SessionDetailView` (steps preview, rename/hide,
+  start/resume) is doing real work distinct from the player. No change.
+- [x] **"Exercises listed above" confirmed** — resolved with Ameena,
+  2026-09-15: means `SessionDetailView`'s preview list of steps before
+  starting — already exists, nothing to build.
+- [x] **Cap/split held steps over ~2 minutes.** Resolved with Ameena,
+  2026-09-15. Ameena, verbatim: "the ones that are longer than 2 min, bc i
+  keep looking at the screen to see if its done. its not rlly normal for
+  someone to do an exercise STRAIGHT for 3 min." Scoped to static
+  holds/exercises only (confirmed with Ameena) — continuous cardio/activity
+  blocks (walk, bike, swim, climb, hike) and passive soaks (sauna, shower)
+  keep their long single steps by design, and rep-counted strength/gym
+  sets (`reps`/`sets` present) were left alone since `PlayerView` already
+  renders those as a tap-through counter, not a countdown clock, so the
+  "staring at the screen" complaint doesn't apply. Split 45 steps across
+  14 sessions (`main-pilates-core-20`, `main-pilates-full-30`,
+  `main-mobility-20`, `main-yoga-flow-20`, `main-desk-worker-posture-flow`,
+  `main-sweat-investment`, `des-guided-foam-rolling`, and standalone
+  dessert/side stretch steps) so every timed step is ≤120s, preserving
+  `glossaryID` per sub-step and setting `switchSides: false` explicitly on
+  the new steps to avoid double-firing the existing mid-hold switch-sides
+  alert. Splitting `main-desk-worker-posture-flow`'s combined-name steps
+  ("Chest opener & wall angels", "Low lunge pulses & thoracic twists",
+  "Glute bridge holds & pelvic tilts") also incidentally did half of
+  Yusra's separate "split combined exercise steps" item for this session —
+  "Standing quad stretch & side body reach" (`catalog.json:3064`) is
+  untouched since it was already under 120s, still Yusra's to split (see
+  open items). All 275 `FeelGoodTests` pass.
+- [x] **Fix menus exceeding the time budget.** Reported three times as the
+  same underlying bug got progressively narrowed: "5 minutes available"
+  giving 3-4 items; a 30-minute target giving 55 minutes (appetizer 5 +
+  main 30 + side 20); and after the first round of fixes, a 35-minute
+  target still giving 48 minutes. Two distinct root causes, both in
+  `makeMenu` ([`PlanEngine.swift`](FeelGood/Engine/PlanEngine.swift:61)):
+  1. `isEligible` only ever checked each candidate individually against
+     `checkIn.time.maxMinutes`, so a main, `sideCount` sides, a guaranteed
+     appetizer, and a guaranteed dessert that each fit alone could stack
+     past the budget combined. Fixed with a running `usedMinutes` total
+     that bounds sides and course selection against what's actually left.
+  2. Once that was fixed, the "always something to offer" floor fallback
+     for the appetizer/dessert (`guaranteedAppetizer`/`guaranteedDessert`)
+     still reached for the *first* catalog match (or, briefly, the
+     top-scored match with no duration cap at all) rather than the
+     *shortest* eligible one — so hitting that fallback could add up to a
+     whole dessert's worth of unrelated overshoot. Fixed: the fallback now
+     picks the shortest eligible item under a ceiling of the *whole*
+     check-in budget (never the original ceiling, but allowed to exceed
+     what's merely left of it — that's the guarantee's whole point).
+  Specials still ignore the budget entirely (intentional — planned ahead).
+  `alwaysOffersAnAppetizer` and `neverFailsAcrossTheCheckInMatrix` still
+  hold (an appetizer is always offered); dessert has no such promise and
+  can now legitimately be absent when nothing fits. Locked in with a new
+  regression test, `totalMenuDurationStaysNearBudget` — all 43
+  `PlanEngineTests` pass.
+- [x] **Let a custom ("own") session take an optional description**, **Owned
+  by Yusra.** Done in `5664143` (2026-09-14) — `Session.own(...)` takes a
+  `description` param that becomes the subtitle, falling back to an empty
+  string instead of the hardcoded "Yours".
+- [x] **A custom routine added to today's menu has no "Start" button and no
+  internal timed parts — only "I did this."** **Owned by Yusra.** Done in
+  `5664143` (2026-09-14): added `CustomRoutinePart` and a new
+  `SessionSource.custom(steps:)` case ([`OwnSession.swift`](FeelGood/Content/OwnSession.swift)),
+  so `isOwn` now means "editable by its author," not "has no steps."
+  `AddRoutineSheet.swift` got the requested add-as-you-go flow (name the
+  routine, add one timed part at a time, Reminders-style), and
+  `SessionDetailView` now shows Start/Resume → `PlayerView` for a custom
+  routine with parts, keeping "I did this" only for the old zero-step log.
+  Covered by new tests in `OwnWorkoutTests.swift` and `PersistenceTests.swift`.
+- [x] **Player visuals: one slot, one rule.** (2026-09-15) The breathing
+  orb was a full-screen background layer that overlapped the card and cue;
+  it now lives in the card's visual slot like the drawn demos, breathing
+  steps declare themselves (and their cadence, so box breathing is
+  4-4-4-4 rather than 4-in/6-out) via `visual` in `catalog.json`, the
+  name-sniffing heuristic and the orb's progress ring are gone.
+- [x] **Player visuals, phase 2: glossary breadth.** (2026-09-15) Glossary
+  went from 32 to 149 entries with plain-language instructions; 22 catalog
+  steps now link to a drawing that matches their pose; `ATTRIBUTION.md`
+  lists every bundled set. Nothing pruned — Ameena's call, the gym art
+  stays for sessions not yet written.
+- [x] **Custom routines get visuals too.** (2026-09-15) Typed part titles
+  are matched to the glossary and breathing vocabulary when played, so a
+  My Menu "Box breathing" routine gets the orb and "Push-ups" gets the
+  drawing. Touches custom-routine territory (Yusra's) but only at play
+  time in `PlayerView`; the builder and persistence are untouched.
+- [x] **Show the "what's this?" sheet for matched custom steps.** (2026-09-15)
+  `TodayModel.term(for:)` now falls back to `CustomStepMatcher` when a step
+  has no authored `glossaryID`, so a custom "Push-ups" part gets the same
+  explanation sheet on the detail screen that it already got in the player.
 - [x] **Redesign `PlayerView`'s running screen.** **Owned by Ameena**, `90ddc60`
   (2026-09-14): countdown/counter moved to its own centered row under the
   top bar instead of sitting mid-screen; the exercise illustration replaced
@@ -301,7 +391,7 @@ The goal of this milestone is to elevate this system into a **Dual-Objective Ada
   plus a separate Back/Next row; one pause control now covers both the
   get-ready countdown and the hold, so the separate +5s button is gone.
   Also added crossfade transitions between steps and into the completion
-  screen — folds into the Microanimations work below.
+  screen — folds into the Microanimations work above.
 - [x] **Fix and relocate "I did something else."** Prominent rounded capsule button below the menu cards matching the new clean design reference. Keeps the "+" button next to "Your menu" for the dopamine menu / routine builder, shows remaining minutes inline ("14 min left"), and transitions to a completion state card with checkmark and log adjustments once an activity is recorded.
 - [x] **Add profile picture support.** `YouView` currently only shows a placeholder person icon in a solid-color circle. **Owned by Yusra.**
 - [x] **Let Chat show the full menu, not one routine at a time.** `ExploreView` currently surfaces a single `recommendationCard` per turn. Extend it so someone can see today's whole menu and ask questions about any item in it, rather than being limited to whatever the last recommendation was.
