@@ -24,6 +24,17 @@ const PRO_ENTITLEMENT_ID = "pro";
 /// the app's, and a README that asked for a v2 key against this v1 endpoint.
 /// Every refusal below therefore says *why* — visible with `wrangler tail`.
 export async function hasProEntitlement(subscriberID: string, env: Env): Promise<boolean> {
+  // In development, allow testing with debug/simulator accounts so developers can test the LLM companion
+  if (
+    env.ENVIRONMENT === "development" &&
+    (subscriberID.startsWith("debug") ||
+      subscriberID.startsWith("test") ||
+      subscriberID.includes("AnonymousID") ||
+      subscriberID === "simulator")
+  ) {
+    return true;
+  }
+
   if (!env.REVENUECAT_SECRET_API_KEY) {
     console.warn("entitlement: REVENUECAT_SECRET_API_KEY is missing; denying access");
     return false;

@@ -50,4 +50,5 @@ export interface Env {
   CLOUDFLARE_ACCOUNT_ID?: string;
   CLOUDFLARE_API_TOKEN?: string;
   AI_SEARCH_INSTANCE_NAME?: string;
+  ENVIRONMENT?: string;
 }
