@@ -30,6 +30,15 @@ nonisolated private final class OneSignalInAppClickListener: NSObject, OSInAppMe
 nonisolated final class OneSignalManager: Sendable {
     static let shared = OneSignalManager()
 
+    /// The Journey waits this long before offering to resume a paused reset.
+    /// Keep this in sync with the Wait Until expiration in OneSignal.
+    private static let pausedSessionReminderDelay: TimeInterval = 2.5 * 60 * 60
+
+    /// Latest acceptable delivery time in the user's current time zone. A
+    /// pause that would put the reminder after this point still reaches
+    /// OneSignal for analytics, but is ineligible to enter the Journey.
+    private static let pausedSessionReminderCutoff = DateComponents(hour: 20, minute: 30)
+
     private let inAppClickListener = OneSignalInAppClickListener()
 
     private init() {}
@@ -70,6 +79,65 @@ nonisolated final class OneSignalManager: Sendable {
         OneSignal.User.removeTag(key)
     }
 
+    /// Local-only value used by dashboard-defined In-App Messages. This is
+    /// intentionally an IAM trigger rather than a server-side user tag.
+    static let engagementTriggerKey = "days_since_last_session"
+
+    func setEngagementTrigger(daysSinceLast: Int?) {
+        guard let daysSinceLast else {
+            OneSignal.InAppMessages.removeTrigger(Self.engagementTriggerKey)
+            return
+        }
+        OneSignal.InAppMessages.addTrigger(
+            Self.engagementTriggerKey,
+            withValue: String(daysSinceLast)
+        )
+    }
+
+    /// Sends behavior to OneSignal Custom Events. These events drive Journeys;
+    /// they are separate from the local In-App Message triggers below.
+    func trackEvent(name: String, properties: [String: Any] = [:]) {
+        OneSignal.User.trackEvent(
+            name: name,
+            properties: properties.isEmpty ? nil : properties
+        )
+    }
+
+    func trackSessionPaused(
+        sessionID: String,
+        startedAt: Date,
+        pausedAt: Date = Date(),
+        calendar: Calendar = .autoupdatingCurrent
+    ) {
+        var properties = sessionEventProperties(sessionID: sessionID, startedAt: startedAt)
+        properties["reminder_eligible"] = Self.isPausedSessionReminderEligible(
+            pausedAt: pausedAt,
+            calendar: calendar
+        )
+        trackEvent(name: "session_paused", properties: properties)
+    }
+
+    func trackSessionResumed(sessionID: String, startedAt: Date) {
+        trackEvent(
+            name: "session_resumed",
+            properties: sessionEventProperties(sessionID: sessionID, startedAt: startedAt)
+        )
+    }
+
+    func trackSessionCompleted(sessionID: String, startedAt: Date) {
+        trackEvent(
+            name: "session_completed",
+            properties: sessionEventProperties(sessionID: sessionID, startedAt: startedAt)
+        )
+    }
+
+    func trackSessionDiscarded(sessionID: String, startedAt: Date) {
+        trackEvent(
+            name: "session_discarded",
+            properties: sessionEventProperties(sessionID: sessionID, startedAt: startedAt)
+        )
+    }
+
     /// Makes a dashboard-defined In-App Message eligible. Trigger names and
     /// values are case-sensitive and must exactly match the OneSignal rule.
     func setInAppTrigger(key: String, value: String) {
@@ -80,5 +148,37 @@ nonisolated final class OneSignalManager: Sendable {
     /// against a half-updated set of conditions.
     func setInAppTriggers(_ triggers: [String: String]) {
         OneSignal.InAppMessages.addTriggers(triggers)
+    }
+
+    private func sessionEventProperties(sessionID: String, startedAt: Date) -> [String: Any] {
+        var properties: [String: Any] = [
+            "session_id": sessionID,
+            "session_run_id": Self.sessionRunID(sessionID: sessionID, startedAt: startedAt)
+        ]
+        if let launchURL = DeepLink.session(sessionID)?.absoluteString {
+            properties["launch_url"] = launchURL
+        }
+        return properties
+    }
+
+    private static func sessionRunID(sessionID: String, startedAt: Date) -> String {
+        let startedAtMilliseconds = Int64((startedAt.timeIntervalSince1970 * 1_000).rounded())
+        return "\(sessionID):\(startedAtMilliseconds)"
+    }
+
+    private static func isPausedSessionReminderEligible(
+        pausedAt: Date,
+        calendar: Calendar
+    ) -> Bool {
+        let reminderAt = pausedAt.addingTimeInterval(pausedSessionReminderDelay)
+        guard calendar.isDate(pausedAt, inSameDayAs: reminderAt),
+              let cutoff = calendar.date(
+                bySettingHour: pausedSessionReminderCutoff.hour ?? 20,
+                minute: pausedSessionReminderCutoff.minute ?? 30,
+                second: 0,
+                of: pausedAt
+              )
+        else { return false }
+        return reminderAt <= cutoff
     }
 }

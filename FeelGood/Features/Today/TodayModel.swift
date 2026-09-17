@@ -451,6 +451,8 @@ final class TodayModel {
     /// Permanently hides a session so it is never recommended by the engine.
     /// If it is currently on Today's menu, it is immediately swapped out.
     func hide(_ session: Session, now: Date = Date()) {
+        progressStore.clearProgress(for: session.id)
+        inProgressSessionIDs.remove(session.id)
         profile.hiddenSessionIDs.insert(session.id)
         log.hideSession(session.id, at: now)
 
@@ -631,6 +633,8 @@ final class TodayModel {
     /// Removing a kept workout removes it from what can be offered. It does not
     /// remove the fact that it was done.
     func forget(_ session: Session, now: Date = Date()) {
+        progressStore.clearProgress(for: session.id)
+        inProgressSessionIDs.remove(session.id)
         log.forget(session.id)
         ownSessions = log.kept()
         todayCustomOverrides = todayCustomOverrides.filter { $0.value.id != session.id }
