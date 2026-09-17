@@ -24,6 +24,12 @@ export interface UserPreferencesContext {
   recoveryOwed?: boolean;
   hiddenSessionIDs?: string[];
   hidden_session_ids?: string[];
+  preferredIntensityTier?: "gentle" | "moderate" | "dynamic";
+  preferred_intensity_tier?: "gentle" | "moderate" | "dynamic";
+  topExploredActivities?: string[];
+  top_explored_activities?: string[];
+  fatigueSensitivity?: number;
+  fatigue_sensitivity?: number;
 }
 
 export interface ChatPayload {
@@ -325,6 +331,18 @@ function buildSystemPrompt(
     if (hidden && hidden.length > 0) {
       prompt += `\nEXCLUDED / HIDDEN EXERCISES: The user has explicitly chosen to hide these routines: ${hidden.join(", ")}. Never suggest or recommend these.`;
     }
+    const preferredTier = userContext.preferredIntensityTier || userContext.preferred_intensity_tier;
+    if (preferredTier) {
+      prompt += `\nLEARNED INTENSITY PREFERENCE: The on-device recommendation engine has learned that this user currently thrives best at a '${preferredTier}' intensity tier. Favor routines aligned with this tier when not overridden by specific check-in requests.`;
+    }
+    const explored = userContext.topExploredActivities || userContext.top_explored_activities;
+    if (explored && explored.length > 0) {
+      prompt += `\nADAPTIVE AFFINITY: The user's most explored activities are: ${explored.join(", ")}. Prioritize these when appropriate.`;
+    }
+    const fatigue = userContext.fatigueSensitivity ?? userContext.fatigue_sensitivity;
+    if (fatigue !== undefined && fatigue > 0.6) {
+      prompt += `\nFATIGUE SENSITIVITY: The user is sensitive to high fatigue or cumulative strain. Ensure recovery options are offered generously.`;
+    }
   }
   if (knowledgeContext) {
     prompt += `\n\n${knowledgeContext}\n\nKNOWLEDGE USAGE: If the user asks about app FAQs, subscription, pricing, exercises (e.g. box breathing, shake out, power pose, gratitude scan), or science/voice guidelines, use the relevant knowledge context above to answer accurately and warmly.`;
@@ -416,6 +434,9 @@ function resolveCanonicalRecommendation(
       recoveryOwed: userContext?.recoveryOwed,
       lastFeel: userContext?.lastFeel,
       hiddenSessionIds: hidden,
+      preferredIntensityTier: userContext?.preferredIntensityTier || userContext?.preferred_intensity_tier,
+      topExploredActivities: userContext?.topExploredActivities || userContext?.top_explored_activities,
+      fatigueSensitivity: userContext?.fatigueSensitivity ?? userContext?.fatigue_sensitivity,
     });
   }
 

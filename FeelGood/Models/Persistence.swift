@@ -516,3 +516,33 @@ final class ContentVersionRecord {
         self.seededAt = seededAt
     }
 }
+
+// MARK: - Bandit State
+
+/// On-device model state for the contextual bandit recommendation loop.
+/// Compact covariance and weight tensors persisted locally in SwiftData.
+@Model
+final class BanditStateRecord {
+    @Attribute(.unique) var id: String
+    var modelVersion: Int
+    var stateData: Data
+    var updatedAt: Date
+
+    init(id: String = "default", modelVersion: Int = 1, stateData: Data, updatedAt: Date = Date()) {
+        self.id = id
+        self.modelVersion = modelVersion
+        self.stateData = stateData
+        self.updatedAt = updatedAt
+    }
+
+    init(id: String = "default", modelVersion: Int = 1, state: BanditState, updatedAt: Date = Date()) {
+        self.id = id
+        self.modelVersion = modelVersion
+        self.stateData = (try? JSONEncoder().encode(state)) ?? Data()
+        self.updatedAt = updatedAt
+    }
+
+    var banditState: BanditState? {
+        try? JSONDecoder().decode(BanditState.self, from: stateData)
+    }
+}

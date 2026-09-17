@@ -39,6 +39,7 @@ struct SchemaMigrationTests {
             )
         )
         context.insert(ContentVersionRecord(version: 2, seededAt: Fixture.now))
+        context.insert(BanditStateRecord(state: BanditState(), updatedAt: Fixture.now))
         try? context.save()
     }
 
@@ -49,7 +50,8 @@ struct SchemaMigrationTests {
         let entities = Set(FeelGoodSchema.schema.entities.map(\.name))
         let expected: Set<String> = [
             "UserProfile", "CheckInRecord", "PlanDay", "PlanItem",
-            "SessionRecord", "AffinityRecord", "CustomSession", "ContentVersionRecord"
+            "SessionRecord", "AffinityRecord", "CustomSession", "ContentVersionRecord",
+            "BanditStateRecord"
         ]
         #expect(entities == expected)
         #expect(FeelGoodSchemaV1.versionIdentifier == Schema.Version(1, 0, 0))
