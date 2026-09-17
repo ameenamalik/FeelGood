@@ -136,13 +136,11 @@ not just functionally correct:
 
 ---
 
-## 🎯 Next Priority Milestone: Adaptive Contextual Bandit Recommendation Loop
+## 🎯 Completed Milestone: Adaptive Contextual Bandit Recommendation Loop (Shipped 2026-09-17)
 
 ### Background & Objective
 
-Today, FeelGood utilizes a deterministic heuristic scoring engine (`PlanEngine.swift`) that combines check-in inputs, a 14-day history window, and rolled-up affinity scores to rank candidate sessions.
-
-The goal of this milestone is to elevate this system into a **Dual-Objective Adaptive Contextual Bandit** that dynamically learns user preferences, balances engagement with burnout prevention, and aligns on-device selection with the AI companion on Cloudflare Edge.
+Elevated FeelGood's deterministic heuristic scoring engine into a **Dual-Objective Adaptive Contextual Bandit** (`FeelGood/Engine/Bandit.swift`) that dynamically learns user preferences, balances engagement with burnout prevention, and aligns on-device selection with the AI companion on Cloudflare Edge. Fully implemented, tested across 30/60/90-day trajectory simulations, and merged into `main` (`5f00085`).
 
 ---
 
@@ -222,6 +220,12 @@ The goal of this milestone is to elevate this system into a **Dual-Objective Ada
 
 ## ✅ Completed
 
+- [x] **Edge Worker LLM Model Upgrade & App Store 403 Entitlement Unblock.** (2026-09-17)
+      Upgraded Cloudflare Worker to active `gemini-2.5-flash` model with `gemini-flash-latest`
+      and Anthropic Claude 3.5 Haiku automatic failover. Fixed entitlement gate in
+      `worker/src/entitlement.ts` to permit simulator/dev traffic and fall open to client StoreKit
+      verification when the RevenueCat secret API key is missing on production, unblocking
+      the AI companion for both Simulator and App Store release builds (`4df1516`).
 - [x] **Fix `aps-environment` for release.** [`FeelGood.entitlements`](FeelGood/FeelGood.entitlements) was
       set to `development`, which would have silently broken push notifications
       for real users. Flipped to `production` (2026-09-15). Note: the same
