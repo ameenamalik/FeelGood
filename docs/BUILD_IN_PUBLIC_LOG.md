@@ -38,6 +38,7 @@ the real tweet URL and criterion then, not now.
 | "new onboarding for FeelGood. same six screens, half the words 👀" | screenshot grid of the 6 onboarding screens | Criterion 1 |
 | "shipped subscriptions this week. MRR: enough for maybe one coffee 😅" | paywall screen, or no image | Criterion 1 |
 | "every session in FeelGood tells you why it's there. not 'recommended for you' — just the actual reason" | menu screenshot showing a reason line | Criterion 1 |
+| "building my dream exercise dopamine menu app!!! today was a ux day — ripped the box off the exercise screen so the breathing orb just sits on the page instead of trapped in a lil peach card 🌼 it sounds small but staring at a box vs staring at open space genuinely changes how calm the screen feels" | before/after screen recording of exercise step screen, box vs no box | Criterion 1 |
 
 ## Feedback loops worth closing
 

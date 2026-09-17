@@ -17,7 +17,20 @@ export type ReasonCode = (typeof REASON_CODES)[number];
 export const ENERGY_VALUES = ["low", "steady", "strong"] as const;
 export type EnergyValue = (typeof ENERGY_VALUES)[number];
 
-export const TIME_BUDGET_VALUES = ["aLittle", "some", "plenty"] as const;
+export const TIME_BUDGET_VALUES = [
+  "zeroMinutes",
+  "fiveMinutes",
+  "aLittle",
+  "fifteenMinutes",
+  "twentyMinutes",
+  "twentyFiveMinutes",
+  "some",
+  "thirtyFiveMinutes",
+  "fortyMinutes",
+  "fortyFiveMinutes",
+  "fiftyMinutes",
+  "plenty",
+] as const;
 export type TimeBudgetValue = (typeof TIME_BUDGET_VALUES)[number];
 
 export interface CopyPayload {

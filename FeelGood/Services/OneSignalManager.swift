@@ -70,6 +70,24 @@ nonisolated final class OneSignalManager: Sendable {
         OneSignal.User.removeTag(key)
     }
 
+    /// Local-only condition an In-App Message can require, e.g. "days since
+    /// last session >= 5" configured against `engagementTriggerKey` in the
+    /// OneSignal dashboard. Unlike `setTag`, this never syncs to OneSignal's
+    /// servers or the dashboard's user record — it only controls what the SDK
+    /// is willing to show while someone is already in the app, so it can't be
+    /// used for push segmentation (push re-engagement instead targets
+    /// OneSignal's own built-in "Last Session" condition, which needs no
+    /// client-side trigger at all).
+    static let engagementTriggerKey = "days_since_last_session"
+
+    func setEngagementTrigger(daysSinceLast: Int?) {
+        guard let daysSinceLast else {
+            OneSignal.InAppMessages.removeTrigger(Self.engagementTriggerKey)
+            return
+        }
+        OneSignal.InAppMessages.addTrigger(Self.engagementTriggerKey, withValue: String(daysSinceLast))
+    }
+
     /// Makes a dashboard-defined In-App Message eligible. Trigger names and
     /// values are case-sensitive and must exactly match the OneSignal rule.
     func setInAppTrigger(key: String, value: String) {
@@ -81,4 +99,41 @@ nonisolated final class OneSignalManager: Sendable {
     func setInAppTriggers(_ triggers: [String: String]) {
         OneSignal.InAppMessages.addTriggers(triggers)
     }
+
+    /// A real, server-assigned subscription ID is non-empty and not the SDK's
+    /// `local-` placeholder, which is assigned before the device registers.
+    var currentPushSubscriptionId: String? {
+        OneSignal.User.pushSubscription.id
+    }
+
+    func addPushSubscriptionObserver(_ observer: PushSubscriptionObserver) {
+        OneSignal.User.pushSubscription.addObserver(observer)
+    }
+
+    func requestPushPermission(completion: @escaping @Sendable (Bool) -> Void) {
+        OneSignal.Notifications.requestPermission(completion, fallbackToSettings: true)
+    }
+
+    nonisolated final class PushSubscriptionObserver: NSObject, OSPushSubscriptionObserver, @unchecked Sendable {
+        private let onRegistered: @Sendable () -> Void
+        private var hasFired = false
+
+        init(onRegistered: @escaping @Sendable () -> Void) {
+            self.onRegistered = onRegistered
+        }
+
+        func onPushSubscriptionDidChange(state: OSPushSubscriptionChangedState) {
+            evaluate(state.current.id)
+        }
+
+        func evaluate(_ subscriptionId: String?) {
+            guard let subscriptionId, !subscriptionId.isEmpty, !subscriptionId.hasPrefix("local-") else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self, !self.hasFired else { return }
+                self.hasFired = true
+                self.onRegistered()
+            }
+        }
+    }
 }
+

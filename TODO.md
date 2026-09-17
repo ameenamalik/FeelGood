@@ -38,13 +38,13 @@ Two threads it surfaced are still unresolved:
 
 ### Voice notes feedback, 2026-09-14 (open items)
 
-- [ ] **Allow "0 minutes available" as a check-in option**, for rest/recovery
-  days. `TimeBudget` ([`PlanTypes.swift:125`](FeelGood/Engine/PlanTypes.swift:125))
-  has no zero case — `.fiveMinutes` is the floor — so the picker at
-  [`CheckInSheet.swift:609`](FeelGood/Features/CheckIn/CheckInSheet.swift:609)
-  can't offer it. Needs a `.none`/zero-minute `TimeBudget` case that
-  short-circuits `makeMenu` to an empty/rest-day menu rather than forcing
-  a 5-minute floor.
+- [x] **Allow "0 minutes available" as a check-in option**, for rest/recovery
+  days. Added `.zeroMinutes` (0 min, `isZero`) to `TimeBudget` (`PlanTypes.swift:125`),
+  configured `CheckInSheet.swift` slider floor to "Rest" / "Rest day (0 min)",
+  short-circuited `PlanEngine.makeMenu` to generate a serene 2-card untimed Rest Day menu
+  ("Rest is part of it. Take the day."), added untimed restorative sessions to `catalog.json`,
+  and updated `PlayerView.swift` to support ambient untimed rest sessions with a manual finish action.
+  Covered by `PlanEngineTests`.
 - [ ] **Optional sound/voice cues in `PlayerView`**, off by default or
   user-toggleable — a mute/unmute affordance like Google Maps' voice
   toggle (tap to cancel, icon reflects on/off state), for people doing a

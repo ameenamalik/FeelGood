@@ -73,6 +73,7 @@ struct PlayerView: View {
     /// breathing" gets the same orb the catalog's does.
     private let steps: [Step]
     private var step: Step? { steps.indices.contains(index) ? steps[index] : nil }
+    private var isUntimed: Bool { session.durationMin == 0 || (step?.seconds == 0 && step?.isCounted == false) }
 
     init(
         session: Session,
@@ -236,8 +237,8 @@ struct PlayerView: View {
                 restartBreathingCycle()
             }
 
-            // Counted exercises advance through taps, not a hidden timer.
-            guard !step.isCounted else { return }
+            // Counted or untimed rest exercises advance through user action ("Done"), not a hidden countdown timer.
+            guard !step.isCounted, !isUntimed else { return }
             while remaining > 0 && !isDone {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
@@ -526,6 +527,8 @@ struct PlayerView: View {
                 readingCountdown
             } else if step.isCounted, let perSet = step.reps {
                 counter(step, perSet: perSet)
+            } else if isUntimed {
+                untimedRestIndicator
             } else {
                 VStack(spacing: FGSpace.xs) {
                     if step.requiresSideSwitch {
@@ -543,18 +546,19 @@ struct PlayerView: View {
 
     /// The exercise's name and its visual — a looping line-art demo if one
     /// is bundled, the paced orb for a breathing step, otherwise nothing —
-    /// on a warm aura card rather than bare on the page — the same soft
-    /// gradient language as a check-in tile, spread across the session's
-    /// steps by index so neighbouring exercises don't repeat the same hue.
+    /// bare on the page rather than boxed in a card. The aura still spreads
+    /// across the session's steps by index, driving the breathing orb's own
+    /// glow, so neighbouring exercises don't repeat the same hue.
     ///
-    /// `inkOnAccent`, not `ink`: the card fill doesn't flip with the
-    /// appearance, so the title on it can't either — see `FGColor.inkOnAccent`.
+    /// `ink`, not `inkOnAccent`: there's no accent-colored fill behind the
+    /// title anymore, so it needs to flip with the appearance like normal
+    /// page text — see `FGColor.ink`.
     private func exerciseCard(_ step: Step) -> some View {
         let aura = FGAura.allCases[index % FGAura.allCases.count]
         return VStack(spacing: FGSpace.s) {
             Text(step.name)
                 .font(FGFont.display)
-                .foregroundStyle(FGColor.inkOnAccent)
+                .foregroundStyle(FGColor.ink)
                 .multilineTextAlignment(.center)
 
             StepVisualView(
@@ -567,10 +571,6 @@ struct PlayerView: View {
         }
         .padding(FGSpace.l)
         .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                .fill(LinearGradient(colors: [aura.core, aura.mid], startPoint: .topLeading, endPoint: .bottomTrailing))
-        )
     }
 
     /// Back / pause / next as three evenly-weighted circles rather than a
@@ -601,6 +601,10 @@ struct PlayerView: View {
                 FGQuietButton("Undo one", systemImage: "arrow.uturn.backward") {
                     undoOne(step)
                 }
+            } else if isUntimed && !step.isCounted {
+                FGPrimaryButton(title: index == steps.count - 1 ? "Finish session" : "Done with this step") {
+                    advance()
+                }
             }
 
             HStack(spacing: FGSpace.l) {
@@ -615,11 +619,10 @@ struct PlayerView: View {
 
                 Spacer()
 
-                // No pause concept mid-count: reps advance by tapping the
-                // counter itself, not a running timer. It still appears
-                // during that step's own get-ready countdown, which is a
-                // timer like any other.
-                if !isSwitchingSides, !step.isCounted || readingRemaining > 0 {
+                // No pause concept mid-count or during untimed rest: reps advance by tapping the
+                // counter itself, and untimed rest finishes by tapping Done. It still appears
+                // during that step's own get-ready countdown, which is a timer like any other.
+                if !isSwitchingSides, (!step.isCounted && !isUntimed) || readingRemaining > 0 {
                     primaryCircleButton(
                         systemImage: isPaused ? "play.fill" : "pause.fill",
                         accessibilityLabel: isPaused ? "Resume" : "Pause"
@@ -633,6 +636,22 @@ struct PlayerView: View {
                 circleButton(systemImage: "chevron.right", accessibilityLabel: "Next") { advance() }
             }
         }
+    }
+
+    private var untimedRestIndicator: some View {
+        HStack(spacing: FGSpace.xs) {
+            Image(systemName: "bed.double")
+                .font(.system(size: 20, weight: .medium))
+            Text("Untimed · Rest")
+                .font(FGFont.body.weight(.semibold))
+        }
+        .foregroundStyle(FGColor.sageDeep)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(
+            Capsule()
+                .fill(FGColor.sage.opacity(0.35))
+        )
     }
 
     /// A secondary circular control — Back and Next.
