@@ -4986,6 +4986,99 @@
           }
         ]
       }
+    },
+    {
+      "id": "app-rest-box-breathing",
+      "title": "Box breathing & unwind",
+      "subtitle": "Untimed, anywhere, eyes open or closed",
+      "activity": "breathwork",
+      "qualities": [
+        "downRegulation"
+      ],
+      "durationMin": 0,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "outdoors",
+        "gym"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm"
+      ],
+      "course": "appetizer",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Settle & breathe",
+            "seconds": 60,
+            "cue": "Rest is part of the practice. Take a gentle breath in, exhale softly, and give yourself permission to do nothing.",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 4,
+              "exhale": 4,
+              "holdOut": 4
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-rest-legs-up-the-wall",
+      "title": "Legs up the wall & release",
+      "subtitle": "A restorative posture to reset body and mind",
+      "activity": "stretching",
+      "qualities": [
+        "downRegulation",
+        "mobility"
+      ],
+      "durationMin": 0,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Settle by the wall",
+            "seconds": 120,
+            "cue": "Lie on your back and swing your legs up against a wall or resting on a sofa. Rest your arms comfortably by your sides."
+          },
+          {
+            "name": "Rest & let go",
+            "seconds": 180,
+            "cue": "Let your hips feel heavy into the floor. Soften your jaw, release your shoulders, and stay here for as long as feels good."
+          }
+        ]
+      }
     }
   ],
   "glossary": [

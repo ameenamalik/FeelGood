@@ -352,7 +352,7 @@ nonisolated enum CalendarOpeningFinder {
 
     private static func fittingBudget(minutes: Int) -> TimeBudget? {
         TimeBudget.allCases
-            .filter { $0.maxMinutes <= minutes }
+            .filter { $0.maxMinutes > 0 && $0.maxMinutes <= minutes }
             .max { $0.maxMinutes < $1.maxMinutes }
     }
 

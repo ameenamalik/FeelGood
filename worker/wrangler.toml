@@ -18,6 +18,7 @@ id = "b78d072d88f142bfbaafe5aa915b846b"
 
 [vars]
 AI_SEARCH_INSTANCE_NAME = "nameless-feather-c645"
+ENVIRONMENT = "development"
 
 [observability]
 enabled = true
@@ -32,6 +33,7 @@ id = "82a371c9f70447e2b28972e3f10777f7"
 
 [env.production.vars]
 AI_SEARCH_INSTANCE_NAME = "nameless-feather-c645"
+ENVIRONMENT = "production"
 
 [env.production.observability]
 enabled = true

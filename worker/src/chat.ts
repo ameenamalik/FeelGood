@@ -24,6 +24,12 @@ export interface UserPreferencesContext {
   recoveryOwed?: boolean;
   hiddenSessionIDs?: string[];
   hidden_session_ids?: string[];
+  preferredIntensityTier?: "gentle" | "moderate" | "dynamic";
+  preferred_intensity_tier?: "gentle" | "moderate" | "dynamic";
+  topExploredActivities?: string[];
+  top_explored_activities?: string[];
+  fatigueSensitivity?: number;
+  fatigue_sensitivity?: number;
 }
 
 export interface ChatPayload {
@@ -279,12 +285,16 @@ export async function handleChat(payload: ChatPayload, env: Env): Promise<Respon
         );
 
         if (env.GEMINI_API_KEY) {
-          return await handleGeminiChat(payload, env.GEMINI_API_KEY, knowledgeContext);
+          const geminiRes = await handleGeminiChat(payload, env.GEMINI_API_KEY, knowledgeContext);
+          if (geminiRes.ok) {
+            return geminiRes;
+          }
+          console.warn("Gemini chat failed, falling back to Anthropic if available...");
         }
         if (env.ANTHROPIC_API_KEY) {
           return await handleAnthropicChat(payload, env.ANTHROPIC_API_KEY, knowledgeContext);
         }
-        return new Response("upstream error: Neither GEMINI_API_KEY nor ANTHROPIC_API_KEY is configured", { status: 500 });
+        return new Response("upstream error: Neither GEMINI_API_KEY nor ANTHROPIC_API_KEY is configured or able to respond", { status: 500 });
       } catch (error) {
         console.error("handleChat error:", error);
         return new Response(`upstream error: ${error instanceof Error ? error.message : "unknown"}`, { status: 500 });
@@ -324,6 +334,18 @@ function buildSystemPrompt(
     const hidden = userContext.hiddenSessionIDs || userContext.hidden_session_ids;
     if (hidden && hidden.length > 0) {
       prompt += `\nEXCLUDED / HIDDEN EXERCISES: The user has explicitly chosen to hide these routines: ${hidden.join(", ")}. Never suggest or recommend these.`;
+    }
+    const preferredTier = userContext.preferredIntensityTier || userContext.preferred_intensity_tier;
+    if (preferredTier) {
+      prompt += `\nLEARNED INTENSITY PREFERENCE: The on-device recommendation engine has learned that this user currently thrives best at a '${preferredTier}' intensity tier. Favor routines aligned with this tier when not overridden by specific check-in requests.`;
+    }
+    const explored = userContext.topExploredActivities || userContext.top_explored_activities;
+    if (explored && explored.length > 0) {
+      prompt += `\nADAPTIVE AFFINITY: The user's most explored activities are: ${explored.join(", ")}. Prioritize these when appropriate.`;
+    }
+    const fatigue = userContext.fatigueSensitivity ?? userContext.fatigue_sensitivity;
+    if (fatigue !== undefined && fatigue > 0.6) {
+      prompt += `\nFATIGUE SENSITIVITY: The user is sensitive to high fatigue or cumulative strain. Ensure recovery options are offered generously.`;
     }
   }
   if (knowledgeContext) {
@@ -416,6 +438,9 @@ function resolveCanonicalRecommendation(
       recoveryOwed: userContext?.recoveryOwed,
       lastFeel: userContext?.lastFeel,
       hiddenSessionIds: hidden,
+      preferredIntensityTier: userContext?.preferredIntensityTier || userContext?.preferred_intensity_tier,
+      topExploredActivities: userContext?.topExploredActivities || userContext?.top_explored_activities,
+      fatigueSensitivity: userContext?.fatigueSensitivity ?? userContext?.fatigue_sensitivity,
     });
   }
 
@@ -565,35 +590,32 @@ async function handleGeminiChat(
     },
     {
       system: "gemini",
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       systemPrompt,
       inputMessages: contents,
     },
     async (setResponse) => {
-      let response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      );
+      const candidateModels = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-pro"];
+      let response: Response | null = null;
 
-      if (response.status === 404) {
+      for (const model of candidateModels) {
         response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
           }
         );
+        if (response.status !== 404) {
+          break;
+        }
       }
 
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error("Gemini API error:", response.status, errText);
-        return { res: response, candidateText: null, errorDetail: errText };
+      if (!response || !response.ok) {
+        const errText = response ? await response.text() : "No response";
+        console.error("Gemini API error:", response?.status, errText);
+        return { res: response || new Response("gemini 404", { status: 404 }), candidateText: null, errorDetail: errText };
       }
 
       const json = (await response.json()) as any;

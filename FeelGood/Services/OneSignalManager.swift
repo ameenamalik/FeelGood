@@ -150,6 +150,32 @@ nonisolated final class OneSignalManager: Sendable {
         OneSignal.InAppMessages.addTriggers(triggers)
     }
 
+    /// A real, server-assigned subscription ID is non-empty and not the SDK's
+    /// `local-` placeholder, which is assigned before the device registers.
+    var currentPushSubscriptionId: String? {
+        OneSignal.User.pushSubscription.id
+    }
+
+    func addPushSubscriptionObserver(_ observer: PushSubscriptionObserver) {
+        OneSignal.User.pushSubscription.addObserver(observer)
+    }
+
+    func requestPushPermission(completion: @escaping @Sendable (Bool) -> Void) {
+        OneSignal.Notifications.requestPermission(completion, fallbackToSettings: true)
+    }
+
+    nonisolated final class PushSubscriptionObserver: NSObject, OSPushSubscriptionObserver, @unchecked Sendable {
+        private let onRegistered: @Sendable () -> Void
+        private var hasFired = false
+
+        init(onRegistered: @escaping @Sendable () -> Void) {
+            self.onRegistered = onRegistered
+        }
+
+        func onPushSubscriptionDidChange(state: OSPushSubscriptionChangedState) {
+            evaluate(state.current.id)
+        }
+
     private func sessionEventProperties(sessionID: String, startedAt: Date) -> [String: Any] {
         var properties: [String: Any] = [
             "session_id": sessionID,
@@ -182,3 +208,4 @@ nonisolated final class OneSignalManager: Sendable {
         return reminderAt <= cutoff
     }
 }
+

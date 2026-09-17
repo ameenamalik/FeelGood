@@ -139,7 +139,8 @@ final class TodayModel {
                     profile: profile,
                     checkIn: todaysCheckIn,
                     memory: memory,
-                    context: PlanContext(now: now, calendar: calendar)
+                    context: PlanContext(now: now, calendar: calendar),
+                    banditState: isProUserProvider() ? log.banditState() : nil
                 )
             )
             self.menu = generated
@@ -176,8 +177,14 @@ final class TodayModel {
             profile: profile,
             checkIn: checkIn,
             memory: memory,
-            context: PlanContext(now: now, calendar: calendar)
+            context: PlanContext(now: now, calendar: calendar),
+            banditState: isProUser ? log.banditState() : nil
         )
+    }
+
+    var banditCoarsenedPreferences: BanditCoarsenedPreferences {
+        guard let state = log.banditState() else { return BanditCoarsenedPreferences() }
+        return BanditEngine.coarsenedPreferences(from: state)
     }
 
     /// Rebuilds against whatever the store now holds. Used when history

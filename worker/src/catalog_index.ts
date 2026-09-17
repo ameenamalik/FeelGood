@@ -1783,6 +1783,9 @@ export function matchBestSession(params: {
   recoveryOwed?: boolean;
   lastFeel?: "lovedIt" | "fine" | "tooMuch";
   hiddenSessionIds?: string[];
+  preferredIntensityTier?: "gentle" | "moderate" | "dynamic";
+  topExploredActivities?: string[];
+  fatigueSensitivity?: number;
 }): CatalogSessionItem {
   let best: CatalogSessionItem = CATALOG_SESSIONS[0]!;
   let bestScore = -999;
@@ -1827,6 +1830,23 @@ export function matchBestSession(params: {
     // Feedback & Affinity influence
     if (params.likedActivities && params.likedActivities.includes(s.activity)) {
       score += 12;
+    }
+
+    // Contextual Bandit Learned Preference alignment
+    if (params.preferredIntensityTier && s.intensity === params.preferredIntensityTier) {
+      score += 8;
+    }
+
+    if (params.topExploredActivities && params.topExploredActivities.includes(s.activity)) {
+      score += 10;
+    }
+
+    if (params.fatigueSensitivity && params.fatigueSensitivity > 0.6) {
+      if (s.intensity === "gentle") {
+        score += 8;
+      } else if (s.intensity === "dynamic") {
+        score -= 10;
+      }
     }
 
     if (params.recoveryOwed || params.lastFeel === "tooMuch") {

@@ -681,7 +681,7 @@ private struct TimeBudgetScale: View {
             .frame(height: FGSize.minTouchTarget)
 
             HStack {
-                Text("5 min")
+                Text("Rest")
                 Spacer()
                 Text("1 hr")
             }
@@ -705,7 +705,10 @@ private struct TimeBudgetScale: View {
     }
 
     private func compactLabel(for option: TimeBudget) -> String {
-        option.maxMinutes == 60 ? "1 hr" : "\(option.maxMinutes) min"
+        if option.isZero {
+            return "Rest day (0 min)"
+        }
+        return option.maxMinutes == 60 ? "1 hr" : "\(option.maxMinutes) min"
     }
 
     private var activeProgress: CGFloat? {
