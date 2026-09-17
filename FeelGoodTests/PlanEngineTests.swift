@@ -801,4 +801,25 @@ struct PlanEngineTests {
 
         #expect(!menu.items.contains(where: { $0.session.id == "dessert-barefoot-breath" }))
     }
+
+    @Test("Checking in with zero minutes produces an untimed rest day menu")
+    func zeroMinuteCheckInProducesRestDayMenu() {
+        for energy in Energy.allCases {
+            let input = PlanInput(
+                profile: Fixture.profile(),
+                checkIn: PlanCheckIn(energy: energy, time: .zeroMinutes),
+                context: Fixture.context()
+            )
+            let menu = Fixture.engine.makeMenu(input)
+            #expect(menu.headline == "Rest is part of it. Take the day.")
+            #expect(menu.appetizer != nil)
+            #expect(menu.main != nil)
+            #expect(menu.sides.isEmpty)
+            #expect(menu.dessert == nil)
+            #expect(menu.special == nil)
+            #expect(menu.items.count == 2)
+            #expect(menu.items.allSatisfy { $0.session.durationMin == 0 })
+            #expect(menu.items.allSatisfy { $0.session.durationLabel == "Untimed" })
+        }
+    }
 }

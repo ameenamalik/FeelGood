@@ -123,6 +123,7 @@ nonisolated struct PlanProfile: Hashable, Sendable {
 
 /// How much time is actually available today.
 nonisolated enum TimeBudget: String, Codable, CaseIterable, Sendable {
+    case zeroMinutes
     case fiveMinutes
     case aLittle
     case fifteenMinutes
@@ -138,6 +139,7 @@ nonisolated enum TimeBudget: String, Codable, CaseIterable, Sendable {
     /// Hard ceiling on session length. Never recommend 30 when the answer was 10.
     var maxMinutes: Int {
         switch self {
+        case .zeroMinutes: 0
         case .fiveMinutes: 5
         case .aLittle: 10
         case .fifteenMinutes: 15
@@ -152,8 +154,11 @@ nonisolated enum TimeBudget: String, Codable, CaseIterable, Sendable {
         }
     }
 
-    /// The first three stops need the short-session treatment and copy.
-    var isTight: Bool { maxMinutes <= 15 }
+    /// Whether this represents a rest / recovery day with zero planned minutes.
+    var isZero: Bool { maxMinutes == 0 }
+
+    /// The first three timed stops need the short-session treatment and copy.
+    var isTight: Bool { maxMinutes > 0 && maxMinutes <= 15 }
 }
 
 /// Where you're willing to be today. Optional, and defaults to whatever the
