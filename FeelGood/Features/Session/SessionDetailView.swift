@@ -81,15 +81,18 @@ struct SessionDetailView: View {
                         VStack(spacing: FGSpace.s) {
                             if session.source.steps.isEmpty {
                                 FGPrimaryButton(title: "I did this") {
+                                    let completionStartedAt = Date()
                                     Analytics.capture("workout_completed", properties: workoutProperties)
-                                    model.complete(session, startedAt: Date(), feel: nil)
+                                    OneSignalManager.shared.trackSessionCompleted(
+                                        sessionID: session.id,
+                                        startedAt: completionStartedAt
+                                    )
+                                    model.complete(session, startedAt: completionStartedAt, feel: nil)
                                     presentLittleWinOrFinish()
                                 }
                             } else {
                                 FGPrimaryButton(title: savedProgress == nil ? "Start" : "Resume") {
-                                    Analytics.capture("workout_started", properties: workoutProperties)
-                                    startedAt = savedProgress?.startedAt ?? Date()
-                                    isPlaying = true
+                                    startOrResumeSession()
                                 }
                             }
                             HStack(spacing: FGSpace.m) {
@@ -105,9 +108,7 @@ struct SessionDetailView: View {
                     } else {
                         VStack(spacing: FGSpace.s) {
                             FGPrimaryButton(title: savedProgress == nil ? "Start" : "Resume") {
-                                Analytics.capture("workout_started", properties: workoutProperties)
-                                startedAt = savedProgress?.startedAt ?? Date()
-                                isPlaying = true
+                                startOrResumeSession()
                             }
                             FGQuietButton("Don't suggest this again", systemImage: "eye.slash") {
                                 isConfirmingHide = true
@@ -128,10 +129,18 @@ struct SessionDetailView: View {
                     switch result {
                     case .completed(let feel):
                         Analytics.capture("workout_completed", properties: workoutProperties)
+                        OneSignalManager.shared.trackSessionCompleted(
+                            sessionID: session.id,
+                            startedAt: startedAt
+                        )
                         model.complete(session, startedAt: startedAt, feel: feel)
                         completedPlayerSession = true
                     case .paused(let progress):
                         model.pause(session, at: progress)
+                        OneSignalManager.shared.trackSessionPaused(
+                            sessionID: session.id,
+                            startedAt: progress.startedAt
+                        )
                     }
                     shouldCloseAfterPlayer = true
                     isPlaying = false
@@ -158,6 +167,7 @@ struct SessionDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Remove", role: .destructive) {
+                trackDiscardIfNeeded()
                 model.forget(session)
                 dismiss()
             }
@@ -172,6 +182,7 @@ struct SessionDetailView: View {
         ) {
             Button("Hide this exercise", role: .destructive) {
                 Analytics.capture("session_hidden", properties: ["session_id": session.id, "title": session.title])
+                trackDiscardIfNeeded()
                 model.hide(session)
                 dismiss()
             }
@@ -187,6 +198,28 @@ struct SessionDetailView: View {
     }
 
     private var course: Course { session.course }
+
+    private func startOrResumeSession() {
+        Analytics.capture("workout_started", properties: workoutProperties)
+        if let progress = savedProgress {
+            startedAt = progress.startedAt
+            OneSignalManager.shared.trackSessionResumed(
+                sessionID: session.id,
+                startedAt: progress.startedAt
+            )
+        } else {
+            startedAt = Date()
+        }
+        isPlaying = true
+    }
+
+    private func trackDiscardIfNeeded() {
+        guard let progress = savedProgress else { return }
+        OneSignalManager.shared.trackSessionDiscarded(
+            sessionID: session.id,
+            startedAt: progress.startedAt
+        )
+    }
 
     private func handlePlayerDismiss() {
         guard shouldCloseAfterPlayer else { return }
