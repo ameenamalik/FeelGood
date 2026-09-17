@@ -28,6 +28,8 @@ nonisolated struct PlanWeights: Hashable, Sendable {
     var cadenceNudge: Double = 1.0
     var bodyStateMatch: Double = 2.0
     var returningAfterGap: Double = 3.5
+    var banditWeight: Double = 1.5
+    var banditAlpha: Double = 0.5
 
     /// At or below this, a session counts as restful.
     var restfulIntensity: Int = 2
@@ -458,6 +460,20 @@ nonisolated struct PlanEngine: Sendable {
         // Affinity — quietly, over time.
         let affinity = (input.affinity[session.id] ?? 0) + stats.derivedAffinity[session.id, default: 0]
         score += affinity.clamped(to: -1...1) * weights.affinity
+
+        // Adaptive contextual bandit score.
+        if let banditState = input.banditState, weights.banditWeight != 0 {
+            let banditScore = BanditEngine.predictScore(
+                for: session,
+                profile: input.profile,
+                checkIn: checkIn,
+                stats: stats,
+                context: input.context,
+                state: banditState,
+                alpha: weights.banditAlpha
+            )
+            score += banditScore * weights.banditWeight
+        }
 
         // Quality coverage. Only once there's enough history for "absent" to
         // mean anything — a new user is not behind on anything.

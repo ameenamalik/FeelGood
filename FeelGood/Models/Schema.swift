@@ -45,6 +45,7 @@ enum FeelGoodSchemaV1: VersionedSchema {
             AffinityRecord.self,
             CustomSession.self,
             ContentVersionRecord.self,
+            BanditStateRecord.self,
         ]
     }
 }

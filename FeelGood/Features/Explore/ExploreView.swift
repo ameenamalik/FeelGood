@@ -645,12 +645,16 @@ struct ExploreView: View {
             }
             return false
         }
+        let banditPrefs = model.banditCoarsenedPreferences
         let userContext = ChatUserContext(
             likedActivities: Array(Set(liked)),
             lastFeel: lastFeel,
             recentCompletions: completedEntries.count,
             recoveryOwed: recoveryOwed,
-            hiddenSessionIDs: Array(model.profile.hiddenSessionIDs)
+            hiddenSessionIDs: Array(model.profile.hiddenSessionIDs),
+            preferredIntensityTier: banditPrefs.preferredIntensityTier,
+            topExploredActivities: banditPrefs.topExploredActivities,
+            fatigueSensitivity: banditPrefs.fatigueSensitivity
         )
         let wireHistory = messages.suffix(4).map {
             ChatTurnPayload(role: $0.role == .user ? "user" : "model", text: $0.text)

@@ -334,6 +334,7 @@ nonisolated struct PlanInput: Hashable, Sendable {
     var checkIn: PlanCheckIn?
     var memory: PlanMemory
     var context: PlanContext
+    var banditState: BanditState?
 
     var history: [HistoryEntry] { memory.historyEntries }
     var affinity: [String: Double] { memory.affinityScores }
@@ -342,12 +343,14 @@ nonisolated struct PlanInput: Hashable, Sendable {
         profile: PlanProfile,
         checkIn: PlanCheckIn? = nil,
         memory: PlanMemory,
-        context: PlanContext
+        context: PlanContext,
+        banditState: BanditState? = nil
     ) {
         self.profile = profile
         self.checkIn = checkIn
         self.memory = memory
         self.context = context
+        self.banditState = banditState
     }
 
     /// Test-only. Always builds `.full` memory, so a production call site
@@ -359,11 +362,14 @@ nonisolated struct PlanInput: Hashable, Sendable {
         checkIn: PlanCheckIn? = nil,
         history: [HistoryEntry] = [],
         context: PlanContext,
-        affinity: [String: Double] = [:]
+        affinity: [String: Double] = [:],
+        banditState: BanditState? = nil
     ) {
         self.profile = profile
         self.checkIn = checkIn
         self.memory = .full(history: history, affinity: affinity)
         self.context = context
+        self.banditState = banditState
     }
 }
+

@@ -28,6 +28,9 @@ protocol SessionLogging: AnyObject, Sendable {
     func allHistory() -> [HistoryEntry]
     /// Rolled-up preference that outlives the history window.
     func affinity() -> [String: Double]
+    /// On-device contextual bandit model state.
+    func banditState() -> BanditState?
+    func saveBanditState(_ state: BanditState)
 
     // MARK: The day
 
@@ -102,6 +105,7 @@ final class SessionLog: SessionLogging {
         context.insert(record)
 
         moveAffinity(for: session.id, after: .completed(feel: feel), at: endedAt)
+        updateBandit(for: session, outcome: .completed(feel: feel), at: endedAt)
         save()
     }
 
@@ -115,6 +119,7 @@ final class SessionLog: SessionLogging {
         )
         context.insert(record)
         moveAffinity(for: session.id, after: .swappedAway, at: date)
+        updateBandit(for: session, outcome: .swappedAway, at: date)
         save()
     }
 
@@ -139,6 +144,63 @@ final class SessionLog: SessionLogging {
             fetch(FetchDescriptor<AffinityRecord>()).map { ($0.sessionID, $0.score) },
             uniquingKeysWith: { first, _ in first }
         )
+    }
+
+    func banditState() -> BanditState? {
+        fetch(FetchDescriptor<BanditStateRecord>()).first?.banditState
+    }
+
+    func saveBanditState(_ state: BanditState) {
+        let descriptor = FetchDescriptor<BanditStateRecord>()
+        if let existing = fetch(descriptor).first {
+            existing.stateData = (try? JSONEncoder().encode(state)) ?? Data()
+            existing.updatedAt = Date()
+        } else {
+            context.insert(BanditStateRecord(state: state, updatedAt: Date()))
+        }
+    }
+
+    private func updateBandit(for session: Session, outcome: HistoryOutcome, at date: Date) {
+        let currentState = banditState() ?? BanditState()
+        let planProfile = fetch(FetchDescriptor<UserProfile>()).first?.planProfile
+            ?? PlanProfile(availableActivities: [session.activity, .stretching, .walking])
+        let dayStart = calendar.startOfDay(for: date)
+        let todaysCheckIn = checkIn(on: dayStart) ?? PlanCheckIn(energy: .steady, time: .some)
+        let planContext = PlanContext(now: date, calendar: calendar)
+        let entries = history(before: date)
+        let input = PlanInput(
+            profile: planProfile,
+            checkIn: todaysCheckIn,
+            history: entries,
+            context: planContext
+        )
+        let stats = HistoryStats(input: input)
+
+        let completedEntries = entries.filter(\.wasCompleted)
+        var hardRun = 0
+        for dayOffset in 0..<7 {
+            let matches = completedEntries.filter {
+                let diff = calendar.dateComponents([.day], from: calendar.startOfDay(for: $0.date), to: dayStart).day ?? 999
+                return diff == dayOffset && $0.intensity >= 4
+            }
+            if !matches.isEmpty {
+                hardRun += 1
+            } else if dayOffset > 0 {
+                break
+            }
+        }
+
+        let updated = BanditEngine.update(
+            state: currentState,
+            session: session,
+            outcome: outcome,
+            profile: planProfile,
+            checkIn: todaysCheckIn,
+            stats: stats,
+            context: planContext,
+            consecutiveHardDays: hardRun
+        )
+        saveBanditState(updated)
     }
 
     func hideSession(_ sessionID: String, at date: Date) {
@@ -309,9 +371,11 @@ final class SessionLog: SessionLogging {
 final class InMemorySessionLog: SessionLogging {
     private(set) var entries: [HistoryEntry] = []
     private(set) var affinityScores: [String: Double] = [:]
+    private(set) var currentBanditState: BanditState?
 
-    init(entries: [HistoryEntry] = []) {
+    init(entries: [HistoryEntry] = [], banditState: BanditState? = nil) {
         self.entries = entries
+        self.currentBanditState = banditState
     }
 
     func recordCompletion(of session: Session, startedAt: Date, endedAt: Date, feel: Feel?, place: Place?) {
@@ -331,6 +395,7 @@ final class InMemorySessionLog: SessionLogging {
         case .tooMuch: affinityScores[session.id, default: 0] -= 0.25
         case .fine, .none: break
         }
+        updateBandit(for: session, outcome: .completed(feel: feel), at: endedAt)
     }
 
     func recordSwap(of session: Session, at date: Date) {
@@ -344,11 +409,50 @@ final class InMemorySessionLog: SessionLogging {
             outcome: .swappedAway
         ))
         affinityScores[session.id, default: 0] -= 0.15
+        updateBandit(for: session, outcome: .swappedAway, at: date)
     }
 
     func history(before now: Date) -> [HistoryEntry] { entries }
     func allHistory() -> [HistoryEntry] { entries }
     func affinity() -> [String: Double] { affinityScores }
+    func banditState() -> BanditState? { currentBanditState }
+    func saveBanditState(_ state: BanditState) { currentBanditState = state }
+
+    private func updateBandit(for session: Session, outcome: HistoryOutcome, at date: Date) {
+        let state = currentBanditState ?? BanditState()
+        let profile = PlanProfile(availableActivities: [session.activity, .stretching, .walking])
+        let checkIn = storedCheckIn ?? PlanCheckIn(energy: .steady, time: .some)
+        let context = PlanContext(now: date)
+        let input = PlanInput(profile: profile, checkIn: checkIn, history: entries, context: context)
+        let stats = HistoryStats(input: input)
+
+        var hardRun = 0
+        let completedEntries = entries.filter(\.wasCompleted)
+        let dayStart = Calendar.current.startOfDay(for: date)
+        for dayOffset in 0..<7 {
+            let matches = completedEntries.filter {
+                let diff = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: $0.date), to: dayStart).day ?? 999
+                return diff == dayOffset && $0.intensity >= 4
+            }
+            if !matches.isEmpty {
+                hardRun += 1
+            } else if dayOffset > 0 {
+                break
+            }
+        }
+
+        let updated = BanditEngine.update(
+            state: state,
+            session: session,
+            outcome: outcome,
+            profile: profile,
+            checkIn: checkIn,
+            stats: stats,
+            context: context,
+            consecutiveHardDays: hardRun
+        )
+        currentBanditState = updated
+    }
 
     // MARK: The day
 
