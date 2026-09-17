@@ -176,6 +176,18 @@ nonisolated final class OneSignalManager: Sendable {
             evaluate(state.current.id)
         }
 
+        /// Call immediately after registering, in case the id was already
+        /// server-assigned before this observer attached.
+        func evaluate(_ subscriptionId: String?) {
+            guard let subscriptionId, !subscriptionId.isEmpty, !subscriptionId.hasPrefix("local-") else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self, !self.hasFired else { return }
+                self.hasFired = true
+                self.onRegistered()
+            }
+        }
+    }
+
     private func sessionEventProperties(sessionID: String, startedAt: Date) -> [String: Any] {
         var properties: [String: Any] = [
             "session_id": sessionID,
