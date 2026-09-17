@@ -103,7 +103,9 @@ nonisolated extension BodyFocus {
 }
 
 nonisolated extension Session {
-    var durationLabel: String { "\(durationMin) min" }
+    var durationLabel: String {
+        durationMin == 0 ? "Untimed" : "\(durationMin) min"
+    }
 
     /// What the session targets — e.g. "Spine & Hips", "Neck & Shoulders", "Full Body".
     var targetLabel: String {
@@ -225,6 +227,7 @@ nonisolated extension Energy {
 nonisolated extension TimeBudget {
     var checkInLabel: String {
         switch self {
+        case .zeroMinutes: "Rest day"
         case .fiveMinutes: "Five minutes"
         case .aLittle: "Ten minutes"
         case .fifteenMinutes: "Fifteen minutes"
@@ -241,6 +244,7 @@ nonisolated extension TimeBudget {
 
     var checkInDetail: String {
         switch self {
+        case .zeroMinutes: "0 min"
         case .fiveMinutes: "5 min"
         case .aLittle: "10 min"
         case .fifteenMinutes: "15 min"
@@ -256,7 +260,9 @@ nonisolated extension TimeBudget {
     }
 
     /// Sentence-case form used after the energy label in today's summary.
-    var summaryPhrase: String { checkInDetail }
+    var summaryPhrase: String {
+        isZero ? "Untimed" : checkInDetail
+    }
 
     /// The ceiling as a bare numeral, for the tile that prints it large with
     /// "min" underneath. Reads off `maxMinutes` rather than restating it, so
@@ -265,6 +271,7 @@ nonisolated extension TimeBudget {
 
     var checkInSymbol: String {
         switch self {
+        case .zeroMinutes: "bed.double"
         case .fiveMinutes: "5.circle"
         case .aLittle: "10.circle"
         case .fifteenMinutes: "15.circle"
@@ -305,16 +312,16 @@ nonisolated extension BodyState {
         case .stiff: "Stiff"
         case .stressed: "Stressed"
         case .cramping: "Cramping"
-        case .good: "Good"
+        case .good: "Feeling good"
         }
     }
 
     var checkInSymbol: String {
         switch self {
-        case .sore: "figure.walk.motion"
-        case .stiff: "figure.flexibility"
+        case .sore: "figure.walk"
+        case .stiff: "figure.cooldown"
         case .stressed: "brain.head.profile"
-        case .cramping: "water.waves"
+        case .cramping: "waveform.path.ecg"
         case .good: "sparkles"
         }
     }
@@ -423,6 +430,9 @@ nonisolated extension PlanCheckIn {
     /// "Window," not "target" — a target is missed or hit; a window is just
     /// open.
     var detailedSummaryPhrase: String {
-        "\(energy.checkInLabel) energy • \(time.summaryPhrase) window"
+        if time.isZero {
+            return "\(energy.checkInLabel) energy • Untimed"
+        }
+        return "\(energy.checkInLabel) energy • \(time.summaryPhrase) window"
     }
 }

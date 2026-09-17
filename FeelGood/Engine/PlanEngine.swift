@@ -28,6 +28,8 @@ nonisolated struct PlanWeights: Hashable, Sendable {
     var cadenceNudge: Double = 1.0
     var bodyStateMatch: Double = 2.0
     var returningAfterGap: Double = 3.5
+    var banditWeight: Double = 1.5
+    var banditAlpha: Double = 0.5
 
     /// At or below this, a session counts as restful.
     var restfulIntensity: Int = 2
@@ -60,6 +62,9 @@ nonisolated struct PlanEngine: Sendable {
 
     func makeMenu(_ input: PlanInput) -> Menu {
         let checkIn = resolvedCheckIn(input)
+        if checkIn.time.isZero {
+            return makeRestDayMenu(input, checkIn: checkIn)
+        }
         let stats = HistoryStats(input: input)
         let scored = rankedCandidates(input, checkIn: checkIn, stats: stats)
 
@@ -357,8 +362,11 @@ nonisolated struct PlanEngine: Sendable {
         // Never recommend equipment that isn't available.
         guard Set(session.equipment).subtracting([.none]).isSubset(of: input.profile.equipment) else { return false }
         // Specials are planned ahead, so today's time budget doesn't apply.
-        if session.course != .special {
-            guard session.durationMin <= checkIn.time.maxMinutes else { return false }
+        // Rest days only match untimed (0-minute) sessions; active days only match positive durations.
+        if checkIn.time.isZero {
+            guard session.durationMin == 0 else { return false }
+        } else if session.course != .special {
+            guard session.durationMin > 0 && session.durationMin <= checkIn.time.maxMinutes else { return false }
         }
         // Activities that need a pool, a bike or a pair of skates are asked
         // about; the rest are always on the table and earn their place through
@@ -452,6 +460,20 @@ nonisolated struct PlanEngine: Sendable {
         // Affinity — quietly, over time.
         let affinity = (input.affinity[session.id] ?? 0) + stats.derivedAffinity[session.id, default: 0]
         score += affinity.clamped(to: -1...1) * weights.affinity
+
+        // Adaptive contextual bandit score.
+        if let banditState = input.banditState, weights.banditWeight != 0 {
+            let banditScore = BanditEngine.predictScore(
+                for: session,
+                profile: input.profile,
+                checkIn: checkIn,
+                stats: stats,
+                context: input.context,
+                state: banditState,
+                alpha: weights.banditAlpha
+            )
+            score += banditScore * weights.banditWeight
+        }
 
         // Quality coverage. Only once there's enough history for "absent" to
         // mean anything — a new user is not behind on anything.
@@ -632,6 +654,98 @@ nonisolated struct PlanEngine: Sendable {
         let fallback = maxDuration == nil ? eligible.min(by: { $0.durationMin < $1.durationMin }) : eligible.first
         return fallback.map { candidate(for: $0, input: input, checkIn: checkIn, stats: stats).item }
     }
+
+    // MARK: - Rest Day Menu
+
+    private func makeRestDayMenu(_ input: PlanInput, checkIn: PlanCheckIn) -> Menu {
+        let appSession = catalog.first {
+            $0.course == .appetizer && $0.durationMin == 0 && !input.profile.hiddenSessionIDs.contains($0.id)
+        } ?? Self.fallbackRestAppetizer
+
+        let mainSession = catalog.first {
+            $0.course == .main && $0.durationMin == 0 && !input.profile.hiddenSessionIDs.contains($0.id)
+        } ?? Self.fallbackRestMain
+
+        let appetizerItem = MenuItem(
+            session: appSession,
+            course: .appetizer,
+            reasons: [],
+            reasonText: "Untimed · Soft breathing"
+        )
+        let mainItem = MenuItem(
+            session: mainSession,
+            course: .main,
+            reasons: [],
+            reasonText: "Restorative posture · Take your time"
+        )
+
+        return Menu(
+            dayStart: input.context.calendar.startOfDay(for: input.context.now),
+            appetizer: appetizerItem,
+            main: mainItem,
+            sides: [],
+            dessert: nil,
+            special: nil,
+            headline: MenuCopy.headline(reasons: [], checkIn: checkIn),
+            assumedCheckIn: checkIn
+        )
+    }
+
+    static let fallbackRestAppetizer = Session(
+        id: "app-rest-box-breathing",
+        title: "Box breathing & unwind",
+        subtitle: "Untimed, anywhere, eyes open or closed",
+        activity: .breathwork,
+        qualities: [.downRegulation],
+        durationMin: 0,
+        intensity: 1,
+        energyFit: [.low, .steady, .strong],
+        equipment: [.none],
+        places: [.home, .gym],
+        bodyFocus: [.full],
+        contraindications: [],
+        intents: [.calm],
+        course: .appetizer,
+        source: .authored(steps: [
+            Step(
+                name: "Settle & breathe",
+                seconds: 60,
+                cue: "Rest is part of the practice. Take a gentle breath in, exhale softly, and give yourself permission to do nothing.",
+                visual: .breathing(BreathingCadence(inhale: 4, holdIn: 4, exhale: 4, holdOut: 4))
+            )
+        ]),
+        attribution: nil
+    )
+
+    static let fallbackRestMain = Session(
+        id: "main-rest-legs-up-the-wall",
+        title: "Legs up the wall & release",
+        subtitle: "A restorative posture to reset body and mind",
+        activity: .stretching,
+        qualities: [.downRegulation, .mobility],
+        durationMin: 0,
+        intensity: 1,
+        energyFit: [.low, .steady, .strong],
+        equipment: [.none],
+        places: [.home],
+        bodyFocus: [.full],
+        contraindications: [],
+        intents: [.calm],
+        course: .main,
+        source: .authored(steps: [
+            Step(
+                name: "Settle by the wall",
+                seconds: 120,
+                cue: "Lie on your back and swing your legs up against a wall or resting on a sofa. Rest your arms comfortably by your sides."
+            ),
+            Step(
+                name: "Rest & let go",
+                seconds: 180,
+                cue: "Let your hips feel heavy into the floor. Soften your jaw, release your shoulders, and stay here for as long as feels good."
+            )
+        ]),
+        attribution: nil
+    )
 }
 
 // MARK: - History stats

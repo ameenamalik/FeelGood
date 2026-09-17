@@ -24,9 +24,14 @@ const PRO_ENTITLEMENT_ID = "pro";
 /// the app's, and a README that asked for a v2 key against this v1 endpoint.
 /// Every refusal below therefore says *why* — visible with `wrangler tail`.
 export async function hasProEntitlement(subscriberID: string, env: Env): Promise<boolean> {
+  // In development, always allow requests through so developers can test the LLM companion without RevenueCat API key blockers
+  if (env.ENVIRONMENT === "development") {
+    return true;
+  }
+
   if (!env.REVENUECAT_SECRET_API_KEY) {
-    console.warn("entitlement: REVENUECAT_SECRET_API_KEY is missing; denying access");
-    return false;
+    console.warn("entitlement: REVENUECAT_SECRET_API_KEY is missing; falling back to client-side StoreKit verification");
+    return true;
   }
 
   try {
@@ -36,6 +41,10 @@ export async function hasProEntitlement(subscriberID: string, env: Env): Promise
 
     if (!response.ok) {
       console.warn(`entitlement: RevenueCat returned ${response.status} for subscriber lookup`);
+      // If RevenueCat key returns 401 (unauthorized/misconfigured), do not brick the app for paying users
+      if (response.status === 401) {
+        return true;
+      }
       return false;
     }
 

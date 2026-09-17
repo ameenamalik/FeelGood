@@ -123,6 +123,9 @@ nonisolated struct Menu: Hashable, Sendable {
 nonisolated enum MenuCopy {
 
     static func headline(reasons: Set<ReasonCode>, checkIn: PlanCheckIn) -> String {
+        if checkIn.time.isZero {
+            return "Rest is part of it. Take the day."
+        }
         if reasons.contains(.returningAfterGap) {
             return "Good to see you. Let's start small."
         }

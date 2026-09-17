@@ -291,6 +291,9 @@ nonisolated struct ChatUserContext: Codable, Sendable {
     let recentCompletions: Int?
     let recoveryOwed: Bool?
     let hiddenSessionIDs: [String]?
+    let preferredIntensityTier: String?
+    let topExploredActivities: [String]?
+    let fatigueSensitivity: Double?
 
     enum CodingKeys: String, CodingKey {
         case likedActivities = "liked_activities"
@@ -298,6 +301,9 @@ nonisolated struct ChatUserContext: Codable, Sendable {
         case recentCompletions = "recent_completions"
         case recoveryOwed = "recovery_owed"
         case hiddenSessionIDs = "hidden_session_ids"
+        case preferredIntensityTier = "preferred_intensity_tier"
+        case topExploredActivities = "top_explored_activities"
+        case fatigueSensitivity = "fatigue_sensitivity"
     }
 
     init(
@@ -305,13 +311,19 @@ nonisolated struct ChatUserContext: Codable, Sendable {
         lastFeel: String? = nil,
         recentCompletions: Int? = nil,
         recoveryOwed: Bool? = nil,
-        hiddenSessionIDs: [String]? = nil
+        hiddenSessionIDs: [String]? = nil,
+        preferredIntensityTier: String? = nil,
+        topExploredActivities: [String]? = nil,
+        fatigueSensitivity: Double? = nil
     ) {
         self.likedActivities = likedActivities
         self.lastFeel = lastFeel
         self.recentCompletions = recentCompletions
         self.recoveryOwed = recoveryOwed
         self.hiddenSessionIDs = hiddenSessionIDs
+        self.preferredIntensityTier = preferredIntensityTier
+        self.topExploredActivities = topExploredActivities
+        self.fatigueSensitivity = fatigueSensitivity
     }
 }
 
