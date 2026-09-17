@@ -285,12 +285,16 @@ export async function handleChat(payload: ChatPayload, env: Env): Promise<Respon
         );
 
         if (env.GEMINI_API_KEY) {
-          return await handleGeminiChat(payload, env.GEMINI_API_KEY, knowledgeContext);
+          const geminiRes = await handleGeminiChat(payload, env.GEMINI_API_KEY, knowledgeContext);
+          if (geminiRes.ok) {
+            return geminiRes;
+          }
+          console.warn("Gemini chat failed, falling back to Anthropic if available...");
         }
         if (env.ANTHROPIC_API_KEY) {
           return await handleAnthropicChat(payload, env.ANTHROPIC_API_KEY, knowledgeContext);
         }
-        return new Response("upstream error: Neither GEMINI_API_KEY nor ANTHROPIC_API_KEY is configured", { status: 500 });
+        return new Response("upstream error: Neither GEMINI_API_KEY nor ANTHROPIC_API_KEY is configured or able to respond", { status: 500 });
       } catch (error) {
         console.error("handleChat error:", error);
         return new Response(`upstream error: ${error instanceof Error ? error.message : "unknown"}`, { status: 500 });
@@ -586,35 +590,32 @@ async function handleGeminiChat(
     },
     {
       system: "gemini",
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       systemPrompt,
       inputMessages: contents,
     },
     async (setResponse) => {
-      let response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      );
+      const candidateModels = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-pro"];
+      let response: Response | null = null;
 
-      if (response.status === 404) {
+      for (const model of candidateModels) {
         response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
           }
         );
+        if (response.status !== 404) {
+          break;
+        }
       }
 
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error("Gemini API error:", response.status, errText);
-        return { res: response, candidateText: null, errorDetail: errText };
+      if (!response || !response.ok) {
+        const errText = response ? await response.text() : "No response";
+        console.error("Gemini API error:", response?.status, errText);
+        return { res: response || new Response("gemini 404", { status: 404 }), candidateText: null, errorDetail: errText };
       }
 
       const json = (await response.json()) as any;
