@@ -44,6 +44,25 @@ nonisolated struct Reflection: Hashable, Sendable {
     var notes: [Note]
 
     var isEarly: Bool { notes.isEmpty }
+
+    /// The single most interesting true thing, so the view can say one
+    /// thing well instead of five things vaguely. Ranked by specificity —
+    /// "you keep coming back to stretching" names a real preference,
+    /// "you moved four times" is just a count — not by where `reflect`
+    /// happened to put it in `notes`. `moved` is always present once
+    /// anything has happened, so this is only `nil` when `isEarly` is.
+    var headline: Note? {
+        func specificity(_ note: Note) -> Int {
+            switch note {
+            case .keepsReturningTo: 0
+            case .activities: 1
+            case .mostly: 2
+            case .madeRoomForRest: 3
+            case .moved: 4
+            }
+        }
+        return notes.min { specificity($0) < specificity($1) }
+    }
 }
 
 nonisolated enum LookBack {

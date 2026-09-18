@@ -88,7 +88,7 @@ final class FeelGoodUITests: XCTestCase {
         XCTAssertTrue(youTab.waitForExistence(timeout: 5))
         youTab.tap()
 
-        XCTAssertTrue(app.staticTexts["You, lately."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["My preferences"].waitForExistence(timeout: 5))
     }
 
     @MainActor

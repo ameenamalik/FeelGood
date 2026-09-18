@@ -200,7 +200,7 @@ struct SubscriptionSettingsView: View {
                     isRestoring = false
                     restoreResultMessage = unlocked
                         ? "FeelGood Pro restored."
-                        : "No active purchases found for this Apple ID."
+                        : "No active purchases found for this Apple ID. Try signing in with the Apple ID you subscribed with."
                 }
             } label: {
                 if isRestoring {

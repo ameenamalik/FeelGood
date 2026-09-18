@@ -133,7 +133,7 @@ struct LogWorkoutSheet: View {
         }) {
             AuthSheetView(
                 title: "Save your routine",
-                subtitle: "Create an account so your custom workout is saved and synced across devices."
+                subtitle: "Create an account to keep this activity across devices."
             )
         }
     }

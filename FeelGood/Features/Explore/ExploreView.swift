@@ -107,7 +107,7 @@ struct ExploreView: View {
         .sheet(isPresented: $isShowingAuthPrompt) {
             AuthSheetView(
                 title: "Save your routine",
-                subtitle: "Save this personalized recommendation to your account and keep it across devices."
+                subtitle: "Create an account to keep this recommendation across devices."
             )
         }
         .sheet(isPresented: $isShowingHistory) {
