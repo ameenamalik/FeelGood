@@ -135,15 +135,26 @@ struct SessionDetailView: View {
                         )
                         model.complete(session, startedAt: startedAt, feel: feel)
                         completedPlayerSession = true
-                    case .paused(let progress):
-                        model.pause(session, at: progress)
-                        OneSignalManager.shared.trackSessionPaused(
-                            sessionID: session.id,
-                            startedAt: progress.startedAt
-                        )
+                    case .paused:
+                        // PlayerView reports and persists the interruption at
+                        // the moment Pause or Leave is tapped.
+                        break
                     }
                     shouldCloseAfterPlayer = true
                     isPlaying = false
+                },
+                onPause: { progress in
+                    model.pause(session, at: progress)
+                    OneSignalManager.shared.trackSessionPaused(
+                        sessionID: session.id,
+                        startedAt: progress.startedAt
+                    )
+                },
+                onResume: { progress in
+                    OneSignalManager.shared.trackSessionResumed(
+                        sessionID: session.id,
+                        startedAt: progress.startedAt
+                    )
                 },
                 startedAt: startedAt
             )

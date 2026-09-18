@@ -14,6 +14,11 @@ struct PlayerView: View {
 
     let session: Session
     let onFinish: (PlayerResult) -> Void
+    /// Persists the exact point where playback stopped and starts the paused
+    /// session Journey even if the app is backgrounded before Leave is tapped.
+    let onPause: (SessionProgress) -> Void
+    /// Cancels the matching paused-session Journey when playback continues.
+    let onResume: (SessionProgress) -> Void
     /// When Start was tapped, so the record reflects real elapsed time.
     let startedAt: Date
 
@@ -67,6 +72,9 @@ struct PlayerView: View {
     @State private var breathingStartedAt = Date()
     @State private var breathingPausedAt: Date?
     @State private var breathingAnchorIndex: Int?
+    /// Prevents Pause followed by Leave from reporting the same interruption
+    /// twice (and potentially entering the Journey twice when re-entry is on).
+    @State private var hasReportedPause = false
 
     /// Authored steps as written; a custom routine's steps matched to the
     /// glossary and breathing vocabulary, so what somebody typed as "Box
@@ -80,10 +88,14 @@ struct PlayerView: View {
         progress: SessionProgress? = nil,
         glossary: [ExerciseTerm] = [],
         onFinish: @escaping (PlayerResult) -> Void,
+        onPause: @escaping (SessionProgress) -> Void,
+        onResume: @escaping (SessionProgress) -> Void,
         startedAt: Date
     ) {
         self.session = session
         self.onFinish = onFinish
+        self.onPause = onPause
+        self.onResume = onResume
         self.startedAt = startedAt
 
         let steps = session.isOwn
@@ -589,6 +601,9 @@ struct PlayerView: View {
                 }
             } else if readingRemaining > 0 {
                 FGPrimaryButton(title: "Start now") {
+                    if isReadingPaused {
+                        reportResume()
+                    }
                     readingRemaining = 0
                     isReadingPaused = false
                     if isBreathingStep(step) { restartBreathingCycle() }
@@ -690,10 +705,17 @@ struct PlayerView: View {
     }
 
     private func togglePause(for step: Step) {
+        let wasPaused = isPaused
         if readingRemaining > 0 {
             isReadingPaused.toggle()
         } else {
             toggleRunning(for: step)
+        }
+
+        if wasPaused {
+            reportResume()
+        } else {
+            reportPause()
         }
     }
 
@@ -1054,14 +1076,34 @@ struct PlayerView: View {
     }
 
     private func leave() {
-        let saved = SessionProgress(
+        let saved = currentProgress
+        if !hasReportedPause {
+            hasReportedPause = true
+            onPause(saved)
+        }
+        onFinish(.paused(saved))
+    }
+
+    private var currentProgress: SessionProgress {
+        SessionProgress(
             stepIndex: index,
             remainingSeconds: max(remaining, 1),
             startedAt: startedAt,
             repsDone: repsDone,
             setsDone: setsDone
         )
-        onFinish(.paused(saved))
+    }
+
+    private func reportPause() {
+        guard !hasReportedPause else { return }
+        hasReportedPause = true
+        onPause(currentProgress)
+    }
+
+    private func reportResume() {
+        guard hasReportedPause else { return }
+        hasReportedPause = false
+        onResume(currentProgress)
     }
 
     private func goBack() {
