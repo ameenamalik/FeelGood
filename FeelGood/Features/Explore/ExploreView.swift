@@ -449,7 +449,7 @@ struct ExploreView: View {
         HStack(spacing: 8) {
             ProgressView()
                 .scaleEffect(0.8)
-                .tint(FGColor.clay)
+                .tint(FGColor.controlAccent)
             Text("Shaping routine...")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(FGColor.inkMuted)

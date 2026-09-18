@@ -15,6 +15,12 @@ import SwiftUI
 import UIKit
 
 struct AuthSheetView: View {
+    /// Apple's native authorization control owns its typography and renders
+    /// slightly larger than an ordinary 19-point SwiftUI label. Use this
+    /// optical match for the adjacent custom provider buttons.
+    private static let providerButtonFont = Font.system(size: 21, weight: .semibold)
+    private static let providerIconSize: CGFloat = 20
+
     var title: String = "Save your routine"
     var subtitle: String = "Keep your movement history and personalized daily menus synced safely across devices."
     /// Swaps the small "sparkles" glyph for the brand-mark + fruit-cluster
@@ -27,6 +33,7 @@ struct AuthSheetView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthService.self) private var authService
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var mode: AuthMode
     @State private var email: String = ""
@@ -180,11 +187,9 @@ struct AuthSheetView: View {
         } label: {
             HStack(spacing: FGSpace.s) {
                 Image(systemName: "envelope.fill")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: Self.providerIconSize, weight: .semibold))
                 Text("Continue with Email")
-                    // Match the optical size of Apple's system-provided label
-                    // so the three authentication methods have equal weight.
-                    .font(.system(size: 19, weight: .medium))
+                    .font(Self.providerButtonFont)
             }
             .foregroundStyle(FGColor.bg)
             .frame(maxWidth: .infinity, minHeight: 56)
@@ -321,7 +326,7 @@ struct AuthSheetView: View {
                 handleAppleResult(result)
             }
         )
-        .signInWithAppleButtonStyle(.black)
+        .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
         .frame(height: 56)
         .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
     }
@@ -360,10 +365,10 @@ struct AuthSheetView: View {
         } label: {
             HStack(spacing: FGSpace.s) {
                 googleGLogo
-                    .frame(width: 18, height: 18)
+                    .frame(width: Self.providerIconSize, height: Self.providerIconSize)
 
                 Text(mode == .signIn ? "Sign in with Google" : "Sign up with Google")
-                    .font(.system(size: 19, weight: .medium))
+                    .font(Self.providerButtonFont)
                     .foregroundStyle(Color.black)
             }
             .frame(maxWidth: .infinity, minHeight: 56)
@@ -421,11 +426,9 @@ struct AuthSheetView: View {
         } label: {
             HStack(spacing: FGSpace.s) {
                 googleGLogo
-                    .frame(width: 18, height: 18)
+                    .frame(width: Self.providerIconSize, height: Self.providerIconSize)
                 Text("Continue with Google")
-                    // SignInWithAppleButton owns its internal typography; 19pt
-                    // is the matching visual size for our adjacent controls.
-                    .font(.system(size: 19, weight: .medium))
+                    .font(Self.providerButtonFont)
                     .foregroundStyle(FGColor.bg)
             }
             .frame(maxWidth: .infinity, minHeight: 56)

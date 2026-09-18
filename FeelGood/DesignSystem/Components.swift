@@ -518,10 +518,10 @@ extension View {
             Button(action: action) {
                 Image(systemName: "xmark")
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Color.black.opacity(0.6))
+                    .foregroundStyle(FGColor.inkMuted)
                     .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
                     .background(.ultraThinMaterial, in: Circle())
-                    .overlay(Circle().strokeBorder(Color.black.opacity(0.08)))
+                    .overlay(Circle().strokeBorder(FGColor.lineStrong.opacity(0.45)))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Close")

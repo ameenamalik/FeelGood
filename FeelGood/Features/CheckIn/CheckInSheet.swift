@@ -238,7 +238,7 @@ struct CheckInSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .tint(FGColor.gold)
+        .tint(FGColor.controlAccent)
         .padding(FGSpace.m)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
