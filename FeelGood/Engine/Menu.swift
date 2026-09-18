@@ -164,7 +164,7 @@ nonisolated enum MenuCopy {
                 if let gapQuality { return qualityGapLine(gapQuality) }
                 continue
             case .varietyBreak:
-                return "Something different from this week."
+                return "Not the same shape you've been in all week."
             case .matchesIntent:
                 return intentLine(intent)
             }
@@ -175,7 +175,7 @@ nonisolated enum MenuCopy {
     private static func qualityGapLine(_ quality: Quality) -> String {
         switch quality {
         case .impact: "It's been a while since anything bouncy."
-        case .grip: "Your hands and forearms haven't had much lately."
+        case .grip: "A bit of grip work — your hands haven't had much lately."
         case .agility: "Nothing quick on your feet in a while."
         case .coordination: "Something new for your brain, not just your body."
         case .downRegulation: "You haven't had much that's purely calming."
@@ -188,7 +188,7 @@ nonisolated enum MenuCopy {
 
     private static func intentLine(_ intent: Intent) -> String {
         switch intent {
-        case .energize: "Toward the energy you're after."
+        case .energize: "Toward waking the body up."
         case .strengthen: "Toward the strength you're building."
         case .calm: "Toward the calm you're after."
         case .mobilize: "Toward moving more easily."
