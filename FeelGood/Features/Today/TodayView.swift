@@ -145,7 +145,7 @@ struct TodayView: View {
         .sheet(isPresented: $isShowingAuthPrompt) {
             AuthSheetView(
                 title: "Save your routine",
-                subtitle: "You finished today's session! Create an account to save your progress and keep your daily menus personalized."
+                subtitle: "You finished today's session! Create an account to keep your progress and daily menus across devices."
             )
         }
         .onChange(of: requestedSessionID.wrappedValue, initial: true) { _, id in

@@ -391,7 +391,7 @@ struct PlayerView: View {
 
             Spacer()
 
-            FGPrimaryButton(title: "Complete Workout") {
+            FGPrimaryButton(title: "Complete session") {
                 withAnimation(FGMotion.gentle) {
                     isDone = true
                 }
@@ -410,10 +410,10 @@ struct PlayerView: View {
             Spacer()
 
             VStack(spacing: FGSpace.m) {
-                Text("No steps to play")
+                Text("Nothing to play")
                     .font(FGFont.itemTitle)
                     .foregroundStyle(FGColor.ink)
-                Text("This session does not contain any timed or counted exercises.")
+                Text("This one doesn't have steps to walk through — mark it done whenever you're ready.")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.inkMuted)
                     .multilineTextAlignment(.center)
@@ -421,7 +421,7 @@ struct PlayerView: View {
 
             Spacer()
 
-            FGPrimaryButton(title: "Complete Workout") {
+            FGPrimaryButton(title: "Complete session") {
                 withAnimation(FGMotion.gentle) {
                     isDone = true
                 }
