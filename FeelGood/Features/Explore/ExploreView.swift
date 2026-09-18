@@ -22,6 +22,7 @@ struct ExploreView: View {
     @State private var isProcessing: Bool = false
     @State private var service: any ChatProviding = ChatService()
     @State private var selectedSession: Session?
+    @State private var selectedSessionReason: String?
     @State private var activeTimeLabel: String = "15 min"
     @FocusState private var isFieldFocused: Bool
     @Environment(AuthService.self) private var authService
@@ -102,7 +103,7 @@ struct ExploreView: View {
             .navigationBarHidden(true)
         }
         .sheet(item: $selectedSession) { session in
-            SessionDetailView(session: session, model: model)
+            SessionDetailView(session: session, model: model, reason: selectedSessionReason)
         }
         .sheet(isPresented: $isShowingAuthPrompt) {
             AuthSheetView(
@@ -235,8 +236,7 @@ struct ExploreView: View {
                     recommendationCard(
                         recommendation: recommendation,
                         messageID: message.id,
-                        isCommitted: message.isCommittedToToday,
-                        isReasonVisible: message.isReasonVisible
+                        isCommitted: message.isCommittedToToday
                     )
                 }
             }
@@ -278,10 +278,13 @@ struct ExploreView: View {
     private func recommendationCard(
         recommendation: StructuredRecommendation,
         messageID: UUID?,
-        isCommitted: Bool = false,
-        isReasonVisible: Bool = false
+        isCommitted: Bool = false
     ) -> some View {
-        let palette = cardPalette(for: recommendation.course)
+        // Reads the same shared taxonomy Today and My Menu use — this used to
+        // be a second, hand-copied palette that could (and did) drift from
+        // `Course.accentGradient`. One source of truth now, and the mascot
+        // that goes with it.
+        let course = recommendation.resolvedCourse
 
         return VStack(alignment: .leading, spacing: 14) {
             // Frosted Tags Row
@@ -289,7 +292,7 @@ struct ExploreView: View {
                 ForEach(recommendation.tags, id: \.self) { tag in
                     Text(tag)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(palette.tagText)
+                        .foregroundStyle(course.accentText)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(FGColor.surface.opacity(0.68))
@@ -297,25 +300,21 @@ struct ExploreView: View {
                 }
             }
 
-            // Title
-            Text(recommendation.title)
-                .font(.custom("SFProRounded-Bold", size: 24))
-                .foregroundStyle(palette.titleText)
+            // Title, with the course's mascot alongside — the same fruit this
+            // course wears on Today and My Menu. The "why" waits behind
+            // Start, on the session's own detail screen, rather than
+            // repeating itself here.
+            HStack(alignment: .center, spacing: FGSpace.m) {
+                Text(recommendation.title)
+                    .font(.custom("SFProRounded-Bold", size: 24))
+                    .foregroundStyle(course.accentText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Subtitle
-            Text(recommendation.subtitle)
-                .font(.system(size: 15, weight: .regular))
-                .foregroundStyle(palette.subtitleText)
-                .lineSpacing(3)
-
-            // Inline Reason (if toggled)
-            if isReasonVisible {
-                Text(recommendation.reason)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(palette.subtitleText.opacity(0.9))
-                    .padding(10)
-                    .background(FGColor.surface.opacity(0.5))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                Image(course.menuMascotAsset)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 64, height: 64)
+                    .accessibilityHidden(true)
             }
 
             // Prominent Action Button: Start ->
@@ -337,109 +336,31 @@ struct ExploreView: View {
             }
             .buttonStyle(.plain)
 
-            // Secondary Action Row: Add to today & Why this?
-            HStack(spacing: 10) {
-                Button {
-                    commitRecommendationToToday(recommendation: recommendation, messageID: messageID)
-                } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: isCommitted ? "checkmark" : "plus")
-                            .font(.system(size: 12, weight: .bold))
-                        Text(isCommitted ? "Added to today" : "Add to today")
-                            .font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundStyle(isCommitted ? FGColor.sageDeep : palette.titleText)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(FGColor.surface.opacity(0.55))
-                    .clipShape(Capsule())
+            // Secondary Action: Add to today
+            Button {
+                commitRecommendationToToday(recommendation: recommendation, messageID: messageID)
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: isCommitted ? "checkmark" : "plus")
+                        .font(.system(size: 12, weight: .bold))
+                    Text(isCommitted ? "Added to today" : "Add to today")
+                        .font(.system(size: 13, weight: .semibold))
                 }
-                .buttonStyle(.plain)
-                .disabled(isCommitted)
-
-                if let messageID {
-                    Button {
-                        toggleReason(for: messageID)
-                    } label: {
-                        Text(isReasonVisible ? "Hide why" : "Why this?")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(palette.titleText.opacity(0.8))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 7)
-                            .background(FGColor.surface.opacity(0.55))
-                            .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
+                .foregroundStyle(isCommitted ? FGColor.sageDeep : course.accentText)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(FGColor.surface.opacity(0.55))
+                .clipShape(Capsule())
             }
+            .buttonStyle(.plain)
+            .disabled(isCommitted)
         }
         .padding(18)
-        .background(palette.gradient)
+        .background(course.accentGradient)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .contentShape(Rectangle())
         .onTapGesture {
             launchSession(recommendation: recommendation)
-        }
-    }
-
-    // MARK: - Palette Helper
-
-    private struct CardPalette {
-        let gradient: LinearGradient
-        let titleText: Color
-        let subtitleText: Color
-        let tagText: Color
-    }
-
-    private func cardPalette(for course: String) -> CardPalette {
-        switch course.lowercased() {
-        case "appetizer":
-            return CardPalette(
-                gradient: LinearGradient(
-                    colors: [Color(light: 0xFEE4D3, dark: 0x3D261C), Color(light: 0xF5B4AB, dark: 0x4A2222)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                titleText: Color(light: 0x241C15, dark: 0xF7F3EC),
-                subtitleText: Color(light: 0x4A3B32, dark: 0xD8CCC0),
-                tagText: Color(light: 0x241C15, dark: 0xF7F3EC)
-            )
-
-        case "side", "sides":
-            return CardPalette(
-                gradient: LinearGradient(
-                    colors: [Color(light: 0xE8EEE4, dark: 0x202B1D), Color(light: 0xACC5AA, dark: 0x2E422C)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                titleText: Color(light: 0x1B2618, dark: 0xF7F3EC),
-                subtitleText: Color(light: 0x374A33, dark: 0xD0DCD0),
-                tagText: Color(light: 0x1B2618, dark: 0xF7F3EC)
-            )
-
-        case "dessert":
-            return CardPalette(
-                gradient: LinearGradient(
-                    colors: [Color(light: 0xFCEEF3, dark: 0x381C26), Color(light: 0xE6B2BE, dark: 0x482330)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                titleText: Color(light: 0x2B1520, dark: 0xF7F3EC),
-                subtitleText: Color(light: 0x4E2F3E, dark: 0xDCBFC9),
-                tagText: Color(light: 0x2B1520, dark: 0xF7F3EC)
-            )
-
-        default: // Main
-            return CardPalette(
-                gradient: LinearGradient(
-                    colors: [Color(light: 0xFDF1E2, dark: 0x3A2616), Color(light: 0xF3C89B, dark: 0x4A2F1B)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                titleText: Color(light: 0x281B0E, dark: 0xF7F3EC),
-                subtitleText: Color(light: 0x4A3622, dark: 0xDBCAB8),
-                tagText: Color(light: 0x281B0E, dark: 0xF7F3EC)
-            )
         }
     }
 
@@ -688,6 +609,7 @@ struct ExploreView: View {
             if let lastRec = messages.reversed().compactMap(\.recommendation).first {
                 launchSession(recommendation: lastRec)
             } else if let main = model.menu.main {
+                selectedSessionReason = main.reasonText
                 selectedSession = main.session
             }
 
@@ -719,14 +641,9 @@ struct ExploreView: View {
         }
     }
 
-    private func toggleReason(for messageID: UUID) {
-        if let index = messages.firstIndex(where: { $0.id == messageID }) {
-            messages[index].isReasonVisible.toggle()
-        }
-    }
-
     private func launchSession(recommendation: StructuredRecommendation) {
         let session = resolveSession(from: recommendation)
+        selectedSessionReason = recommendation.reason
         selectedSession = session
     }
 

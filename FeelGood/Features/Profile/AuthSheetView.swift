@@ -291,8 +291,7 @@ struct AuthSheetView: View {
                 WelcomeHeroIllustration()
                     .padding(.bottom, FGSpace.xs)
             } else {
-                FeelGoodAppIcon(size: 64)
-                    .accessibilityHidden(true)
+                WelcomeHeroIllustration(compact: true)
                     .padding(.bottom, 2)
             }
 
@@ -640,7 +639,13 @@ struct AuthSheetView: View {
 /// out of a soft apricot wash. Reuses the app-icon-reading trick from
 /// `ProductIntroView.promiseHero` rather than a duplicated image asset, so this
 /// always shows the exact shipping icon.
+///
+/// `compact` scales the whole cluster down for the milestone-nudge sheets
+/// (save your routine, delete account, etc.) — every entry into auth gets the
+/// same fruit-cluster signature, not just onboarding's first impression.
 private struct WelcomeHeroIllustration: View {
+    var compact: Bool = false
+
     var body: some View {
         ZStack {
             Circle()
@@ -649,23 +654,23 @@ private struct WelcomeHeroIllustration: View {
                         colors: [FGAura.apricot.core, FGAura.apricot.mid, FGAura.apricot.edge.opacity(0)],
                         center: .center,
                         startRadius: 0,
-                        endRadius: 130
+                        endRadius: compact ? 78 : 130
                     )
                 )
-                .frame(width: 240, height: 200)
-                .offset(y: 18)
+                .frame(width: compact ? 150 : 240, height: compact ? 120 : 200)
+                .offset(y: compact ? 10 : 18)
 
-            VStack(spacing: -18) {
-                FeelGoodAppIcon(size: 76)
+            VStack(spacing: compact ? -11 : -18) {
+                FeelGoodAppIcon(size: compact ? 46 : 76)
 
-                HStack(spacing: -14) {
-                    fruit("IntentMobilityPear", size: 58, rotation: -10, offsetY: 10)
-                    fruit("IntentEnergyClementine", size: 70, rotation: 0, offsetY: -6)
-                    fruit("IntentCalmPeach", size: 60, rotation: 8, offsetY: 4)
+                HStack(spacing: compact ? -9 : -14) {
+                    fruit("IntentMobilityPear", size: compact ? 35 : 58, rotation: -10, offsetY: compact ? 6 : 10)
+                    fruit("IntentEnergyClementine", size: compact ? 42 : 70, rotation: 0, offsetY: compact ? -4 : -6)
+                    fruit("IntentCalmPeach", size: compact ? 36 : 60, rotation: 8, offsetY: compact ? 2 : 4)
                 }
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 190)
+        .frame(maxWidth: .infinity, minHeight: compact ? 116 : 190)
         .accessibilityHidden(true)
     }
 
