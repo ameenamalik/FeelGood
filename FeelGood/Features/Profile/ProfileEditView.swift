@@ -37,7 +37,7 @@ struct ProfileEditView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     VStack(alignment: .leading, spacing: FGSpace.s) {
-                        Text("My Preferences")
+                        Text("My preferences")
                             .font(.system(.largeTitle, design: .rounded).weight(.semibold))
                             .foregroundStyle(FGColor.ink)
                         Text("Change anything. Today's menu follows.")

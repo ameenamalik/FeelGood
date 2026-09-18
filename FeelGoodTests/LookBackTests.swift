@@ -145,7 +145,7 @@ struct LookBackTests {
     // MARK: What gets loved
 
     @Test("The loved activity is named when it is not already the busiest one")
-    func namesWhatSheKeepsReturningTo() {
+    func namesWhatTheyKeepReturningTo() {
         let history = [
             completed("a", .pilates, daysAgo: 1),
             completed("b", .pilates, daysAgo: 2),
@@ -183,6 +183,64 @@ struct LookBackTests {
             completed("b", .stretching, daysAgo: 2, intensity: 2),
         ]
         #expect(reflect(history).notes.contains(.madeRoomForRest))
+    }
+
+    // MARK: Headline — the one note the card gets to lead with
+
+    @Test("The headline prefers what's returned to over a plain count")
+    func headlinePrefersReturningToOverCount() {
+        let history = [
+            completed("a", .pilates, daysAgo: 1),
+            completed("b", .pilates, daysAgo: 2),
+            completed("c", .pilates, daysAgo: 3),
+            completed("d", .stretching, daysAgo: 4, feel: .lovedIt),
+            completed("e", .stretching, daysAgo: 5, feel: .lovedIt),
+        ]
+        #expect(reflect(history).headline == .keepsReturningTo(.stretching))
+    }
+
+    @Test("With nothing sharper to say, the headline is still the count, never nil")
+    func headlineFallsBackToCount() {
+        let reflection = reflect([completed("a", .pilates, daysAgo: 1)])
+        #expect(reflection.headline == .moved(times: 1))
+    }
+
+    @Test("An early reflection has no headline to lead with")
+    func earlyReflectionHasNoHeadline() {
+        #expect(reflect([]).headline == nil)
+    }
+
+    // MARK: Pointing at something real, on today's actual menu
+
+    private func menu(with session: Session) -> Menu {
+        Menu(
+            dayStart: Fixture.now,
+            appetizer: nil,
+            main: MenuItem(session: session, course: .main, reasons: [], reasonText: "Test."),
+            sides: [],
+            dessert: nil,
+            special: nil,
+            headline: "Here's today.",
+            assumedCheckIn: PlanCheckIn(energy: .steady, time: .some)
+        )
+    }
+
+    @Test("A returning-to note points at that activity's real item on today's menu")
+    func invitePointsAtARealSessionWhenOneMatches() {
+        let session = Fixture.session(id: "m-stretch", activity: .stretching, qualities: [.mobility],
+                                       durationMin: 10, intensity: 2, course: .main)
+        let note = Reflection.Note.keepsReturningTo(.stretching)
+        #expect(note.matchedItem(in: menu(with: session))?.session.id == "m-stretch")
+        #expect(note.invite(in: menu(with: session)).contains("stretching"))
+    }
+
+    @Test("With nothing matching on today's menu, the invite stays generic rather than inventing a claim")
+    func inviteStaysGenericWithNoMatch() {
+        let session = Fixture.session(id: "m-walk", activity: .walking, qualities: [.endurance],
+                                       durationMin: 15, intensity: 2, course: .main)
+        let note = Reflection.Note.keepsReturningTo(.stretching)
+        #expect(note.matchedItem(in: menu(with: session)) == nil)
+        #expect(note.invite(in: menu(with: session)) == "Today's menu is ready when you are.")
     }
 
     // MARK: What it must never do
