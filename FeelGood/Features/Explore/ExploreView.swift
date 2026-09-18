@@ -204,65 +204,17 @@ struct ExploreView: View {
 
     // MARK: - Initial Curated Conversation State
 
+    /// Text-only on purpose — the menu itself already has a visual home on
+    /// Today, cards here just repeated it. Chat's opener now only needs to
+    /// invite the conversation, not restate the whole menu.
     private var initialCuratedThread: some View {
         VStack(alignment: .leading, spacing: 18) {
-            // Dynamic Welcome from Assistant
             if model.menu.items.isEmpty {
                 assistantTextBubble(text: "How is your body feeling today? Tell me what you need, or tap an option below.")
             } else {
-                assistantTextBubble(text: "Here is your plan for today (\(activeTimeLabel)). How is your body feeling?")
-
-                VStack(spacing: 14) {
-                    ForEach(model.menu.items) { item in
-                        menuOverviewRow(for: item)
-                    }
-                }
+                assistantTextBubble(text: "Your \(todaysMenuMinutes)-minute menu is ready on Today. Tell me how it's going, or what you need instead.")
             }
         }
-    }
-
-    /// A reference card for one item of today's menu — every course, not just
-    /// the one the old single-card opener singled out. Sized and dressed like
-    /// `recommendationCard` (frosted tags, big title) so the opening turn
-    /// doesn't read as a downgrade from a mid-conversation recommendation;
-    /// it just skips the Start/Add/Why-this actions, since five of those
-    /// stacked at once would be a lot of repeated buttons. Tapping opens the
-    /// same `SessionDetailView` a tap on a recommendation card would.
-    private func menuOverviewRow(for item: MenuItem) -> some View {
-        let palette = cardPalette(for: item.course.rawValue)
-
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 6) {
-                ForEach([item.course.label, "\(item.session.durationMin) min"], id: \.self) { tag in
-                    Text(tag)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(palette.tagText)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(FGColor.surface.opacity(0.68))
-                        .clipShape(Capsule())
-                }
-            }
-
-            Text(item.session.title)
-                .font(.custom("SFProRounded-Bold", size: 22))
-                .foregroundStyle(palette.titleText)
-
-            Text(item.reasonText)
-                .font(.system(size: 15, weight: .regular))
-                .foregroundStyle(palette.subtitleText)
-                .lineSpacing(3)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
-        .background(palette.gradient, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .contentShape(Rectangle())
-        .onTapGesture {
-            selectedSession = item.session
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.course.label), \(item.session.title), \(item.session.durationMin) minutes")
-        .accessibilityHint("Opens session details")
     }
 
     // MARK: - Message Rows
@@ -788,11 +740,20 @@ struct ExploreView: View {
         return model.everything.first(where: { $0.durationMin == rec.durationMin }) ?? model.everything.first
     }
 
+    /// The header pill and the opening bubble both read off this, so they
+    /// can never disagree with each other — or with what the cards below
+    /// actually add up to. A check-in's time budget is a ceiling the engine
+    /// doesn't always fill (see `TodayView`'s "Room for X min"), so stating
+    /// the budget here instead of the real total made the two look broken.
+    private var todaysMenuMinutes: Int {
+        model.menu.items.reduce(0) { $0 + $1.session.durationMin }
+    }
+
     private func updateActiveTimeLabel() {
-        if let time = model.checkIn?.time {
+        if !model.menu.items.isEmpty {
+            activeTimeLabel = "\(todaysMenuMinutes) min"
+        } else if let time = model.checkIn?.time {
             activeTimeLabel = time.checkInLabel
-        } else if let main = model.menu.main {
-            activeTimeLabel = main.session.durationLabel
         } else {
             activeTimeLabel = "15 min"
         }
