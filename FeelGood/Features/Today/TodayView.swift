@@ -129,7 +129,7 @@ struct TodayView: View {
         .sheet(isPresented: $isShowingPaywall) {
             FeelGoodPaywallView()
         }
-        .sheet(isPresented: $isShowingMyMenu, onDismiss: syncOneSignalDiscoveryTriggers) {
+        .sheet(isPresented: $isShowingMyMenu, onDismiss: clearOneSignalDiscoveryTriggers) {
             MyMenuView(model: model)
         }
         .sheet(item: $selected, onDismiss: presentCompletionPaywallIfNeeded) { item in
@@ -152,7 +152,9 @@ struct TodayView: View {
             openRequestedSession(id)
         }
         .onAppear {
-            syncOneSignalDiscoveryTriggers()
+            // Discovery messaging belongs to the moment after a completion,
+            // never to app launch or the start of a calming session.
+            clearOneSignalDiscoveryTriggers()
         }
         .onReceive(NotificationCenter.default.publisher(for: .oneSignalOpenMyMenu)) { _ in
             // Let OneSignal's overlay finish dismissing before presenting the
@@ -204,7 +206,7 @@ struct TodayView: View {
                             isInProgress: model.isInProgress(item),
                             canSwap: (model.canSwap(item) || !model.hasRemainingSwaps) && !model.isCompleted(item) && !model.isInProgress(item),
                             isReset: model.isCycleReset(item),
-                            onOpen: { selected = item },
+                            onOpen: { openSession(item) },
                             onSwap: {
                                 if model.hasRemainingSwaps {
                                     withAnimation(FGMotion.swap) { model.swap(item) }
@@ -223,7 +225,7 @@ struct TodayView: View {
                             isInProgress: model.isInProgress(item),
                             canSwap: (model.canSwap(item) || !model.hasRemainingSwaps) && !model.isCompleted(item) && !model.isInProgress(item),
                             isReset: model.isCycleReset(item),
-                            onOpen: { selected = item },
+                            onOpen: { openSession(item) },
                             onSwap: {
                                 if model.hasRemainingSwaps {
                                     withAnimation(FGMotion.swap) { model.swap(item) }
@@ -265,6 +267,11 @@ struct TodayView: View {
         guard let id else { return }
         defer { requestedSessionID.wrappedValue = nil }
         guard let item = model.menu.items.first(where: { $0.session.id == id }) else { return }
+        openSession(item)
+    }
+
+    private func openSession(_ item: MenuItem) {
+        clearOneSignalDiscoveryTriggers()
         selected = item
     }
 
@@ -648,9 +655,14 @@ struct TodayView: View {
     }
 
     private func presentCompletionPaywallIfNeeded() {
-        syncOneSignalDiscoveryTriggers()
         guard shouldOfferProAfterDismissal else { return }
         shouldOfferProAfterDismissal = false
+
+        // Adding these local triggers makes the discovery message eligible
+        // only now: the completed session sheet has fully dismissed and Today
+        // is visible again. They are deliberately absent while a session is
+        // being considered or played.
+        syncOneSignalDiscoveryTriggers()
 
         if !authService.isAuthenticated && !hasShownFirstCompletionAuthPrompt {
             hasShownFirstCompletionAuthPrompt = true
@@ -671,6 +683,13 @@ struct TodayView: View {
         OneSignalManager.shared.setInAppTriggers([
             "completed_count": String(model.completedSessionCount),
             "has_custom_routine": model.hasCustomRoutine ? "true" : "false",
+        ])
+    }
+
+    private func clearOneSignalDiscoveryTriggers() {
+        OneSignalManager.shared.removeInAppTriggers([
+            "completed_count",
+            "has_custom_routine",
         ])
     }
 
