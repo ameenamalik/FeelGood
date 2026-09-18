@@ -589,9 +589,17 @@ struct FeelGoodPaywallView: View {
             .foregroundStyle(FGColor.inkMuted)
             .frame(minHeight: FGSize.minTouchTarget)
 
-            Text("Cancel anytime in Settings.")
+            Text("Auto-renews until canceled. Cancel anytime in Settings.")
                 .font(FGFont.caption)
                 .foregroundStyle(FGColor.inkMuted.opacity(0.8))
+
+            HStack(spacing: FGSpace.xs) {
+                Link("Terms of Use", destination: LegalLinks.termsOfUse)
+                Text("·")
+                Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
+            }
+            .font(FGFont.caption)
+            .foregroundStyle(FGColor.inkMuted.opacity(0.8))
         }
     }
 
