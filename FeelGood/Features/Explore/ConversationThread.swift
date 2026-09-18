@@ -19,7 +19,6 @@ nonisolated struct ConversationMessage: Identifiable, Codable, Sendable, Equatab
     let text: String
     let timestamp: Date
     var recommendation: StructuredRecommendation?
-    var isReasonVisible: Bool
     var isCommittedToToday: Bool
 
     init(
@@ -28,7 +27,6 @@ nonisolated struct ConversationMessage: Identifiable, Codable, Sendable, Equatab
         text: String,
         timestamp: Date = Date(),
         recommendation: StructuredRecommendation? = nil,
-        isReasonVisible: Bool = false,
         isCommittedToToday: Bool = false
     ) {
         self.id = id
@@ -36,7 +34,6 @@ nonisolated struct ConversationMessage: Identifiable, Codable, Sendable, Equatab
         self.text = text
         self.timestamp = timestamp
         self.recommendation = recommendation
-        self.isReasonVisible = isReasonVisible
         self.isCommittedToToday = isCommittedToToday
     }
 }

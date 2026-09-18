@@ -132,7 +132,7 @@ struct ProfileAvatarPickerView: View {
                             .font(FGFont.title)
                             .foregroundStyle(FGColor.ink)
 
-                        Text("Pick a fruit mascot, then make its background your own.")
+                        Text("These are the same fruits already on your menu — pick whichever feels like you.")
                             .font(FGFont.body)
                             .foregroundStyle(FGColor.inkMuted)
                     }

@@ -5,10 +5,9 @@
 //  What it is, what you need, one action. The title carries the screen; the
 //  detail waits behind a disclosure for whoever actually wants it.
 //
-//  The "why" is deliberately absent here. It is not missing from the product —
-//  the menu card on Today already carries `reasonText`, so principle 4 is
-//  answered at the point the recommendation is made. Repeating it in a
-//  bordered box one tap later was saying the same sentence twice.
+//  The "why" lives here now, not on the card that offered it — Today's menu
+//  card and Chat's recommendation card both stay to a title and a mascot;
+//  whoever wants the reasoning taps in for it instead of reading it twice.
 //
 
 import SwiftUI
@@ -17,8 +16,13 @@ struct SessionDetailView: View {
     @State private var session: Session
     let model: TodayModel
     let onCompleted: () -> Void
+    /// The "why" that used to sit on the card that offered this session.
+    /// `nil` from the Library, where nobody chose it and there's no reason to
+    /// give.
+    private let reasonText: String?
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @State private var isPlaying = false
     @State private var startedAt = Date()
     @State private var explaining: ExerciseTerm?
@@ -35,13 +39,16 @@ struct SessionDetailView: View {
         _session = State(initialValue: item.session)
         self.model = model
         self.onCompleted = onCompleted
+        self.reasonText = item.reasonText
     }
 
-    /// From the Library, where nobody chose it and somebody went looking.
-    init(session: Session, model: TodayModel, onCompleted: @escaping () -> Void = {}) {
+    /// From the Library, where nobody chose it and somebody went looking — or
+    /// from Chat, where a reason was already given in conversation.
+    init(session: Session, model: TodayModel, reason: String? = nil, onCompleted: @escaping () -> Void = {}) {
         _session = State(initialValue: session)
         self.model = model
         self.onCompleted = onCompleted
+        self.reasonText = reason
     }
 
     var body: some View {
@@ -291,24 +298,54 @@ struct SessionDetailView: View {
         ]
     }
 
-    /// The title is the screen. Display weight, and everything under it quiet.
+    /// The title is the screen — carried on the same gradient and mascot as
+    /// the card that offered it, so opening a session doesn't drop the color
+    /// story it walked in with. Whoever wants the "why" gets it here, since
+    /// the card upstream stayed to a title.
     private var heading: some View {
-        VStack(alignment: .leading, spacing: FGSpace.m) {
-            CourseTag(course: course)
-            Text(session.title)
-                .font(FGFont.display)
-                .foregroundStyle(FGColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
+        HStack(alignment: .top, spacing: FGSpace.m) {
+            VStack(alignment: .leading, spacing: FGSpace.s) {
+                Text(course.label.uppercased())
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(course.accentText)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 5)
+                    .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
+                    .clipShape(Capsule())
 
-            if !session.subtitle.isEmpty {
-                Text(session.subtitle)
-                    .font(FGFont.reason)
-                    .foregroundStyle(FGColor.inkMuted)
+                Text(session.title)
+                    .font(FGFont.display)
+                    .foregroundStyle(course.accentText)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if let explanation {
+                    Text(explanation)
+                        .font(FGFont.reason)
+                        .foregroundStyle(course.accentText.opacity(0.78))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Image(course.menuMascotAsset)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 72, height: 72)
+                .accessibilityHidden(true)
         }
+        .padding(FGSpace.l)
+        .background(course.accentGradient)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
+    }
+
+    /// The session's own blurb if it has one, otherwise the reason this was
+    /// recommended — the same fallback the card upstream used to show.
+    private var explanation: String? {
+        if !session.subtitle.isEmpty { return session.subtitle }
+        guard let reasonText, !reasonText.isEmpty else { return nil }
+        return reasonText
     }
 
     /// Closed by default. Someone deciding whether to start needs the title and

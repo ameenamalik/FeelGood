@@ -807,22 +807,6 @@ struct TodayView: View {
     }
 }
 
-/// The course, named and tinted as a frosted pill consistent with Chat.
-struct CourseTag: View {
-    let course: Course
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        Text(course.label)
-            .font(.system(size: 13, weight: .semibold, design: .rounded))
-            .foregroundStyle(course.tagText)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 5)
-            .background(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.70))
-            .clipShape(Capsule())
-    }
-}
-
 private struct MenuItemCard: View {
     let item: MenuItem
     let isDone: Bool
@@ -950,52 +934,58 @@ private struct MenuItemBody: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Top metadata row: White pill badges matching design reference
-            HStack(alignment: .center, spacing: 6) {
-                Text(item.course.label.uppercased())
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(item.course.accentText)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 5)
-                    .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
-                    .clipShape(Capsule())
+        // Bottom-aligned, with the text column held to a minimum height —
+        // the shuffle button floats over the top-trailing corner, so the
+        // mascot needs to clear it even when the title is one short line.
+        HStack(alignment: .bottom, spacing: FGSpace.m) {
+            VStack(alignment: .leading, spacing: 10) {
+                // Top metadata row: White pill badges matching design reference
+                HStack(alignment: .center, spacing: 6) {
+                    Text(item.course.label.uppercased())
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(item.course.accentText)
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 5)
+                        .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
+                        .clipShape(Capsule())
 
-                Text(item.session.durationLabel.uppercased())
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(item.course.accentText)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 5)
-                    .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
-                    .clipShape(Capsule())
+                    Text(item.session.durationLabel.uppercased())
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(item.course.accentText)
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 5)
+                        .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
+                        .clipShape(Capsule())
 
-                if isDone {
-                    DoneMark()
-                        .padding(.leading, 2)
-                        .transition(.scale(scale: 0.7).combined(with: .opacity))
-                } else if isInProgress {
-                    ResumeMark()
-                        .padding(.leading, 2)
+                    if isDone {
+                        DoneMark()
+                            .padding(.leading, 2)
+                            .transition(.scale(scale: 0.7).combined(with: .opacity))
+                    } else if isInProgress {
+                        ResumeMark()
+                            .padding(.leading, 2)
+                    }
                 }
 
-                Spacer(minLength: 30)
-            }
-
-            // Session Title in SF Pro Rounded Bold
-            Text(item.session.title)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundStyle(isDone ? FGColor.inkMuted : item.course.accentText)
-                .fixedSize(horizontal: false, vertical: true)
-
-            // Subtitle
-            let subtitleText = !item.session.subtitle.isEmpty ? item.session.subtitle : item.reasonText
-            if !subtitleText.isEmpty {
-                Text(subtitleText)
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(isDone ? FGColor.inkMuted.opacity(0.8) : item.course.accentText.opacity(0.78))
-                    .lineSpacing(2)
+                // Session Title in SF Pro Rounded Bold. The why waits behind
+                // a tap, on the session's own detail screen.
+                Text(item.session.title)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundStyle(isDone ? FGColor.inkMuted : item.course.accentText)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, minHeight: 106, alignment: .topLeading)
+
+            // The course's mascot — the same fruit this course wears on My
+            // Menu and the paywall, so a Side here and a Side there read as
+            // the same thing. Bottom-anchored, clear of the shuffle button
+            // floating over the top-trailing corner.
+            Image(item.course.menuMascotAsset)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 64, height: 64)
+                .accessibilityHidden(true)
+                .padding(.bottom, 2)
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 20)
