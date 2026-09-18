@@ -160,7 +160,7 @@ struct AuthSheetView: View {
             Button("Already have an account? Sign in") {
                 path.append(.emailSignIn)
             }
-            .font(FGFont.caption.weight(.medium))
+            .font(.system(size: 19, weight: .medium))
             .foregroundStyle(FGColor.goldDeep)
             .padding(.top, FGSpace.xs)
             .disabled(isLoading)
@@ -180,9 +180,11 @@ struct AuthSheetView: View {
         } label: {
             HStack(spacing: FGSpace.s) {
                 Image(systemName: "envelope.fill")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: 18, weight: .medium))
                 Text("Continue with Email")
-                    .font(.system(size: 17, weight: .semibold))
+                    // Match the optical size of Apple's system-provided label
+                    // so the three authentication methods have equal weight.
+                    .font(.system(size: 19, weight: .medium))
             }
             .foregroundStyle(FGColor.bg)
             .frame(maxWidth: .infinity, minHeight: 56)
@@ -421,7 +423,9 @@ struct AuthSheetView: View {
                 googleGLogo
                     .frame(width: 18, height: 18)
                 Text("Continue with Google")
-                    .font(.system(size: 17, weight: .semibold))
+                    // SignInWithAppleButton owns its internal typography; 19pt
+                    // is the matching visual size for our adjacent controls.
+                    .font(.system(size: 19, weight: .medium))
                     .foregroundStyle(FGColor.bg)
             }
             .frame(maxWidth: .infinity, minHeight: 56)
@@ -616,7 +620,7 @@ struct AuthSheetView: View {
             Button(guestButtonTitle) {
                 dismissWithoutAuth()
             }
-            .font(FGFont.label.weight(.medium))
+            .font(.system(size: 19, weight: .medium))
             .foregroundStyle(FGColor.inkMuted)
             .padding(.top, FGSpace.s)
 
