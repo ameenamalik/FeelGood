@@ -118,29 +118,15 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if let content {
-                if let profile = profiles.first {
-                    TodayScreen(
-                        content: content,
-                        profile: profile,
-                        log: SessionLog(context: context)
-                    )
-                    .id("\(profile.updatedAt.timeIntervalSince1970)-\(accountReloadID.uuidString)")
-                } else {
-                    FirstRunFlow { onboarding in
-                        context.insert(onboarding.makeRecord(now: Date()))
-                        try? context.save()
-                    }
-                }
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-FGForcePaywall") {
+                FeelGoodPaywallView()
             } else {
-                // The catalog ships in the bundle, so this is a build problem
-                // rather than a user one — but it still must not be blank.
-                ContentUnavailableView(
-                    "Content didn't load",
-                    systemImage: "leaf",
-                    description: Text("Reinstalling the app should fix it.")
-                )
+                routedContent
             }
+            #else
+            routedContent
+            #endif
         }
         .onChange(of: authService.currentUser?.uid, initial: true) { _, userID in
             guard let userID else {
@@ -239,6 +225,33 @@ struct RootView: View {
             }
         }
         #endif
+    }
+
+    @ViewBuilder
+    private var routedContent: some View {
+        if let content {
+            if let profile = profiles.first {
+                TodayScreen(
+                    content: content,
+                    profile: profile,
+                    log: SessionLog(context: context)
+                )
+                .id("\(profile.updatedAt.timeIntervalSince1970)-\(accountReloadID.uuidString)")
+            } else {
+                FirstRunFlow { onboarding in
+                    context.insert(onboarding.makeRecord(now: Date()))
+                    try? context.save()
+                }
+            }
+        } else {
+            // The catalog ships in the bundle, so this is a build problem
+            // rather than a user one — but it still must not be blank.
+            ContentUnavailableView(
+                "Content didn't load",
+                systemImage: "leaf",
+                description: Text("Reinstalling the app should fix it.")
+            )
+        }
     }
 
     @MainActor

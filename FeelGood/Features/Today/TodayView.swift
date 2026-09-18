@@ -454,22 +454,13 @@ struct TodayView: View {
                 #endif
             }
 
-            // On its own line rather than crowding the title row — that row
-            // already has to fit "Your menu" plus the Add/adjust controls,
-            // and this is the one piece that's safe to wrap onto a second
-            // line without anything else needing to shrink or truncate.
+            // The remaining-minutes and "Completed" states already show inline
+            // next to the title above; this line only carries the one state
+            // that has nowhere else to go.
             if model.checkIn?.time.isZero == true || (model.checkIn == nil && model.menu.assumedCheckIn.time.isZero) {
                 Text("Rest day · Untimed")
                     .font(.system(size: 16, weight: .regular))
                     .foregroundStyle(FGColor.inkMuted)
-            } else if model.remainingDurationMin > 0 {
-                Text("Room for \(model.remainingDurationMin) min")
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundStyle(FGColor.inkMuted)
-            } else if model.hasCompletedActivityToday {
-                Text("Completed")
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundStyle(FGColor.sageDeep)
             }
 
             if isAdjusting {
