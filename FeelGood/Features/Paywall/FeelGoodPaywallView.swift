@@ -604,7 +604,7 @@ struct FeelGoodPaywallView: View {
                 if unlocked {
                     finish()
                 } else {
-                    restoreResultMessage = "No active purchases found for this Apple ID."
+                    restoreResultMessage = "No active purchases found for this Apple ID. Try signing in with the Apple ID you subscribed with."
                 }
             }
         } label: {

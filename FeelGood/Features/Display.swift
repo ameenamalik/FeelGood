@@ -329,7 +329,7 @@ nonisolated extension BodyState {
 
 // MARK: The Look Back
 
-extension Activity {
+nonisolated extension Activity {
     /// The name as it reads *mid-sentence*: "Mostly Pilates and walking."
     /// `label` is title-case for tags and headings, which would give
     /// "Mostly Pilates and Walking" — so the proper noun keeps its capital
@@ -357,7 +357,7 @@ extension Activity {
     }
 }
 
-extension TimeOfDay {
+nonisolated extension TimeOfDay {
     /// Plural: it describes a habit, not an appointment.
     var lookBackLabel: String {
         switch self {
@@ -369,7 +369,11 @@ extension TimeOfDay {
     }
 }
 
-extension Reflection.Note {
+// nonisolated: `Reflection.Note` and `Menu` are both pure Engine types, and
+// the project's ambient MainActor default would otherwise silently isolate
+// these members — calling one off the main actor (as a unit test does)
+// trips a runtime executor assertion (SIGTRAP), not a compile error.
+nonisolated extension Reflection.Note {
     /// One note, said out loud.
     ///
     /// Identity rather than measurement: the register is "this is who you are
@@ -392,7 +396,36 @@ extension Reflection.Note {
         case .keepsReturningTo(let activity):
             "You keep coming back to the \(activity.lookBackName) sessions."
         case .madeRoomForRest:
-            "And you make room for the gentle ones."
+            "You've made room for the gentle ones too."
+        }
+    }
+
+    /// The one real, checkable thing this note can point at on *today's*
+    /// menu — never a claim the menu can't back up, and never a rendered
+    /// gap. Only the two activity-shaped notes have something to point at;
+    /// everything else invites without pointing.
+    func matchedItem(in menu: Menu) -> MenuItem? {
+        switch self {
+        case .keepsReturningTo(let activity):
+            menu.items.first { $0.session.activity == activity }
+        case .activities(let activities):
+            menu.items.first { activities.contains($0.session.activity) }
+        case .moved, .mostly, .madeRoomForRest:
+            nil
+        }
+    }
+
+    /// The open, non-pushy second half of the card: a question or a nudge
+    /// toward today, never a report of how long it's been.
+    func invite(in menu: Menu) -> String {
+        if let item = matchedItem(in: menu) {
+            return "There's a \(item.session.activity.lookBackName) session on today's menu."
+        }
+        switch self {
+        case .madeRoomForRest:
+            return "Today's menu has something light too, if that's what fits."
+        case .moved, .mostly, .activities, .keepsReturningTo:
+            return "Today's menu is ready when you are."
         }
     }
 
@@ -405,7 +438,7 @@ extension Reflection.Note {
     }
 }
 
-private extension String {
+private nonisolated extension String {
     /// Uppercases only the first character, so "qi gong" becomes "Qi gong"
     /// rather than "Qi Gong".
     var capitalisedFirst: String {
