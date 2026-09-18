@@ -150,6 +150,15 @@ nonisolated final class OneSignalManager: Sendable {
         OneSignal.InAppMessages.addTriggers(triggers)
     }
 
+    /// Removes a local In-App Message condition when its moment has passed.
+    /// OneSignal trigger values are session-scoped UI state, not durable user
+    /// attributes, so callers should clear moment-specific triggers eagerly.
+    func removeInAppTriggers(_ keys: [String]) {
+        for key in keys {
+            OneSignal.InAppMessages.removeTrigger(key)
+        }
+    }
+
     /// A real, server-assigned subscription ID is non-empty and not the SDK's
     /// `local-` placeholder, which is assigned before the device registers.
     var currentPushSubscriptionId: String? {
@@ -220,4 +229,3 @@ nonisolated final class OneSignalManager: Sendable {
         return reminderAt <= cutoff
     }
 }
-
