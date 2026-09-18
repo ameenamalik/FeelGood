@@ -57,6 +57,12 @@ nonisolated enum FGColor {
     /// Secondary type. 6.1:1 on white — still comfortable at footnote sizes.
     static let inkMuted = Color(light: 0x6B6155, dark: 0xB8AC9C)
 
+    /// Interactive controls whose fill must carry a white system affordance
+    /// (for example, the thumb of a Toggle). Unlike the pastel accents below,
+    /// this stays dark enough for that affordance in both appearances while
+    /// still separating clearly from each page background.
+    static let controlAccent = Color(light: 0x8B4218, dark: 0xAC5A30)
+
     // MARK: Accents — fills only, always behind ink text
 
     /// The one thing on the screen worth doing. 9.4:1 behind ink.
@@ -324,15 +330,17 @@ nonisolated extension Course {
         case .appetizer: 0xF5B4AB
         case .side: 0xACC5AA
         case .dessert: 0xE6B2BE
-        case .special: 0x241C15
+        // The widget renders this raw value as a fixed pastel badge in both
+        // appearances, so keep it light enough for `inkOnAccent` to remain
+        // readable in dark mode too.
+        case .special: 0xD8D2C7
         }
     }
 
-    /// Ink on every accent; the page colour on the ink-filled one. `.special`
-    /// is the exception that keeps `bg`, because its fill flips with the
-    /// appearance and so must its text.
+    /// Text used directly on course gradients. The gradients become deep in
+    /// dark mode, so this must flip from dark ink to light ink with them.
     var accentText: Color {
-        self == .special ? FGColor.bg : FGColor.inkOnAccent
+        FGColor.ink
     }
 
     /// The authentic FeelGood warm organic gradients from Chat & CheckIn aura tiles:

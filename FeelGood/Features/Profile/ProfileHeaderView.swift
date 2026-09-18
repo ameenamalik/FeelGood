@@ -22,6 +22,7 @@ struct ProfileHeaderView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(PurchasesManager.self) private var purchasesManager
     @Environment(AuthService.self) private var authService
+    @Environment(\.colorScheme) private var colorScheme
     @State private var errorMessage: String?
     @State private var errorTitle = "Error"
     @State private var isShowingAuthSheet = false
@@ -88,7 +89,7 @@ struct ProfileHeaderView: View {
                     } onCompletion: { result in
                         handleAppleReauthResult(result)
                     }
-                    .signInWithAppleButtonStyle(.black)
+                    .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
                     .frame(height: 56)
                     .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
                     .padding(.horizontal, FGSpace.page)
@@ -494,7 +495,7 @@ struct ProfileHeaderView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .tint(FGColor.gold)
+        .tint(FGColor.controlAccent)
         .padding(FGSpace.m)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)

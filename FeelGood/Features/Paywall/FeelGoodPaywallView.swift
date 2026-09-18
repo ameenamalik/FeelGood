@@ -337,7 +337,7 @@ struct FeelGoodPaywallView: View {
         HStack(spacing: 6) {
             ProgressView()
                 .scaleEffect(0.7)
-                .tint(FGColor.clay)
+                .tint(FGColor.controlAccent)
             Text("Shaping routine...")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(FGColor.inkMuted)
@@ -472,7 +472,7 @@ struct FeelGoodPaywallView: View {
                         if plan == .yearly, let savingsPercent {
                             Text("SAVE ABOUT \(savingsPercent)%")
                                 .font(FGFont.label.weight(.bold))
-                                .foregroundStyle(FGColor.sageDeep)
+                                .foregroundStyle(FGColor.inkOnAccent)
                                 .padding(.horizontal, FGSpace.xs)
                                 .padding(.vertical, 2)
                                 .background(Capsule().fill(FGAura.sage.core))

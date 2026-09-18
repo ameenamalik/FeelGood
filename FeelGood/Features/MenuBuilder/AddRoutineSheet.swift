@@ -262,7 +262,7 @@ struct AddRoutineSheet: View {
                                     .foregroundStyle(FGColor.inkMuted)
                             }
                         }
-                        .tint(FGColor.clayDeep)
+                        .tint(FGColor.controlAccent)
                         .padding(FGSpace.m)
                         .background(FGColor.surface)
                         .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
