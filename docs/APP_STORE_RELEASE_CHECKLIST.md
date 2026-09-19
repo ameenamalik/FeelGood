@@ -1,6 +1,6 @@
 # FeelGood App Store release checklist
 
-Last audited: 2026-09-11
+Last audited: 2026-09-19 (Build 14)
 
 ## Code verified
 
@@ -8,12 +8,13 @@ Last audited: 2026-09-11
 - [x] Release uses the production copy Worker URL.
 - [x] RevenueCat entitlement is `pro`; the app reads the current offering's monthly and annual packages.
 - [x] Purchases, restore purchases, subscription status, and Customer Center are reachable from You → Account & privacy → Subscription.
-- [x] Purchase entry points use RevenueCatUI's remotely managed paywall so published dashboard content, trial eligibility, renewal terms, and localized pricing are shown without hard-coded app UI.
+- [x] Purchase entry points use `FeelGoodPaywallView` (custom SwiftUI paywall backed by RevenueCat for products and purchases) showing localized StoreKit pricing, introductory trial terms, auto-renewal notice, Terms of Use, Privacy Policy, and Restore Purchases.
 - [x] Pro gates cover full planning memory, unlimited swaps, quick adjustments, Chat, Describe Day, and Calendar context.
-- [x] Onboarding completion shows the skippable RevenueCat paywall once; the first completed Today session may also show it once.
+- [x] Onboarding completion shows the skippable paywall once; the first completed Today session may also show it once.
 - [x] The free daily swap survives an app relaunch.
 - [x] The Worker fails closed when its RevenueCat secret is absent and verifies `pro` server-side before an AI request.
-- [x] Terms, Privacy Policy, Support, Calendar usage copy, and a privacy manifest are present, and the account/deletion copy matches the app.
+- [x] Terms (`https://feelgood-web.vercel.app/terms`), Privacy Policy (`https://feelgood-web.vercel.app/privacy`), Support mailto, Calendar usage copy, and privacy manifests (`PrivacyInfo.xcprivacy` in app, widget, and OneSignal extension) are present and verified.
+- [x] Target device family configured as iPhone-only (`TARGETED_DEVICE_FAMILY = 1`), eliminating iPad screenshot upload blockers.
 - [x] Screenshot-based PostHog session replay is disabled in Release; allow-listed analytics events remain enabled.
 - [x] Swift Release build, full iOS unit suite, Worker typecheck, and backend agent tests pass.
 - [x] In-app account deletion supports Apple, Google, and email reauthentication; Apple deletion revokes its token.
