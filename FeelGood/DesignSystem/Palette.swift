@@ -168,6 +168,17 @@ nonisolated struct FGAccent: Equatable {
 nonisolated enum FGAura: Sendable, CaseIterable {
     case apricot, lilac, blush, sage, butter
 
+    /// Stable name for handing an aura across a process boundary (the widget).
+    var key: String {
+        switch self {
+        case .apricot: "apricot"
+        case .lilac: "lilac"
+        case .blush: "blush"
+        case .sage: "sage"
+        case .butter: "butter"
+        }
+    }
+
 
     /// What a tile looks like before it is picked: barely there.
     ///

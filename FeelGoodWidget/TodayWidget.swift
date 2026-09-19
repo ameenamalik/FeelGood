@@ -10,36 +10,108 @@
 //  because the app has no visual language for absence and neither does this.
 //
 
+import AppIntents
 import SwiftUI
 import WidgetKit
 
-struct TodayEntry: TimelineEntry {
-    let date: Date
-    let snapshot: TodaySnapshot?
+/// Long-press → Edit Widget.
+nonisolated enum WidgetLook: String, AppEnum {
+    /// Your fruit on a soft colour.
+    case fruit
+    /// The plain card with the tinted course pill.
+    case plain
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Style"
+    static let caseDisplayRepresentations: [WidgetLook: DisplayRepresentation] = [
+        .fruit: "Fruit",
+        .plain: "Plain",
+    ]
 }
 
-struct TodayProvider: TimelineProvider {
+nonisolated enum WidgetTint: String, AppEnum {
+    /// Whatever colour the fruit has in the app.
+    case match, blush, apricot, butter, sage, lilac
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Colour"
+    static let caseDisplayRepresentations: [WidgetTint: DisplayRepresentation] = [
+        .match: "Match my fruit",
+        .blush: "Blush",
+        .apricot: "Apricot",
+        .butter: "Butter",
+        .sage: "Sage",
+        .lilac: "Lilac",
+    ]
+}
+
+nonisolated struct TodayWidgetIntent: WidgetConfigurationIntent {
+    static let title: LocalizedStringResource = "Today"
+    static let description = IntentDescription("Pick a look for your Today widget.")
+
+    @Parameter(title: "Style", default: .fruit)
+    var look: WidgetLook
+
+    @Parameter(title: "Colour", default: .match)
+    var tint: WidgetTint
+}
+
+struct TodayEntry: TimelineEntry {
+    let date: Date
+    /// The one thing this hour's entry says. `nil` renders the invitation.
+    let item: TodayItem?
+    var appearance: WidgetAppearance = .fallback
+    var look: WidgetLook = .fruit
+    var tint: WidgetTint = .match
+
+    /// The colour behind the fruit: the person's override, else the fruit's own.
+    var aura: WidgetAura {
+        WidgetAura(rawValue: tint == .match ? appearance.auraRaw : tint.rawValue) ?? .apricot
+    }
+}
+
+struct TodayProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> TodayEntry {
-        TodayEntry(date: .now, snapshot: .preview)
+        TodayEntry(date: .now, item: .preview)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (TodayEntry) -> Void) {
-        completion(TodayEntry(date: .now, snapshot: context.isPreview ? .preview : current()))
+    func snapshot(for configuration: TodayWidgetIntent, in context: Context) async -> TodayEntry {
+        entry(for: configuration, now: .now, snapshot: context.isPreview ? .preview : current(now: .now))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<TodayEntry>) -> Void) {
+    func timeline(for configuration: TodayWidgetIntent, in context: Context) async -> Timeline<TodayEntry> {
+        let calendar = Calendar.current
         let now = Date()
-        let entry = TodayEntry(date: now, snapshot: current(now: now))
-        // Refresh at the next local midnight: the menu is a day at a time, so
-        // there is nothing to say until the day turns over. The app also nudges
-        // the timeline whenever it regenerates.
-        let midnight = Calendar.current.startOfDay(for: now.addingTimeInterval(86_400))
-        completion(Timeline(entries: [entry], policy: .after(midnight)))
+        let snapshot = current(now: now)
+        let midnight = calendar.startOfDay(for: now.addingTimeInterval(86_400))
+
+        // One entry now, then one at the top of every hour until the day turns
+        // over, each with a different item from the menu. WidgetKit does not let
+        // a widget refresh on unlock, so a pre-built hourly rotation is the
+        // reliable way to make the home screen feel alive. The app also nudges
+        // the timeline whenever the menu changes.
+        var dates = [now]
+        var next = calendar.nextDate(after: now, matching: DateComponents(minute: 0, second: 0),
+                                     matchingPolicy: .nextTime) ?? midnight
+        while next < midnight {
+            dates.append(next)
+            next = calendar.date(byAdding: .hour, value: 1, to: next) ?? midnight
+        }
+        let entries = dates.map { entry(for: configuration, now: $0, snapshot: snapshot) }
+        return Timeline(entries: entries, policy: .after(midnight))
+    }
+
+    private func entry(for configuration: TodayWidgetIntent, now: Date, snapshot: TodaySnapshot?) -> TodayEntry {
+        TodayEntry(
+            date: now,
+            item: snapshot?.item(atHour: Calendar.current.component(.hour, from: now)),
+            appearance: SharedContainer.readAppearance() ?? .fallback,
+            look: configuration.look,
+            tint: configuration.tint
+        )
     }
 
     /// A snapshot from an earlier day is discarded rather than shown. Yesterday's
     /// suggestion presented as today's would be a small lie.
-    private func current(now: Date = .now) -> TodaySnapshot? {
+    private func current(now: Date) -> TodaySnapshot? {
         guard let snapshot = SharedContainer.readSnapshot(),
               snapshot.isCurrent(on: now, calendar: .current)
         else { return nil }
@@ -49,62 +121,118 @@ struct TodayProvider: TimelineProvider {
 
 struct TodayWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "TodayWidget", provider: TodayProvider()) { entry in
-            TodayWidgetView(snapshot: entry.snapshot)
-                .containerBackground(WidgetPalette.surface, for: .widget)
+        AppIntentConfiguration(kind: "TodayWidget", intent: TodayWidgetIntent.self,
+                               provider: TodayProvider()) { entry in
+            TodayWidgetView(entry: entry)
+                .containerBackground(for: .widget) { background(for: entry) }
         }
         .configurationDisplayName("Today")
         .description("The one thing worth doing today.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
+
+    @ViewBuilder
+    private func background(for entry: TodayEntry) -> some View {
+        switch entry.look {
+        case .fruit:
+            LinearGradient(colors: [entry.aura.core, entry.aura.mid],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .plain:
+            WidgetPalette.surface
+        }
+    }
 }
 
 struct TodayWidgetView: View {
-    let snapshot: TodaySnapshot?
+    let entry: TodayEntry
     @Environment(\.widgetFamily) private var family
 
+    private var item: TodayItem? { entry.item }
+    private var isFruit: Bool { entry.look == .fruit }
+    /// The aura never flips with the appearance (neither does the app's), so on
+    /// it the ink doesn't either.
+    private var ink: Color { isFruit ? WidgetPalette.inkOnAccent : WidgetPalette.ink }
+    private var inkMuted: Color {
+        isFruit ? WidgetPalette.inkOnAccent.opacity(0.72) : WidgetPalette.inkMuted
+    }
+
     var body: some View {
+        content
+            // Opens the session it is showing, not just the app.
+            .widgetURL(item.flatMap { DeepLink.session($0.sessionID) })
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if isFruit, family == .systemMedium {
+            HStack(alignment: .center, spacing: 12) {
+                text
+                mascot(size: 88)
+            }
+        } else if isFruit {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top) {
+                    if let item { courseTag(item) }
+                    Spacer(minLength: 0)
+                    mascot(size: 44)
+                }
+                text(showingTag: false)
+            }
+        } else {
+            text
+        }
+    }
+
+    private var text: some View { text(showingTag: !isFruit || family == .systemMedium) }
+
+    private func text(showingTag: Bool) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            if let snapshot {
-                courseTag(snapshot)
-                Text(snapshot.title)
+            if let item {
+                if showingTag { courseTag(item) }
+                Text(item.title)
                     .font(.system(family == .systemSmall ? .subheadline : .headline,
                                   design: .rounded).weight(.semibold))
-                    .foregroundStyle(WidgetPalette.ink)
+                    .foregroundStyle(ink)
                     .lineLimit(family == .systemSmall ? 3 : 2)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if family != .systemSmall, !snapshot.reason.isEmpty {
-                    Text(snapshot.reason)
+                if family != .systemSmall, !item.reason.isEmpty {
+                    Text(item.reason)
                         .font(.subheadline)
-                        .foregroundStyle(WidgetPalette.inkMuted)
+                        .foregroundStyle(inkMuted)
                         .lineLimit(2)
                 }
 
                 Spacer(minLength: 0)
 
-                Text(snapshot.isDone ? "Done" : snapshot.durationLabel)
+                Text(item.isDone ? "Done" : item.durationLabel)
                     .font(.system(.caption, design: .rounded).weight(.medium))
-                    .foregroundStyle(WidgetPalette.inkMuted)
+                    .foregroundStyle(inkMuted)
             } else {
                 Text("Today")
                     .font(.system(.caption, design: .rounded).weight(.medium))
-                    .foregroundStyle(WidgetPalette.inkMuted)
+                    .foregroundStyle(inkMuted)
                     .textCase(.uppercase)
                 Text("Open when you're ready.")
                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundStyle(WidgetPalette.ink)
+                    .foregroundStyle(ink)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        // Opens the session it is showing, not just the app.
-        .widgetURL(snapshot.flatMap { DeepLink.session($0.sessionID) })
     }
 
-    private func courseTag(_ snapshot: TodaySnapshot) -> some View {
-        Text(snapshot.courseLabel)
+    private func mascot(size: CGFloat) -> some View {
+        Image(WidgetMascot.imageName(for: entry.appearance.avatarRaw))
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
+    }
+
+    private func courseTag(_ item: TodayItem) -> some View {
+        Text(item.courseLabel)
             .font(.system(.caption2, design: .rounded).weight(.medium))
             .textCase(.uppercase)
             .tracking(1.1)
@@ -113,7 +241,46 @@ struct TodayWidgetView: View {
             .foregroundStyle(WidgetPalette.inkOnAccent)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(Capsule().fill(Color(hex: snapshot.accentHex)))
+            // On a fruit colour the course accent would vanish into it, so the
+            // pill goes translucent white there.
+            .background(Capsule().fill(isFruit ? Color.white.opacity(0.55) : Color(hex: item.accentHex)))
+    }
+}
+
+/// The widget's own list of mascot artwork, keyed by `ProfileAvatar.rawValue`.
+/// Downsized copies live in the widget's asset catalog: a home-screen widget
+/// has a small memory budget and the app's originals are 1254px.
+enum WidgetMascot {
+    static let known: Set<String> = ["apple", "plum", "banana", "pear", "blueberry", "peach", "clementine", "lime"]
+
+    static func imageName(for raw: String) -> String {
+        "mascot-\(known.contains(raw) ? raw : "apple")"
+    }
+}
+
+/// Restated from `FGAura` for the same reason as `WidgetPalette`: importing the
+/// design system would cost the extension the whole app. Keep the hexes in step.
+enum WidgetAura: String {
+    case apricot, lilac, blush, sage, butter
+
+    var core: Color {
+        switch self {
+        case .apricot: Color(hex: 0xFCE3D2)
+        case .lilac: Color(hex: 0xF1E4EB)
+        case .blush: Color(hex: 0xFCE2E8)
+        case .sage: Color(hex: 0xEAF0DE)
+        case .butter: Color(hex: 0xFFF8D8)
+        }
+    }
+
+    var mid: Color {
+        switch self {
+        case .apricot: Color(hex: 0xF7C8A8)
+        case .lilac: Color(hex: 0xE2CAD6)
+        case .blush: Color(hex: 0xF2C4D3)
+        case .sage: Color(hex: 0xC6D8BE)
+        case .butter: Color(hex: 0xF4DF91)
+        }
     }
 }
 
@@ -150,9 +317,8 @@ nonisolated extension Color {
     }
 }
 
-extension TodaySnapshot {
-    static let preview = TodaySnapshot(
-        day: .now,
+extension TodayItem {
+    static let preview = TodayItem(
         sessionID: "main-pilates-gentle-10",
         courseLabel: "Main",
         accentHex: 0xC7EA4E,
@@ -163,15 +329,32 @@ extension TodaySnapshot {
     )
 }
 
-#Preview("Small", as: .systemSmall) {
-    TodayWidget()
-} timeline: {
-    TodayEntry(date: .now, snapshot: .preview)
-    TodayEntry(date: .now, snapshot: nil)
+extension TodaySnapshot {
+    static let preview = TodaySnapshot(day: .now, items: [.preview])
 }
 
-#Preview("Medium", as: .systemMedium) {
+#Preview("Small · fruit", as: .systemSmall) {
     TodayWidget()
 } timeline: {
-    TodayEntry(date: .now, snapshot: .preview)
+    TodayEntry(date: .now, item: .preview, appearance: .init(avatarRaw: "peach", auraRaw: "blush"))
+    TodayEntry(date: .now, item: nil, appearance: .init(avatarRaw: "peach", auraRaw: "blush"))
+}
+
+#Preview("Small · plain", as: .systemSmall) {
+    TodayWidget()
+} timeline: {
+    TodayEntry(date: .now, item: .preview, look: .plain)
+    TodayEntry(date: .now, item: nil, look: .plain)
+}
+
+#Preview("Medium · fruit", as: .systemMedium) {
+    TodayWidget()
+} timeline: {
+    TodayEntry(date: .now, item: .preview, appearance: .init(avatarRaw: "pear", auraRaw: "sage"))
+}
+
+#Preview("Medium · plain", as: .systemMedium) {
+    TodayWidget()
+} timeline: {
+    TodayEntry(date: .now, item: .preview, look: .plain)
 }

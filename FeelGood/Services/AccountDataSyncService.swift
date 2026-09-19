@@ -293,6 +293,7 @@ enum AccountDataSyncService {
             profile.avatarBackgroundRaw = backgroundID
         }
         if let reminder = data["reminderHour"] as? Int { profile.reminderHour = reminder }
+        profile.publishWidgetAppearance()
     }
 
     private static func decodedSet<Value: RawRepresentable & Hashable>(

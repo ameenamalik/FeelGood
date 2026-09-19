@@ -371,6 +371,9 @@ private struct TodayScreen: View {
             }
         }
         .tint(FGColor.ink)
+        // Covers upgrades and restores: the widget learns the fruit on launch,
+        // not only when it is next changed.
+        .onAppear { profile.publishWidgetAppearance() }
         .onOpenURL { url in
             guard let id = DeepLink.sessionID(from: url) else { return }
             tab = .today
