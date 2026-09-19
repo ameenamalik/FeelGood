@@ -233,4 +233,33 @@ struct OwnWorkoutTests {
         #expect(model.todayCustomOverrides[.appetizer] == nil)
         #expect(model.todayCustomOverrides[.side] == updated)
     }
+
+    @Test("Stand still and pace-that-feels-good are universally sanitized")
+    func standStillAndVaguePaceAreSanitized() throws {
+        // Direct CustomRoutinePart creation
+        let part1 = CustomRoutinePart(title: "Stand still", durationMin: 1)
+        #expect(part1.step.name == "Closing stillness")
+        #expect(part1.step.cue == "Take slow, steady breaths and stay present.")
+        #expect(!part1.step.cue.contains("pace that feels good"))
+
+        let part2 = CustomRoutinePart(title: "Push ups", durationMin: 2)
+        #expect(part2.step.cue == "Move with control and breathe steadily.")
+        #expect(!part2.step.cue.contains("pace that feels good"))
+
+        // Decoded from JSON
+        let json = """
+        {
+            "name": "Stand still",
+            "seconds": 30,
+            "cue": "Move at a pace that feels good."
+        }
+        """.data(using: .utf8)!
+
+        let decoded = try JSONDecoder().decode(Step.self, from: json)
+        #expect(decoded.name == "Closing stillness")
+        #expect(decoded.cue == "Take slow, steady breaths and stay present.")
+        #expect(!decoded.name.contains("Stand still"))
+        #expect(!decoded.cue.contains("pace that feels good"))
+    }
 }
+

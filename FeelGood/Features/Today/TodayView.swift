@@ -46,7 +46,6 @@ struct TodayView: View {
     /// not reopen the sheet every time this view is rebuilt.
     var requestedSessionID: Binding<String?> = .constant(nil)
     @State private var isCheckingIn = false
-    @State private var isLogging = false
     @State private var isShowingPaywall = false
     @State private var shouldOfferProAfterDismissal = false
     @AppStorage("hasShownFirstCompletionPaywall") private var hasShownFirstCompletionPaywall = false
@@ -56,7 +55,6 @@ struct TodayView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var isAdjusting = false
     @State private var isShowingMyMenu = false
-    @State private var showMenuAnyway = false
     @State private var selected: MenuItem?
     @State private var littleWinCelebration: LittleWinCelebration?
     @State private var pendingCheckInUpdate: PendingCheckInUpdate?
@@ -91,12 +89,7 @@ struct TodayView: View {
                     header
                     menuHeading
                     calendarFitCard
-                    if model.shouldShowCompletionState && !showMenuAnyway {
-                        completedSummaryCard
-                    } else {
-                        menuItems
-                        logFooter
-                    }
+                    menuItems
                 }
                 .padding(FGSpace.page)
             }
@@ -118,11 +111,6 @@ struct TodayView: View {
                     completedMovementPlan: completedMovementPlan
                 )
                 isCheckingIn = false
-            }
-        }
-        .sheet(isPresented: $isLogging, onDismiss: presentPendingLittleWinCelebration) {
-            LogWorkoutSheet { workout in
-                model.log(workout)
             }
         }
         .sheet(isPresented: $isShowingPaywall) {
@@ -267,8 +255,17 @@ struct TodayView: View {
     private func openRequestedSession(_ id: String?) {
         guard let id else { return }
         defer { requestedSessionID.wrappedValue = nil }
-        guard let item = model.menu.items.first(where: { $0.session.id == id }) else { return }
-        openSession(item)
+        if let item = model.menu.items.first(where: { $0.session.id == id }) {
+            openSession(item)
+        } else if let session = model.store.session(id: id) {
+            let item = MenuItem(
+                session: session,
+                course: session.course,
+                reasons: [.matchesIntent],
+                reasonText: session.subtitle
+            )
+            openSession(item)
+        }
     }
 
     private func openSession(_ item: MenuItem) {
@@ -373,18 +370,7 @@ struct TodayView: View {
                         .foregroundStyle(FGColor.ink)
                         .accessibilityAddTraits(.isHeader)
 
-                    if model.remainingDurationMin > 0 {
-                        Text("\(model.remainingDurationMin) min left")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(FGColor.inkMuted)
-                            .contentTransition(
-                                .numericText(value: Double(model.remainingDurationMin))
-                            )
-                            .animation(
-                                reduceMotion ? .none : .easeInOut(duration: 0.35),
-                                value: model.remainingDurationMin
-                            )
-                    } else if model.hasCompletedActivityToday {
+                    if model.hasCompletedActivityToday && model.isMenuCompletedToday {
                         Text("Completed")
                             .font(.system(size: 16, weight: .regular))
                             .foregroundStyle(FGColor.sageDeep)
@@ -395,31 +381,24 @@ struct TodayView: View {
 
                 Spacer(minLength: FGSpace.s)
 
-                // Compact icon-only controls for routine and quick adjust.
-                // Quick adjust is a Pro feature; free users get only the +,
-                // never a lock icon that gates a control they can't see the
-                // point of yet.
-                #if compiler(>=6.2)
-                if #available(iOS 26, *) {
-                    GlassEffectContainer(spacing: FGSpace.s) {
-                        HStack(spacing: FGSpace.s) {
-                            routineButtonLabel
-                                .glassEffect(.regular.interactive(), in: Capsule())
-                            if model.isProUser {
-                                adjustButtonLabel
-                                    .glassEffect(
-                                        isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
-                                        in: Circle()
-                                    )
-                            }
+                // Quick adjust control for Pro users.
+                if model.isProUser {
+                    #if compiler(>=6.2)
+                    if #available(iOS 26, *) {
+                        GlassEffectContainer(spacing: FGSpace.s) {
+                            adjustButtonLabel
+                                .glassEffect(
+                                    isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
+                                    in: Circle()
+                                )
                         }
+                    } else {
+                        legacyMenuControls
                     }
-                } else {
+                    #else
                     legacyMenuControls
+                    #endif
                 }
-                #else
-                legacyMenuControls
-                #endif
             }
 
             // The remaining-minutes and "Completed" states already show inline
@@ -442,41 +421,15 @@ struct TodayView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var routineButtonLabel: some View {
-        Button {
-            isShowingMyMenu = true
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .semibold))
-                Text("Add")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .lineLimit(1)
-            }
-            .fixedSize()
-            .foregroundStyle(FGColor.ink)
-            .padding(.horizontal, 10)
-            .frame(height: 32)
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Add custom routine or view My Menu")
-    }
-
+    @ViewBuilder
     private var legacyMenuControls: some View {
-        HStack(spacing: FGSpace.s) {
-            routineButtonLabel
-                .background(FGColor.surface)
-                .clipShape(Capsule())
-                .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
-            if model.isProUser {
-                adjustButtonLabel
-                    .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
-                    )
-            }
+        if model.isProUser {
+            adjustButtonLabel
+                .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
+                .clipShape(Circle())
+                .overlay(
+                    Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
+                )
         }
     }
 
@@ -670,100 +623,6 @@ struct TodayView: View {
             )
             .postHogMask()
             .accessibilityElement(children: .combine)
-        }
-    }
-
-    private var completedSummaryCard: some View {
-        VStack(spacing: FGSpace.m) {
-            VStack(alignment: .leading, spacing: FGSpace.s) {
-                HStack(alignment: .top, spacing: FGSpace.m) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 32, weight: .semibold))
-                        .foregroundStyle(FGColor.sageDeep)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Done for today")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(FGColor.ink)
-
-                        if let latest = model.completedEntriesToday.first {
-                            let title = model.title(for: latest)
-                            Text("\(title) • \(latest.durationMin) min")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundStyle(FGColor.inkMuted)
-                        } else {
-                            Text("All routines completed")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundStyle(FGColor.inkMuted)
-                        }
-
-                        Text("Great job taking time for yourself today.")
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundStyle(FGColor.inkMuted.opacity(0.85))
-                            .padding(.top, 2)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(FGSpace.l)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.white.opacity(colorScheme == .dark ? 0.10 : 0.85))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.15 : 0.6), lineWidth: 1)
-                    )
-                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.04), radius: 10, x: 0, y: 3)
-            )
-
-            HStack(spacing: FGSpace.m) {
-                Button {
-                    isLogging = true
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 12, weight: .semibold))
-                        Text("Log another activity")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                    }
-                    .foregroundStyle(FGColor.inkMuted)
-                }
-                .buttonStyle(.plain)
-
-                Text("•")
-                    .foregroundStyle(FGColor.lineStrong.opacity(0.5))
-
-                Button {
-                    withAnimation(FGMotion.settle) {
-                        showMenuAnyway = true
-                    }
-                } label: {
-                    Text("View today's menu")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundStyle(FGColor.inkMuted)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.top, 2)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var logFooter: some View {
-        VStack(spacing: FGSpace.s) {
-            if showMenuAnyway && model.shouldShowCompletionState {
-                Button {
-                    withAnimation(FGMotion.settle) {
-                        showMenuAnyway = false
-                    }
-                } label: {
-                    Text("Hide menu")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundStyle(FGColor.inkMuted)
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
-            }
         }
     }
 }

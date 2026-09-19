@@ -433,6 +433,7 @@ struct SessionDetailView: View {
                     Text(step.name)
                         .font(FGFont.body)
                         .foregroundStyle(FGColor.ink)
+                        .fixedSize(horizontal: false, vertical: true)
                     // The only route into the glossary is a step already
                     // on screen. It is never browsable.
                     if let term = model.term(for: step) {

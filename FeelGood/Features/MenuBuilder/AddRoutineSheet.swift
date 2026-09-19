@@ -300,10 +300,10 @@ struct AddRoutineSheet: View {
                     title = pickedSession.title
                     sessionDescription = pickedSession.subtitle
                     let pickedParts = pickedSession.source.steps.map {
-                        CustomRoutinePart(title: $0.name, durationMin: max(1, Int(ceil(Double($0.seconds) / 60))))
+                        CustomRoutinePart(title: $0.name, durationMin: max(1, Int(ceil(Double($0.seconds) / 60))), cue: $0.cue)
                     }
                     parts = pickedParts.isEmpty
-                        ? [CustomRoutinePart(title: pickedSession.title, durationMin: pickedSession.durationMin)]
+                        ? [CustomRoutinePart(title: pickedSession.title, durationMin: pickedSession.durationMin, cue: pickedSession.subtitle.isEmpty ? nil : pickedSession.subtitle)]
                         : pickedParts
                     activity = pickedSession.activity
                     course = pickedSession.course

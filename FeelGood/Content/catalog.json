@@ -37,7 +37,8 @@
           {
             "name": "Settle",
             "seconds": 20,
-            "cue": "Sit or stand. Let your shoulders drop away from your ears."
+            "cue": "Sit or stand. Let your shoulders drop away from your ears.",
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Round one",
@@ -255,7 +256,8 @@
           {
             "name": "Settle",
             "seconds": 60,
-            "cue": "Arms wide. Let the floor take your weight."
+            "cue": "Arms wide. Let the floor take your weight.",
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Breathe",
@@ -263,7 +265,8 @@
             "cue": "Long, unhurried out-breaths. Nothing to do here.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Come out slowly",
@@ -320,7 +323,8 @@
           {
             "name": "Rest & shake out",
             "seconds": 20,
-            "cue": "Shake it out. Breathe."
+            "cue": "Shake it out. Breathe.",
+            "glossaryID": "full-body-shake"
           },
           {
             "name": "Thirty more",
@@ -382,7 +386,8 @@
           {
             "name": "Set down and shake out",
             "seconds": 20,
-            "cue": "Put them down before your grip gives out, not after."
+            "cue": "Put them down before your grip gives out, not after.",
+            "glossaryID": "full-body-shake"
           },
           {
             "name": "Walk again",
@@ -435,12 +440,14 @@
           {
             "name": "Stand and settle",
             "seconds": 45,
-            "cue": "Feet hip width, knees soft, weight even."
+            "cue": "Feet hip width, knees soft, weight even.",
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Lifting the sky",
             "seconds": 75,
-            "cue": "Arms float up on the in-breath, sink on the out."
+            "cue": "Arms float up on the in-breath, sink on the out.",
+            "glossaryID": "qigong-lifting-the-sky"
           },
           {
             "name": "Turning the waist",
@@ -453,9 +460,10 @@
             "cue": "Hands trace down the front of your body, palms facing you."
           },
           {
-            "name": "Stand still",
+            "name": "Closing stillness",
             "seconds": 30,
-            "cue": "Notice how you feel before you move on with the day."
+            "cue": "Notice how you feel before you move on with the day.",
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -501,7 +509,8 @@
             "cue": "On your back, knees bent. Wide ribs on the way in.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Pelvic tilts",
@@ -1000,7 +1009,8 @@
           {
             "name": "Lifting the sky",
             "seconds": 180,
-            "cue": "Arms rise with the breath in, sink with the breath out."
+            "cue": "Arms rise with the breath in, sink with the breath out.",
+            "glossaryID": "qigong-lifting-the-sky"
           },
           {
             "name": "Turning the waist",
@@ -1070,7 +1080,8 @@
             "cue": "On your back. Let the floor hold you.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Hamstrings — right",
@@ -1663,12 +1674,13 @@
             "name": "Bound",
             "seconds": 60,
             "cue": "Push off one foot, land softly on the other.",
-            "glossaryID": "skater-bound"
+            "glossaryID": "skater-hop"
           },
           {
             "name": "Rest & shake out",
             "seconds": 45,
-            "cue": "Breathe."
+            "cue": "Breathe.",
+            "glossaryID": "full-body-shake"
           },
           {
             "name": "Bound again",
@@ -1678,7 +1690,8 @@
           {
             "name": "Rest & shake out",
             "seconds": 45,
-            "cue": "Shake out."
+            "cue": "Shake out.",
+            "glossaryID": "full-body-shake"
           },
           {
             "name": "Last set",
@@ -2603,7 +2616,8 @@
               "holdIn": 4,
               "exhale": 4,
               "holdOut": 4
-            }
+            },
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Look at the horizon",
@@ -2662,7 +2676,8 @@
             "cue": "One long exhale to close.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -2720,7 +2735,8 @@
           {
             "name": "Quiet stillness",
             "seconds": 120,
-            "cue": "Sip your tea or just close your eyes."
+            "cue": "Sip your tea or just close your eyes.",
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -2788,7 +2804,8 @@
             "cue": "Listen to the park around you.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -2996,7 +3013,8 @@
           {
             "name": "Rest and shake out",
             "seconds": 30,
-            "cue": "Breathe."
+            "cue": "Breathe.",
+            "glossaryID": "full-body-shake"
           },
           {
             "name": "Side step-ups",
@@ -3240,6 +3258,7 @@
             "name": "Wall angels",
             "seconds": 90,
             "cue": "Slide arms overhead while keeping contact with the wall.",
+            "glossaryID": "wall-angels",
             "switchSides": false
           },
           {
@@ -3406,7 +3425,8 @@
             "cue": "Song fades. Hands on your chest, feel your heartbeat and breathe in deep.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -3463,7 +3483,8 @@
               "type": "breathing",
               "inhale": 4,
               "exhale": 6
-            }
+            },
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Slow grounding strut",
@@ -3533,7 +3554,8 @@
           {
             "name": "Full upper body shakeout",
             "seconds": 30,
-            "cue": "Shake out arms, bounce lightly on your heels, and reset for the rest of your day."
+            "cue": "Shake out arms, bounce lightly on your heels, and reset for the rest of your day.",
+            "glossaryID": "full-body-shake"
           }
         ]
       }
@@ -3582,7 +3604,8 @@
           {
             "name": "Set your stance & shake it out",
             "seconds": 20,
-            "cue": "Stand with feet ready. Take one big breath to summon quick power."
+            "cue": "Stand with feet ready. Take one big breath to summon quick power.",
+            "glossaryID": "full-body-shake"
           },
           {
             "name": "First explosion: 15 rapid reps",
@@ -3592,7 +3615,8 @@
           {
             "name": "Active recovery breath",
             "seconds": 30,
-            "cue": "Hands on hips. Deep inhale, slow exhale while pacing in place."
+            "cue": "Hands on hips. Deep inhale, slow exhale while pacing in place.",
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Second explosion: 15 rapid reps",
@@ -3704,7 +3728,8 @@
             "cue": "Close your eyes, breathe the scent all the way into the lower ribs, and exhale fully.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Gentle standing twists",
@@ -3933,7 +3958,8 @@
               "type": "breathing",
               "inhale": 4,
               "exhale": 4
-            }
+            },
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Cat-cow & gentle spinal waves",
@@ -3944,7 +3970,8 @@
           {
             "name": "Vinyasa flow & standing warriors",
             "seconds": 600,
-            "cue": "Downward dog to lunges, Warrior II pulses, and open heart openers. Move smoothly without rushing."
+            "cue": "Downward dog to lunges, Warrior II pulses, and open heart openers. Move smoothly without rushing.",
+            "glossaryID": "downward-dog"
           },
           {
             "name": "Deep Yin hip openers — right",
@@ -4048,7 +4075,8 @@
           {
             "name": "Standing quad stretch",
             "seconds": 90,
-            "cue": "Both sides, easy hold."
+            "cue": "Both sides, easy hold.",
+            "glossaryID": "standing-quad-stretch"
           }
         ]
       }
@@ -4474,7 +4502,8 @@
             "cue": "Stand comfortably. Let your shoulders drop away from your ears and take a slow exhale.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Shake arms & wrists",
@@ -4484,7 +4513,8 @@
           {
             "name": "Catch your breath",
             "seconds": 15,
-            "cue": "Pause and notice the tingling warmth in your hands and shoulders."
+            "cue": "Pause and notice the tingling warmth in your hands and shoulders.",
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Shake legs & hips",
@@ -4494,17 +4524,20 @@
           {
             "name": "Catch your breath",
             "seconds": 15,
-            "cue": "Stand still, feeling grounded through the soles of your feet."
+            "cue": "Stay grounded through the soles of your feet and breathe deeply.",
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Full body shake",
             "seconds": 60,
-            "cue": "Bounce softly on your heels and shake everything loose from head to toe."
+            "cue": "Bounce softly on your heels and shake everything loose from head to toe.",
+            "glossaryID": "full-body-shake"
           },
           {
             "name": "Quiet integration",
             "seconds": 90,
-            "cue": "Stand tall, eyes soft or closed. Feel your nervous system settle into ease."
+            "cue": "Stand tall, eyes soft or closed. Feel your nervous system settle into ease.",
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -4553,7 +4586,8 @@
             "cue": "Keep your chin level, chest wide. Inhale slowly into your belly, exhale slow and steady.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Ground & soften",
@@ -4785,7 +4819,8 @@
             "cue": "Pat your face dry with a towel and take one long, slow exhale. Notice your pulse slowing.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -4852,7 +4887,8 @@
             "cue": "Clasp hands behind your back or place on your hips, open your chest, and breathe deeply.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -4892,7 +4928,8 @@
           {
             "name": "Close your eyes & arrive",
             "seconds": 45,
-            "cue": "Sit or lie down quietly. Let your body rest without needing to produce or perform."
+            "cue": "Sit or lie down quietly. Let your body rest without needing to produce or perform.",
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Thank your feet & legs",
@@ -4912,7 +4949,8 @@
           {
             "name": "Full body integration",
             "seconds": 45,
-            "cue": "Take a deep, grateful breath for your whole self. Let a quiet smile soften your face."
+            "cue": "Take a deep, grateful breath for your whole self. Let a quiet smile soften your face.",
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -4971,7 +5009,8 @@
           {
             "name": "Breathe & recover",
             "seconds": 15,
-            "cue": "Hands on your hips, stand tall, take two full inhales."
+            "cue": "Hands on your hips, stand tall, take two full inhales.",
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Burst interval two",
@@ -4982,7 +5021,7 @@
           {
             "name": "Land & feel the buzz",
             "seconds": 15,
-            "cue": "Stand still with palms forward. Notice your energized pulse and awake mind."
+            "cue": "Pause with palms facing forward. Notice your energized pulse and awake mind."
           }
         ]
       }
@@ -5030,7 +5069,8 @@
               "holdIn": 4,
               "exhale": 4,
               "holdOut": 4
-            }
+            },
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -5070,12 +5110,14 @@
           {
             "name": "Settle by the wall",
             "seconds": 120,
-            "cue": "Lie on your back and swing your legs up against a wall or resting on a sofa. Rest your arms comfortably by your sides."
+            "cue": "Lie on your back and swing your legs up against a wall or resting on a sofa. Rest your arms comfortably by your sides.",
+            "glossaryID": "deep-breath"
           },
           {
             "name": "Rest & let go",
             "seconds": 180,
-            "cue": "Let your hips feel heavy into the floor. Soften your jaw, release your shoulders, and stay here for as long as feels good."
+            "cue": "Let your hips feel heavy into the floor. Soften your jaw, release your shoulders, and stay here for as long as feels good.",
+            "glossaryID": "deep-breath"
           }
         ]
       }
@@ -5305,24 +5347,6 @@
       ]
     },
     {
-      "id": "skater-bound",
-      "name": "Skater bound",
-      "aka": [
-        "lateral bound"
-      ],
-      "instructions": [
-        "Stand on one leg with a soft knee.",
-        "Push sideways off that leg and land on the other foot.",
-        "Land quietly, letting the knee and hip bend to absorb it.",
-        "Start small. Bigger only when the landings stay soft."
-      ],
-      "muscles": [
-        "glutes",
-        "thighs",
-        "ankles"
-      ]
-    },
-    {
       "id": "single-leg-stand",
       "name": "Single leg stand",
       "aka": [
@@ -5476,6 +5500,27 @@
       "muscles": [
         "chest",
         "front of the shoulders"
+      ]
+    },
+    {
+      "id": "downward-dog",
+      "name": "Downward-Facing Dog",
+      "aka": [
+        "downward dog",
+        "down dog",
+        "adho mukha svanasana"
+      ],
+      "instructions": [
+        "Start on all fours with hands shoulder-width apart and knees under hips.",
+        "Tuck your toes and press through your palms to lift your hips high.",
+        "Lengthen your spine into an inverted V-shape, letting your neck relax.",
+        "Reach your heels toward the floor and take steady, calming breaths."
+      ],
+      "muscles": [
+        "hamstrings",
+        "calves",
+        "shoulders",
+        "spine"
       ]
     },
     {
@@ -7481,6 +7526,91 @@
         "back",
         "legs",
         "heart and lungs"
+      ]
+    },
+    {
+      "id": "qigong-lifting-the-sky",
+      "name": "Lifting the Sky",
+      "aka": [
+        "lifting the sky",
+        "qi gong lifting the sky",
+        "ba duan jin"
+      ],
+      "instructions": [
+        "Stand tall with feet shoulder-width apart and knees soft.",
+        "Rest your hands in front of your belly, palms facing up.",
+        "Inhale as your hands float up along your chest and turn upward overhead.",
+        "Exhale as you press palms gently toward the sky, then lower smoothly."
+      ],
+      "muscles": [
+        "shoulders",
+        "spine",
+        "chest",
+        "core"
+      ]
+    },
+    {
+      "id": "wall-angels",
+      "name": "Wall angels",
+      "aka": [
+        "wall angel",
+        "scapular wall slides"
+      ],
+      "instructions": [
+        "Stand with your back, head, and tailbone flat against a wall, feet slightly forward.",
+        "Bring your arms into a goalpost shape with elbows and backs of your hands against the wall.",
+        "Slowly slide your hands upward into a wide Y shape, keeping contact with the wall.",
+        "Lower your elbows with control back to shoulder height and repeat."
+      ],
+      "muscles": [
+        "upper back",
+        "shoulders",
+        "posture muscles"
+      ]
+    },
+    {
+      "id": "full-body-shake",
+      "name": "Full-body shake",
+      "aka": [
+        "shake out",
+        "body shake",
+        "tremoring"
+      ],
+      "instructions": [
+        "Stand tall with feet hip-width apart and knees soft and springy.",
+        "Drop your shoulders and let your arms hang completely loose beside your hips.",
+        "Gently bounce through your heels and knees, letting your wrists and hands flutter.",
+        "Breathe naturally and shake off physical tension from head to toe."
+      ],
+      "muscles": [
+        "nervous system ease",
+        "calves",
+        "shoulders",
+        "spine"
+      ]
+    },
+    {
+      "id": "deep-breath",
+      "name": "Mindful breathing",
+      "aka": [
+        "deep breath",
+        "settle and breathe",
+        "box breathing",
+        "centering",
+        "quiet integration",
+        "catch your breath",
+        "mindful breath"
+      ],
+      "instructions": [
+        "Stand tall or sit comfortably with feet grounded and spine long.",
+        "Drop your shoulders away from your ears and let your hands rest loose.",
+        "Take a slow, deep breath in through your nose, expanding your ribcage and belly.",
+        "Exhale smoothly through your mouth or nose, letting all tension melt away."
+      ],
+      "muscles": [
+        "diaphragm",
+        "nervous system regulation",
+        "posture"
       ]
     }
   ]

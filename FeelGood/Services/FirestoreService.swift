@@ -71,21 +71,24 @@ public struct FirestoreCustomRoutinePart: Codable, Sendable, Identifiable {
     public var id: String
     public var title: String
     public var durationMin: Int
+    public var cue: String?
 
-    public init(id: String = UUID().uuidString, title: String, durationMin: Int) {
+    public init(id: String = UUID().uuidString, title: String, durationMin: Int, cue: String? = nil) {
         self.id = id
         self.title = title
         self.durationMin = durationMin
+        self.cue = cue
     }
 
     init(_ part: CustomRoutinePart) {
         id = part.id
         title = part.title
         durationMin = part.durationMin
+        cue = part.cue
     }
 
     var customRoutinePart: CustomRoutinePart {
-        CustomRoutinePart(id: id, title: title, durationMin: durationMin)
+        CustomRoutinePart(id: id, title: title, durationMin: durationMin, cue: cue)
     }
 }
 

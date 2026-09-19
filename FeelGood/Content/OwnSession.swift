@@ -15,15 +15,31 @@ nonisolated struct CustomRoutinePart: Codable, Hashable, Sendable, Identifiable 
     let id: String
     var title: String
     var durationMin: Int
+    var cue: String?
 
-    init(id: String = UUID().uuidString, title: String, durationMin: Int) {
+    init(id: String = UUID().uuidString, title: String, durationMin: Int, cue: String? = nil) {
         self.id = id
         self.title = title
         self.durationMin = max(1, durationMin)
+        self.cue = cue
     }
 
     var step: Step {
-        Step(name: title, seconds: durationMin * 60, cue: "Move at a pace that feels good.")
+        let finalCue: String
+        if let cue, !cue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            finalCue = cue
+        } else {
+            finalCue = Self.defaultCue(for: title)
+        }
+        return Step(name: title, seconds: durationMin * 60, cue: finalCue)
+    }
+
+    private static func defaultCue(for title: String) -> String {
+        let lower = title.lowercased()
+        if lower.contains("breath") || lower.contains("breathe") || lower.contains("settle") || lower.contains("pause") || lower.contains("rest") || lower.contains("still") {
+            return "Take slow, steady breaths and stay present."
+        }
+        return "Move with control and breathe steadily."
     }
 }
 
@@ -136,7 +152,7 @@ nonisolated extension Session {
     var customRoutineParts: [CustomRoutinePart] {
         guard case .custom(let steps) = source else { return [] }
         return steps.map { step in
-            CustomRoutinePart(title: step.name, durationMin: max(1, Int(ceil(Double(step.seconds) / 60))))
+            CustomRoutinePart(title: step.name, durationMin: max(1, Int(ceil(Double(step.seconds) / 60))), cue: step.cue)
         }
     }
 

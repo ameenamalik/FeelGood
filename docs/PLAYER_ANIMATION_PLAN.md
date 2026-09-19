@@ -204,8 +204,8 @@ Estimated size: one focused session. Touches `PlayerView.swift`,
 
 ### Phase 1b: custom routines — DONE 2026-09-15
 
-Routines built in My Menu turn each typed part into a step with the generic
-cue "Move at a pace that feels good" and no glossary id or visual, so they
+Routines built in My Menu turn each typed part into a step with context-aware
+cues (e.g. steady movement or breathing) and no glossary id or visual, so they
 never had a drawing or an orb on any build. `Step.inferringVisual(from:)`
 (`Content/OwnSession.swift`) now matches a typed title against glossary
 names and aliases (whole words, longest wins, plural-tolerant) and against a

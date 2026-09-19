@@ -361,6 +361,9 @@ struct PlayerView: View {
                     .font(FGFont.display)
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .minimumScaleFactor(0.75)
 
                 Group {
                     if let playerURL = WorkerConstants.playerURL(videoID: videoID) {
@@ -569,6 +572,9 @@ struct PlayerView: View {
                 .font(FGFont.display)
                 .foregroundStyle(FGColor.ink)
                 .multilineTextAlignment(.center)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
+                .minimumScaleFactor(0.75)
 
             StepVisualView(
                 step: step,
@@ -578,7 +584,8 @@ struct PlayerView: View {
                 breathingPausedAt: breathingPausedAt
             )
         }
-        .padding(FGSpace.l)
+        .padding(.horizontal, FGSpace.s)
+        .padding(.vertical, FGSpace.s)
         .frame(maxWidth: .infinity)
     }
 
