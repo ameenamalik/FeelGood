@@ -113,6 +113,7 @@ in the player today; the rest are on disk for sessions not yet written.
 - `decline-dumbbell-press-1.png`, `decline-dumbbell-press-2.png`, `decline-dumbbell-press-3.png`
 - `decline-push-up-1.png`, `decline-push-up-2.png`, `decline-push-up-3.png`
 - `decline-sit-up-1.png`, `decline-sit-up-2.png`, `decline-sit-up-3.png`
+- `deep-breath-1.png`, `deep-breath-2.png`
 - `deficit-reverse-lunge-1.png`, `deficit-reverse-lunge-2.png`, `deficit-reverse-lunge-3.png`
 - `diamond-push-up-1.png`, `diamond-push-up-2.png`, `diamond-push-up-3.png`
 - `dip-1.png`, `dip-2.png`, `dip-3.png`
@@ -120,6 +121,7 @@ in the player today; the rest are on disk for sessions not yet written.
 - `donkey-kick-1.png`, `donkey-kick-2.png`, `donkey-kick-3.png`
 - `doorway-chest-stretch-1.png`, `doorway-chest-stretch-2.png`, `doorway-chest-stretch-3.png`
 - `doorway-row-1.png`, `doorway-row-2.png`, `doorway-row-3.png`
+- `downward-dog-1.png`, `downward-dog-2.png`
 - `drag-curl-1.png`, `drag-curl-2.png`, `drag-curl-3.png`
 - `dragon-flag-1.png`, `dragon-flag-2.png`, `dragon-flag-3.png`
 - `dumbbell-bench-press-1.png`, `dumbbell-bench-press-2.png`, `dumbbell-bench-press-3.png`
@@ -153,6 +155,7 @@ in the player today; the rest are on disk for sessions not yet written.
 - `front-foot-elevated-split-squat-1.png`, `front-foot-elevated-split-squat-2.png`, `front-foot-elevated-split-squat-3.png`
 - `front-raise-1.png`, `front-raise-2.png`, `front-raise-3.png`
 - `front-squat-1.png`, `front-squat-2.png`, `front-squat-3.png`
+- `full-body-shake-1.png`, `full-body-shake-2.png`
 - `glute-bridge-1.png`, `glute-bridge-2.png`, `glute-bridge-3.png`
 - `glute-bridge-march-1.png`, `glute-bridge-march-2.png`, `glute-bridge-march-3.png`
 - `glute-focused-back-extension-1.png`, `glute-focused-back-extension-2.png`, `glute-focused-back-extension-3.png`
@@ -241,6 +244,7 @@ in the player today; the rest are on disk for sessions not yet written.
 - `push-press-1.png`, `push-press-2.png`, `push-press-3.png`
 - `push-up-1.png`, `push-up-2.png`, `push-up-3.png`
 - `push-up-shoulder-tap-1.png`, `push-up-shoulder-tap-2.png`, `push-up-shoulder-tap-3.png`
+- `qigong-lifting-the-sky-1.png`, `qigong-lifting-the-sky-2.png`, `qigong-lifting-the-sky-3.png`
 - `rack-pull-1.png`, `rack-pull-2.png`, `rack-pull-3.png`
 - `rear-delt-fly-1.png`, `rear-delt-fly-2.png`, `rear-delt-fly-3.png`
 - `reverse-crunch-1.png`, `reverse-crunch-2.png`, `reverse-crunch-3.png`
@@ -329,6 +333,7 @@ in the player today; the rest are on disk for sessions not yet written.
 - `v-up-1.png`, `v-up-2.png`, `v-up-3.png`
 - `walking-1.png`, `walking-2.png`, `walking-3.png`
 - `walking-lunge-1.png`, `walking-lunge-2.png`, `walking-lunge-3.png`
+- `wall-angels-1.png`, `wall-angels-2.png`, `wall-angels-3.png`
 - `wall-calf-stretch-1.png`, `wall-calf-stretch-2.png`, `wall-calf-stretch-3.png`
 - `wall-handstand-push-up-1.png`, `wall-handstand-push-up-2.png`, `wall-handstand-push-up-3.png`
 - `wall-push-up-1.png`, `wall-push-up-2.png`, `wall-push-up-3.png`
@@ -348,6 +353,6 @@ in the player today; the rest are on disk for sessions not yet written.
 
 ## Glossary coverage
 
-149 of the 322 sets have a glossary entry in `catalog.json` as of 2026-09-15:
+153 of the 327 sets have a glossary entry in `catalog.json` as of 2026-09-19:
 
-`arm-circles`, `assisted-dip`, `assisted-pull-up`, `back-extension`, `band-pull-apart`, `banded-clamshell`, `banded-face-pull`, `banded-glute-bridge`, `banded-lateral-walk`, `banded-monster-walk`, `banded-row`, `banded-squat`, `barbell-row`, `bear-crawl`, `bear-plank`, `bench-press`, `bent-over-row`, `bicep-curl`, `bicycle-crunch`, `bird-dog`, `bodyweight-squat`, `bulgarian-split-squat`, `burpee`, `butterfly-stretch`, `cable-fly`, `calf-raise`, `calf-stretch`, `cat-cow`, `chair-dip`, `chest-press`, `childs-pose`, `chin-tuck`, `chin-up`, `clamshell`, `cross-body-shoulder-stretch`, `crunch`, `curtsy-lunge`, `cycling`, `dead-bug`, `dead-hang`, `deadlift`, `donkey-kick`, `doorway-chest-stretch`, `dumbbell-bench-press`, `dumbbell-hip-thrust`, `dumbbell-overhead-tricep-extension`, `dumbbell-romanian-deadlift`, `dumbbell-side-bend`, `elliptical`, `face-pull`, `farmers-carry`, `figure-four-stretch`, `fire-hydrant`, `flutter-kick`, `forearm-stretch`, `forward-lunge`, `frog-pump`, `front-raise`, `glute-bridge`, `glute-bridge-march`, `goblet-squat`, `good-morning`, `hammer-curl`, `hamstring-stretch`, `hanging-knee-raise`, `heel-tap`, `high-knees`, `hip-abduction-machine`, `hip-adduction-machine`, `hip-thrust`, `hollow-body-hold`, `inchworm`, `incline-push-up`, `inverted-row`, `jump-rope`, `jump-squat`, `jumping-jack`, `kettlebell-romanian-deadlift`, `kettlebell-swing`, `knee-push-up`, `kneeling-hip-flexor-stretch`, `lat-pulldown`, `lateral-lunge`, `lateral-raise`, `lateral-shuffle`, `leg-curl`, `leg-extension`, `leg-press`, `leg-swings-stretch`, `legs-up-the-wall`, `low-lunge`, `lying-leg-raise`, `machine-chest-press`, `machine-row`, `machine-shoulder-press`, `mountain-climber`, `neck-side-stretch`, `one-arm-dumbbell-row`, `overhead-press`, `pallof-press`, `pec-deck`, `pelvic-tilt`, `plank`, `plank-shoulder-tap`, `pull-up`, `push-up`, `reverse-crunch`, `reverse-lunge`, `romanian-deadlift`, `rowing`, `running`, `russian-twist`, `seated-cable-row`, `seated-forward-fold-stretch`, `side-lying-leg-raise`, `side-plank`, `side-plank-hip-dip`, `single-leg-calf-raise`, `single-leg-glute-bridge`, `single-leg-romanian-deadlift`, `single-leg-stand`, `single-leg-stretch`, `skater-bound`, `skater-hop`, `split-squat`, `squat`, `stair-climber`, `standing-calf-raise`, `standing-dumbbell-press`, `standing-quad-stretch`, `step-up`, `superman`, `superman-hold`, `supine-hamstring-stretch`, `swimming`, `the-hundred`, `thoracic-rotation`, `toe-touch`, `torso-twist-stretch`, `treadmill-incline-walk`, `tree-pose`, `tricep-pushdown`, `walking`, `walking-lunge`, `wall-calf-stretch`, `wall-push-up`, `wall-sit`, `wide-grip-lat-pulldown`, `worlds-greatest-stretch`
+`arm-circles`, `assisted-dip`, `assisted-pull-up`, `back-extension`, `band-pull-apart`, `banded-clamshell`, `banded-face-pull`, `banded-glute-bridge`, `banded-lateral-walk`, `banded-monster-walk`, `banded-row`, `banded-squat`, `barbell-row`, `bear-crawl`, `bear-plank`, `bench-press`, `bent-over-row`, `bicep-curl`, `bicycle-crunch`, `bird-dog`, `bodyweight-squat`, `bulgarian-split-squat`, `burpee`, `butterfly-stretch`, `cable-fly`, `calf-raise`, `calf-stretch`, `cat-cow`, `chair-dip`, `chest-press`, `childs-pose`, `chin-tuck`, `chin-up`, `clamshell`, `cross-body-shoulder-stretch`, `crunch`, `curtsy-lunge`, `cycling`, `dead-bug`, `dead-hang`, `deadlift`, `deep-breath`, `donkey-kick`, `doorway-chest-stretch`, `downward-dog`, `dumbbell-bench-press`, `dumbbell-hip-thrust`, `dumbbell-overhead-tricep-extension`, `dumbbell-romanian-deadlift`, `dumbbell-side-bend`, `elliptical`, `face-pull`, `farmers-carry`, `figure-four-stretch`, `fire-hydrant`, `flutter-kick`, `forearm-stretch`, `forward-lunge`, `frog-pump`, `front-raise`, `full-body-shake`, `glute-bridge`, `glute-bridge-march`, `goblet-squat`, `good-morning`, `hammer-curl`, `hamstring-stretch`, `hanging-knee-raise`, `heel-tap`, `high-knees`, `hip-abduction-machine`, `hip-adduction-machine`, `hip-thrust`, `hollow-body-hold`, `inchworm`, `incline-push-up`, `inverted-row`, `jump-rope`, `jump-squat`, `jumping-jack`, `kettlebell-romanian-deadlift`, `kettlebell-swing`, `knee-push-up`, `kneeling-hip-flexor-stretch`, `lat-pulldown`, `lateral-lunge`, `lateral-raise`, `lateral-shuffle`, `leg-curl`, `leg-extension`, `leg-press`, `leg-swings-stretch`, `legs-up-the-wall`, `low-lunge`, `lying-leg-raise`, `machine-chest-press`, `machine-row`, `machine-shoulder-press`, `mountain-climber`, `neck-side-stretch`, `one-arm-dumbbell-row`, `overhead-press`, `pallof-press`, `pec-deck`, `pelvic-tilt`, `plank`, `plank-shoulder-tap`, `pull-up`, `push-up`, `qigong-lifting-the-sky`, `reverse-crunch`, `reverse-lunge`, `romanian-deadlift`, `rowing`, `running`, `russian-twist`, `seated-cable-row`, `seated-forward-fold-stretch`, `side-lying-leg-raise`, `side-plank`, `side-plank-hip-dip`, `single-leg-calf-raise`, `single-leg-glute-bridge`, `single-leg-romanian-deadlift`, `single-leg-stand`, `single-leg-stretch`, `skater-hop`, `split-squat`, `squat`, `stair-climber`, `standing-calf-raise`, `standing-dumbbell-press`, `standing-quad-stretch`, `step-up`, `superman`, `superman-hold`, `supine-hamstring-stretch`, `swimming`, `the-hundred`, `thoracic-rotation`, `toe-touch`, `torso-twist-stretch`, `treadmill-incline-walk`, `tree-pose`, `tricep-pushdown`, `walking`, `walking-lunge`, `wall-angels`, `wall-calf-stretch`, `wall-push-up`, `wall-sit`, `wide-grip-lat-pulldown`, `worlds-greatest-stretch`

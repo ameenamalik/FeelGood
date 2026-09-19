@@ -253,6 +253,101 @@ nonisolated struct Step: Codable, Hashable, Sendable {
     /// Defaults to halfway (`seconds / 2`) if absent.
     let switchAfterSeconds: Int?
 
+    init(
+        name: String,
+        seconds: Int,
+        cue: String,
+        glossaryID: String? = nil,
+        visual: StepVisual? = nil,
+        reps: Int? = nil,
+        sets: Int? = nil,
+        switchSides: Bool? = nil,
+        switchAfterSeconds: Int? = nil
+    ) {
+        let cleanName = Self.sanitizeName(name)
+        let cleanCue = Self.sanitizeCue(cue, name: cleanName)
+        self.name = cleanName
+        self.seconds = seconds
+        self.cue = cleanCue
+        self.glossaryID = glossaryID
+        self.visual = visual
+        self.reps = reps
+        self.sets = sets
+        self.switchSides = switchSides
+        self.switchAfterSeconds = switchAfterSeconds
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name, seconds, cue, glossaryID, visual, reps, sets, switchSides, switchAfterSeconds
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let rawName = try container.decode(String.self, forKey: .name)
+        let seconds = try container.decode(Int.self, forKey: .seconds)
+        let rawCue = try container.decode(String.self, forKey: .cue)
+        let glossaryID = try container.decodeIfPresent(String.self, forKey: .glossaryID)
+        let visual = try container.decodeIfPresent(StepVisual.self, forKey: .visual)
+        let reps = try container.decodeIfPresent(Int.self, forKey: .reps)
+        let sets = try container.decodeIfPresent(Int.self, forKey: .sets)
+        let switchSides = try container.decodeIfPresent(Bool.self, forKey: .switchSides)
+        let switchAfterSeconds = try container.decodeIfPresent(Int.self, forKey: .switchAfterSeconds)
+
+        let cleanName = Self.sanitizeName(rawName)
+        let cleanCue = Self.sanitizeCue(rawCue, name: cleanName)
+
+        self.name = cleanName
+        self.seconds = seconds
+        self.cue = cleanCue
+        self.glossaryID = glossaryID
+        self.visual = visual
+        self.reps = reps
+        self.sets = sets
+        self.switchSides = switchSides
+        self.switchAfterSeconds = switchAfterSeconds
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(seconds, forKey: .seconds)
+        try container.encode(cue, forKey: .cue)
+        try container.encodeIfPresent(glossaryID, forKey: .glossaryID)
+        try container.encodeIfPresent(visual, forKey: .visual)
+        try container.encodeIfPresent(reps, forKey: .reps)
+        try container.encodeIfPresent(sets, forKey: .sets)
+        try container.encodeIfPresent(switchSides, forKey: .switchSides)
+        try container.encodeIfPresent(switchAfterSeconds, forKey: .switchAfterSeconds)
+    }
+
+    private static func sanitizeName(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.caseInsensitiveCompare("Stand still") == .orderedSame {
+            return "Closing stillness"
+        }
+        return trimmed
+    }
+
+    private static func sanitizeCue(_ raw: String, name: String) -> String {
+        var clean = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if clean.lowercased().contains("pace that feels good") {
+            let lower = name.lowercased()
+            if lower.contains("breath") || lower.contains("breathe") || lower.contains("settle") || lower.contains("pause") || lower.contains("rest") || lower.contains("still") {
+                return "Take slow, steady breaths and stay present."
+            } else {
+                return "Move with control and breathe steadily."
+            }
+        }
+        if clean.lowercased().contains("stand still, ") {
+            clean = clean.replacingOccurrences(of: "Stand still, ", with: "Stay grounded, ", options: .caseInsensitive)
+        } else if clean.lowercased().contains("stand still with ") {
+            clean = clean.replacingOccurrences(of: "Stand still with ", with: "Pause with ", options: .caseInsensitive)
+        } else if clean.caseInsensitiveCompare("Stand still.") == .orderedSame || clean.caseInsensitiveCompare("Stand still") == .orderedSame {
+            clean = "Take slow, steady breaths and stay present."
+        }
+        return clean
+    }
+
     /// Counted rather than timed. Zero or negative is treated as untimed
     /// authoring noise rather than a step nobody can finish.
     var isCounted: Bool { (reps ?? 0) > 0 }
@@ -300,28 +395,6 @@ nonisolated struct Step: Codable, Hashable, Sendable {
             if seconds > 90 { return 90 }
         }
         return max(1, seconds / 2)
-    }
-
-    init(
-        name: String,
-        seconds: Int,
-        cue: String,
-        glossaryID: String? = nil,
-        visual: StepVisual? = nil,
-        reps: Int? = nil,
-        sets: Int? = nil,
-        switchSides: Bool? = nil,
-        switchAfterSeconds: Int? = nil
-    ) {
-        self.name = name
-        self.seconds = seconds
-        self.cue = cue
-        self.glossaryID = glossaryID
-        self.visual = visual
-        self.reps = reps
-        self.sets = sets
-        self.switchSides = switchSides
-        self.switchAfterSeconds = switchAfterSeconds
     }
 }
 

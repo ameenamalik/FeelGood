@@ -890,7 +890,7 @@ final class TodayModel {
     }
 
     var shouldShowCompletionState: Bool {
-        hasCompletedSomethingElseToday || isMenuCompletedToday
+        false
     }
 
     var remainingDurationMin: Int {

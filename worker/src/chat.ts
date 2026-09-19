@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { Env } from "./types";
-import { CATALOG_SESSIONS, findSessionById, matchBestSession, CatalogSessionItem } from "./catalog_index";
+import { CATALOG_SESSIONS, findSessionById, matchBestSession, CatalogSessionItem, searchGlossary } from "./catalog_index";
 import { queryAISearch } from "./ai_search";
 import { traceAgentTurn, traceChatModel, traceToolExecution } from "./tracing";
 
@@ -278,11 +278,21 @@ export async function handleChat(payload: ChatPayload, env: Env): Promise<Respon
     },
     async () => {
       try {
-        const knowledgeContext = await traceToolExecution(
+        let knowledgeContext = await traceToolExecution(
           "ai_search",
           { query: payload.prompt },
           async () => queryAISearch(payload.prompt, env)
         );
+
+        const matchedExercise = searchGlossary(payload.prompt);
+        if (matchedExercise) {
+          const exerciseGuide = `EXERCISE GUIDE (${matchedExercise.name}):
+- Movement ID: ${matchedExercise.id}
+- Target muscles/focus: ${matchedExercise.muscles.join(", ")}
+- Form cues & instructions:
+${matchedExercise.instructions.map((inst) => `  * ${inst}`).join("\n")}`;
+          knowledgeContext = knowledgeContext ? `${knowledgeContext}\n\n${exerciseGuide}` : exerciseGuide;
+        }
 
         if (env.GEMINI_API_KEY) {
           const geminiRes = await handleGeminiChat(payload, env.GEMINI_API_KEY, knowledgeContext);

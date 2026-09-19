@@ -62,6 +62,51 @@ struct PlanEngineTests {
         #expect(total <= budget, "menu totaled \(total) minutes against a \(budget)-minute budget")
     }
 
+    @Test("Total menu duration never exceeds check-in budget across all times and moments")
+    func totalMenuDurationNeverExceedsBudget() {
+        for time in TimeBudget.allCases where !time.isZero {
+            for energy in Energy.allCases {
+                for moments in MovementMoments.allCases {
+                    let input = PlanInput(
+                        profile: Fixture.profile(moments: moments),
+                        checkIn: PlanCheckIn(energy: energy, time: time),
+                        context: Fixture.context()
+                    )
+                    let menu = Fixture.engine.makeMenu(input)
+                    let total = menu.items
+                        .filter { $0.course != .special }
+                        .reduce(0) { $0 + $1.session.durationMin }
+                    #expect(total <= time.maxMinutes, "menu totaled \(total) min against a \(time.maxMinutes)-minute budget for \(energy)/\(moments)")
+                }
+            }
+        }
+    }
+
+    @Test("Swapping an item preserves total menu budget")
+    func swappingItemPreservesBudget() {
+        for time in TimeBudget.allCases where !time.isZero {
+            let input = PlanInput(
+                profile: Fixture.profile(moments: .aCouple),
+                checkIn: PlanCheckIn(energy: .steady, time: time),
+                context: Fixture.context()
+            )
+            let menu = Fixture.engine.makeMenu(input)
+            for item in menu.items where item.course != .special {
+                var current = item
+                var seen: Set<String> = [item.session.id]
+                for _ in 0..<3 {
+                    if let alt = Fixture.engine.alternative(for: current, onMenu: menu, input: input, alreadySeen: seen) {
+                        let other = menu.items.filter { $0.id != item.id && $0.course != .special }.reduce(0) { $0 + $1.session.durationMin }
+                        let newTotal = other + alt.session.durationMin
+                        #expect(newTotal <= time.maxMinutes, "swap to \(alt.session.title) totaled \(newTotal) against \(time.maxMinutes) min")
+                        seen.insert(alt.session.id)
+                        current = alt
+                    }
+                }
+            }
+        }
+    }
+
     @Test("A skipped check-in still produces a menu")
     func skippedCheckInStillProducesAMenu() {
         let input = PlanInput(profile: Fixture.profile(), checkIn: nil, context: Fixture.context())

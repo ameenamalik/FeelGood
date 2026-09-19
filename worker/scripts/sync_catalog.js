@@ -39,6 +39,14 @@ const sessions = catalog.sessions.map((s) => ({
   equipment: s.equipment || [],
 }));
 
+const glossary = (catalog.glossary || []).map((g) => ({
+  id: g.id,
+  name: g.name,
+  aka: g.aka || [],
+  instructions: g.instructions || [],
+  muscles: g.muscles || [],
+}));
+
 const header = `// Auto-generated catalog index from FeelGood/Content/catalog.json
 // DO NOT EDIT DIRECTLY. Run 'npm run sync:catalog' to regenerate.
 
@@ -56,11 +64,37 @@ export interface CatalogSessionItem {
   equipment: string[];
 }
 
+export interface CatalogGlossaryItem {
+  id: string;
+  name: string;
+  aka?: string[];
+  instructions: string[];
+  muscles: string[];
+}
+
 export const CATALOG_SESSIONS: CatalogSessionItem[] = ${JSON.stringify(sessions, null, 2)};
+
+export const CATALOG_GLOSSARY: CatalogGlossaryItem[] = ${JSON.stringify(glossary, null, 2)};
 
 export function findSessionById(id?: string): CatalogSessionItem | undefined {
   if (!id) return undefined;
   return CATALOG_SESSIONS.find(s => s.id === id);
+}
+
+export function findGlossaryById(id?: string): CatalogGlossaryItem | undefined {
+  if (!id) return undefined;
+  return CATALOG_GLOSSARY.find(g => g.id === id);
+}
+
+export function searchGlossary(query: string): CatalogGlossaryItem | undefined {
+  const q = query.toLowerCase().trim();
+  if (!q) return undefined;
+  return CATALOG_GLOSSARY.find(g =>
+    g.name.toLowerCase() === q ||
+    g.id.toLowerCase() === q ||
+    (g.aka && g.aka.some(a => a.toLowerCase() === q || q.includes(a.toLowerCase()))) ||
+    q.includes(g.name.toLowerCase())
+  );
 }
 
 export function matchBestSession(params: {
@@ -159,4 +193,4 @@ export function matchBestSession(params: {
 `;
 
 fs.writeFileSync(outputPath, header, "utf-8");
-console.log(`Successfully synced ${sessions.length} sessions from catalog.json -> worker/src/catalog_index.ts`);
+console.log(`Successfully synced ${sessions.length} sessions and ${glossary.length} glossary items from catalog.json -> worker/src/catalog_index.ts`);

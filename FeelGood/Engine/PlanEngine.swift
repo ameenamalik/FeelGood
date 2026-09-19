@@ -181,19 +181,15 @@ nonisolated struct PlanEngine: Sendable {
             usedMinutes += appetizer.session.durationMin
         }
 
-        // `guaranteedDessertIsAlwaysOfferable` holds the dessert to the same
-        // floor as the appetizer. Try what fits the remaining budget first;
-        // when nothing does, `guaranteedDessert(maxDuration: nil)` now picks
-        // the *shortest* eligible dessert rather than the first one in
-        // catalog order or anything bounded by the whole original budget —
-        // that shortest-match behavior is what keeps this bounded to a few
-        // minutes of overshoot instead of the up-to-20-minute catalog max.
+        // `guaranteedDessert` should only be offered if it fits within the
+        // remaining budget. Unlike the appetizer, dessert carries no floor
+        // promise that allows it to overshoot the user's check-in budget.
+        // If nothing fits what remains of the budget, no dessert is offered.
         let remainingForDessert = max(0, budget - usedMinutes)
         let dessert = first(from: scored, course: .dessert, excluding: taken, excludingActivities: takenActivities, maxDuration: remainingForDessert)
             ?? first(from: scored, course: .dessert, excluding: taken, excludingActivities: heroActivities, maxDuration: remainingForDessert)
             ?? first(from: scored, course: .dessert, excluding: taken, maxDuration: remainingForDessert)
             ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken, maxDuration: remainingForDessert)
-            ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken)
         if let dessert {
             taken.insert(dessert.session.id)
             takenActivities.insert(dessert.session.activity)
@@ -215,6 +211,26 @@ nonisolated struct PlanEngine: Sendable {
         }
         if count > Self.maxMenuItems, !trimmedSides.isEmpty {
             trimmedSides.removeLast()
+        }
+
+        // Ensure total duration of non-special courses strictly respects the
+        // check-in budget. If items ever stack beyond the budget, drop optional
+        // courses in reverse priority (dessert first, then sides) until the
+        // menu fits.
+        func totalDuration() -> Int {
+            (trimmedDessert?.session.durationMin ?? 0)
+                + trimmedSides.reduce(0) { $0 + $1.session.durationMin }
+                + (main?.session.durationMin ?? 0)
+                + (appetizer?.session.durationMin ?? 0)
+        }
+        while totalDuration() > budget {
+            if trimmedDessert != nil {
+                trimmedDessert = nil
+            } else if !trimmedSides.isEmpty {
+                trimmedSides.removeLast()
+            } else {
+                break
+            }
         }
 
         // Give every line on the menu something different to say.
@@ -281,18 +297,25 @@ nonisolated struct PlanEngine: Sendable {
         let scored = rankedCandidates(input, checkIn: checkIn, stats: stats)
         let excluded = Set(menu.items.map(\.session.id)).union(alreadySeen).union([item.session.id])
 
-        if let next = first(from: scored, course: item.course, excluding: excluded) {
+        // Swapping an item must never push the total menu duration over the check-in budget.
+        let budget = checkIn.time.maxMinutes
+        let otherMinutes = menu.items
+            .filter { $0.id != item.id && $0.course != .special }
+            .reduce(0) { $0 + $1.session.durationMin }
+        let maxDuration = item.course == .special ? nil : max(0, budget - otherMinutes)
+
+        if let next = first(from: scored, course: item.course, excluding: excluded, maxDuration: maxDuration) {
             return next
         }
         // An appetizer must always be offerable, even on the third swap.
         if item.course == .appetizer {
-            if let guaranteed = guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: excluded) {
+            if let guaranteed = guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: excluded, maxDuration: maxDuration) {
                 return guaranteed
             }
         }
-        // A dessert must always be offerable.
+        // A dessert can be offered if it fits within the remaining duration.
         if item.course == .dessert {
-            if let guaranteed = guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: excluded) {
+            if let guaranteed = guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: excluded, maxDuration: maxDuration) {
                 return guaranteed
             }
         }
@@ -306,16 +329,23 @@ nonisolated struct PlanEngine: Sendable {
         let scored = rankedCandidates(input, checkIn: checkIn, stats: stats)
         let excluded = Set(menu.items.map(\.session.id)).union([item.session.id])
 
-        if let next = first(from: scored, course: item.course, excluding: excluded) {
+        // Swapping an item must never push the total menu duration over the check-in budget.
+        let budget = checkIn.time.maxMinutes
+        let otherMinutes = menu.items
+            .filter { $0.id != item.id && $0.course != .special }
+            .reduce(0) { $0 + $1.session.durationMin }
+        let maxDuration = item.course == .special ? nil : max(0, budget - otherMinutes)
+
+        if let next = first(from: scored, course: item.course, excluding: excluded, maxDuration: maxDuration) {
             return next
         }
         if item.course == .appetizer {
-            if let guaranteed = guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: excluded) {
+            if let guaranteed = guaranteedAppetizer(input, checkIn: checkIn, stats: stats, excluding: excluded, maxDuration: maxDuration) {
                 return guaranteed
             }
         }
         if item.course == .dessert {
-            if let guaranteed = guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: excluded) {
+            if let guaranteed = guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: excluded, maxDuration: maxDuration) {
                 return guaranteed
             }
         }

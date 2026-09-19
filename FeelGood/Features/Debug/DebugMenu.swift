@@ -119,6 +119,40 @@ struct DebugMenu: View {
                         }
                     }
 
+                    VStack(alignment: .leading, spacing: FGSpace.xs) {
+                        Text("Exercise Demos")
+                            .font(FGFont.title)
+                            .foregroundStyle(FGColor.ink)
+                        Text("Newly animated exercise demo flipbooks.")
+                            .font(FGFont.reason)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+
+                    VStack(spacing: FGSpace.m) {
+                        let demos: [(String, String)] = [
+                            ("Downward Dog", "downward-dog"),
+                            ("Qigong: Lifting the Sky", "qigong-lifting-the-sky"),
+                            ("Wall Angels", "wall-angels"),
+                            ("Full Body Shakeout", "full-body-shake"),
+                            ("Mindful Breathing", "deep-breath")
+                        ]
+                        ForEach(demos, id: \.1) { name, id in
+                            FGCard {
+                                VStack(alignment: .leading, spacing: FGSpace.s) {
+                                    Text(name)
+                                        .font(FGFont.body.weight(.semibold))
+                                        .foregroundStyle(FGColor.ink)
+                                    HStack {
+                                        Spacer()
+                                        ExerciseDemoView(glossaryID: id)
+                                            .frame(width: 140, height: 140)
+                                        Spacer()
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     FGPrimaryButton(title: "Back to today") { dismiss() }
                 }
                 .padding(FGSpace.page)
