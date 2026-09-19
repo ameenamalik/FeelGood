@@ -10,6 +10,7 @@
 
 import Foundation
 import SwiftData
+import WidgetKit
 
 // MARK: - Profile
 
@@ -170,6 +171,16 @@ final class UserProfile {
     var avatarBackground: ProfileAvatarBackground {
         get { ProfileAvatarBackground(rawValue: avatarBackgroundRaw) ?? .automatic }
         set { avatarBackgroundRaw = newValue.rawValue }
+    }
+
+    /// Hands the home-screen widget the fruit and colour chosen here, so the
+    /// two never drift apart. Call after any change to either.
+    func publishWidgetAppearance() {
+        SharedContainer.writeAppearance(WidgetAppearance(
+            avatarRaw: avatar.rawValue,
+            auraRaw: avatarBackground.aura(for: avatar).key
+        ))
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 

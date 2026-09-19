@@ -828,24 +828,27 @@ final class TodayModel {
         }
     }
 
-    /// The home screen's copy of today's Main.
+    /// The home screen's copy of today's menu.
     ///
     /// Flattened on the way out — the widget gets strings and a colour, never
     /// the model — and re-published on every change, because a widget offering
     /// a session you already finished is worse than one offering nothing.
     private func publishSnapshot(now: Date) {
-        guard let main = menu.items.first(where: { $0.course == .main }) ?? menu.items.first
-        else { return }
+        guard !menu.items.isEmpty else { return }
 
         SharedContainer.writeSnapshot(TodaySnapshot(
             day: calendar.startOfDay(for: now),
-            sessionID: main.session.id,
-            courseLabel: main.course.label,
-            accentHex: main.course.accentHex,
-            title: main.session.title,
-            reason: main.reasonText,
-            durationLabel: main.session.durationLabel,
-            isDone: completedToday.contains(main.session.id)
+            items: menu.items.map { item in
+                TodayItem(
+                    sessionID: item.session.id,
+                    courseLabel: item.course.label,
+                    accentHex: item.course.accentHex,
+                    title: item.session.title,
+                    reason: item.reasonText,
+                    durationLabel: item.session.durationLabel,
+                    isDone: completedToday.contains(item.session.id)
+                )
+            }
         ))
         WidgetCenter.shared.reloadAllTimelines()
     }

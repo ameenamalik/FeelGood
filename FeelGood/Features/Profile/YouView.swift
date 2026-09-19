@@ -197,6 +197,7 @@ struct YouView: View {
         guard profile.avatar != avatar else { return }
         profile.avatar = avatar
         try? modelContext.save()
+        profile.publishWidgetAppearance()
         Analytics.capture("profile_avatar_changed", properties: ["avatar": avatar.rawValue])
 
         if let userID = authService.currentUser?.uid {
@@ -210,6 +211,7 @@ struct YouView: View {
         guard profile.avatarBackground != background else { return }
         profile.avatarBackground = background
         try? modelContext.save()
+        profile.publishWidgetAppearance()
         Analytics.capture(
             "profile_avatar_background_changed",
             properties: ["background": background.rawValue]
