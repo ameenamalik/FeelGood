@@ -565,6 +565,8 @@ export function ScreenshotEditor() {
         setDevice={(v) => setState((p) => ({ ...p, device: v }))}
         orientation={state.orientation}
         setOrientation={(v) => setState((p) => ({ ...p, orientation: v }))}
+        themeId={state.themeId}
+        setThemeId={(v) => setState((p) => ({ ...p, themeId: v }))}
         onExport={exportAll}
         onResetAll={() => {
           reset();

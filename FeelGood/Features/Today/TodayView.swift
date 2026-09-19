@@ -89,7 +89,6 @@ struct TodayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     header
-                    checkInPrompt
                     menuHeading
                     calendarFitCard
                     if model.shouldShowCompletionState && !showMenuAnyway {
@@ -172,12 +171,14 @@ struct TodayView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: FGSpace.s) {
+        VStack(alignment: .leading, spacing: FGSpace.xs) {
             Text(model.upgradedHeadline ?? model.menu.headline)
                 .font(FGFont.display)
                 .tracking(-0.8)
                 .foregroundStyle(FGColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
+
+            checkInSubtitle
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
@@ -275,14 +276,10 @@ struct TodayView: View {
         selected = item
     }
 
-    /// The check-in, as a heading and a card that reads back what you said.
-    ///
-    /// It used to be a lone button, which meant the answers vanished the moment
-    /// they were given — the menu was built from something you could no longer
-    /// see. Now the card holds the line and the action beside it changes from
-    /// answering to amending.
+    /// The check-in represented as a seamless, tappable subtitle under the header.
     private struct CheckInAuraPulse: View {
         let checkIn: PlanCheckIn?
+        var size: CGFloat = 18
         @State private var isPulsing = false
         @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -307,12 +304,12 @@ struct TodayView: View {
                                 Color.clear
                             ],
                             center: .center,
-                            startRadius: 4,
-                            endRadius: 22
+                            startRadius: 2,
+                            endRadius: size * 0.95
                         )
                     )
-                    .frame(width: 42, height: 42)
-                    .scaleEffect(isPulsing ? 1.28 : 0.88)
+                    .frame(width: size * 1.6, height: size * 1.6)
+                    .scaleEffect(isPulsing ? 1.25 : 0.88)
                     .opacity(isPulsing ? 0.70 : 0.30)
                     .animation(
                         reduceMotion ? .none : Animation.easeInOut(duration: 2.2).repeatForever(autoreverses: true),
@@ -320,84 +317,48 @@ struct TodayView: View {
                     )
 
                 // Core AuraDot
-                AuraDot(color: auraColor, size: 28)
+                AuraDot(color: auraColor, size: size)
                     .scaleEffect(isPulsing && checkIn == nil ? 1.08 : 0.95)
                     .animation(
                         reduceMotion ? .none : Animation.easeInOut(duration: 2.2).repeatForever(autoreverses: true),
                         value: isPulsing
                     )
             }
-            .frame(width: 34, height: 34)
+            .frame(width: size, height: size)
             .onAppear {
                 isPulsing = true
             }
         }
     }
 
-    private var checkInPrompt: some View {
+    private var checkInSubtitle: some View {
         Button { isCheckingIn = true } label: {
-            HStack(spacing: FGSpace.s + 3) {
-                CheckInAuraPulse(checkIn: model.checkIn)
+            HStack(spacing: 8) {
+                CheckInAuraPulse(checkIn: model.checkIn, size: 18)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    if let checkIn = model.checkIn {
-                        Text(checkIn.detailedSummaryPhrase)
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(FGColor.ink)
-                            .multilineTextAlignment(.leading)
-                            .lineLimit(2)
-                    } else {
-                        Text("Check in for today")
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(FGColor.ink)
-                            .multilineTextAlignment(.leading)
-                            .lineLimit(1)
-
-                        Text("Takes about 30 seconds")
-                            .font(.system(size: 13, weight: .regular))
-                            .foregroundStyle(FGColor.inkMuted)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                if model.checkIn == nil {
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 14, weight: .semibold))
+                if let checkIn = model.checkIn {
+                    Text(checkIn.detailedSummaryPhrase)
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundStyle(FGColor.inkMuted)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 } else {
-                    HStack(spacing: 4) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 11, weight: .medium))
-                        Text("Edit")
-                            .font(FGFont.label.weight(.semibold))
-                    }
-                    .foregroundStyle(FGColor.inkMuted)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.white.opacity(colorScheme == .dark ? 0.12 : 0.60))
-                    .clipShape(Capsule())
-                    .fixedSize()
-                    .padding(.trailing, FGSpace.xs)
+                    Text("Check in for today • 30s")
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundStyle(FGColor.inkMuted)
+                        .lineLimit(1)
                 }
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(FGColor.inkMuted.opacity(0.6))
             }
-            .frame(minHeight: 60)
-            .padding(.vertical, FGSpace.xs)
-            .padding(.horizontal, FGSpace.m)
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.white.opacity(colorScheme == .dark ? 0.10 : 0.72))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.12 : 0.5), lineWidth: 1)
-                    )
-                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.2 : 0.04), radius: 8, x: 0, y: 3)
-            )
+            .padding(.vertical, 2)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityLabel(
-            model.checkIn.map { "Today's check-in: \($0.detailedSummaryPhrase). Edit" }
+            model.checkIn.map { "Today's check-in: \($0.detailedSummaryPhrase). Tap to adjust" }
                 ?? "Check in for today. Takes about 30 seconds"
         )
     }

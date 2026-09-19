@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "appName": "FeelGood",
-  "themeId": "feelgood-terracotta",
+  "themeId": "feelgood-hybrid",
   "connectedCanvas": false,
   "locales": [
     "en"
@@ -19,7 +19,7 @@
           "en": ""
         },
         "headline": {
-          "en": "One question, answered:\nwhat should I do today?"
+          "en": "Movement for days when you have zero energy"
         },
         "screenshot": "/screenshots/apple/iphone/{locale}/01.png",
         "transforms": {
@@ -30,29 +30,85 @@
             "height": 2064.96,
             "rotation": 0,
             "zIndex": 3
+          },
+          "caption": {
+            "x": 105.6,
+            "y": 258.12,
+            "width": 1108.8,
+            "height": 803.0400000000001,
+            "rotation": 0,
+            "zIndex": 4
           }
-        }
+        },
+        "textElements": [
+          {
+            "id": "benefit",
+            "text": {
+              "en": "Bite-sized routines from 2 to 15 minutes"
+            },
+            "transform": {
+              "x": 105.6,
+              "y": 655.6074766355136,
+              "width": 1108.8,
+              "height": 140,
+              "rotation": 0,
+              "zIndex": 5
+            },
+            "fontSize": 48,
+            "fontWeight": 400,
+            "color": "#706357",
+            "align": "center"
+          }
+        ]
       },
       {
         "id": "feelgood_2",
-        "layout": "device-top",
+        "layout": "hero",
         "label": {
           "en": ""
         },
         "headline": {
-          "en": "Every little win counts,\nlike \"First Move.\""
+          "en": "Check in, get your plan"
         },
-        "screenshot": "/screenshots/apple/iphone/{locale}/02.png",
+        "screenshot": "/screenshots/apple/iphone/{locale}/chat.png",
         "transforms": {
+          "device": {
+            "x": 153.18224783861672,
+            "y": 1112.7839999999999,
+            "width": 1013.6355043227666,
+            "height": 2064.96,
+            "rotation": 0,
+            "zIndex": 3
+          },
           "caption": {
-            "x": 105.60001140514677,
-            "y": 2010.2000031909383,
-            "width": 1109,
-            "height": 657,
+            "x": 105.6,
+            "y": 258.12,
+            "width": 1108.8,
+            "height": 803.0400000000001,
             "rotation": 0,
             "zIndex": 4
           }
-        }
+        },
+        "textElements": [
+          {
+            "id": "benefit",
+            "text": {
+              "en": "Pick from 2 to 20 minutes, indoors \nor outdoor exercises\n"
+            },
+            "transform": {
+              "x": 105.6,
+              "y": 655.6074766355136,
+              "width": 1108.8,
+              "height": 140,
+              "rotation": 0,
+              "zIndex": 5
+            },
+            "fontSize": 48,
+            "fontWeight": 400,
+            "color": "#706357",
+            "align": "center"
+          }
+        ]
       },
       {
         "id": "feelgood_3",
@@ -61,19 +117,47 @@
           "en": ""
         },
         "headline": {
-          "en": "Routines built around\nyour day."
+          "en": "Always a \n5-minute option\n"
         },
-        "screenshot": "/screenshots/apple/iphone/{locale}/03.png",
+        "screenshot": "/screenshots/apple/iphone/{locale}/04.png",
         "transforms": {
+          "device": {
+            "x": 153.18224783861672,
+            "y": 1112.7839999999999,
+            "width": 1013.6355043227666,
+            "height": 2064.96,
+            "rotation": 0,
+            "zIndex": 3
+          },
           "caption": {
-            "x": 105.59990101834222,
-            "y": 472.1200060031524,
-            "width": 1109,
-            "height": 589,
+            "x": 105.6,
+            "y": 258.12,
+            "width": 1108.8,
+            "height": 803.0400000000001,
             "rotation": 0,
             "zIndex": 4
           }
-        }
+        },
+        "textElements": [
+          {
+            "id": "benefit",
+            "text": {
+              "en": "Quick resets for the days with zero motivation"
+            },
+            "transform": {
+              "x": 105.6,
+              "y": 655.6074766355136,
+              "width": 1108.8,
+              "height": 140,
+              "rotation": 0,
+              "zIndex": 5
+            },
+            "fontSize": 48,
+            "fontWeight": 400,
+            "color": "#706357",
+            "align": "center"
+          }
+        ]
       },
       {
         "id": "feelgood_4",
@@ -82,63 +166,80 @@
           "en": ""
         },
         "headline": {
-          "en": "Step-by-step routines.\nNo doomscrolling for a workout."
+          "en": "No streaks. No scores. No guilt."
         },
-        "screenshot": "/screenshots/apple/iphone/{locale}/04.png",
+        "screenshot": "/screenshots/apple/iphone/{locale}/02.png",
         "transforms": {
           "caption": {
-            "x": 105.59985166669392,
-            "y": 2036.2000054893333,
+            "x": 105.6,
+            "y": 1950,
             "width": 1109,
-            "height": 631,
+            "height": 630,
             "rotation": 0,
             "zIndex": 4
           }
-        }
+        },
+        "textElements": [
+          {
+            "id": "benefit",
+            "text": {
+              "en": "Take days off anytime without feeling behind"
+            },
+            "transform": {
+              "x": 114.53457943925233,
+              "y": 2325.364485981309,
+              "width": 1109,
+              "height": 140,
+              "rotation": 0,
+              "zIndex": 5
+            },
+            "fontSize": 48,
+            "fontWeight": 400,
+            "color": "#706357",
+            "align": "center"
+          }
+        ]
       },
       {
         "id": "feelgood_5",
-        "layout": "hero",
-        "label": {
-          "en": ""
-        },
-        "headline": {
-          "en": "However you fit it in,\nit still counts as showing up."
-        },
-        "screenshot": "/screenshots/apple/iphone/{locale}/05.png"
-      },
-      {
-        "id": "feelgood_6",
         "layout": "device-top",
         "label": {
           "en": ""
         },
         "headline": {
-          "en": "A quiet look back\nat your last two weeks."
+          "en": "Celebrate every little win"
         },
-        "screenshot": "/screenshots/apple/iphone/{locale}/06.png"
-      },
-      {
-        "id": "feelgood_8",
-        "layout": "hero",
-        "label": {
-          "en": ""
+        "screenshot": "/screenshots/apple/iphone/{locale}/09.png",
+        "transforms": {
+          "caption": {
+            "x": 105.6,
+            "y": 1950,
+            "width": 1109,
+            "height": 630,
+            "rotation": 0,
+            "zIndex": 4
+          }
         },
-        "headline": {
-          "en": "Type how you're feeling.\nIt turns that into a plan."
-        },
-        "screenshot": "/screenshots/apple/iphone/{locale}/08.png"
-      },
-      {
-        "id": "feelgood_9",
-        "layout": "device-top",
-        "label": {
-          "en": ""
-        },
-        "headline": {
-          "en": "Six little wins to collect,\none session at a time."
-        },
-        "screenshot": "/screenshots/apple/iphone/{locale}/09.png"
+        "textElements": [
+          {
+            "id": "benefit",
+            "text": {
+              "en": "Gentle badges for showing up on your terms"
+            },
+            "transform": {
+              "x": 105.6,
+              "y": 2316.4299065420582,
+              "width": 1108.8,
+              "height": 140,
+              "rotation": 0,
+              "zIndex": 5
+            },
+            "fontSize": 48,
+            "fontWeight": 400,
+            "color": "#706357",
+            "align": "center"
+          }
+        ]
       }
     ],
     "android": [],

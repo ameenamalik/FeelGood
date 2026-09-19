@@ -44,8 +44,8 @@ struct FeelGoodPaywallView: View {
 
     private static let menuTeasers: [MenuTeaser] = [
         MenuTeaser(course: .appetizer, title: "Four rounds of box breathing"),
-        MenuTeaser(course: .main, title: "Twenty minutes on the machines"),
-        MenuTeaser(course: .side, title: "Carry the shopping in one trip"),
+        MenuTeaser(course: .main, title: "Twenty minutes of gentle flow"),
+        MenuTeaser(course: .side, title: "Shoulder reset between meetings"),
         MenuTeaser(course: .dessert, title: "Ten minutes in the light"),
     ]
 
@@ -83,11 +83,12 @@ struct FeelGoodPaywallView: View {
     @State private var isRestoring = false
     @State private var restoreResultMessage: String?
     @State private var hasRevealedMenu = false
-    @State private var chatPhase: ChatPhase = .empty
     #if DEBUG
     @State private var heroSlideIndex = Self.debugForcedHeroSlideIndex ?? 0
+    @State private var chatPhase: ChatPhase = (Self.debugForcedHeroSlideIndex == 3) ? .assistantFollowUp : .userOpener
     #else
     @State private var heroSlideIndex = 0
+    @State private var chatPhase: ChatPhase = .userOpener
     #endif
 
     #if DEBUG
@@ -165,9 +166,6 @@ struct FeelGoodPaywallView: View {
             VStack(spacing: FGSpace.m) {
                 heroCard {
                     topSceneContent
-                        .id(heroSlideIndex)
-                        .transition(.opacity)
-                        .animation(reduceMotion ? nil : FGMotion.gentle, value: heroSlideIndex)
                 }
 
                 heroCarousel
@@ -185,40 +183,53 @@ struct FeelGoodPaywallView: View {
 
     // MARK: - Hero scene
 
-    /// Just the content that differs per slide — no box/border/shadow here.
+    /// Just the content that differs per scene — no box/border/shadow here.
     /// Those live once on `heroCard` at the call site so the card itself
     /// never re-inserts (and never animates) when the content swaps.
+    /// Cross-fades inside a top-aligned `ZStack` keyed on `currentSlide.scene`,
+    /// so slides sharing the same scene (e.g. slides 1–2 or 3–4) stay perfectly
+    /// stable with zero glitching or teardown.
     @ViewBuilder
     private var topSceneContent: some View {
-        switch currentSlide.scene {
-        case .menu: menuHeroContent
-        case .chat: chatSceneContent
+        ZStack(alignment: .top) {
+            if currentSlide.scene == .menu {
+                menuHeroContent
+                    .transition(.opacity)
+            } else {
+                chatSceneContent
+                    .transition(.opacity)
+            }
         }
+        .animation(reduceMotion ? nil : FGMotion.gentle, value: currentSlide.scene)
     }
 
     /// The shared "printed card" chrome both scenes sit inside, so swapping
     /// between them on a carousel tick reads as one card's content changing
     /// rather than two differently-shaped things trading places.
-    /// An exact height, not a floor — the menu card (four rows) is naturally
-    /// taller than the chat card (two bubbles), so a `minHeight` only pinned
-    /// the shorter one and left the actual jump between them unfixed. Sized
-    /// to comfortably fit the taller (menu) content with room to spare.
-    private static let heroCardHeight: CGFloat = 246
+    /// Pinned to `maxWidth: .infinity` and exact height 246 so the card frame,
+    /// background, border, and shadow never shift, shrink into a square, or glitch
+    /// regardless of child layout.
+    /// Sized to comfortably fit both scenes with room to spare.
+    private static let heroCardHeight: CGFloat = 260
 
     private func heroCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .padding(FGSpace.m)
-            .frame(height: Self.heroCardHeight, alignment: .top)
-            .background(
-                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .fill(FGColor.surface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .strokeBorder(FGColor.lineStrong, lineWidth: 1)
-            )
-            .shadow(color: FGColor.ink.opacity(0.08), radius: 12, y: 6)
-            .rotationEffect(.degrees(-1))
+        ZStack(alignment: .top) {
+            content()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(FGSpace.m)
+        .frame(maxWidth: .infinity)
+        .frame(height: Self.heroCardHeight, alignment: .top)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+        )
+        .shadow(color: FGColor.ink.opacity(0.08), radius: 12, y: 6)
+        .rotationEffect(.degrees(-1))
     }
 
     /// A single printed-menu card rather than four separate blocks — the
@@ -265,68 +276,124 @@ struct FeelGoodPaywallView: View {
     /// indicator holds the beat, then the reply replaces it — rather than
     /// dropping the whole exchange on screen at once.
     private enum ChatPhase: Int {
-        case empty, userSent, assistantThinking, assistantReplied
+        case userOpener
+        case assistantReplied
+        case userFollowUp
+        case assistantThinking
+        case assistantFollowUp
     }
 
     private var chatSceneContent: some View {
-        VStack(alignment: .trailing, spacing: 8) {
-            if chatPhase.rawValue >= ChatPhase.userSent.rawValue {
+        VStack(alignment: .trailing, spacing: 6) {
+            // Turn 1: User check-in
+            if chatPhase.rawValue >= ChatPhase.userOpener.rawValue {
                 HStack {
-                    Spacer(minLength: 30)
+                    Spacer(minLength: 24)
                     Text("My back is sore, I have 20 minutes, and I'm tired.")
-                        .font(.system(size: 13, weight: .regular))
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.trailing)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
                         .background(Color(light: 0x26231F, dark: 0x36322E))
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .transition(chatBubbleTransition)
             }
 
+            // Turn 1: Assistant gentle recommendation
+            if chatPhase.rawValue >= ChatPhase.assistantReplied.rawValue {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Here's something gentle for your back:")
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundStyle(FGColor.ink)
+
+                        HStack(spacing: 6) {
+                            Image(Course.main.menuMascotAsset)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 18, height: 18)
+
+                            Text("Ten gentle minutes on the mat")
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                .foregroundStyle(FGColor.ink)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(FGAura.sage.core.opacity(0.55))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color(light: 0xF3EEE7, dark: 0x262320))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                    Spacer(minLength: 24)
+                }
+                .transition(chatBubbleTransition)
+            }
+
+            // Turn 2: User follow-up asking for something shorter
+            if chatPhase.rawValue >= ChatPhase.userFollowUp.rawValue {
+                HStack {
+                    Spacer(minLength: 24)
+                    Text("Hmm, something else shorter?")
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.trailing)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(Color(light: 0x26231F, dark: 0x36322E))
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .transition(chatBubbleTransition)
+            }
+
+            // Turn 2: Assistant thinking or follow-up reply
             if chatPhase == .assistantThinking {
                 HStack {
                     chatTypingIndicator
-                    Spacer(minLength: 30)
+                    Spacer(minLength: 24)
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
-            } else if chatPhase == .assistantReplied {
+            } else if chatPhase == .assistantFollowUp {
                 HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Here's something gentle for your back.")
-                            .font(.system(size: 13, weight: .regular))
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Five minutes on the floor, zero pressure:")
+                            .font(.system(size: 11, weight: .regular))
                             .foregroundStyle(FGColor.ink)
 
-                        HStack(spacing: 8) {
-                            Image(Course.appetizer.menuMascotAsset)
+                        HStack(spacing: 6) {
+                            Image(Course.dessert.menuMascotAsset)
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 24, height: 24)
+                                .frame(width: 18, height: 18)
 
-                            Text("Five-minute shake-out")
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            Text("Living room floor unwind")
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
                                 .foregroundStyle(FGColor.ink)
                         }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(FGAura.sage.core.opacity(0.55))
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(FGAura.apricot.core.opacity(0.45))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
                     .background(Color(light: 0xF3EEE7, dark: 0x262320))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-                    Spacer(minLength: 30)
+                    Spacer(minLength: 24)
                 }
                 .transition(chatBubbleTransition)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .top)
         .animation(reduceMotion ? nil : FGMotion.gentle, value: chatPhase)
-        .task { await runChatSequence() }
+        .task(id: heroSlideIndex) { await handleSlideChange(heroSlideIndex) }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Example chat. You: my back is sore, I have 20 minutes, and I'm tired. FeelGood: here's something gentle for your back — a five-minute shake-out.")
+        .accessibilityLabel("Example chat. You: my back is sore, I have 20 minutes, and I'm tired. FeelGood: here's something gentle for your back — ten gentle minutes on the mat. You: hmm, something else shorter? FeelGood: five minutes on the floor, zero pressure — living room floor unwind.")
     }
 
     private var chatBubbleTransition: AnyTransition {
@@ -338,59 +405,68 @@ struct FeelGoodPaywallView: View {
             ProgressView()
                 .scaleEffect(0.7)
                 .tint(FGColor.controlAccent)
-            Text("Shaping routine...")
-                .font(.system(size: 12, weight: .medium))
+            Text("Adapting routine...")
+                .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(FGColor.inkMuted)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 12)
         .background(Color(light: 0xF3EEE7, dark: 0x262320))
         .clipShape(Capsule())
     }
 
-    /// Replays from the top each time a chat slide comes onto the carousel —
-    /// `.task` restarts automatically because `topSceneContent` above is keyed to
-    /// `heroSlideIndex`, so this needs no cancellation bookkeeping of its own.
-    private func runChatSequence() async {
-        chatPhase = .empty
+    /// Choreographs the dialogue turns with the carousel slides:
+    /// - Slide 3 ("Say how you're feeling"): Turn 1 (check-in + initial recommendation)
+    /// - Slide 4 ("Talk to it when you're stuck"): Turn 2 (request shorter session + adapted 5-min floor unwind)
+    private func handleSlideChange(_ index: Int) async {
         guard !reduceMotion else {
-            chatPhase = .assistantReplied
+            chatPhase = .assistantFollowUp
             return
         }
-        try? await Task.sleep(for: .milliseconds(400))
-        guard !Task.isCancelled else { return }
-        chatPhase = .userSent
-        try? await Task.sleep(for: .milliseconds(700))
-        guard !Task.isCancelled else { return }
-        chatPhase = .assistantThinking
-        try? await Task.sleep(for: .milliseconds(900))
-        guard !Task.isCancelled else { return }
-        chatPhase = .assistantReplied
+        if index == 2 {
+            chatPhase = .userOpener
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            chatPhase = .assistantReplied
+        } else if index == 3 {
+            if chatPhase.rawValue < ChatPhase.assistantReplied.rawValue {
+                chatPhase = .assistantReplied
+            }
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            chatPhase = .userFollowUp
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
+            chatPhase = .assistantThinking
+            try? await Task.sleep(for: .milliseconds(550))
+            guard !Task.isCancelled else { return }
+            chatPhase = .assistantFollowUp
+        }
     }
 
     private func menuTeaserRow(_ teaser: MenuTeaser) -> some View {
         HStack(spacing: FGSpace.s) {
             Circle()
                 .fill(teaser.course.accent)
-                .frame(width: 7, height: 7)
+                .frame(width: 6, height: 6)
 
             Text(teaser.course.label.uppercased())
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .foregroundStyle(teaser.course.tagText)
-                .frame(width: 64, alignment: .leading)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .tracking(0.5)
+                .foregroundStyle(FGColor.inkMuted)
+                .frame(width: 66, alignment: .leading)
 
             Text(teaser.title)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(FGColor.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
 
             Spacer(minLength: FGSpace.xs)
 
             Image(teaser.course.menuMascotAsset)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 26, height: 26)
+                .frame(width: 24, height: 24)
                 .accessibilityHidden(true)
         }
         .padding(.vertical, 8)
@@ -403,15 +479,17 @@ struct FeelGoodPaywallView: View {
     /// on screen at once, and each slide is short enough to read at a glance.
     private var heroCarousel: some View {
         VStack(spacing: FGSpace.s) {
-            Text(currentSlide.title)
-                .font(FGFont.display)
-                .tracking(-0.6)
-                .foregroundStyle(FGColor.ink)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .id("title-\(heroSlideIndex)")
-                .transition(.opacity)
-                .accessibilityAddTraits(.isHeader)
+            ZStack {
+                Text(currentSlide.title)
+                    .font(FGFont.display)
+                    .tracking(-0.6)
+                    .foregroundStyle(FGColor.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .id("title-\(heroSlideIndex)")
+                    .transition(.opacity)
+                    .accessibilityAddTraits(.isHeader)
+            }
 
             HStack(spacing: 6) {
                 ForEach(Self.heroSlides.indices, id: \.self) { index in

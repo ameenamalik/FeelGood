@@ -134,15 +134,54 @@ export const THEMES: Record<string, Theme> = {
     accent: "#B8794A",
     muted: "#65736B",
   },
+  "feelgood-hybrid": {
+    id: "feelgood-hybrid",
+    name: "FeelGood Hybrid (Vitality + Editorial)",
+    // The Golden Hybrid: Crisp luminous warm ivory canvas from Vitality
+    // paired with deep roasted coffee typography and warm terracotta/tangerine from Editorial.
+    bg: "#FFFDF9",
+    bgAlt: "#1C1612",
+    fg: "#1C1612",
+    fgAlt: "#FFFDF9",
+    accent: "#D96B3E",
+    muted: "#756556",
+  },
   "feelgood-terracotta": {
     id: "feelgood-terracotta",
-    name: "FeelGood Sage Studio",
-    // Real design tokens (Paper file "Jazzy tulip", node 2GZ-0) — sage
-    // instead of clay/terracotta per direct feedback. Background is the
-    // app's actual warm cream, flat (no gradient), with sage-deep for
-    // headline text — same "-Deep" pattern the app itself uses to carry
-    // text on a light ground. Inverted slides swap to ink, the app's own
-    // dark surface colour (chat bubbles, the Start button).
+    name: "FeelGood Vitality (Juicy)",
+    // Upgraded design tokens: crisp warm ivory background that gives high contrast
+    // against both the page and the phone frame, rich warm espresso for headlines
+    // (replaces muddy army-green #55624A), and juicy persimmon accent matching the mascots.
+    bg: "#FFFDF9",
+    bgAlt: "#1C1713",
+    fg: "#1E1711",
+    fgAlt: "#FFFDF9",
+    accent: "#E86339",
+    muted: "#706357",
+  },
+  "feelgood-ceramic": {
+    id: "feelgood-ceramic",
+    name: "FeelGood Luxe Ceramic",
+    bg: "#F9F5EE",
+    bgAlt: "#221B16",
+    fg: "#1A1512",
+    fgAlt: "#F9F5EE",
+    accent: "#C85A32",
+    muted: "#6E6156",
+  },
+  "feelgood-aura": {
+    id: "feelgood-aura",
+    name: "FeelGood Sunset Aura",
+    bg: "#FFF6EE",
+    bgAlt: "#1B1411",
+    fg: "#1E1612",
+    fgAlt: "#FFF6EE",
+    accent: "#FF6B4A",
+    muted: "#735E51",
+  },
+  "feelgood-sage-legacy": {
+    id: "feelgood-sage-legacy",
+    name: "FeelGood Sage (Legacy)",
     bg: "#F5F1E9",
     bgAlt: "#2A2420",
     fg: "#55624A",

@@ -85,7 +85,7 @@ struct ConversationThreadTests {
         )
         let messages = [
             ConversationMessage(role: .user, text: "My lower back aches"),
-            ConversationMessage(role: .assistant, text: "Let's do this gentle reset.", recommendation: rec, isReasonVisible: true, isCommittedToToday: true)
+            ConversationMessage(role: .assistant, text: "Let's do this gentle reset.", recommendation: rec, isCommittedToToday: true)
         ]
         let quickReplies = [
             QuickReplyAction(id: "why", label: "Why this?", actionType: .askWhy)

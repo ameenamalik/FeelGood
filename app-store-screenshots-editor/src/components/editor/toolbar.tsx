@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { AlertTriangle, Check, Cloud, Download, UnfoldHorizontal, RotateCcw } from "lucide-react";
+import { AlertTriangle, Check, Cloud, Download, UnfoldHorizontal, RotateCcw, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,6 +20,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DEVICE_LABEL,
+  THEMES,
   supportsLandscape,
 } from "@/lib/constants";
 import { detectPlatform } from "@/lib/defaults";
@@ -37,6 +38,8 @@ type Props = {
   setDevice: (v: Device) => void;
   orientation: Orientation;
   setOrientation: (v: Orientation) => void;
+  themeId: string;
+  setThemeId: (v: string) => void;
   onExport: () => void;
   onResetAll: () => void;
   onResetDevice: () => void;
@@ -171,6 +174,34 @@ export function Toolbar(props: Props) {
           </SelectContent>
         </Select>
       )}
+
+      <span aria-hidden className="mx-1 h-5 w-px bg-border" />
+
+      <Select
+        value={props.themeId}
+        onValueChange={props.setThemeId}
+        disabled={props.busy}
+      >
+        <SelectTrigger className="h-8 w-48 text-xs">
+          <div className="flex items-center gap-1.5 truncate">
+            <Palette className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">{THEMES[props.themeId]?.name || "Theme"}</span>
+          </div>
+        </SelectTrigger>
+        <SelectContent>
+          {Object.values(THEMES).map((t) => (
+            <SelectItem key={t.id} value={t.id}>
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-block h-3 w-3 shrink-0 rounded-full border shadow-sm"
+                  style={{ backgroundColor: t.bg }}
+                />
+                <span className="truncate">{t.name}</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <SaveStatus savedAt={props.savedAt} saveError={props.saveError} />
