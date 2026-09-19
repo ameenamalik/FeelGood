@@ -63,9 +63,6 @@ struct PlayerView: View {
     @State private var stepStartOpacity = 0.0
     /// Large, glanceable countdown digits scalable with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var timerFontSize = 68.0
-    /// The counter is the whole tap target, and it grows with Dynamic Type —
-    /// this is used mid-movement, often without looking straight at it.
-    @ScaledMetric(relativeTo: .largeTitle) private var counterHeight = 180.0
     @State private var isRunning = true
     @State private var isDone = false
     @State private var haveFeelChoicesLanded = false
@@ -538,7 +535,7 @@ struct PlayerView: View {
             } else if readingRemaining > 0 {
                 readingCountdown
             } else if step.isCounted, let perSet = step.reps {
-                counter(step, perSet: perSet)
+                counterInfo(step, perSet: perSet)
             } else if isUntimed {
                 untimedRestIndicator
             } else {
@@ -608,13 +605,27 @@ struct PlayerView: View {
                     isReadingPaused = false
                     if isBreathingStep(step) { restartBreathingCycle() }
                 }
-            } else if step.isCounted, repsDone > 0 || setsDone > 0 {
-                // Counting is only trustworthy if it is reversible. A
-                // thumb catches the card twice and the count is worse
-                // than useless without a way back — including back into
-                // the set before this one.
-                FGQuietButton("Undo one", systemImage: "arrow.uturn.backward") {
-                    undoOne(step)
+            } else if step.isCounted {
+                // No tap-per-rep: a body in the middle of a set has no hand
+                // free to count with, and the running tally used to eat the
+                // vertical space this screen wants for the exercise's own
+                // animation. One tap closes the whole set instead.
+                VStack(spacing: FGSpace.s) {
+                    FGPrimaryButton(
+                        title: setsDone + 1 < step.setCount
+                            ? "Done with this set"
+                            : (index == steps.count - 1 ? "Finish session" : "Done with this step")
+                    ) {
+                        completeSet(step)
+                    }
+                    if setsDone > 0 {
+                        // A thumb catches the card twice and a set is worse
+                        // than useless without a way back — including back
+                        // into the set before this one.
+                        FGQuietButton("Back one set", systemImage: "arrow.uturn.backward") {
+                            backOneSet()
+                        }
+                    }
                 }
             } else if isUntimed && !step.isCounted {
                 FGPrimaryButton(title: index == steps.count - 1 ? "Finish session" : "Done with this step") {
@@ -634,9 +645,10 @@ struct PlayerView: View {
 
                 Spacer()
 
-                // No pause concept mid-count or during untimed rest: reps advance by tapping the
-                // counter itself, and untimed rest finishes by tapping Done. It still appears
-                // during that step's own get-ready countdown, which is a timer like any other.
+                // No pause concept mid-count or during untimed rest: a counted
+                // set advances by tapping Done with this set, and untimed rest
+                // finishes by tapping Done. It still appears during that
+                // step's own get-ready countdown, which is a timer like any other.
                 if !isSwitchingSides, (!step.isCounted && !isUntimed) || readingRemaining > 0 {
                     primaryCircleButton(
                         systemImage: isPaused ? "play.fill" : "pause.fill",
@@ -922,90 +934,51 @@ struct PlayerView: View {
         .accessibilityLabel(label(for: feel))
     }
 
-    /// Counting reps, not counting down. Deliberately not a progress bar:
-    /// the number is a place-keeper for a working memory that is busy holding
-    /// a plank, not a score to finish. Nothing here renders a percentage.
-    ///
-    /// The number counts the set someone is actually in. Three sets of ten is
-    /// three tens, never a thirty — a counter running to thirty is arithmetic
-    /// nobody asked for in the middle of a lift.
-    private func counter(_ step: Step, perSet: Int) -> some View {
-        Button {
-            guard repsDone < perSet else { return }
-            repsDone += 1
-            guard repsDone >= perSet else { return }
-            // Let the last rep land on screen before the set turns over —
-            // moving on the instant of the tap means never seeing it.
-            let countedStep = index
-            let countedSet = setsDone
-            Task {
-                try? await Task.sleep(for: .milliseconds(450))
-                guard index == countedStep, setsDone == countedSet else { return }
-                withAnimation(FGMotion.gentle) {
-                    if setsDone + 1 < step.setCount {
-                        setsDone += 1
-                        repsDone = 0
-                    } else {
-                        advance()
-                    }
-                }
-            }
-        } label: {
-            VStack(spacing: FGSpace.xs) {
-                if step.setCount > 1 {
-                    Text("Set \(setsDone + 1) of \(step.setCount)")
-                        .font(FGFont.label)
-                        .foregroundStyle(FGColor.inkMuted)
-                }
-                Text("\(repsDone)/\(perSet)")
-                    .font(.system(.largeTitle, design: .rounded).weight(.bold).monospacedDigit())
-                    .contentTransition(.numericText())
-                    .foregroundStyle(FGColor.goldDeep)
-                Text(setLabel(step, perSet: perSet))
-                    .font(FGFont.caption)
+    /// What a counted step is *for*, not something to tap through. Reps are
+    /// felt, not counted on screen — a body in the middle of a set has no
+    /// hand free to tap with, and nobody doing push-ups needs a number to
+    /// tell them they're on their eighth. This is a plain readout, sized to
+    /// leave the exercise's own animation the room the timer display gets,
+    /// not the tall tap target the old per-rep counter needed.
+    private func counterInfo(_ step: Step, perSet: Int) -> some View {
+        VStack(spacing: FGSpace.xs) {
+            if step.setCount > 1 {
+                Text("Set \(setsDone + 1) of \(step.setCount)")
+                    .font(FGFont.label)
                     .foregroundStyle(FGColor.inkMuted)
             }
-            .frame(maxWidth: .infinity, minHeight: counterHeight)
-            .contentShape(.rect)
+            Text("\(perSet) reps")
+                .font(.system(.title, design: .rounded).weight(.bold))
+                .foregroundStyle(FGColor.goldDeep)
         }
-        .buttonStyle(.plain)
-        .disabled(repsDone >= perSet)
-        .animation(FGMotion.gentle, value: repsDone)
-        // The haptic is the point: "don't lose count" means being sure a tap
-        // registered without looking down to check.
-        .sensoryFeedback(.increase, trigger: repsDone)
-        .accessibilityElement()
+        .animation(FGMotion.gentle, value: setsDone)
+        .accessibilityElement(children: .combine)
         .accessibilityLabel(step.setCount > 1
-            ? "\(step.name), set \(setsDone + 1) of \(step.setCount)"
-            : step.name)
-        .accessibilityValue("\(repsDone) of \(perSet)")
-        .accessibilityHint("Counts one rep")
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment: if repsDone < perSet { repsDone += 1 }
-            case .decrement: undoOne(step)
-            @unknown default: break
+            ? "\(step.name), set \(setsDone + 1) of \(step.setCount), \(perSet) reps"
+            : "\(step.name), \(perSet) reps")
+    }
+
+    /// Closes out the set someone just did. One tap, whatever they actually
+    /// felt like inside it — the app was never the one counting.
+    private func completeSet(_ step: Step) {
+        withAnimation(FGMotion.gentle) {
+            if setsDone + 1 < step.setCount {
+                setsDone += 1
+                repsDone = 0
+            } else {
+                repsDone = step.reps ?? 0
+                advance()
             }
         }
     }
 
-    /// What to say under the number. The last rep of a set is worth marking,
-    /// and "rest" is the instruction that actually follows it.
-    private func setLabel(_ step: Step, perSet: Int) -> String {
-        guard repsDone >= perSet else { return "tap as you go" }
-        return setsDone + 1 < step.setCount ? "rest, then the next set" : "that's the last set"
-    }
-
-    /// Steps the count back one rep, over the boundary into the previous set
-    /// when the thumb was one tap too eager at the start of a new one.
-    private func undoOne(_ step: Step) {
+    /// Steps back into the set before this one, for the thumb that caught
+    /// "Done with this set" a beat too eager.
+    private func backOneSet() {
         withAnimation(FGMotion.gentle) {
-            if repsDone > 0 {
-                repsDone -= 1
-            } else if setsDone > 0 {
-                setsDone -= 1
-                repsDone = max(0, (step.reps ?? 1) - 1)
-            }
+            guard setsDone > 0 else { return }
+            setsDone -= 1
+            repsDone = 0
         }
     }
 
