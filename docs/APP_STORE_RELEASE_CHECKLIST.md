@@ -21,7 +21,7 @@ Last audited: 2026-09-19 (Build 14)
 
 ## Blocking before submission
 
-- [ ] **Deploy the updated production Worker.** Confirm the production environment has `REVENUECAT_SECRET_API_KEY`, `ANTHROPIC_API_KEY`, and the expected rate-limit binding. Do not ship the older entitlement bypass.
+- [ ] **Deploy the updated production Worker.** Confirm the production environment has `REVENUECAT_SECRET_API_KEY`, `GEMINI_API_KEY`, and the expected rate-limit binding. Do not ship the older entitlement bypass.
 - [ ] **Complete App Store Connect subscriptions.** Put monthly and annual in one subscription group, add prices/localizations/review screenshots, and configure the 7-day annual introductory offer.
 - [ ] **Complete RevenueCat production configuration.** Attach both App Store products to entitlement `pro`, add them to the current `default` offering as monthly/annual packages, and publish the production paywall.
 - [ ] **Audit the remote paywall text.** It may advertise only shipped benefits: learning from history, quick adjustments/unlimited swaps, conversational check-ins, and optional Calendar context. It must show actual duration/price, renewal terms, Terms, Privacy, and Restore.
