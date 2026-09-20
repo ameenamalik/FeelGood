@@ -1613,20 +1613,21 @@
         "type": "authored",
         "steps": [
           {
-            "name": "One leg",
+            "name": "Balance on your right leg",
             "seconds": 120,
-            "cue": "Top half of your teeth. Hold the sink if you need to.",
+            "cue": "Stand on your right leg with your left foot just off the floor, and keep brushing your teeth. Rest a hand on the sink if you need it.",
             "glossaryID": "single-leg-stand"
           },
           {
-            "name": "Other leg",
+            "name": "Balance on your left leg",
             "seconds": 120,
-            "cue": "Bottom half."
+            "cue": "Switch legs. Stand on your left leg with your right foot just off the floor, and keep brushing. Rest a hand on the sink if you need it.",
+            "glossaryID": "single-leg-stand"
           },
           {
-            "name": "Eyes closed, briefly",
+            "name": "Eyes closed (optional)",
             "seconds": 60,
-            "cue": "Only if you're near something to hold."
+            "cue": "Stand on either leg and close your eyes for a few breaths. Only try this with the sink or counter within reach."
           }
         ]
       }
