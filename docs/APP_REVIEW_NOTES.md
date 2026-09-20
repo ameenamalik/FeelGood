@@ -12,8 +12,9 @@ routines to a new phone.
 To reach the main flows:
 - Check-in: open the app, tap the check-in banner on the Today tab, pick an
   energy level, a time budget and how you feel. The menu on Today updates.
-- Chat: the Chat tab lets you describe your day in your own words. Messages are
-  sent to a third-party language model (disclosed in the privacy policy).
+- Chat (Pro): the Chat tab lets subscribers describe their day in their own
+  words. Messages are scrubbed of emails, phone numbers and links, then sent to
+  a third-party language model (disclosed in the privacy policy).
 - Paywall: FeelGood Pro is a subscription. Open the You tab → Your plan to see
   the paywall. TODO: confirm this is the shortest path a reviewer can take, and
   list any in-app entry point (e.g. a gated session) once verified. Price, billing period,
@@ -22,7 +23,7 @@ To reach the main flows:
 - Pro content: Pro sessions and the AI framing line are behind the
   subscription. Please use a sandbox Apple ID to purchase; nothing else is
   required. TODO: if you prefer, add a promo code here.
-- Account deletion: You → Account & privacy → Delete Account.
+- Account deletion: You tab → gear icon → My account → Delete account.
 
 Health note: FeelGood offers general wellness and movement suggestions only. It
 makes no medical claims. Optional "work-arounds" (e.g. low back, pregnancy) are
@@ -55,4 +56,5 @@ Notes:
   If you decide any of it is health data, add **Health** (App Functionality)
   here and in the manifest.
 - "Do you or your third-party partners use data for tracking?" → **No**.
-- Privacy Policy URL must point at the published `docs/privacy-policy.html`.
+- Privacy Policy URL: https://feelgood-web.vercel.app/privacy (the live copy;
+  it lives in the separate web repo, not `docs/privacy-policy.html`, which is stale).
