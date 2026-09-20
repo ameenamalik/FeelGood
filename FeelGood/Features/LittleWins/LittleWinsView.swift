@@ -60,11 +60,13 @@ private struct LittleWinCard: View {
                     .resizable()
                     .scaledToFit()
                     .saturation(progress.isUnlocked ? 1 : 0)
-                    .opacity(progress.isUnlocked ? 1 : 0.48)
+                    .blur(radius: progress.isUnlocked ? 0 : 9)
+                    .opacity(progress.isUnlocked ? 1 : 0.58)
                     .frame(width: 64, height: 64)
                     .rotationEffect(.degrees(mascotTilt))
+                    .accessibilityHidden(true)
 
-                Text(progress.win.title)
+                Text(progress.isUnlocked ? progress.win.title : "Mystery badge")
                     .font(FGFont.itemTitle)
                     .foregroundStyle(FGColor.inkOnAccent)
                     .lineLimit(1)
@@ -74,7 +76,7 @@ private struct LittleWinCard: View {
                 // read as pale grey on the pastels (5.3:1). 0.85 measures about
                 // 7.5:1 on the palest and darkest aura stops; a lighter black
                 // would fail the 4.5:1 floor.
-                Text(progress.statusLine)
+                Text(progress.isUnlocked ? progress.statusLine : "Keep moving to reveal it")
                     .font(FGFont.caption.weight(.medium))
                     .foregroundStyle(FGColor.inkOnAccent.opacity(0.85))
                     .multilineTextAlignment(.center)
@@ -104,7 +106,11 @@ private struct LittleWinCard: View {
         )
         .scaleEffect(isPulsing ? 1.07 : 1.0)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(progress.win.title), \(progress.statusLine)")
+        .accessibilityLabel(
+            progress.isUnlocked
+                ? "\(progress.win.title), \(progress.statusLine)"
+                : "Locked mystery badge. Keep moving to reveal it."
+        )
         .accessibilityHint("Opens badge details")
         .onChange(of: progress.isUnlocked) { wasUnlocked, isUnlocked in
             // Only the live flip earns the moment — a card that opens already
@@ -141,18 +147,20 @@ struct LittleWinDetailView: View {
                     .resizable()
                     .scaledToFit()
                     .saturation(progress.isUnlocked ? 1 : 0)
-                    .opacity(progress.isUnlocked ? 1 : 0.48)
+                    .blur(radius: progress.isUnlocked ? 0 : 14)
+                    .opacity(progress.isUnlocked ? 1 : 0.58)
                     .frame(width: 112, height: 112)
+                    .accessibilityHidden(true)
 
                 VStack(spacing: FGSpace.s) {
-                    Text(progress.win.title)
+                    Text(progress.isUnlocked ? progress.win.title : "Mystery badge")
                         .font(FGFont.display)
                         .foregroundStyle(FGColor.ink)
-                    Text(progress.isUnlocked ? progress.win.unlockedLine : progress.statusLine)
+                    Text(progress.isUnlocked ? progress.win.unlockedLine : "Keep moving to reveal it")
                         .font(FGFont.sectionTitle)
                         .foregroundStyle(FGColor.inkMuted)
                         .multilineTextAlignment(.center)
-                    Text(progress.win.detail)
+                    Text(progress.isUnlocked ? progress.win.detail : "This little win will introduce itself when you earn it.")
                         .font(FGFont.body)
                         .foregroundStyle(FGColor.inkMuted)
                         .multilineTextAlignment(.center)
