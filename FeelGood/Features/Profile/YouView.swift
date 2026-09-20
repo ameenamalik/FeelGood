@@ -29,7 +29,11 @@ struct YouView: View {
     var body: some View {
         NavigationStack {
             page
-                .toolbar(.hidden, for: .navigationBar)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.hidden, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) { settingsMenu }
+                }
         }
         .sheet(isPresented: $isEditingProfile) {
             ProfileEditView(
@@ -92,7 +96,7 @@ struct YouView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
-                    profileHeader
+                    profileHero
 
                     LittleWinsSection(progress: model.littleWins)
 
@@ -112,47 +116,28 @@ struct YouView: View {
         }
     }
 
-    private var profileHeader: some View {
-        VStack(alignment: .leading, spacing: FGSpace.m) {
-            profileHero
-
-            HStack(spacing: FGSpace.s) {
-                preferencePill(
-                    "My preferences",
-                    fill: FGAura.blush.core
-                ) {
-                    isEditingProfile = true
-                }
-                preferencePill(
-                    "My account",
-                    fill: FGAura.sage.core
-                ) {
-                    isShowingAccount = true
-                }
+    /// Preferences and account live behind one gear, top right, instead of a
+    /// row of pills under the greeting — the greeting gets the room back.
+    private var settingsMenu: some View {
+        // Qualified: the engine's own `Menu` (today's menu) shadows SwiftUI's.
+        SwiftUI.Menu {
+            Button {
+                isEditingProfile = true
+            } label: {
+                Label("My preferences", systemImage: "slider.horizontal.3")
             }
-            .frame(maxWidth: .infinity)
+            Button {
+                isShowingAccount = true
+            } label: {
+                Label("My account", systemImage: "person.crop.circle")
+            }
+        } label: {
+            Image(systemName: "gearshape")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(FGColor.ink)
         }
-    }
-
-    /// Filled factual-chip styling, matching the pills used on menu cards.
-    private func preferencePill(
-        _ title: String,
-        fill: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
-                .foregroundStyle(FGColor.inkOnAccent)
-                .lineLimit(1)
-                .minimumScaleFactor(0.88)
-                .padding(.horizontal, FGSpace.s)
-                .frame(maxWidth: .infinity, minHeight: 40)
-                .background(Capsule().fill(fill))
-        }
-        .buttonStyle(.feelGoodPress)
-        .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
-        .contentShape(Rectangle())
+        .accessibilityLabel("Settings")
+        .accessibilityHint("Opens your preferences and account")
     }
 
     @ViewBuilder
