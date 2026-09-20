@@ -171,6 +171,8 @@ struct TodayView: View {
             if model.checkIn == nil {
                 CheckInBanner { isCheckingIn = true }
                     .padding(.top, FGSpace.m)
+                    // Room before "Your menu", matching the air around the headline.
+                    .padding(.bottom, 6)
             } else {
                 checkInSubtitle
             }
