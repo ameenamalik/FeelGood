@@ -55,48 +55,40 @@ private struct LittleWinCard: View {
     @State private var mascotTilt = 0.0
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(alignment: .center, spacing: FGSpace.xs) {
-                Image(progress.win.mascotAsset)
-                    .resizable()
-                    .scaledToFit()
-                    .saturation(progress.isUnlocked ? 1 : 0)
-                    .blur(radius: progress.isUnlocked ? 0 : 9)
-                    .opacity(progress.isUnlocked ? 1 : 0.58)
-                    .frame(width: 48, height: 48)
-                    .rotationEffect(.degrees(mascotTilt))
-                    .accessibilityHidden(true)
+        VStack(alignment: .center, spacing: FGSpace.xs) {
+            Image(progress.win.mascotAsset)
+                .resizable()
+                .scaledToFit()
+                .saturation(progress.isUnlocked ? 1 : 0)
+                .blur(radius: progress.isUnlocked ? 0 : 9)
+                .opacity(progress.isUnlocked ? 1 : 0.58)
+                .frame(width: progress.isUnlocked ? 40 : 52, height: progress.isUnlocked ? 40 : 52)
+                .rotationEffect(.degrees(mascotTilt))
+                .accessibilityHidden(true)
 
-                Text(progress.isUnlocked ? progress.win.title : "Mystery badge")
+            if progress.isUnlocked {
+                Text(progress.win.title)
                     .font(.system(.subheadline, design: .rounded).weight(.semibold))
                     .foregroundStyle(FGColor.inkOnAccent)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.7)
 
                 // Medium weight and 0.85 opacity: at 0.72 in regular weight this
                 // read as pale grey on the pastels (5.3:1). 0.85 measures about
                 // 7.5:1 on the palest and darkest aura stops; a lighter black
                 // would fail the 4.5:1 floor.
-                Text(progress.isUnlocked ? progress.statusLine : "Keep moving to reveal it")
+                Text(progress.statusLine)
                     .font(FGFont.caption.weight(.medium))
                     .foregroundStyle(FGColor.inkOnAccent.opacity(0.85))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, minHeight: 124, alignment: .center)
-
-            if !progress.isUnlocked {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(FGColor.inkMuted)
-                    .frame(width: 24, height: 24)
-                    .background(FGColor.surface.opacity(0.78))
-                    .clipShape(Circle())
+                    .minimumScaleFactor(0.7)
             }
         }
-        .padding(10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .padding(8)
+        .aspectRatio(1, contentMode: .fit)
         .background(
             progress.win.aura.badgeGradient,
             in: RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
