@@ -819,11 +819,11 @@ private struct MenuItemBody: View {
                     }
                 }
 
-                // Session Title in SF Rounded Medium — lighter than the bold
+                // Session Title in SF Rounded Semibold — lighter than the bold
                 // pills above it so the card has a weight hierarchy. The why
                 // waits behind a tap, on the session's own detail screen.
                 Text(item.session.title)
-                    .font(.system(size: 22, weight: .medium, design: .rounded))
+                    .font(.system(size: 22, weight: .semibold, design: .rounded))
                     .foregroundStyle(isDone ? FGColor.inkMuted : item.course.accentText)
                     .fixedSize(horizontal: false, vertical: true)
             }
