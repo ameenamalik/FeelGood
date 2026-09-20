@@ -381,16 +381,21 @@ struct TodayView: View {
 
                 Spacer(minLength: FGSpace.s)
 
-                // Quick adjust control for Pro users.
-                if model.isProUser {
+                HStack(spacing: FGSpace.s) {
                     #if compiler(>=6.2)
                     if #available(iOS 26, *) {
                         GlassEffectContainer(spacing: FGSpace.s) {
-                            adjustButtonLabel
-                                .glassEffect(
-                                    isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
-                                    in: Circle()
-                                )
+                            HStack(spacing: FGSpace.s) {
+                                routineButtonLabel
+                                    .glassEffect(.regular.interactive(), in: Capsule())
+                                if model.isProUser {
+                                    adjustButtonLabel
+                                        .glassEffect(
+                                            isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
+                                            in: Circle()
+                                        )
+                                }
+                            }
                         }
                     } else {
                         legacyMenuControls
@@ -421,15 +426,42 @@ struct TodayView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private var routineButtonLabel: some View {
+        Button {
+            isShowingMyMenu = true
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "plus")
+                    .font(.system(size: 11, weight: .semibold))
+                Text("Routine")
+                    .font(FGFont.label.weight(.medium))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .foregroundStyle(FGColor.ink)
+            .fixedSize()
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add custom routine or view My Menu")
+    }
+
     @ViewBuilder
     private var legacyMenuControls: some View {
-        if model.isProUser {
-            adjustButtonLabel
-                .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
-                .clipShape(Circle())
-                .overlay(
-                    Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
-                )
+        HStack(spacing: FGSpace.s) {
+            routineButtonLabel
+                .background(FGColor.surface)
+                .clipShape(Capsule())
+                .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
+
+            if model.isProUser {
+                adjustButtonLabel
+                    .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
+                    )
+            }
         }
     }
 
