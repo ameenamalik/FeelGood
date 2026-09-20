@@ -166,7 +166,14 @@ struct TodayView: View {
                 .foregroundStyle(FGColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
-            checkInSubtitle
+            // Until there is a check-in, ask for one with a real card; after,
+            // collapse to the one-line summary.
+            if model.checkIn == nil {
+                CheckInBanner { isCheckingIn = true }
+                    .padding(.top, FGSpace.m)
+            } else {
+                checkInSubtitle
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
@@ -179,7 +186,9 @@ struct TodayView: View {
         //     isDebugging = true
         // }
         // #endif
-        .accessibilityElement(children: .combine)
+        // `.contain`, not `.combine`: the banner and the summary are buttons,
+        // and combining would fold them into the headline and lose that.
+        .accessibilityElement(children: .contain)
     }
 
     private var menuItems: some View {
