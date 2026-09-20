@@ -2,19 +2,20 @@
   "name": "feelgood-copy-worker",
   "version": "1.0.0",
   "private": true,
-  "description": "The copy proxy (PRD §11) — the only thing that ever holds the Anthropic key.",
+  "description": "The copy proxy (PRD \u00a711) \u2014 the only thing that ever holds the Anthropic key.",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "sync:catalog": "node scripts/sync_catalog.js",
     "deploy": "wrangler deploy",
     "deploy:production": "wrangler deploy --env production",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"test/*.test.ts\""
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250101.0",
+    "@cloudflare/workers-types": "^5.20260919.1",
     "typescript": "^5.6.0",
-    "wrangler": "^3.90.0"
+    "wrangler": "^4.135.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0"
