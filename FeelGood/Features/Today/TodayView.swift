@@ -825,6 +825,7 @@ private struct MenuItemBody: View {
                 Text(item.session.title)
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
                     .foregroundStyle(isDone ? FGColor.inkMuted : item.course.accentText)
+                    .lineSpacing(-2)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, minHeight: 106, alignment: .topLeading)
