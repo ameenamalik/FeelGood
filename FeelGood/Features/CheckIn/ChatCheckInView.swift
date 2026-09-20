@@ -20,6 +20,8 @@ struct ChatCheckInView: View {
     @State private var turns: [ChatTurnPayload] = []
     @State private var service: any ChatProviding = ChatService()
     @FocusState private var isFieldFocused: Bool
+    @AppStorage(ChatConsent.key) private var chatConsentRaw = ChatConsent.Status.notAsked.rawValue
+    @State private var isShowingChatConsent = false
 
     private let quickPrompts = [
         "15 min, back is stiff, staying in",
@@ -180,12 +182,26 @@ struct ChatCheckInView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
+        .sheet(isPresented: $isShowingChatConsent) {
+            ChatConsentSheet { agreed in
+                chatConsentRaw = (agreed ? ChatConsent.Status.granted : .declined).rawValue
+                isShowingChatConsent = false
+                submitText()
+            }
+        }
     }
 
     private func submitText(explicitText: String? = nil) {
         let textToSend = explicitText ?? text
         let trimmed = textToSend.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+
+        if PurchasesManager.shared.isProUnlocked, chatConsentRaw == ChatConsent.Status.notAsked.rawValue {
+            text = trimmed
+            isFieldFocused = false
+            isShowingChatConsent = true
+            return
+        }
 
         isFieldFocused = false
         isProcessing = true

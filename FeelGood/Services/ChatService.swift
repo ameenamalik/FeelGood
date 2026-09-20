@@ -503,19 +503,22 @@ actor ChatService: ChatProviding {
     private let timeout: TimeInterval
     private let isProUnlocked: @Sendable () async -> Bool
     private let subscriberID: @Sendable () async -> String
+    private let hasChatConsent: @Sendable () -> Bool
 
     init(
         transport: any ChatTransport = URLSessionChatTransport(),
         redactor: RedactionService = .shared,
         timeout: TimeInterval = 10.0,
         isProUnlocked: @escaping @Sendable () async -> Bool = { await MainActor.run { PurchasesManager.shared.isProUnlocked } },
-        subscriberID: @escaping @Sendable () async -> String = { await MainActor.run { PurchasesManager.shared.appUserID } }
+        subscriberID: @escaping @Sendable () async -> String = { await MainActor.run { PurchasesManager.shared.appUserID } },
+        hasChatConsent: @escaping @Sendable () -> Bool = { ChatConsent.isGranted }
     ) {
         self.transport = transport
         self.redactor = redactor
         self.timeout = timeout
         self.isProUnlocked = isProUnlocked
         self.subscriberID = subscriberID
+        self.hasChatConsent = hasChatConsent
     }
 
     func describeDay(
@@ -531,15 +534,22 @@ actor ChatService: ChatProviding {
         let subID = await subscriberID()
 
         // The on-device fallback stays available for previews and offline use,
-        // but only a verified Pro subscriber may reach the paid edge service.
-        guard await isProUnlocked() else {
+        // but only a verified Pro subscriber who has agreed to it may reach the
+        // paid edge service. Without consent nothing leaves the device: the
+        // fallback answers locally, so declining never breaks Chat.
+        guard await isProUnlocked(), hasChatConsent() else {
             return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext, todaysMenu: todaysMenu)
         }
+
+        // Earlier turns hold text the person typed before, so they get the same
+        // scrub as the new message. Redacting only `prompt` let "I'm pregnant"
+        // through on the very next turn, as history.
+        let sanitizedHistory = history.map { ChatTurnPayload(role: $0.role, text: redactor.sanitize($0.text)) }
 
         guard let response = try? await transport.sendChat(
             prompt: sanitized,
             subscriberID: subID,
-            history: history,
+            history: sanitizedHistory,
             activeSessionID: activeSessionID,
             userContext: userContext,
             todaysMenu: todaysMenu,
