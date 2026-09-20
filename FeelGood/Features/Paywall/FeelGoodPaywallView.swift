@@ -83,6 +83,7 @@ struct FeelGoodPaywallView: View {
     @State private var isRestoring = false
     @State private var restoreResultMessage: String?
     @State private var hasRevealedMenu = false
+    @State private var carouselResetToken = 0
     #if DEBUG
     @State private var heroSlideIndex = Self.debugForcedHeroSlideIndex ?? 0
     @State private var chatPhase: ChatPhase = (Self.debugForcedHeroSlideIndex == 3) ? .assistantFollowUp : .userOpener
@@ -164,18 +165,33 @@ struct FeelGoodPaywallView: View {
     private var content: some View {
         ScrollView {
             VStack(spacing: FGSpace.m) {
-                heroCard {
-                    topSceneContent
+                VStack(spacing: FGSpace.m) {
+                    heroCard {
+                        topSceneContent
+                    }
+
+                    heroCarousel
+                        .padding(.top, FGSpace.s)
+                }
+                .contentShape(Rectangle())
+                .simultaneousGesture(heroSwipe)
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment: stepHeroSlide(by: 1)
+                    case .decrement: stepHeroSlide(by: -1)
+                    @unknown default: break
+                    }
                 }
 
-                heroCarousel
-
                 planPicker
+                    .padding(.top, FGSpace.m)
 
                 ctaSection
             }
             .padding(.horizontal, FGSpace.page)
-            .padding(.top, FGSpace.l)
+            // Clears the close button overlay (pinned to the safe area's top
+            // trailing corner) so it never sits on top of the hero card.
+            .padding(.top, FGSize.minTouchTarget + FGSpace.s)
             .padding(.bottom, FGSpace.m)
         }
         .scrollBounceBehavior(.basedOnSize)
@@ -222,15 +238,23 @@ struct FeelGoodPaywallView: View {
         .frame(height: Self.heroCardHeight, alignment: .top)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                .fill(FGColor.surface)
+                .fill(FGColor.bg)
+                .opacity(hasCardChrome ? 1 : 0)
         )
         .overlay(
             RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
                 .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+                .opacity(hasCardChrome ? 1 : 0)
         )
-        .shadow(color: FGColor.ink.opacity(0.08), radius: 12, y: 6)
-        .rotationEffect(.degrees(-1))
+        .shadow(color: FGColor.ink.opacity(hasCardChrome ? 0.08 : 0), radius: 12, y: 6)
+        .rotationEffect(.degrees(hasCardChrome ? -1 : 0))
+        .animation(reduceMotion ? nil : FGMotion.gentle, value: hasCardChrome)
     }
+
+    /// The printed-menu card frames the menu scene only. Chat bubbles float
+    /// straight on the page, the way they do in the real Chat tab; the chrome
+    /// fades rather than being removed so the frame never re-inserts.
+    private var hasCardChrome: Bool { currentSlide.scene == .menu }
 
     /// A single printed-menu card rather than four separate blocks — the
     /// "creative, skeuomorphic" read the user asked for, and far shorter than
@@ -389,6 +413,7 @@ struct FeelGoodPaywallView: View {
                 .transition(chatBubbleTransition)
             }
         }
+        .padding(.horizontal, FGSpace.s)
         .frame(maxWidth: .infinity, alignment: .top)
         .animation(reduceMotion ? nil : FGMotion.gentle, value: chatPhase)
         .task(id: heroSlideIndex) { await handleSlideChange(heroSlideIndex) }
@@ -501,7 +526,26 @@ struct FeelGoodPaywallView: View {
         }
         .frame(maxWidth: 340)
         .fgAnimation(FGMotion.gentle, value: heroSlideIndex)
-        .task { await runHeroCarousel() }
+        // Keyed on the reset token so a manual swipe restarts the 3s timer
+        // instead of letting it fire right after the person moved on.
+        .task(id: carouselResetToken) { await runHeroCarousel() }
+    }
+
+    /// Horizontal swipes step the carousel; mostly-vertical drags fall
+    /// through so the page still scrolls.
+    private var heroSwipe: some Gesture {
+        DragGesture(minimumDistance: 24)
+            .onEnded { value in
+                let dx = value.translation.width
+                guard abs(dx) > abs(value.translation.height) * 1.5, abs(dx) > 40 else { return }
+                stepHeroSlide(by: dx < 0 ? 1 : -1)
+            }
+    }
+
+    private func stepHeroSlide(by delta: Int) {
+        let count = Self.heroSlides.count
+        heroSlideIndex = (heroSlideIndex + delta + count) % count
+        carouselResetToken += 1
     }
 
     private var currentSlide: HeroSlide {
@@ -544,17 +588,8 @@ struct FeelGoodPaywallView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: FGSpace.xs) {
                         Text(plan.title)
-                            .font(FGFont.itemTitle)
+                            .font(.system(.title3, design: .rounded).weight(.medium))
                             .foregroundStyle(FGColor.ink)
-
-                        if plan == .yearly, let savingsPercent {
-                            Text("SAVE ABOUT \(savingsPercent)%")
-                                .font(FGFont.label.weight(.bold))
-                                .foregroundStyle(FGColor.inkOnAccent)
-                                .padding(.horizontal, FGSpace.xs)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(FGAura.sage.core))
-                        }
                     }
 
                     Text(priceLine(for: package, plan: plan))
@@ -570,14 +605,32 @@ struct FeelGoodPaywallView: View {
             .frame(minHeight: FGSize.minTouchTarget + 8)
             .background(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .fill(isSelected ? FGAura.apricot.core.opacity(0.4) : FGColor.surface)
+                    .fill(isSelected ? AnyShapeStyle(Course.appetizer.accentGradient) : AnyShapeStyle(FGColor.surface))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .strokeBorder(isSelected ? FGColor.ink : FGColor.lineStrong, lineWidth: isSelected ? 2 : 1)
+                    .strokeBorder(isSelected ? FGColor.ink.opacity(0.2) : FGColor.line, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
+        .overlay(alignment: .topTrailing) {
+            // Straddles the card's top edge, clear of the plan name.
+            if plan == .yearly, let savingsPercent {
+                Text("SAVE ABOUT \(savingsPercent)%")
+                    .font(.system(.caption2, design: .rounded).weight(.heavy))
+                    .tracking(0.4)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, FGSpace.s + 2)
+                    .padding(.vertical, 4)
+                    // Deep botanical green — the saturated end of the Side
+                    // course's sage — so white text clears 4.5:1 and the
+                    // pill leads instead of receding into the card.
+                    .background(Capsule().fill(Color(light: 0x3F6B26, dark: 0x4C7A2E)))
+                    .padding(.trailing, FGSpace.m)
+                    .offset(y: -10)
+                    .allowsHitTesting(false)
+            }
+        }
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
@@ -649,35 +702,47 @@ struct FeelGoodPaywallView: View {
                 purchaseSelectedPlan()
             }
 
-            HStack(spacing: FGSpace.xs) {
-                Button {
-                    Analytics.capture("paywall_declined", properties: ["plan": selectedPlan.analyticsID])
-                    finish()
-                } label: {
-                    Text("Continue with free menu")
-                }
-                .buttonStyle(.plain)
-
-                Text("·")
-                    .foregroundStyle(FGColor.inkMuted.opacity(0.6))
-
-                restoreButton
+            Button {
+                Analytics.capture("paywall_declined", properties: ["plan": selectedPlan.analyticsID])
+                finish()
+            } label: {
+                Text("Continue with free menu")
+                    .font(FGFont.caption.weight(.medium))
+                    .foregroundStyle(FGColor.inkMuted)
+                    .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
+                    .contentShape(Rectangle())
             }
-            .font(FGFont.caption.weight(.medium))
-            .foregroundStyle(FGColor.inkMuted)
-            .frame(minHeight: FGSize.minTouchTarget)
+            .buttonStyle(.plain)
 
             Text("Auto-renews until canceled. Cancel anytime in Settings.")
                 .font(FGFont.caption)
                 .foregroundStyle(FGColor.inkMuted.opacity(0.8))
 
-            HStack(spacing: FGSpace.xs) {
-                Link("Terms of Use", destination: LegalLinks.termsOfUse)
-                Text("·")
-                Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
+            ViewThatFits(in: .horizontal) {
+                legalLinks(spacing: FGSpace.xs, isStacked: false)
+                legalLinks(spacing: FGSpace.xs, isStacked: true)
             }
             .font(FGFont.caption)
             .foregroundStyle(FGColor.inkMuted.opacity(0.8))
+        }
+    }
+
+    @ViewBuilder
+    private func legalLinks(spacing: CGFloat, isStacked: Bool) -> some View {
+        if isStacked {
+            VStack(spacing: spacing) {
+                Link("Terms of Use", destination: LegalLinks.termsOfUse)
+                Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
+                restoreButton
+            }
+        } else {
+            HStack(spacing: spacing) {
+                Link("Terms of Use", destination: LegalLinks.termsOfUse)
+                Text("·")
+                Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
+                Text("·")
+                restoreButton
+            }
         }
     }
 

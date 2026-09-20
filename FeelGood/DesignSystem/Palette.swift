@@ -57,6 +57,13 @@ nonisolated enum FGColor {
     /// Secondary type. 6.1:1 on white — still comfortable at footnote sizes.
     static let inkMuted = Color(light: 0x6B6155, dark: 0xB8AC9C)
 
+    /// The dark fill of a primary action — the chat recommendation's "Start"
+    /// and `FGPrimaryButton` both read this, so they can't drift apart.
+    /// Warm brown-black rather than `ink`, which flips to cream in dark mode.
+    static let actionFill = Color(light: 0x2C211C, dark: 0x1A1715)
+    /// Label on `actionFill`.
+    static let onActionFill = Color.white
+
     /// Interactive controls whose fill must carry a white system affordance
     /// (for example, the thumb of a Toggle). Unlike the pastel accents below,
     /// this stays dark enough for that affordance in both appearances while

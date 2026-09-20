@@ -329,9 +329,9 @@ struct ExploreView: View {
                         .font(.system(size: 15, weight: .bold))
                     Spacer()
                 }
-                .foregroundStyle(Color.white)
+                .foregroundStyle(FGColor.onActionFill)
                 .padding(.vertical, 14)
-                .background(Color(light: 0x2C211C, dark: 0x1A1715))
+                .background(FGColor.actionFill)
                 .clipShape(Capsule())
             }
             .buttonStyle(.plain)
