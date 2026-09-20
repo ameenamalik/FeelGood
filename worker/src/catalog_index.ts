@@ -4338,6 +4338,82 @@ export const CATALOG_GLOSSARY: CatalogGlossaryItem[] = [
     ]
   },
   {
+    "id": "qigong-drawing-the-bow",
+    "name": "Drawing the bow",
+    "aka": [
+      "draw the bow",
+      "qi gong drawing the bow"
+    ],
+    "instructions": [
+      "Stand with your feet a little wider than your shoulders and bend your knees slightly. Go only as low as feels comfortable.",
+      "Point your right hand out to the right, with your index finger and thumb making an L shape, and look toward it.",
+      "Bend your left arm and pull the elbow back, as if drawing a bow. Breathe in as you pull.",
+      "Breathe out as you let the pull go, then repeat slowly. Switch sides for the next step."
+    ],
+    "muscles": [
+      "shoulders",
+      "upper back",
+      "legs"
+    ]
+  },
+  {
+    "id": "qigong-turning-the-waist",
+    "name": "Turning the waist",
+    "aka": [
+      "waist turning",
+      "swinging arms"
+    ],
+    "instructions": [
+      "Stand with your feet hip-width apart and your knees slightly bent.",
+      "Let your arms hang loose, like ropes.",
+      "Turn your upper body to the right, then to the left, letting your arms swing around you.",
+      "Keep your feet planted and breathe normally."
+    ],
+    "muscles": [
+      "core",
+      "spine",
+      "hips"
+    ]
+  },
+  {
+    "id": "qigong-cloud-hands",
+    "name": "Cloud hands",
+    "aka": [
+      "cloud hands",
+      "qi gong cloud hands"
+    ],
+    "instructions": [
+      "Stand with your feet shoulder-width apart and your knees slightly bent.",
+      "Shift your weight onto your right foot. Raise your right hand to chest height with the palm facing you, and rest your left hand near your belly.",
+      "Slowly shift your weight to your left foot as your hands trade places: the left hand rises and the right hand lowers.",
+      "Keep going back and forth slowly, like wiping a big window, and breathe easily."
+    ],
+    "muscles": [
+      "legs",
+      "core",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "qigong-holding-the-ball",
+    "name": "Holding the ball",
+    "aka": [
+      "holding the ball",
+      "embrace the tree"
+    ],
+    "instructions": [
+      "Stand with your feet hip-width apart and your knees slightly bent.",
+      "Lift your arms in front of your chest as if hugging a large beach ball, with your fingertips pointing toward each other.",
+      "Let your shoulders drop and keep your elbows slightly lower than your hands.",
+      "Stay still and breathe slowly."
+    ],
+    "muscles": [
+      "shoulders",
+      "legs",
+      "core"
+    ]
+  },
+  {
     "id": "wall-angels",
     "name": "Wall angels",
     "aka": [
