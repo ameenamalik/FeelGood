@@ -33,6 +33,8 @@ struct ExploreView: View {
     @AppStorage("hasUsedFreeChatExchange") private var hasUsedFreeChatExchange = false
     @State private var isShowingAuthPrompt = false
     @State private var isShowingPaywall = false
+    @AppStorage(ChatConsent.key) private var chatConsentRaw = ChatConsent.Status.notAsked.rawValue
+    @State private var isShowingChatConsent = false
 
     private let threadsPersistenceKey = "FeelGood.ChatThreads.v1"
     private let activeThreadKey = "FeelGood.ActiveThreadID.v1"
@@ -128,6 +130,14 @@ struct ExploreView: View {
         }
         .sheet(isPresented: $isShowingPaywall) {
             FeelGoodPaywallView()
+        }
+        .sheet(isPresented: $isShowingChatConsent) {
+            ChatConsentSheet { agreed in
+                chatConsentRaw = (agreed ? ChatConsent.Status.granted : .declined).rawValue
+                isShowingChatConsent = false
+                // The message they wrote is still in the composer.
+                submitText()
+            }
         }
         .onAppear {
             loadPersistedHistory()
@@ -489,6 +499,15 @@ struct ExploreView: View {
             Analytics.capture("chat_paywall_presented", properties: [
                 "trigger": "second_message"
             ])
+            return
+        }
+
+        // Only a subscriber's message can reach the server, so only they are
+        // asked, and only once. The answer is remembered either way.
+        if purchasesManager.isProUnlocked, chatConsentRaw == ChatConsent.Status.notAsked.rawValue {
+            inputText = trimmed
+            isFieldFocused = false
+            isShowingChatConsent = true
             return
         }
 

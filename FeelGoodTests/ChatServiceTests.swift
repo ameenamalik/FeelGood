@@ -98,7 +98,7 @@ struct ChatServiceTests {
                 overrides: ConversationalOverrides(energy: .low, time: .fifteenMinutes)
             )
         )
-        let service = ChatService(transport: transport, isProUnlocked: { true })
+        let service = ChatService(transport: transport, isProUnlocked: { true }, hasChatConsent: { true })
 
         let response = await service.describeDay(prompt: "User at test@example.com with 15 min")
 
@@ -184,7 +184,7 @@ struct ChatServiceTests {
                 phase: .routineCommitted
             )
         )
-        let service = ChatService(transport: transport, isProUnlocked: { true })
+        let service = ChatService(transport: transport, isProUnlocked: { true }, hasChatConsent: { true })
         let history = [
             ChatTurnPayload(role: "user", text: "I'm feeling stiff"),
             ChatTurnPayload(role: "model", text: "Would you like a gentle stretch or a breath reset?")
@@ -301,6 +301,36 @@ struct ChatServiceTests {
             )
             #expect(hiddenMatch?.id != normalMatch.id)
         }
+    }
+}
+
+extension ChatServiceTests {
+    @Test("Without consent a Pro message never reaches the transport")
+    func noConsentStaysOnDevice() async {
+        let transport = FakeChatTransport(
+            response: ChatResponse(message: "x", mode: .banter, intent: .acknowledgment, phase: .greeting)
+        )
+        let service = ChatService(transport: transport, isProUnlocked: { true }, hasChatConsent: { false })
+
+        let response = await service.describeDay(prompt: "gentle stretch please")
+
+        #expect(response != nil)
+        #expect(await transport.lastPromptReceived == nil)
+    }
+
+    @Test("History turns are redacted before they leave the device")
+    func historyIsRedacted() async {
+        let transport = FakeChatTransport(
+            response: ChatResponse(message: "x", mode: .banter, intent: .acknowledgment, phase: .greeting)
+        )
+        let service = ChatService(transport: transport, isProUnlocked: { true }, hasChatConsent: { true })
+        let history = [ChatTurnPayload(role: "user", text: "I'm pregnant, email me at a@b.com")]
+
+        _ = await service.describeDay(prompt: "something gentle", history: history)
+
+        let sent = await transport.lastHistoryReceived?.first?.text ?? ""
+        #expect(!sent.lowercased().contains("pregnant"))
+        #expect(!sent.contains("a@b.com"))
     }
 }
 
