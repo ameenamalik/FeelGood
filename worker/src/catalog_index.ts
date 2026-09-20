@@ -1636,6 +1636,98 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     ]
   },
   {
+    "id": "main-qigong-12",
+    "title": "Twelve minutes of qi gong",
+    "subtitle": "Standing, slow, and short enough for a busy day",
+    "durationMin": 12,
+    "intensity": "gentle",
+    "course": "main",
+    "activity": "qigong",
+    "places": [
+      "home",
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm",
+      "mobilize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-dance-10",
+    "title": "Ten-minute dance break",
+    "subtitle": "One song's worth of moving however you like",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "dance",
+    "places": [
+      "home"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "play",
+      "energize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-standing-mobility-12",
+    "title": "Twelve-minute standing mobility",
+    "subtitle": "No mat, no floor — loosening up from your shoulders down",
+    "durationMin": 12,
+    "intensity": "gentle",
+    "course": "main",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full",
+      "hips",
+      "back",
+      "neckShoulders"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-standing-strength-12",
+    "title": "Twelve-minute standing strength",
+    "subtitle": "Squats, lunges, and wall push-ups. No equipment, no floor",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
     "id": "side-dance-it-out-five",
     "title": "Five-minute dance it out",
     "subtitle": "Put on your favorite track and let your body move freely",
