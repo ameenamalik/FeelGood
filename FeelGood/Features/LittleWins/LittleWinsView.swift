@@ -9,11 +9,12 @@ import UIKit
 struct LittleWinsSection: View {
     let progress: [LittleWinProgress]
     @State private var selected: LittleWinProgress?
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    private let columns = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12),
-    ]
+    private var columns: [GridItem] {
+        let count = dynamicTypeSize.isAccessibilitySize ? 2 : 3
+        return Array(repeating: GridItem(.flexible(), spacing: FGSpace.s), count: count)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: FGSpace.m) {
@@ -26,7 +27,7 @@ struct LittleWinsSection: View {
                     .foregroundStyle(FGColor.inkMuted)
             }
 
-            LazyVGrid(columns: columns, spacing: 12) {
+            LazyVGrid(columns: columns, spacing: FGSpace.s) {
                 ForEach(progress) { item in
                     Button { selected = item } label: {
                         LittleWinCard(progress: item)
@@ -55,22 +56,23 @@ private struct LittleWinCard: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            VStack(alignment: .center, spacing: FGSpace.s) {
+            VStack(alignment: .center, spacing: FGSpace.xs) {
                 Image(progress.win.mascotAsset)
                     .resizable()
                     .scaledToFit()
                     .saturation(progress.isUnlocked ? 1 : 0)
                     .blur(radius: progress.isUnlocked ? 0 : 9)
                     .opacity(progress.isUnlocked ? 1 : 0.58)
-                    .frame(width: 64, height: 64)
+                    .frame(width: 48, height: 48)
                     .rotationEffect(.degrees(mascotTilt))
                     .accessibilityHidden(true)
 
                 Text(progress.isUnlocked ? progress.win.title : "Mystery badge")
-                    .font(FGFont.itemTitle)
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
                     .foregroundStyle(FGColor.inkOnAccent)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
 
                 // Medium weight and 0.85 opacity: at 0.72 in regular weight this
                 // read as pale grey on the pastels (5.3:1). 0.85 measures about
@@ -83,18 +85,18 @@ private struct LittleWinCard: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity, minHeight: 154, alignment: .center)
+            .frame(maxWidth: .infinity, minHeight: 124, alignment: .center)
 
             if !progress.isUnlocked {
                 Image(systemName: "lock.fill")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(FGColor.inkMuted)
-                    .frame(width: 28, height: 28)
+                    .frame(width: 24, height: 24)
                     .background(FGColor.surface.opacity(0.78))
                     .clipShape(Circle())
             }
         }
-        .padding(FGSpace.m)
+        .padding(10)
         .background(
             progress.win.aura.badgeGradient,
             in: RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
