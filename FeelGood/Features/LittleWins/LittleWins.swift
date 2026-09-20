@@ -84,7 +84,7 @@ nonisolated struct LittleWinProgress: Hashable, Identifiable, Sendable {
         if isUnlocked { return "Unlocked" }
         switch win {
         case .firstMove:
-            return "Locked · complete one session"
+            return "Complete one session"
         case .homebody:
             return "\(current) of \(target) at-home sessions"
         case .gymRegular:

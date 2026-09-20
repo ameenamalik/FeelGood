@@ -70,9 +70,13 @@ private struct LittleWinCard: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
 
+                // Medium weight and 0.85 opacity: at 0.72 in regular weight this
+                // read as pale grey on the pastels (5.3:1). 0.85 measures about
+                // 7.5:1 on the palest and darkest aura stops; a lighter black
+                // would fail the 4.5:1 floor.
                 Text(progress.statusLine)
-                    .font(FGFont.caption)
-                    .foregroundStyle(FGColor.inkOnAccent.opacity(0.72))
+                    .font(FGFont.caption.weight(.medium))
+                    .foregroundStyle(FGColor.inkOnAccent.opacity(0.85))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)

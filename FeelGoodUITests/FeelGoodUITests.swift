@@ -88,7 +88,12 @@ final class FeelGoodUITests: XCTestCase {
         XCTAssertTrue(youTab.waitForExistence(timeout: 5))
         youTab.tap()
 
+        // Preferences and account sit behind the gear at the top right.
+        let settings = app.buttons["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        settings.tap()
         XCTAssertTrue(app.buttons["My preferences"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["My account"].exists)
     }
 
     @MainActor
