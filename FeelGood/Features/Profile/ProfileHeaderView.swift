@@ -40,6 +40,7 @@ struct ProfileHeaderView: View {
     @State private var passwordForReauth = ""
     @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
     private var isMovementRecognitionEnabled = false
+    @AppStorage(ChatConsent.key) private var chatConsentRaw = ChatConsent.Status.notAsked.rawValue
 
     var body: some View {
         VStack(alignment: .leading, spacing: FGSpace.m) {
@@ -47,6 +48,7 @@ struct ProfileHeaderView: View {
             subscriptionRow
             if purchasesManager.isProUnlocked {
                 calendarPrivacySection
+                chatPrivacySection
             }
             accountDeletionSection
             legalLinks
@@ -490,6 +492,32 @@ struct ProfileHeaderView: View {
                     .font(FGFont.body.weight(.medium))
                     .foregroundStyle(FGColor.ink)
                 Text("Checks Calendar event names on this device for workouts and classes. Names are never saved or shared.")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(FGColor.controlAccent)
+        .padding(FGSpace.m)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .postHogMask()
+    }
+
+    // MARK: Chat privacy
+
+    private var chatPrivacySection: some View {
+        Toggle(isOn: Binding(
+            get: { chatConsentRaw == ChatConsent.Status.granted.rawValue },
+            set: { chatConsentRaw = ($0 ? ChatConsent.Status.granted : .declined).rawValue }
+        )) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("AI replies in Chat")
+                    .font(FGFont.body.weight(.medium))
+                    .foregroundStyle(FGColor.ink)
+                Text("Sends your chat messages, with emails, phone numbers and some health words removed, to an AI language model. Off keeps Chat on your phone.")
                     .font(FGFont.caption)
                     .foregroundStyle(FGColor.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
