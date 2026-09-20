@@ -63,6 +63,26 @@ nonisolated struct Menu: Hashable, Sendable {
         return items.flatMap(\.reasons).filter { seen.insert($0).inserted }
     }
 
+    /// Swaps one item for another in place, keeping the rest of the menu as it
+    /// was — the card exchanges, the screen does not rebuild.
+    ///
+    /// Lives here, not beside `TodayModel`: an extension declared in a
+    /// MainActor-defaulted file inherits that isolation, and calling it from
+    /// anywhere else — the engine's tests included — traps on an executor
+    /// assertion rather than failing to compile.
+    func replacing(_ item: MenuItem, with replacement: MenuItem) -> Menu {
+        Menu(
+            dayStart: dayStart,
+            appetizer: appetizer?.id == item.id ? replacement : appetizer,
+            main: main?.id == item.id ? replacement : main,
+            sides: sides.map { $0.id == item.id ? replacement : $0 },
+            dessert: dessert?.id == item.id ? replacement : dessert,
+            special: special?.id == item.id ? replacement : special,
+            headline: headline,
+            assumedCheckIn: assumedCheckIn
+        )
+    }
+
     /// Returns a copy of this menu with the given course slot replaced.
     func replacing(course: Course, with session: Session) -> Menu {
         let item = MenuItem(

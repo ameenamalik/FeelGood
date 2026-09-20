@@ -96,8 +96,10 @@ struct PlanEngineTests {
                 var seen: Set<String> = [item.session.id]
                 for _ in 0..<3 {
                     if let alt = Fixture.engine.alternative(for: current, onMenu: menu, input: input, alreadySeen: seen) {
-                        let other = menu.items.filter { $0.id != item.id && $0.course != .special }.reduce(0) { $0 + $1.session.durationMin }
-                        let newTotal = other + alt.session.durationMin
+                        // A swap is the alternative plus `fitting`, which drops
+                        // optional courses when the replacement needs the room.
+                        let swapped = Fixture.engine.fitting(menu.replacing(item, with: alt), to: input)
+                        let newTotal = swapped.items.filter { $0.course != .special }.reduce(0) { $0 + $1.session.durationMin }
                         #expect(newTotal <= time.maxMinutes, "swap to \(alt.session.title) totaled \(newTotal) against \(time.maxMinutes) min")
                         seen.insert(alt.session.id)
                         current = alt
@@ -866,5 +868,56 @@ struct PlanEngineTests {
             #expect(menu.items.allSatisfy { $0.session.durationMin == 0 })
             #expect(menu.items.allSatisfy { $0.session.durationLabel == "Untimed" })
         }
+    }
+
+    // MARK: - Swapping inside the budget
+
+    @Test("A main can always be swapped when a longer one fits once optional courses make room")
+    func mainSwapTrimsOptionalCoursesInsteadOfRefusing() throws {
+        // Reported 2026-09-19: capping a swap at "budget minus everything else
+        // on the menu" left people with few options (one main that fits their
+        // equipment) unable to swap at all, because the dessert and sides had
+        // already used the room. Only the required courses should hold a
+        // main's swap; the optional ones give way.
+        let engine = PlanEngine(catalog: Fixture.catalog.filter { $0.id != "m-pilates-5" })
+        for energy in Energy.allCases {
+            let input = PlanInput(
+                profile: Fixture.profile(),
+                checkIn: PlanCheckIn(energy: energy, time: .some),
+                context: Fixture.context()
+            )
+            let menu = engine.makeMenu(input)
+            guard let main = menu.main else { continue }
+
+            let replacement = try #require(engine.alternative(for: main, onMenu: menu, input: input))
+            let swapped = engine.fitting(menu.replacing(main, with: replacement), to: input)
+
+            #expect(swapped.main?.session.id == replacement.session.id)
+            let total = swapped.items.filter { $0.course != .special }.reduce(0) { $0 + $1.session.durationMin }
+            #expect(total <= TimeBudget.some.maxMinutes, "energy \(energy): swapped menu ran to \(total) minutes")
+        }
+    }
+
+    @Test("Fitting drops the dessert before any side, and never the main or appetizer")
+    func fittingDropsDessertFirst() throws {
+        let input = PlanInput(
+            profile: Fixture.profile(),
+            checkIn: PlanCheckIn(energy: .steady, time: .some),
+            context: Fixture.context()
+        )
+        let engine = Fixture.engine
+        let menu = engine.makeMenu(input)
+        let long = try #require(Fixture.catalog.first { $0.id == "m-video-20" })
+        let longMain = MenuItem(session: long, course: .main, reasons: [], reasonText: "")
+        let stretched = menu.replacing(try #require(menu.main), with: longMain)
+
+        let fitted = engine.fitting(stretched, to: input)
+
+        #expect(fitted.main?.session.id == "m-video-20")
+        #expect(fitted.appetizer?.id == menu.appetizer?.id)
+        // If a side went, the dessert must already have gone.
+        if fitted.sides.count < menu.sides.count { #expect(fitted.dessert == nil) }
+        let total = fitted.items.filter { $0.course != .special }.reduce(0) { $0 + $1.session.durationMin }
+        #expect(total <= TimeBudget.some.maxMinutes)
     }
 }
