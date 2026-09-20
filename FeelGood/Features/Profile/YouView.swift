@@ -29,11 +29,7 @@ struct YouView: View {
     var body: some View {
         NavigationStack {
             page
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbarBackground(.hidden, for: .navigationBar)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) { settingsMenu }
-                }
+                .toolbar(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $isEditingProfile) {
             ProfileEditView(
@@ -116,8 +112,8 @@ struct YouView: View {
         }
     }
 
-    /// Preferences and account live behind one gear, top right, instead of a
-    /// row of pills under the greeting — the greeting gets the room back.
+    /// Preferences and account live behind one gear on the greeting's own row,
+    /// instead of a row of pills under it — the greeting gets the room back.
     private var settingsMenu: some View {
         // Qualified: the engine's own `Menu` (today's menu) shadows SwiftUI's.
         SwiftUI.Menu {
@@ -135,6 +131,9 @@ struct YouView: View {
             Image(systemName: "gearshape")
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(FGColor.ink)
+                .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
+                .background(FGColor.surface.opacity(0.78), in: Circle())
+                .overlay { Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1) }
         }
         .accessibilityLabel("Settings")
         .accessibilityHint("Opens your preferences and account")
@@ -175,6 +174,9 @@ struct YouView: View {
             Text(welcomeLine)
                 .font(FGFont.sectionTitle)
                 .foregroundStyle(FGColor.ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            settingsMenu
         }
     }
 
