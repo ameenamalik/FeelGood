@@ -4686,43 +4686,48 @@
           {
             "name": "Standing",
             "seconds": 60,
-            "cue": "Feet hip width, knees soft. Let your weight settle."
+            "cue": "Stand with your feet hip-width apart and your knees slightly bent. Let your arms hang at your sides. Breathe in through your nose and out slowly, with your weight even on both feet."
           },
           {
             "name": "Lifting the sky",
             "seconds": 150,
-            "cue": "Arms rise with the breath in, sink with the breath out.",
+            "cue": "Start with your hands in front of your belly, palms up. Breathe in as you raise your hands up the front of your body and above your head, palms toward the sky. Breathe out as you lower them.",
             "glossaryID": "qigong-lifting-the-sky"
           },
           {
             "name": "Drawing the bow — right",
             "seconds": 75,
-            "cue": "Turn to the right, one arm drawing back like a bow, the other reaching out. Slow."
+            "cue": "Step your feet a little wider than your shoulders and bend your knees. Point your right hand out to the right and pull your left elbow back, like drawing a bow. Look at your right hand.",
+            "glossaryID": "qigong-drawing-the-bow"
           },
           {
             "name": "Drawing the bow — left",
             "seconds": 75,
-            "cue": "Switch sides. Same slow pull, same steady breath."
+            "cue": "Switch sides. Point your left hand out to the left and pull your right elbow back. Look at your left hand.",
+            "glossaryID": "qigong-drawing-the-bow"
           },
           {
             "name": "Turning the waist",
             "seconds": 90,
-            "cue": "Loose arms swinging around the body, letting the hips lead."
+            "cue": "Let your arms hang loose like ropes. Turn your upper body to the right, then to the left, so your arms swing around you. Keep your feet planted.",
+            "glossaryID": "qigong-turning-the-waist"
           },
           {
             "name": "Cloud hands",
             "seconds": 150,
-            "cue": "Weight shifting side to side, hands passing the centre."
+            "cue": "Shift your weight from one foot to the other. As you shift, your hands trade places: one rises to chest height while the other lowers to your belly, like wiping a big window.",
+            "glossaryID": "qigong-cloud-hands"
           },
           {
             "name": "Holding the ball",
             "seconds": 60,
-            "cue": "Slow, round, unhurried. Shoulders down."
+            "cue": "Lift your arms in front of your chest as if hugging a big beach ball. Let your shoulders drop, stay still, and breathe slowly.",
+            "glossaryID": "qigong-holding-the-ball"
           },
           {
             "name": "Stand and close",
             "seconds": 60,
-            "cue": "One quiet minute before you go back to the day."
+            "cue": "Let your arms drop to your sides and stand still. Take a few slow breaths, then go back to your day."
           }
         ]
       }
@@ -4768,17 +4773,17 @@
           {
             "name": "Start small",
             "seconds": 135,
-            "cue": "Shoulders, hips, feet. Let it build."
+            "cue": "Sway from side to side and roll your shoulders. Let your hips and feet join in when you feel like it."
           },
           {
             "name": "Full out",
             "seconds": 360,
-            "cue": "Nobody's watching. Change songs whenever you want."
+            "cue": "Dance however you like, big or small, with no plan. Change songs whenever you want."
           },
           {
             "name": "Slow it down",
             "seconds": 60,
-            "cue": "Let the tempo fall. Sway, breathe, and let your arms hang."
+            "cue": "Let your movements slow down with the music. Let your arms hang loose and breathe slowly."
           }
         ]
       }
@@ -4821,75 +4826,75 @@
           {
             "name": "Arrive",
             "seconds": 45,
-            "cue": "Stand tall. Three slow breaths, feeling your feet on the ground."
+            "cue": "Stand tall with your feet hip-width apart. Take three slow breaths and feel your feet on the ground."
           },
           {
             "name": "Shoulder rolls",
             "seconds": 60,
-            "cue": "Slow circles, forward then back. Let your neck stay long."
+            "cue": "Roll your shoulders in slow circles, forward and then backward. Keep your neck relaxed."
           },
           {
             "name": "Arm circles",
             "seconds": 75,
-            "cue": "Start small and let them grow. Keep your shoulders easy.",
+            "cue": "Hold your arms out to the sides and make small circles, letting them grow gradually larger. Keep your shoulders down.",
             "glossaryID": "arm-circles"
           },
           {
             "name": "Torso twists",
             "seconds": 90,
-            "cue": "Feet planted, arms loose. Turn gently from side to side.",
+            "cue": "Stand with your feet planted and your arms relaxed. Turn your upper body gently from side to side and let your arms swing along.",
             "glossaryID": "torso-twist-stretch"
           },
           {
             "name": "Leg swings — right",
             "seconds": 60,
-            "cue": "Rest a hand on a wall or chair. Swing the leg forward and back.",
+            "cue": "Hold a wall or chair with one hand. Swing your right leg gently forward and back, a little higher each swing.",
             "glossaryID": "leg-swings-stretch"
           },
           {
             "name": "Leg swings — left",
             "seconds": 60,
-            "cue": "Switch sides. Keep the swing easy and let it grow.",
+            "cue": "Switch sides. Swing your left leg gently forward and back, a little higher each swing.",
             "glossaryID": "leg-swings-stretch"
           },
           {
             "name": "Hip circles",
             "seconds": 60,
-            "cue": "Hands on your hips, big slow circles, then the other way."
+            "cue": "Put your hands on your hips and stand with your feet shoulder-width apart. Draw big, slow circles with your hips, then reverse direction."
           },
           {
             "name": "Standing quad stretch — right",
             "seconds": 45,
-            "cue": "Hold a wall for balance and draw your heel toward you.",
+            "cue": "Hold a wall for balance. Bend your right knee and hold your right foot behind you, keeping your knees close together.",
             "glossaryID": "standing-quad-stretch"
           },
           {
             "name": "Standing quad stretch — left",
             "seconds": 45,
-            "cue": "Switch sides. Stand tall and keep your knees close together.",
+            "cue": "Switch sides. Bend your left knee and hold your left foot behind you, keeping your knees close together.",
             "glossaryID": "standing-quad-stretch"
           },
           {
             "name": "Calf stretch — right",
             "seconds": 45,
-            "cue": "Hands on the wall, one foot back with the heel down.",
+            "cue": "Stand facing a wall with your hands on it. Step your right foot back, keep your heel down, and lean toward the wall until you feel a stretch in your calf.",
             "glossaryID": "wall-calf-stretch"
           },
           {
             "name": "Calf stretch — left",
             "seconds": 45,
-            "cue": "Switch sides. Heel down, gentle lean forward.",
+            "cue": "Switch sides. Step your left foot back, keep your heel down, and lean toward the wall.",
             "glossaryID": "wall-calf-stretch"
           },
           {
             "name": "Reach and fold",
             "seconds": 60,
-            "cue": "Reach up tall, then fold forward with soft knees and let your head hang."
+            "cue": "Reach both arms up toward the ceiling. Then bend forward from your hips with your knees soft and let your head and arms hang."
           },
           {
             "name": "Stand and close",
             "seconds": 30,
-            "cue": "Roll up slowly. Notice how your body feels."
+            "cue": "Roll up slowly, one section of your spine at a time, and stand tall for a breath."
           }
         ]
       }
@@ -4931,66 +4936,66 @@
           {
             "name": "March in place",
             "seconds": 60,
-            "cue": "Knees up, arms swinging. Easy and warming."
+            "cue": "Lift your knees and swing your arms. Keep it easy; this is your warm-up."
           },
           {
             "name": "Bodyweight squats",
             "seconds": 90,
-            "cue": "Sit back and down, chest tall, then stand. Keep a pace you can hold.",
+            "cue": "Push your hips back and bend your knees as if sitting into a chair, keeping your chest tall. Then stand up. Move at a pace you can keep going.",
             "glossaryID": "bodyweight-squat"
           },
           {
             "name": "Reverse lunges — right",
             "seconds": 60,
-            "cue": "Step back, lower with control, and press through the front foot.",
+            "cue": "Step your right foot back and lower your back knee toward the floor. Push through your front foot to stand.",
             "glossaryID": "reverse-lunge"
           },
           {
             "name": "Reverse lunges — left",
             "seconds": 60,
-            "cue": "Switch sides. Same steady pace.",
+            "cue": "Switch sides. Step your left foot back, lower, and push through your front foot to stand.",
             "glossaryID": "reverse-lunge"
           },
           {
             "name": "Wall push-ups",
             "seconds": 90,
-            "cue": "Hands on the wall, body in one line. Bend the elbows and press away.",
+            "cue": "Stand an arm's length from a wall with your hands on it at shoulder height. Bend your elbows to bring your chest toward the wall, then press away.",
             "glossaryID": "wall-push-up"
           },
           {
             "name": "Calf raises",
             "seconds": 60,
-            "cue": "Rest a hand on the wall. Rise onto your toes and lower slowly.",
+            "cue": "Rest one hand on the wall. Rise up onto your toes, then lower slowly.",
             "glossaryID": "calf-raise"
           },
           {
             "name": "Wall sit",
             "seconds": 60,
-            "cue": "Back against the wall, thighs as level as feels comfortable. Breathe.",
+            "cue": "Lean your back against a wall and slide down until your thighs are as level as feels comfortable. Hold and keep breathing.",
             "glossaryID": "wall-sit"
           },
           {
             "name": "Slow squats",
             "seconds": 90,
-            "cue": "Take three counts down and three counts up.",
+            "cue": "Take three counts to lower into the squat and three counts to stand back up.",
             "glossaryID": "bodyweight-squat"
           },
           {
             "name": "Slow wall push-ups",
             "seconds": 60,
-            "cue": "Three counts in, three counts out.",
+            "cue": "Take three counts to bring your chest toward the wall and three counts to press away.",
             "glossaryID": "wall-push-up"
           },
           {
             "name": "Shake it out",
             "seconds": 45,
-            "cue": "Loosen your arms and legs. Let everything go heavy.",
+            "cue": "Let your arms and legs go loose and shake them out gently.",
             "glossaryID": "full-body-shake"
           },
           {
             "name": "Slow breaths",
             "seconds": 45,
-            "cue": "Hands on your belly. Breathe in through your nose, out through your mouth."
+            "cue": "Rest your hands on your belly. Breathe in through your nose and out through your mouth."
           }
         ]
       }
@@ -7892,6 +7897,82 @@
         "shoulders",
         "spine",
         "chest",
+        "core"
+      ]
+    },
+    {
+      "id": "qigong-drawing-the-bow",
+      "name": "Drawing the bow",
+      "aka": [
+        "draw the bow",
+        "qi gong drawing the bow"
+      ],
+      "instructions": [
+        "Stand with your feet a little wider than your shoulders and bend your knees slightly. Go only as low as feels comfortable.",
+        "Point your right hand out to the right, with your index finger and thumb making an L shape, and look toward it.",
+        "Bend your left arm and pull the elbow back, as if drawing a bow. Breathe in as you pull.",
+        "Breathe out as you let the pull go, then repeat slowly. Switch sides for the next step."
+      ],
+      "muscles": [
+        "shoulders",
+        "upper back",
+        "legs"
+      ]
+    },
+    {
+      "id": "qigong-turning-the-waist",
+      "name": "Turning the waist",
+      "aka": [
+        "waist turning",
+        "swinging arms"
+      ],
+      "instructions": [
+        "Stand with your feet hip-width apart and your knees slightly bent.",
+        "Let your arms hang loose, like ropes.",
+        "Turn your upper body to the right, then to the left, letting your arms swing around you.",
+        "Keep your feet planted and breathe normally."
+      ],
+      "muscles": [
+        "core",
+        "spine",
+        "hips"
+      ]
+    },
+    {
+      "id": "qigong-cloud-hands",
+      "name": "Cloud hands",
+      "aka": [
+        "cloud hands",
+        "qi gong cloud hands"
+      ],
+      "instructions": [
+        "Stand with your feet shoulder-width apart and your knees slightly bent.",
+        "Shift your weight onto your right foot. Raise your right hand to chest height with the palm facing you, and rest your left hand near your belly.",
+        "Slowly shift your weight to your left foot as your hands trade places: the left hand rises and the right hand lowers.",
+        "Keep going back and forth slowly, like wiping a big window, and breathe easily."
+      ],
+      "muscles": [
+        "legs",
+        "core",
+        "shoulders"
+      ]
+    },
+    {
+      "id": "qigong-holding-the-ball",
+      "name": "Holding the ball",
+      "aka": [
+        "holding the ball",
+        "embrace the tree"
+      ],
+      "instructions": [
+        "Stand with your feet hip-width apart and your knees slightly bent.",
+        "Lift your arms in front of your chest as if hugging a large beach ball, with your fingertips pointing toward each other.",
+        "Let your shoulders drop and keep your elbows slightly lower than your hands.",
+        "Stay still and breathe slowly."
+      ],
+      "muscles": [
+        "shoulders",
+        "legs",
         "core"
       ]
     },
