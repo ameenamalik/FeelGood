@@ -4,7 +4,7 @@ Two unrelated routes that happen to share a host.
 
 | Route | Auth | Why it exists |
 |---|---|---|
-| `POST /copy` | Pro entitlement, rate-limited | The Claude proxy behind PRD §11. The only place the Anthropic key lives — the app never sees it. See `CLAUDE.md`'s security rules and `FeelGood/Services/CopyPayload.swift` for the payload it receives (the six-key allow-list, locked down by `CopyPayloadTests`). |
+| `POST /copy` | Pro entitlement, rate-limited | The language-model proxy behind PRD §11 (Gemini only, by design: it is the one provider the privacy policy names). The only place the Gemini key lives — the app never sees it. See `CLAUDE.md`'s security rules and `FeelGood/Services/CopyPayload.swift` for the payload it receives (the six-key allow-list, locked down by `CopyPayloadTests`). |
 | `GET /player?v=<id>` | none — public, static, cacheable | Serves the page that frames the YouTube embed. Needs no secret, no KV, and no entitlement. |
 
 ## Why `/player` has to exist
@@ -40,14 +40,14 @@ wrangler kv:namespace create RATE_LIMIT --env production
 Set secrets — never committed, never in `wrangler.toml`:
 
 ```bash
-wrangler secret put ANTHROPIC_API_KEY
+wrangler secret put GEMINI_API_KEY
 wrangler secret put REVENUECAT_SECRET_API_KEY   # the RevenueCat *secret* v1 REST key
 
-wrangler secret put ANTHROPIC_API_KEY --env production
+wrangler secret put GEMINI_API_KEY --env production
 wrangler secret put REVENUECAT_SECRET_API_KEY --env production
 ```
 
-Use **separate Anthropic keys for dev and production** (PRD §11, "clean
+Use **separate Gemini keys for dev and production** (PRD §11, "clean
 dev/prod separation") — if the dev key leaks, rotating it doesn't touch
 production.
 

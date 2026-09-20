@@ -1,11 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { handleChat, isValidChatPayload } from "./chat";
 import { hasProEntitlement } from "./entitlement";
 import { privacyPolicyResponse, supportResponse, termsResponse } from "./legal";
 import { playerResponse } from "./player";
 import { isRateLimited } from "./rateLimit";
 import { COPY_SYSTEM_PROMPT } from "./systemPrompt";
-import { traceAgentTurn, traceChatModel } from "./tracing";
+import { traceAgentTurn } from "./tracing";
 import { Env } from "./types";
 import { isValidPayload } from "./validate";
 
@@ -115,40 +114,9 @@ export default {
         try {
           let line: string | null = null;
 
-          // Prioritize Gemini 1.5 Flash (primary model)
+          // Gemini only. If it fails the client falls back to its template headline.
           if (env.GEMINI_API_KEY) {
             line = await generateGeminiCopy(body, env.GEMINI_API_KEY);
-          }
-
-          // Fallback to Anthropic if Gemini unavailable or not configured and Anthropic key exists
-          if (!line && env.ANTHROPIC_API_KEY) {
-            const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-            const messages = [{ role: "user" as const, content: JSON.stringify(body) }];
-
-            const response = await traceChatModel(
-              {
-                agentName: "feelgood-copy-agent",
-                agentId: "feelgood-copywriter",
-                conversationId: body.subscriberID || "anonymous",
-              },
-              {
-                system: "anthropic",
-                model: "claude-3-5-haiku-20241022",
-                systemPrompt: COPY_SYSTEM_PROMPT,
-                inputMessages: messages,
-              },
-              async (setResponse) => {
-                const res = await client.messages.create({
-                  model: "claude-3-5-haiku-20241022",
-                  max_tokens: 300,
-                  system: [{ type: "text", text: COPY_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-                  messages,
-                });
-                setResponse(res.content);
-                return res;
-              }
-            );
-            line = firstText(response);
           }
 
           if (!line) return new Response("empty response", { status: 500 });
@@ -188,7 +156,7 @@ async function generateGeminiCopy(body: unknown, apiKey: string): Promise<string
       body: payload,
     });
 
-    if (resp.status === 404) {
+    if (resp.status === 404 || resp.status === 429 || resp.status >= 500) {
       resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -205,9 +173,4 @@ async function generateGeminiCopy(body: unknown, apiKey: string): Promise<string
   } catch {
     return null;
   }
-}
-
-function firstText(response: Anthropic.Message): string | null {
-  const block = response.content.find((entry) => entry.type === "text");
-  return block?.type === "text" ? block.text.trim() : null;
 }
