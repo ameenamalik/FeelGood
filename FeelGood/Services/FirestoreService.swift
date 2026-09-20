@@ -325,7 +325,10 @@ public final class FirestoreService: Sendable {
 
     // MARK: - Account Deletion
 
-    public func deleteUserData(userId: String) async {
+    /// Throws if any document could not be removed, so a caller never treats a
+    /// failed or partial delete as a finished one. Account deletion relies on
+    /// that: it must not go on to delete the auth user while data remains.
+    public func deleteUserData(userId: String) async throws {
         stopListening()
         guard let db else { return }
 
@@ -339,23 +342,21 @@ public final class FirestoreService: Sendable {
         // exhaustion instead of taking a single capped page.
         async let workoutsCleared: Void = deleteAllDocuments(in: userRef.collection("custom_workouts"))
         async let completionsCleared: Void = deleteAllDocuments(in: userRef.collection("completions"))
-        _ = await (workoutsCleared, completionsCleared)
+        _ = try await (workoutsCleared, completionsCleared)
 
-        try? await userRef.delete()
+        try await userRef.delete()
     }
 
-    private func deleteAllDocuments(in collection: CollectionReference, pageSize: Int = 300) async {
+    private func deleteAllDocuments(in collection: CollectionReference, pageSize: Int = 300) async throws {
         while true {
-            guard let snapshot = try? await collection.limit(to: pageSize).getDocuments(),
-                  !snapshot.documents.isEmpty else {
-                return
-            }
+            let snapshot = try await collection.limit(to: pageSize).getDocuments()
+            guard !snapshot.documents.isEmpty else { return }
 
             let batch = collection.firestore.batch()
             for doc in snapshot.documents {
                 batch.deleteDocument(doc.reference)
             }
-            try? await batch.commit()
+            try await batch.commit()
 
             if snapshot.documents.count < pageSize {
                 return

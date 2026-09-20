@@ -14,6 +14,7 @@ import CryptoKit
 @preconcurrency import FirebaseAuth
 import FirebaseCore
 import Foundation
+import PostHog
 @preconcurrency import GoogleSignIn
 import SwiftUI
 
@@ -214,7 +215,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         }
         let mapped = Self.mapUser(user)
         self.currentUser = mapped
-        Self.identify(mapped)
         FirestoreService.shared.startListening(for: mapped.uid)
         Task {
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
@@ -231,16 +231,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         )
     }
 
-    /// Links this device's PostHog activity to who's actually signed in.
-    /// Identity only — email, display name, auth provider — never body state
-    /// or work-arounds; those stay off every analytics channel per CLAUDE.md.
-    private static func identify(_ user: AuthUser) {
-        var properties: [String: Any] = ["provider": user.providerID]
-        if let email = user.email { properties["email"] = email }
-        if let displayName = user.displayName { properties["name"] = displayName }
-        Analytics.identify(user.uid, properties: properties)
-    }
-
     // MARK: - Email Sign In & Sign Up
 
     public func signInWithEmail(email: String, password: String) async throws {
@@ -254,7 +244,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = false
             self.currentUser = mock
-            Self.identify(mock)
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
         }
@@ -264,7 +253,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let mapped = Self.mapUser(result.user)
             self.lastAuthenticationCreatedAccount = false
             self.currentUser = mapped
-            Self.identify(mapped)
             FirestoreService.shared.startListening(for: mapped.uid)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
@@ -282,7 +270,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
-            Self.identify(mock)
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
         }
@@ -292,7 +279,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let mapped = Self.mapUser(result.user)
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mapped
-            Self.identify(mapped)
             FirestoreService.shared.startListening(for: mapped.uid)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
@@ -319,7 +305,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
-            Self.identify(mock)
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
         }
@@ -335,7 +320,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let mapped = Self.mapUser(result.user)
             self.lastAuthenticationCreatedAccount = result.additionalUserInfo?.isNewUser ?? false
             self.currentUser = mapped
-            Self.identify(mapped)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
             throw AuthError.mapFirebaseError(error)
@@ -354,7 +338,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
-            Self.identify(mock)
             await PurchasesManager.shared.logIn(appUserID: mock.uid)
             return
         }
@@ -386,7 +369,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let mapped = Self.mapUser(result.user)
             self.lastAuthenticationCreatedAccount = result.additionalUserInfo?.isNewUser ?? false
             self.currentUser = mapped
-            Self.identify(mapped)
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
             throw AuthError.mapFirebaseError(error)
@@ -457,10 +439,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
 
         let uid = user.uid
 
-        // Best-effort Firestore user data cleanup with a non-blocking timeout
-        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
-            await FirestoreService.shared.deleteUserData(userId: uid)
-        }
+        await Self.deleteCloudData(uid: uid)
 
         do {
             try await Self.withTimeout(seconds: 8.0) {
@@ -477,6 +456,21 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             throw AuthError.networkError
         } catch {
             throw AuthError.mapFirebaseError(error)
+        }
+    }
+
+    /// Removes the person's synced data before their auth user goes, because
+    /// Firestore's rules key access off the signed-in uid. Deleting the account
+    /// never waits on this: if it fails or times out the account is still
+    /// deleted, and the failure is logged (no identifiers) so it is visible.
+    /// Anything left behind needs a server-side cleanup on user deletion.
+    private static func deleteCloudData(uid: String) async {
+        do {
+            try await withTimeout(seconds: 15.0) {
+                try await FirestoreService.shared.deleteUserData(userId: uid)
+            }
+        } catch {
+            Analytics.log("account_deletion_cloud_cleanup_incomplete", level: .error)
         }
     }
 
@@ -537,9 +531,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         }
 
         let uid = user.uid
-        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
-            await FirestoreService.shared.deleteUserData(userId: uid)
-        }
+        await Self.deleteCloudData(uid: uid)
 
         do {
             try await Self.withTimeout(seconds: 8.0) {
@@ -611,9 +603,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         }
 
         let uid = user.uid
-        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
-            await FirestoreService.shared.deleteUserData(userId: uid)
-        }
+        await Self.deleteCloudData(uid: uid)
 
         do {
             try await Self.withTimeout(seconds: 8.0) {
@@ -666,9 +656,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         }
 
         let uid = user.uid
-        await Self.withTimeout(seconds: 6.0, defaultValue: ()) {
-            await FirestoreService.shared.deleteUserData(userId: uid)
-        }
+        await Self.deleteCloudData(uid: uid)
 
         do {
             try await Self.withTimeout(seconds: 8.0) {
