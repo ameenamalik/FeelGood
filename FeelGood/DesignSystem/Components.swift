@@ -62,12 +62,12 @@ struct FGPrimaryButton: View {
         Button(action: action) {
             Text(title)
                 .font(FGFont.body.weight(.medium))
-                .foregroundStyle(isEnabled ? FGColor.bg : FGColor.inkMuted)
+                .foregroundStyle(isEnabled ? FGColor.onActionFill : FGColor.inkMuted)
                 .frame(maxWidth: .infinity, minHeight: 56)
                 .contentShape(Capsule())
                 .background(
                     Capsule()
-                        .fill(isEnabled ? FGColor.ink : FGColor.line)
+                        .fill(isEnabled ? FGColor.actionFill : FGColor.line)
                 )
         }
         .buttonStyle(.feelGoodPress)
@@ -516,17 +516,20 @@ extension View {
     func guaranteedPaywallCloseButton(action: @escaping () -> Void) -> some View {
         overlay(alignment: .topTrailing) {
             Button(action: action) {
+                // The system close affordance: a small tinted disc with a
+                // light glyph, sitting inside a full-size tap target.
                 Image(systemName: "xmark")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(FGColor.inkMuted)
+                    .frame(width: 30, height: 30)
+                    .background(FGColor.ink.opacity(0.08), in: Circle())
                     .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
-                    .background(.ultraThinMaterial, in: Circle())
-                    .overlay(Circle().strokeBorder(FGColor.lineStrong.opacity(0.45)))
+                    .contentShape(Circle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Close")
-            .padding(.top, FGSpace.s)
-            .padding(.trailing, FGSpace.s)
+            .padding(.top, FGSpace.xs)
+            .padding(.trailing, FGSpace.xs)
         }
     }
 }
