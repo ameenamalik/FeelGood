@@ -133,7 +133,6 @@ struct DebugMenu: View {
                             ("Downward Dog", "downward-dog"),
                             ("Qigong: Lifting the Sky", "qigong-lifting-the-sky"),
                             ("Wall Angels", "wall-angels"),
-                            ("Full Body Shakeout", "full-body-shake"),
                             ("Mindful Breathing", "deep-breath")
                         ]
                         ForEach(demos, id: \.1) { name, id in
