@@ -339,21 +339,25 @@ private struct TodayScreen: View {
         // stays the default and stays uncluttered; this is just how the
         // peers to it become reachable. Library and Settings land here too.
         // Keep the tab bar readable over the app's warm background wash.
-        // instead. Only pre-26 needs that explicit material.
-        tabView
-            .toolbarBackground(.ultraThinMaterial, for: .tabBar)
-            .toolbarBackground(.visible, for: .tabBar)
+        ZStack {
+            // Keep one page surface alive while destinations switch. The tab
+            // views are created lazily, so without this layer their first
+            // rendered frame can briefly expose the system background.
+            FGColor.bg.ignoresSafeArea()
+
+            tabView
+        }
+        .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
 
     private var tabView: some View {
         TabView(selection: $tab) {
             Tab("Today", systemImage: "sun.max", value: Destination.today) {
                 TodayView(model: model, requestedSessionID: $requestedSessionID)
-                    .tabSettleIn()
             }
             Tab("Chat", systemImage: "bubble.left.and.bubble.right", value: Destination.explore) {
                 ExploreView(model: model)
-                    .tabSettleIn()
             }
             Tab("You", systemImage: "person", value: Destination.you) {
                 YouView(model: model, profile: profile) { answers in
@@ -367,7 +371,6 @@ private struct TodayScreen: View {
                         }
                     }
                 }
-                .tabSettleIn()
             }
         }
         .tint(FGColor.ink)
