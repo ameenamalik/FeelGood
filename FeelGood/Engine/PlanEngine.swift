@@ -297,12 +297,7 @@ nonisolated struct PlanEngine: Sendable {
         let scored = rankedCandidates(input, checkIn: checkIn, stats: stats)
         let excluded = Set(menu.items.map(\.session.id)).union(alreadySeen).union([item.session.id])
 
-        // Swapping an item must never push the total menu duration over the check-in budget.
-        let budget = checkIn.time.maxMinutes
-        let otherMinutes = menu.items
-            .filter { $0.id != item.id && $0.course != .special }
-            .reduce(0) { $0 + $1.session.durationMin }
-        let maxDuration = item.course == .special ? nil : max(0, budget - otherMinutes)
+        let maxDuration = swapCeiling(for: item, onMenu: menu, budget: checkIn.time.maxMinutes)
 
         if let next = first(from: scored, course: item.course, excluding: excluded, maxDuration: maxDuration) {
             return next
@@ -322,6 +317,49 @@ nonisolated struct PlanEngine: Sendable {
         return nil
     }
 
+    /// The longest a replacement for `item` may be.
+    ///
+    /// A main or appetizer is a required course, so it may use whatever the
+    /// *other required* course leaves free — the dessert and sides are optional
+    /// and `fitting(_:to:)` drops them to make room. Without that a person with
+    /// few options (one main that fits their equipment) got a swap that
+    /// silently refused, because the optional courses had already filled the
+    /// budget. Sides and dessert are themselves the optional courses, so they
+    /// stay bounded by everything else on the menu.
+    private func swapCeiling(for item: MenuItem, onMenu menu: Menu, budget: Int) -> Int? {
+        if item.course == .special { return nil }
+        let others = menu.items.filter { $0.id != item.id && $0.course != .special }
+        let counted = item.course == .main || item.course == .appetizer
+            ? others.filter { $0.course == .main || $0.course == .appetizer }
+            : others
+        return max(0, budget - counted.reduce(0) { $0 + $1.session.durationMin })
+    }
+
+    /// Drops the dessert, then sides from the end, until the timed courses fit
+    /// the check-in budget — the order `makeMenu` uses. Call this after a swap
+    /// so the menu never ends up longer than the time the person gave.
+    func fitting(_ menu: Menu, to input: PlanInput) -> Menu {
+        let budget = resolvedCheckIn(input).time.maxMinutes
+        func total(_ menu: Menu) -> Int {
+            menu.items.filter { $0.course != .special }.reduce(0) { $0 + $1.session.durationMin }
+        }
+        var result = menu
+        while total(result) > budget {
+            if result.dessert != nil {
+                result = result.replacing(course: .dessert, withItem: nil)
+            } else if let lastSide = result.sides.last {
+                result = Menu(
+                    dayStart: result.dayStart, appetizer: result.appetizer, main: result.main,
+                    sides: result.sides.filter { $0.id != lastSide.id }, dessert: result.dessert,
+                    special: result.special, headline: result.headline, assumedCheckIn: result.assumedCheckIn
+                )
+            } else {
+                break
+            }
+        }
+        return result
+    }
+
     /// Returns the next alternative when cycling back after all unseen options have been seen.
     func cyclicAlternative(for item: MenuItem, onMenu menu: Menu, input: PlanInput) -> MenuItem? {
         let checkIn = resolvedCheckIn(input)
@@ -329,12 +367,7 @@ nonisolated struct PlanEngine: Sendable {
         let scored = rankedCandidates(input, checkIn: checkIn, stats: stats)
         let excluded = Set(menu.items.map(\.session.id)).union([item.session.id])
 
-        // Swapping an item must never push the total menu duration over the check-in budget.
-        let budget = checkIn.time.maxMinutes
-        let otherMinutes = menu.items
-            .filter { $0.id != item.id && $0.course != .special }
-            .reduce(0) { $0 + $1.session.durationMin }
-        let maxDuration = item.course == .special ? nil : max(0, budget - otherMinutes)
+        let maxDuration = swapCeiling(for: item, onMenu: menu, budget: checkIn.time.maxMinutes)
 
         if let next = first(from: scored, course: item.course, excluding: excluded, maxDuration: maxDuration) {
             return next

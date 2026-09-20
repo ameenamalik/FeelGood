@@ -350,7 +350,7 @@ final class TodayModel {
             swappedAway.insert(item.session.id)
             log.recordSwap(of: item.session, at: now)
             history = log.history(before: now)
-            menu = menu.replacing(item, with: replacement)
+            menu = engine.fitting(menu.replacing(item, with: replacement), to: currentInput)
             // The card you exchanged stays exchanged when you come back to it.
             log.save(menu, generatedAt: now)
             publishSnapshot(now: now)
@@ -364,7 +364,7 @@ final class TodayModel {
             swappedAway.insert(item.session.id)
             log.recordSwap(of: item.session, at: now)
             history = log.history(before: now)
-            menu = menu.replacing(item, with: cycleReplacement)
+            menu = engine.fitting(menu.replacing(item, with: cycleReplacement), to: currentInput)
             log.save(menu, generatedAt: now)
             publishSnapshot(now: now)
         }
@@ -476,7 +476,7 @@ final class TodayModel {
                 input: currentInput
             ) {
                 swappedAway.insert(item.session.id)
-                menu = menu.replacing(item, with: replacement)
+                menu = engine.fitting(menu.replacing(item, with: replacement), to: currentInput)
                 log.save(menu, generatedAt: now)
                 publishSnapshot(now: now)
             }
@@ -939,22 +939,5 @@ final class TodayModel {
             return store.term(id: id)
         }
         return store.term(id: CustomStepMatcher.glossaryID(for: step.name, in: store.glossary))
-    }
-}
-
-extension Menu {
-    /// Swaps one item for another in place, keeping the rest of the menu as it
-    /// was — the card exchanges, the screen does not rebuild.
-    func replacing(_ item: MenuItem, with replacement: MenuItem) -> Menu {
-        Menu(
-            dayStart: dayStart,
-            appetizer: appetizer?.id == item.id ? replacement : appetizer,
-            main: main?.id == item.id ? replacement : main,
-            sides: sides.map { $0.id == item.id ? replacement : $0 },
-            dessert: dessert?.id == item.id ? replacement : dessert,
-            special: special?.id == item.id ? replacement : special,
-            headline: headline,
-            assumedCheckIn: assumedCheckIn
-        )
     }
 }
