@@ -1,4 +1,4 @@
-import { Env } from "./types";
+import type { Env } from "./types";
 
 // Matches RevenueCatConstants.proEntitlementID in
 // FeelGood/Support/RevenueCatConstants.swift — keep the two in sync.
@@ -30,8 +30,8 @@ export async function hasProEntitlement(subscriberID: string, env: Env): Promise
   }
 
   if (!env.REVENUECAT_SECRET_API_KEY) {
-    console.warn("entitlement: REVENUECAT_SECRET_API_KEY is missing; falling back to client-side StoreKit verification");
-    return true;
+    console.error("entitlement: REVENUECAT_SECRET_API_KEY is missing; refusing (fail closed)");
+    return false;
   }
 
   try {
@@ -40,11 +40,10 @@ export async function hasProEntitlement(subscriberID: string, env: Env): Promise
     });
 
     if (!response.ok) {
-      console.warn(`entitlement: RevenueCat returned ${response.status} for subscriber lookup`);
-      // If RevenueCat key returns 401 (unauthorized/misconfigured), do not brick the app for paying users
-      if (response.status === 401) {
-        return true;
-      }
+      // A 401 means our secret key is revoked or wrong. That is a config fault
+      // we must see loudly, and it must never open the door to the model.
+      const log = response.status === 401 ? console.error : console.warn;
+      log(`entitlement: RevenueCat returned ${response.status} for subscriber lookup`);
       return false;
     }
 
