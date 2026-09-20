@@ -156,6 +156,12 @@ enum Fixture {
         session(id: "m-strength-30", activity: .strength, qualities: [.strength, .grip],
                 durationMin: 30, intensity: 4, course: .main, equipment: [.weights],
                 places: [.home, .gym], energyFit: [.strong]),
+        // A short main, so a swap still has something that fits inside the
+        // check-in budget once the rest of the menu has taken its share.
+        // It needs a mat like the other mains, so profiles with no equipment
+        // still see no main and fall back to the floor.
+        session(id: "m-pilates-5", activity: .pilates, qualities: [.mobility],
+                durationMin: 5, intensity: 1, course: .main, equipment: [.mat]),
         session(id: "m-video-20", activity: .pilates, qualities: [.strength],
                 durationMin: 20, intensity: 3, course: .main, equipment: [.mat],
                 energyFit: [.steady, .strong], video: true),
