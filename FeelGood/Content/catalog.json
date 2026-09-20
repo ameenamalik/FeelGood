@@ -4650,6 +4650,352 @@
       }
     },
     {
+      "id": "main-qigong-12",
+      "title": "Twelve minutes of qi gong",
+      "subtitle": "Standing, slow, and short enough for a busy day",
+      "activity": "qigong",
+      "qualities": [
+        "balance",
+        "mobility",
+        "downRegulation"
+      ],
+      "durationMin": 12,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "calm",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Standing",
+            "seconds": 60,
+            "cue": "Feet hip width, knees soft. Let your weight settle."
+          },
+          {
+            "name": "Lifting the sky",
+            "seconds": 150,
+            "cue": "Arms rise with the breath in, sink with the breath out.",
+            "glossaryID": "qigong-lifting-the-sky"
+          },
+          {
+            "name": "Drawing the bow — right",
+            "seconds": 75,
+            "cue": "Turn to the right, one arm drawing back like a bow, the other reaching out. Slow."
+          },
+          {
+            "name": "Drawing the bow — left",
+            "seconds": 75,
+            "cue": "Switch sides. Same slow pull, same steady breath."
+          },
+          {
+            "name": "Turning the waist",
+            "seconds": 90,
+            "cue": "Loose arms swinging around the body, letting the hips lead."
+          },
+          {
+            "name": "Cloud hands",
+            "seconds": 150,
+            "cue": "Weight shifting side to side, hands passing the centre."
+          },
+          {
+            "name": "Holding the ball",
+            "seconds": 60,
+            "cue": "Slow, round, unhurried. Shoulders down."
+          },
+          {
+            "name": "Stand and close",
+            "seconds": 60,
+            "cue": "One quiet minute before you go back to the day."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-dance-10",
+      "title": "Ten-minute dance break",
+      "subtitle": "One song's worth of moving however you like",
+      "activity": "dance",
+      "qualities": [
+        "coordination",
+        "endurance"
+      ],
+      "durationMin": 10,
+      "intensity": 2,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "play",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Pick the music",
+            "seconds": 45,
+            "cue": "Something you actually like. This matters more than the movement."
+          },
+          {
+            "name": "Start small",
+            "seconds": 135,
+            "cue": "Shoulders, hips, feet. Let it build."
+          },
+          {
+            "name": "Full out",
+            "seconds": 360,
+            "cue": "Nobody's watching. Change songs whenever you want."
+          },
+          {
+            "name": "Slow it down",
+            "seconds": 60,
+            "cue": "Let the tempo fall. Sway, breathe, and let your arms hang."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-standing-mobility-12",
+      "title": "Twelve-minute standing mobility",
+      "subtitle": "No mat, no floor — loosening up from your shoulders down",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 12,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full",
+        "hips",
+        "back",
+        "neckShoulders"
+      ],
+      "intents": [
+        "mobilize",
+        "calm"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Arrive",
+            "seconds": 45,
+            "cue": "Stand tall. Three slow breaths, feeling your feet on the ground."
+          },
+          {
+            "name": "Shoulder rolls",
+            "seconds": 60,
+            "cue": "Slow circles, forward then back. Let your neck stay long."
+          },
+          {
+            "name": "Arm circles",
+            "seconds": 75,
+            "cue": "Start small and let them grow. Keep your shoulders easy.",
+            "glossaryID": "arm-circles"
+          },
+          {
+            "name": "Torso twists",
+            "seconds": 90,
+            "cue": "Feet planted, arms loose. Turn gently from side to side.",
+            "glossaryID": "torso-twist-stretch"
+          },
+          {
+            "name": "Leg swings — right",
+            "seconds": 60,
+            "cue": "Rest a hand on a wall or chair. Swing the leg forward and back.",
+            "glossaryID": "leg-swings-stretch"
+          },
+          {
+            "name": "Leg swings — left",
+            "seconds": 60,
+            "cue": "Switch sides. Keep the swing easy and let it grow.",
+            "glossaryID": "leg-swings-stretch"
+          },
+          {
+            "name": "Hip circles",
+            "seconds": 60,
+            "cue": "Hands on your hips, big slow circles, then the other way."
+          },
+          {
+            "name": "Standing quad stretch — right",
+            "seconds": 45,
+            "cue": "Hold a wall for balance and draw your heel toward you.",
+            "glossaryID": "standing-quad-stretch"
+          },
+          {
+            "name": "Standing quad stretch — left",
+            "seconds": 45,
+            "cue": "Switch sides. Stand tall and keep your knees close together.",
+            "glossaryID": "standing-quad-stretch"
+          },
+          {
+            "name": "Calf stretch — right",
+            "seconds": 45,
+            "cue": "Hands on the wall, one foot back with the heel down.",
+            "glossaryID": "wall-calf-stretch"
+          },
+          {
+            "name": "Calf stretch — left",
+            "seconds": 45,
+            "cue": "Switch sides. Heel down, gentle lean forward.",
+            "glossaryID": "wall-calf-stretch"
+          },
+          {
+            "name": "Reach and fold",
+            "seconds": 60,
+            "cue": "Reach up tall, then fold forward with soft knees and let your head hang."
+          },
+          {
+            "name": "Stand and close",
+            "seconds": 30,
+            "cue": "Roll up slowly. Notice how your body feels."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-standing-strength-12",
+      "title": "Twelve-minute standing strength",
+      "subtitle": "Squats, lunges, and wall push-ups. No equipment, no floor",
+      "activity": "strength",
+      "qualities": [
+        "strength"
+      ],
+      "durationMin": 12,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "lowBack",
+        "knees"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "March in place",
+            "seconds": 60,
+            "cue": "Knees up, arms swinging. Easy and warming."
+          },
+          {
+            "name": "Bodyweight squats",
+            "seconds": 90,
+            "cue": "Sit back and down, chest tall, then stand. Keep a pace you can hold.",
+            "glossaryID": "bodyweight-squat"
+          },
+          {
+            "name": "Reverse lunges — right",
+            "seconds": 60,
+            "cue": "Step back, lower with control, and press through the front foot.",
+            "glossaryID": "reverse-lunge"
+          },
+          {
+            "name": "Reverse lunges — left",
+            "seconds": 60,
+            "cue": "Switch sides. Same steady pace.",
+            "glossaryID": "reverse-lunge"
+          },
+          {
+            "name": "Wall push-ups",
+            "seconds": 90,
+            "cue": "Hands on the wall, body in one line. Bend the elbows and press away.",
+            "glossaryID": "wall-push-up"
+          },
+          {
+            "name": "Calf raises",
+            "seconds": 60,
+            "cue": "Rest a hand on the wall. Rise onto your toes and lower slowly.",
+            "glossaryID": "calf-raise"
+          },
+          {
+            "name": "Wall sit",
+            "seconds": 60,
+            "cue": "Back against the wall, thighs as level as feels comfortable. Breathe.",
+            "glossaryID": "wall-sit"
+          },
+          {
+            "name": "Slow squats",
+            "seconds": 90,
+            "cue": "Take three counts down and three counts up.",
+            "glossaryID": "bodyweight-squat"
+          },
+          {
+            "name": "Slow wall push-ups",
+            "seconds": 60,
+            "cue": "Three counts in, three counts out.",
+            "glossaryID": "wall-push-up"
+          },
+          {
+            "name": "Shake it out",
+            "seconds": 45,
+            "cue": "Loosen your arms and legs. Let everything go heavy.",
+            "glossaryID": "full-body-shake"
+          },
+          {
+            "name": "Slow breaths",
+            "seconds": 45,
+            "cue": "Hands on your belly. Breathe in through your nose, out through your mouth."
+          }
+        ]
+      }
+    },
+    {
       "id": "side-dance-it-out-five",
       "title": "Five-minute dance it out",
       "subtitle": "Put on your favorite track and let your body move freely",
