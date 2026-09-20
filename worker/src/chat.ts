@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { Env } from "./types";
 import { CATALOG_SESSIONS, findSessionById, matchBestSession, CatalogSessionItem, searchGlossary } from "./catalog_index";
 import { queryAISearch } from "./ai_search";
@@ -123,7 +122,8 @@ const CHAT_SYSTEM_PROMPT = `You are FeelGood, a warm, calm, unhurried daily well
 Your user is conversing with you about their movement, how they feel today, adjusting routines, or asking questions about workouts and yoga.
 
 CORE PRINCIPLES:
-1. Speak warmly and calmly, like an empathetic friend who knows their week. Keep responses short (1-2 sentences).
+1. Speak warmly and calmly, like an empathetic friend who knows their week. Notice how they feel and reflect it back briefly before suggesting anything. Keep responses short (1-2 sentences).
+1a. REGISTER: Plain, natural, and a little understated, never theatrical or old-fashioned. Address the person as "you" only. NEVER use terms of endearment or pet names of any kind ("my dear", "dear", "honey", "sweetheart", "darling", "love", "friend", "girl", "sis", "hun"), and do not open with a stage-y interjection like "Ah," or "Oh, my". Never assume the person's gender.
 2. Never make medical or diagnostic claims. Never mention streaks, calories, numbers, or guilt.
 3. GROUNDING: You MUST recommend ONLY real routines from the catalog below using their exact session ID:
 ${CATALOG_PROMPT_SUMMARY}
@@ -137,119 +137,6 @@ ${CATALOG_PROMPT_SUMMARY}
    - Acknowledgment ("ok", "sounds good", "perfect"): Classify as 'acknowledgment' and confirm warmly.
    - Action trigger ("add to today", "let's do it", "start"): Classify as 'action_trigger'.
    - Vague / Incomplete / Ambiguous ("no", "nah", "it feels okay", "feels fine", "not sure", "meh", "maybe"): DO NOT return an exercise recommendation card! Classify as phase: 'needs_discovery' and intent: 'general_check_in'. Do not return a session_id. Ask a gentle clarifying question (e.g. "Got it. Would you prefer a short breath reset, a gentle floor stretch, or something to build a little energy?") and provide 3-4 discovery quick replies.`;
-
-const ORCHESTRATE_TOOL: Anthropic.Tool = {
-  name: "orchestrate_conversation_state",
-  description:
-    "Extract stateful conversation parameters, intent, routine recommendation, and dynamic UI quick replies.",
-  input_schema: {
-    type: "object",
-    properties: {
-      message: {
-        type: "string",
-        description: "Warm, calm, empathetic 1-2 sentence response.",
-      },
-      mode: {
-        type: "string",
-        enum: ["clarifying", "banter", "recommendation"],
-        description: "Conversation mode: clarifying (vague/needs info, no card), banter (affirmation/inquiry, no card), recommendation (specific routine suggested with card).",
-      },
-      intent: {
-        type: "string",
-        enum: [
-          "new_routine_request",
-          "inquiry",
-          "acknowledgment",
-          "refinement",
-          "action_trigger",
-          "general_check_in",
-        ],
-        description: "Classified user intent.",
-      },
-      phase: {
-        type: "string",
-        enum: [
-          "greeting",
-          "needs_discovery",
-          "recommendation_active",
-          "routine_committed",
-          "inquiry_active",
-        ],
-        description: "Current conversation state.",
-      },
-      session_id: {
-        type: "string",
-        description: "The exact session ID from the catalog that best matches the user's needs.",
-      },
-      reason: {
-        type: "string",
-        description: "Warm 1-sentence explanation of why this routine was picked.",
-      },
-      quick_replies: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            id: { type: "string" },
-            label: { type: "string" },
-            symbol: { type: "string" },
-            action_type: {
-              type: "string",
-              enum: [
-                "commit_to_today",
-                "ask_why",
-                "swap_routine",
-                "filter_gentler",
-                "filter_shorter",
-                "filter_more_energizing",
-                "filter_staying_in",
-                "start_session",
-                "custom_prompt",
-              ],
-            },
-            payload: { type: "string" },
-          },
-          required: ["id", "label", "action_type"],
-        },
-      },
-      energy: {
-        type: "string",
-        enum: ["low", "steady", "strong"],
-      },
-      timeBudget: {
-        type: "string",
-        enum: [
-          "fiveMinutes",
-          "aLittle",
-          "fifteenMinutes",
-          "twentyMinutes",
-          "twentyFiveMinutes",
-          "some",
-          "thirtyFiveMinutes",
-          "fortyMinutes",
-          "plenty",
-        ],
-      },
-      place: {
-        type: "string",
-        enum: ["stayingIn", "happyToGoOut", "atTheGym"],
-      },
-      body: {
-        type: "string",
-        enum: ["sore", "stiff", "stressed", "cramping", "good"],
-      },
-      intentField: {
-        type: "string",
-        enum: ["energize", "strengthen", "calm", "mobilize", "joy"],
-      },
-      quickFilter: {
-        type: "string",
-        enum: ["shorter", "gentler", "moreEnergizing", "canNotLeave"],
-      },
-    },
-    required: ["message", "intent", "phase", "quick_replies"],
-  },
-};
 
 export function isValidChatPayload(body: unknown): body is ChatPayload {
   if (typeof body !== "object" || body === null) return false;
@@ -294,17 +181,14 @@ ${matchedExercise.instructions.map((inst) => `  * ${inst}`).join("\n")}`;
           knowledgeContext = knowledgeContext ? `${knowledgeContext}\n\n${exerciseGuide}` : exerciseGuide;
         }
 
-        if (env.GEMINI_API_KEY) {
-          const geminiRes = await handleGeminiChat(payload, env.GEMINI_API_KEY, knowledgeContext);
-          if (geminiRes.ok) {
-            return geminiRes;
-          }
-          console.warn("Gemini chat failed, falling back to Anthropic if available...");
+        // Gemini is the only provider chat text is ever sent to, which is what
+        // the privacy policy and the consent sheet say. Resilience comes from
+        // trying other Gemini models (inside handleGeminiChat), never from a
+        // second vendor.
+        if (!env.GEMINI_API_KEY) {
+          return new Response("upstream error: GEMINI_API_KEY is not configured", { status: 500 });
         }
-        if (env.ANTHROPIC_API_KEY) {
-          return await handleAnthropicChat(payload, env.ANTHROPIC_API_KEY, knowledgeContext);
-        }
-        return new Response("upstream error: Neither GEMINI_API_KEY nor ANTHROPIC_API_KEY is configured or able to respond", { status: 500 });
+        return await handleGeminiChat(payload, env.GEMINI_API_KEY, knowledgeContext);
       } catch (error) {
         console.error("handleChat error:", error);
         return new Response(`upstream error: ${error instanceof Error ? error.message : "unknown"}`, { status: 500 });
@@ -617,7 +501,10 @@ async function handleGeminiChat(
             body: JSON.stringify(body),
           }
         );
-        if (response.status !== 404) {
+        // Move to the next model on "not found" and on transient failures
+        // (rate limit, overload). Anything else is a real answer.
+        const shouldTryNextModel = response.status === 404 || response.status === 429 || response.status >= 500;
+        if (!shouldTryNextModel) {
           break;
         }
       }
@@ -704,165 +591,6 @@ async function handleGeminiChat(
     phase: parsed.phase || (mode === "clarifying" ? "needs_discovery" : "recommendation_active"),
     recommendation: finalRecommendation,
     quick_replies: quickReplies,
-    extracted_check_in: Object.keys(extractedCheckIn).length > 0 ? extractedCheckIn : null,
-  };
-
-  return Response.json(data);
-}
-
-async function handleAnthropicChat(
-  payload: ChatPayload,
-  apiKey: string,
-  knowledgeContext?: string | null
-): Promise<Response> {
-  const client = new Anthropic({ apiKey });
-
-  const messages: Anthropic.MessageParam[] = [];
-  if (payload.history && payload.history.length > 0) {
-    for (const item of payload.history.slice(-8)) {
-      const text = item.text || item.content || "";
-      if (text) {
-        messages.push({
-          role: item.role === "model" || item.role === "assistant" ? "assistant" : "user",
-          content: text,
-        });
-      }
-    }
-  }
-  messages.push({
-    role: "user",
-    content: payload.prompt,
-  });
-
-  const systemPrompt = buildSystemPrompt(payload.userContext, knowledgeContext, payload.todaysMenu, payload.activeSessionID);
-
-  const response = await traceChatModel(
-    {
-      agentName: "feelgood-chat-agent",
-      agentId: "feelgood-companion",
-      conversationId: payload.subscriberID,
-    },
-    {
-      system: "anthropic",
-      model: "claude-3-5-haiku-20241022",
-      systemPrompt,
-      inputMessages: messages,
-    },
-    async (setResponse) => {
-      const res = await client.messages.create({
-        model: "claude-3-5-haiku-20241022",
-        max_tokens: 600,
-        system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
-        tools: [ORCHESTRATE_TOOL],
-        tool_choice: { type: "auto" },
-        messages,
-      });
-      setResponse(res.content);
-      return res;
-    }
-  );
-
-  let messageText = "";
-  let mode: ChatMode | undefined;
-  let intent: ChatResponseData["intent"] = "general_check_in";
-  let phase: ChatResponseData["phase"] = "recommendation_active";
-  let sessionId: string | undefined;
-  let reason: string | undefined;
-  let quick_replies: QuickReplyAction[] = [];
-  const extractedCheckIn: ExtractedCheckIn = {};
-
-  for (const block of response.content) {
-    if (block.type === "tool_use" && block.name === "orchestrate_conversation_state") {
-      const input = block.input as Record<string, unknown>;
-      const parsedTool = await traceToolExecution("orchestrate_conversation_state", input, async () => {
-        return {
-          message: typeof input.message === "string" ? input.message.trim() : undefined,
-          mode: typeof input.mode === "string" ? (input.mode as ChatMode) : undefined,
-          intent: typeof input.intent === "string" ? (input.intent as ChatResponseData["intent"]) : undefined,
-          phase: typeof input.phase === "string" ? (input.phase as ChatResponseData["phase"]) : undefined,
-          sessionId: typeof input.session_id === "string" ? input.session_id : undefined,
-          reason: typeof input.reason === "string" ? input.reason : undefined,
-          quick_replies: Array.isArray(input.quick_replies) ? (input.quick_replies as QuickReplyAction[]) : undefined,
-          energy: typeof input.energy === "string" ? (input.energy as ExtractedCheckIn["energy"]) : undefined,
-          timeBudget: typeof input.timeBudget === "string" ? (input.timeBudget as ExtractedCheckIn["timeBudget"]) : undefined,
-          place: typeof input.place === "string" ? (input.place as ExtractedCheckIn["place"]) : undefined,
-          body: typeof input.body === "string" ? (input.body as ExtractedCheckIn["body"]) : undefined,
-          intentField: typeof input.intentField === "string" ? (input.intentField as ExtractedCheckIn["intent"]) : undefined,
-          quickFilter: typeof input.quickFilter === "string" ? (input.quickFilter as ExtractedCheckIn["quickFilter"]) : undefined,
-        };
-      });
-
-      if (parsedTool.message) messageText = parsedTool.message;
-      if (parsedTool.mode) mode = parsedTool.mode;
-      if (parsedTool.intent) intent = parsedTool.intent;
-      if (parsedTool.phase) phase = parsedTool.phase;
-      if (parsedTool.sessionId) sessionId = parsedTool.sessionId;
-      if (parsedTool.reason) reason = parsedTool.reason;
-      if (parsedTool.quick_replies) quick_replies = parsedTool.quick_replies;
-      if (parsedTool.energy) extractedCheckIn.energy = parsedTool.energy;
-      if (parsedTool.timeBudget) extractedCheckIn.timeBudget = parsedTool.timeBudget;
-      if (parsedTool.place) extractedCheckIn.place = parsedTool.place;
-      if (parsedTool.body) extractedCheckIn.body = parsedTool.body;
-      if (parsedTool.intentField) extractedCheckIn.intent = parsedTool.intentField;
-      if (parsedTool.quickFilter) extractedCheckIn.quickFilter = parsedTool.quickFilter;
-    } else if (block.type === "text" && !messageText) {
-      messageText = block.text.trim();
-    }
-  }
-
-  if (!messageText) {
-    messageText = isVagueInput(payload.prompt)
-      ? "Got it. What kind of movement or rest would feel good right now?"
-      : "Here is a gentle plan tailored for your day.";
-  }
-
-  const recommendation = resolveCanonicalRecommendation(
-    sessionId,
-    reason,
-    extractedCheckIn,
-    payload.prompt,
-    phase,
-    payload.userContext
-  );
-
-  if (quick_replies.length === 0) {
-    if (phase === "needs_discovery" || isVagueInput(payload.prompt)) {
-      quick_replies = [
-        { id: "floor_stretch", label: "5 min floor stretch", symbol: "figure.mind.and.body", action_type: "custom_prompt", payload: "5 min gentle floor stretch" },
-        { id: "breath_reset", label: "Breath reset", symbol: "wind", action_type: "custom_prompt", payload: "3 min breath reset" },
-        { id: "gentle_mobility", label: "Gentle mobility", symbol: "figure.cooldown", action_type: "custom_prompt", payload: "10 min gentle mobility" },
-        { id: "just_resting", label: "Resting today", symbol: "bed.double", action_type: "custom_prompt", payload: "I am taking a full rest day" },
-      ];
-    } else {
-      quick_replies = [
-        { id: "commit", label: "Add to today", symbol: "plus", action_type: "commit_to_today" },
-        { id: "why_this", label: "Why this?", symbol: "questionmark.circle", action_type: "ask_why" },
-        { id: "shorter", label: "Something shorter", symbol: "clock.arrow.circlepath", action_type: "filter_shorter" },
-        { id: "gentler", label: "Gentler option", symbol: "leaf", action_type: "filter_gentler" },
-      ];
-    }
-  }
-
-  let finalMode: ChatMode = mode || "banter";
-  if (!mode || (mode !== "clarifying" && mode !== "banter" && mode !== "recommendation")) {
-    if (phase === "needs_discovery" || isVagueInput(payload.prompt)) {
-      finalMode = "clarifying";
-    } else if (recommendation) {
-      finalMode = "recommendation";
-    } else {
-      finalMode = "banter";
-    }
-  }
-
-  const finalRecommendation = finalMode === "recommendation" ? recommendation : null;
-
-  const data: ChatResponseData = {
-    message: messageText,
-    mode: finalMode,
-    intent,
-    phase: phase || (finalMode === "clarifying" ? "needs_discovery" : "recommendation_active"),
-    recommendation: finalRecommendation,
-    quick_replies,
     extracted_check_in: Object.keys(extractedCheckIn).length > 0 ? extractedCheckIn : null,
   };
 
