@@ -741,6 +741,8 @@ private struct ResumeMark: View {
             Text("Resume")
                 .foregroundStyle(FGColor.ink)
         }
+        .lineLimit(1)
+        .fixedSize()
         .font(.system(size: 13, weight: .semibold, design: .rounded))
         .accessibilityHidden(true)
     }
@@ -806,6 +808,8 @@ private struct MenuItemBody: View {
                 HStack(alignment: .center, spacing: 6) {
                     Text(item.course.label.uppercased())
                         .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .lineLimit(1)
+                        .fixedSize()
                         .foregroundStyle(item.course.accentText)
                         .padding(.horizontal, 11)
                         .padding(.vertical, 5)
@@ -814,6 +818,8 @@ private struct MenuItemBody: View {
 
                     Text(item.session.durationLabel.uppercased())
                         .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .lineLimit(1)
+                        .fixedSize()
                         .foregroundStyle(item.course.accentText)
                         .padding(.horizontal, 11)
                         .padding(.vertical, 5)
