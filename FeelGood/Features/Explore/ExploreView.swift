@@ -544,6 +544,7 @@ struct ExploreView: View {
             recentCompletions: completedEntries.count,
             recoveryOwed: recoveryOwed,
             hiddenSessionIDs: Array(model.profile.hiddenSessionIDs),
+            shownSessionIDs: Array(Set(messages.compactMap { $0.recommendation?.sessionID })),
             preferredIntensityTier: banditPrefs.preferredIntensityTier,
             topExploredActivities: banditPrefs.topExploredActivities,
             fatigueSensitivity: banditPrefs.fatigueSensitivity

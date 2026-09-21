@@ -291,6 +291,9 @@ nonisolated struct ChatUserContext: Codable, Sendable {
     let recentCompletions: Int?
     let recoveryOwed: Bool?
     let hiddenSessionIDs: [String]?
+    /// Every session already shown as a card in this conversation. Chat never
+    /// offers one of these again after a "nah" or "something else".
+    let shownSessionIDs: [String]?
     let preferredIntensityTier: String?
     let topExploredActivities: [String]?
     let fatigueSensitivity: Double?
@@ -301,6 +304,7 @@ nonisolated struct ChatUserContext: Codable, Sendable {
         case recentCompletions = "recent_completions"
         case recoveryOwed = "recovery_owed"
         case hiddenSessionIDs = "hidden_session_ids"
+        case shownSessionIDs = "shown_session_ids"
         case preferredIntensityTier = "preferred_intensity_tier"
         case topExploredActivities = "top_explored_activities"
         case fatigueSensitivity = "fatigue_sensitivity"
@@ -312,6 +316,7 @@ nonisolated struct ChatUserContext: Codable, Sendable {
         recentCompletions: Int? = nil,
         recoveryOwed: Bool? = nil,
         hiddenSessionIDs: [String]? = nil,
+        shownSessionIDs: [String]? = nil,
         preferredIntensityTier: String? = nil,
         topExploredActivities: [String]? = nil,
         fatigueSensitivity: Double? = nil
@@ -321,6 +326,7 @@ nonisolated struct ChatUserContext: Codable, Sendable {
         self.recentCompletions = recentCompletions
         self.recoveryOwed = recoveryOwed
         self.hiddenSessionIDs = hiddenSessionIDs
+        self.shownSessionIDs = shownSessionIDs
         self.preferredIntensityTier = preferredIntensityTier
         self.topExploredActivities = topExploredActivities
         self.fatigueSensitivity = fatigueSensitivity
@@ -589,6 +595,7 @@ nonisolated enum LocalStatefulChatEngine {
 
         for s in catalogSessions {
             if let hidden = userContext?.hiddenSessionIDs, hidden.contains(s.id) { continue }
+            if let shown = userContext?.shownSessionIDs, shown.contains(s.id) { continue }
             if let excludeID, s.id == excludeID { continue }
             if let excludedFocus, s.bodyFocus.contains(excludedFocus) { continue }
             var score = 0
@@ -688,6 +695,28 @@ nonisolated enum LocalStatefulChatEngine {
         }
     }
 
+    /// "nahhh" -> "nah": any run of three or more of the same character
+    /// collapses to one. Ordinary double letters ("good") are untouched.
+    static func collapsingRepeats(_ text: String) -> String {
+        var result = ""
+        var previous: Character?
+        var run = 0
+        var pending = ""
+        for character in text {
+            if character == previous {
+                run += 1
+                pending.append(character)
+            } else {
+                result += run >= 3 ? String(previous!) : pending
+                previous = character
+                run = 1
+                pending = String(character)
+            }
+        }
+        result += run >= 3 ? String(previous ?? " ") : pending
+        return result
+    }
+
     static func orchestrate(
         prompt: String,
         history: [WireChatMessage] = [],
@@ -695,7 +724,10 @@ nonisolated enum LocalStatefulChatEngine {
         userContext: ChatUserContext? = nil,
         todaysMenu: [StructuredRecommendation] = []
     ) -> ChatResponse {
-        let trimmedLower = prompt.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        // "nahhh" and "noooo" are the same answer as "nah" and "no".
+        let trimmedLower = collapsingRepeats(
+            prompt.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        )
         let vaguePhrases = [
             "no", "nah", "nope", "it feels okay", "feels okay", "not sure", "idk",
             "maybe", "meh", "whatever", "don't know", "dont know", "nothing",

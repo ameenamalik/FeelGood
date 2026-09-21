@@ -2,6 +2,7 @@ import { Env } from "./types";
 import { CATALOG_SESSIONS, findSessionById, matchBestSession, CatalogSessionItem, searchGlossary } from "./catalog_index";
 import { queryAISearch } from "./ai_search";
 import { traceAgentTurn, traceChatModel, traceToolExecution } from "./tracing";
+import { excludedSessionIDs, isRejection, normalizeReply } from "./repeats";
 
 export type ChatRole = "user" | "assistant" | "model";
 
@@ -23,6 +24,9 @@ export interface UserPreferencesContext {
   recoveryOwed?: boolean;
   hiddenSessionIDs?: string[];
   hidden_session_ids?: string[];
+  // Every session the client has rendered as a card in this conversation.
+  shownSessionIDs?: string[];
+  shown_session_ids?: string[];
   preferredIntensityTier?: "gentle" | "moderate" | "dynamic";
   preferred_intensity_tier?: "gentle" | "moderate" | "dynamic";
   topExploredActivities?: string[];
@@ -212,7 +216,7 @@ function buildSystemPrompt(
     if (activeSessionID) {
       const active = todaysMenu.find((item) => item.session_id === activeSessionID);
       if (active) {
-        prompt += `\nThe item most recently discussed is "${active.title}" (session_id: ${active.session_id}). Treat follow-ups like "why this?" or "something shorter" as being about this item unless the user clearly asks about a different one.`;
+        prompt += `\nThe item most recently discussed is "${active.title}" (session_id: ${active.session_id}). Treat questions like "why this?" as being about this item unless the user clearly asks about a different one. Requests to change it ("something shorter", "gentler", "not today", "nah", "something else") are NOT about keeping this item: they mean the user does not want it, so pick a different session.`;
       }
     }
   }
@@ -228,6 +232,10 @@ function buildSystemPrompt(
     const hidden = userContext.hiddenSessionIDs || userContext.hidden_session_ids;
     if (hidden && hidden.length > 0) {
       prompt += `\nEXCLUDED / HIDDEN EXERCISES: The user has explicitly chosen to hide these routines: ${hidden.join(", ")}. Never suggest or recommend these.`;
+    }
+    const shown = userContext.shownSessionIDs || userContext.shown_session_ids;
+    if (shown && shown.length > 0) {
+      prompt += `\nALREADY SHOWN IN THIS CONVERSATION: ${shown.join(", ")}. The user has seen these cards. Never recommend any of them again unless the user is asking about one of them ("why this?") or has said yes to it. If the user says no, nah, not today, or asks for something else, pick a session that is not on this list; if nothing clearly fits, ask a short clarifying question and return no session_id.`;
     }
     const preferredTier = userContext.preferredIntensityTier || userContext.preferred_intensity_tier;
     if (preferredTier) {
@@ -249,7 +257,7 @@ function buildSystemPrompt(
 }
 
 function isVagueInput(prompt: string): boolean {
-  const p = prompt.trim().toLowerCase();
+  const p = normalizeReply(prompt);
   const vague = [
     "no",
     "nope",
@@ -282,17 +290,32 @@ function resolveCanonicalRecommendation(
   extractedCheckIn: ExtractedCheckIn,
   prompt: string,
   phase: string | undefined,
-  userContext?: UserPreferencesContext
+  userContext?: UserPreferencesContext,
+  intent?: string
 ): StructuredRecommendation | null {
   // If phase is needs_discovery or user response is vague without asking for a routine, don't return an exercise
   if ((phase === "needs_discovery" || isVagueInput(prompt)) && !sessionId) {
     return null;
   }
 
-  const hidden = userContext?.hiddenSessionIDs || userContext?.hidden_session_ids;
+  // Hidden sessions are never offered. Sessions already shown in this chat are
+  // not offered again either, unless the person is asking about the one on
+  // screen — a "nah" that comes back with the same card is the bug this stops.
+  const hidden = excludedSessionIDs({
+    hidden: userContext?.hiddenSessionIDs || userContext?.hidden_session_ids,
+    shown: userContext?.shownSessionIDs || userContext?.shown_session_ids,
+    intent,
+    prompt,
+  });
   let matchedSession: CatalogSessionItem | undefined = findSessionById(sessionId);
-  if (matchedSession && hidden && hidden.includes(matchedSession.id)) {
+  if (matchedSession && hidden.includes(matchedSession.id)) {
     matchedSession = undefined;
+  }
+
+  // A bare rejection has no request in it to rematch against. Guessing another
+  // routine would be a second thing they did not ask for, so answer without a card.
+  if (!matchedSession && isRejection(prompt)) {
+    return null;
   }
 
   if (!matchedSession) {
@@ -336,6 +359,12 @@ function resolveCanonicalRecommendation(
       topExploredActivities: userContext?.topExploredActivities || userContext?.top_explored_activities,
       fatigueSensitivity: userContext?.fatigueSensitivity ?? userContext?.fatigue_sensitivity,
     });
+  }
+
+  // matchBestSession seeds its answer with the first catalog entry, so if every
+  // session is excluded it would hand one back anyway.
+  if (hidden.includes(matchedSession.id)) {
+    return null;
   }
 
   const tags: string[] = [
@@ -548,7 +577,8 @@ async function handleGeminiChat(
     extractedCheckIn,
     payload.prompt,
     parsed.phase,
-    payload.userContext
+    payload.userContext,
+    parsed.intent
   );
 
   let quickReplies: QuickReplyAction[] = parsed.quick_replies || [];
@@ -583,6 +613,20 @@ async function handleGeminiChat(
 
   // Enforce lean schema invariant: clarifying and banter MUST have null recommendation
   const finalRecommendation = mode === "recommendation" ? recommendation : null;
+
+  // The model asked for a card that was dropped (already shown, hidden, or a
+  // bare "nah"). A recommendation reply with no card would show "Add to today"
+  // and "Why this?" chips over nothing, so it becomes a clarifying turn.
+  if (mode === "recommendation" && !finalRecommendation) {
+    mode = "clarifying";
+    parsed.phase = "needs_discovery";
+    quickReplies = [
+      { id: "floor_stretch", label: "5 min floor stretch", symbol: "figure.mind.and.body", action_type: "custom_prompt", payload: "5 min gentle floor stretch" },
+      { id: "breath_reset", label: "Breath reset", symbol: "wind", action_type: "custom_prompt", payload: "3 min breath reset" },
+      { id: "gentle_mobility", label: "Gentle mobility", symbol: "figure.cooldown", action_type: "custom_prompt", payload: "10 min gentle mobility" },
+      { id: "just_resting", label: "Resting today", symbol: "bed.double", action_type: "custom_prompt", payload: "I am taking a full rest day" },
+    ];
+  }
 
   const data: ChatResponseData = {
     message: parsed.message || (isVagueInput(payload.prompt) ? "Got it. What kind of support would feel best right now?" : "Here is a gentle plan tailored for your day."),

@@ -302,6 +302,55 @@ struct ChatServiceTests {
             #expect(hiddenMatch?.id != normalMatch.id)
         }
     }
+
+    @Test("An elongated 'nah' is still a 'nah' and gets no card")
+    func elongatedRejectionIsVague() {
+        for text in ["nahhh", "Noooo", "nope"] {
+            let response = LocalStatefulChatEngine.orchestrate(prompt: text)
+            #expect(response.mode == .clarifying, "\(text)")
+            #expect(response.recommendation == nil, "\(text)")
+        }
+    }
+
+    @Test("Repeated letters collapse only in runs of three or more")
+    func collapsingRepeatsRuns() {
+        #expect(LocalStatefulChatEngine.collapsingRepeats("nahhh") == "nah")
+        #expect(LocalStatefulChatEngine.collapsingRepeats("good") == "good")
+        #expect(LocalStatefulChatEngine.collapsingRepeats("") == "")
+        #expect(LocalStatefulChatEngine.collapsingRepeats("yesss please") == "yes please")
+    }
+
+    @Test("A refinement never comes back with a session already shown in the chat")
+    func refinementSkipsShownSessions() throws {
+        let first = try #require(
+            LocalStatefulChatEngine.orchestrate(prompt: "15 min gentle floor stretch").recommendation
+        )
+        var shown = [first.sessionID]
+
+        // Keep turning things down; every answer must be new, run enough times
+        // that the random pick within the top tier would have repeated by now.
+        for _ in 0..<25 {
+            let context = ChatUserContext(shownSessionIDs: shown)
+            let next = try #require(
+                LocalStatefulChatEngine.orchestrate(
+                    prompt: "Gentler option",
+                    activeSessionID: shown.last,
+                    userContext: context
+                ).recommendation
+            )
+            #expect(!shown.contains(next.sessionID))
+            shown.append(next.sessionID)
+        }
+    }
+
+    @Test("Shown session ids reach the worker as shown_session_ids")
+    func shownSessionIDsEncodeKey() throws {
+        let context = ChatUserContext(hiddenSessionIDs: ["a"], shownSessionIDs: ["b", "c"])
+        let data = try JSONEncoder().encode(context)
+        let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        #expect(json["shown_session_ids"] as? [String] == ["b", "c"])
+        #expect(json["hidden_session_ids"] as? [String] == ["a"])
+    }
 }
 
 extension ChatServiceTests {
