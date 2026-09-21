@@ -20,7 +20,7 @@ way, and CC BY-SA applies to distribution, not to what is on screen.
 
 ### Covered files
 
-All 322 frame sets (950 files). Sets marked with a glossary entry can appear
+All 308 frame sets (924 files). Sets marked with a glossary entry can appear
 in the player today; the rest are on disk for sessions not yet written.
 
 - `ab-wheel-1.png`, `ab-wheel-2.png`, `ab-wheel-3.png`
@@ -89,10 +89,8 @@ in the player today; the rest are on disk for sessions not yet written.
 - `cat-cow-stretch-1.png`, `cat-cow-stretch-2.png`, `cat-cow-stretch-3.png`
 - `chair-dip-1.png`, `chair-dip-2.png`, `chair-dip-3.png`
 - `chest-dip-1.png`, `chest-dip-2.png`, `chest-dip-3.png`
-- `chest-press-1.png`, `chest-press-2.png`
 - `chest-supported-row-1.png`, `chest-supported-row-2.png`, `chest-supported-row-3.png`
 - `childs-pose-1.png`, `childs-pose-2.png`, `childs-pose-3.png`
-- `chin-tuck-1.png`, `chin-tuck-2.png`
 - `chin-up-1.png`, `chin-up-2.png`, `chin-up-3.png`
 - `clamshell-1.png`, `clamshell-2.png`, `clamshell-3.png`
 - `close-grip-bench-press-1.png`, `close-grip-bench-press-2.png`, `close-grip-bench-press-3.png`
@@ -106,14 +104,12 @@ in the player today; the rest are on disk for sessions not yet written.
 - `crunch-1.png`, `crunch-2.png`, `crunch-3.png`
 - `curtsy-lunge-1.png`, `curtsy-lunge-2.png`, `curtsy-lunge-3.png`
 - `cycling-1.png`, `cycling-2.png`, `cycling-3.png`
-- `dead-bug-1.png`, `dead-bug-2.png`
 - `dead-hang-1.png`, `dead-hang-2.png`, `dead-hang-3.png`
 - `deadlift-1.png`, `deadlift-2.png`, `deadlift-3.png`
 - `decline-bench-press-1.png`, `decline-bench-press-2.png`, `decline-bench-press-3.png`
 - `decline-dumbbell-press-1.png`, `decline-dumbbell-press-2.png`, `decline-dumbbell-press-3.png`
 - `decline-push-up-1.png`, `decline-push-up-2.png`, `decline-push-up-3.png`
 - `decline-sit-up-1.png`, `decline-sit-up-2.png`, `decline-sit-up-3.png`
-- `deep-breath-1.png`, `deep-breath-2.png`
 - `deficit-reverse-lunge-1.png`, `deficit-reverse-lunge-2.png`, `deficit-reverse-lunge-3.png`
 - `diamond-push-up-1.png`, `diamond-push-up-2.png`, `diamond-push-up-3.png`
 - `dip-1.png`, `dip-2.png`, `dip-3.png`
@@ -121,7 +117,6 @@ in the player today; the rest are on disk for sessions not yet written.
 - `donkey-kick-1.png`, `donkey-kick-2.png`, `donkey-kick-3.png`
 - `doorway-chest-stretch-1.png`, `doorway-chest-stretch-2.png`, `doorway-chest-stretch-3.png`
 - `doorway-row-1.png`, `doorway-row-2.png`, `doorway-row-3.png`
-- `downward-dog-1.png`, `downward-dog-2.png`
 - `drag-curl-1.png`, `drag-curl-2.png`, `drag-curl-3.png`
 - `dragon-flag-1.png`, `dragon-flag-2.png`, `dragon-flag-3.png`
 - `dumbbell-bench-press-1.png`, `dumbbell-bench-press-2.png`, `dumbbell-bench-press-3.png`
@@ -146,10 +141,8 @@ in the player today; the rest are on disk for sessions not yet written.
 - `farmers-carry-1.png`, `farmers-carry-2.png`, `farmers-carry-3.png`
 - `fast-feet-1.png`, `fast-feet-2.png`, `fast-feet-3.png`
 - `feet-elevated-pike-push-up-1.png`, `feet-elevated-pike-push-up-2.png`, `feet-elevated-pike-push-up-3.png`
-- `figure-four-stretch-1.png`, `figure-four-stretch-2.png`
 - `fire-hydrant-1.png`, `fire-hydrant-2.png`, `fire-hydrant-3.png`
 - `flutter-kick-1.png`, `flutter-kick-2.png`, `flutter-kick-3.png`
-- `forearm-stretch-1.png`, `forearm-stretch-2.png`
 - `forward-lunge-1.png`, `forward-lunge-2.png`, `forward-lunge-3.png`
 - `frog-pump-1.png`, `frog-pump-2.png`, `frog-pump-3.png`
 - `front-foot-elevated-split-squat-1.png`, `front-foot-elevated-split-squat-2.png`, `front-foot-elevated-split-squat-3.png`
@@ -207,8 +200,6 @@ in the player today; the rest are on disk for sessions not yet written.
 - `leg-press-1.png`, `leg-press-2.png`, `leg-press-3.png`
 - `leg-press-calf-raise-1.png`, `leg-press-calf-raise-2.png`, `leg-press-calf-raise-3.png`
 - `leg-swings-stretch-1.png`, `leg-swings-stretch-2.png`, `leg-swings-stretch-3.png`
-- `legs-up-the-wall-1.png`, `legs-up-the-wall-2.png`
-- `low-lunge-1.png`, `low-lunge-2.png`
 - `lying-hamstring-walkout-1.png`, `lying-hamstring-walkout-2.png`, `lying-hamstring-walkout-3.png`
 - `lying-leg-curl-1.png`, `lying-leg-curl-2.png`, `lying-leg-curl-3.png`
 - `lying-leg-raise-1.png`, `lying-leg-raise-2.png`, `lying-leg-raise-3.png`
@@ -219,7 +210,6 @@ in the player today; the rest are on disk for sessions not yet written.
 - `machine-shoulder-press-1.png`, `machine-shoulder-press-2.png`, `machine-shoulder-press-3.png`
 - `meadows-row-1.png`, `meadows-row-2.png`, `meadows-row-3.png`
 - `mountain-climber-1.png`, `mountain-climber-2.png`, `mountain-climber-3.png`
-- `neck-side-stretch-1.png`, `neck-side-stretch-2.png`
 - `negative-pull-up-1.png`, `negative-pull-up-2.png`, `negative-pull-up-3.png`
 - `neutral-grip-pull-up-1.png`, `neutral-grip-pull-up-2.png`, `neutral-grip-pull-up-3.png`
 - `nordic-hamstring-curl-1.png`, `nordic-hamstring-curl-2.png`, `nordic-hamstring-curl-3.png`
@@ -228,7 +218,6 @@ in the player today; the rest are on disk for sessions not yet written.
 - `overhead-tricep-extension-1.png`, `overhead-tricep-extension-2.png`, `overhead-tricep-extension-3.png`
 - `pallof-press-1.png`, `pallof-press-2.png`, `pallof-press-3.png`
 - `pec-deck-1.png`, `pec-deck-2.png`, `pec-deck-3.png`
-- `pelvic-tilt-1.png`, `pelvic-tilt-2.png`
 - `pendlay-row-1.png`, `pendlay-row-2.png`, `pendlay-row-3.png`
 - `pike-push-up-1.png`, `pike-push-up-2.png`, `pike-push-up-3.png`
 - `pistol-squat-1.png`, `pistol-squat-2.png`, `pistol-squat-3.png`
@@ -281,10 +270,7 @@ in the player today; the rest are on disk for sessions not yet written.
 - `single-leg-calf-raise-1.png`, `single-leg-calf-raise-2.png`, `single-leg-calf-raise-3.png`
 - `single-leg-glute-bridge-1.png`, `single-leg-glute-bridge-2.png`, `single-leg-glute-bridge-3.png`
 - `single-leg-romanian-deadlift-1.png`, `single-leg-romanian-deadlift-2.png`, `single-leg-romanian-deadlift-3.png`
-- `single-leg-stand-1.png`, `single-leg-stand-2.png`
-- `single-leg-stretch-1.png`, `single-leg-stretch-2.png`
 - `sissy-squat-1.png`, `sissy-squat-2.png`, `sissy-squat-3.png`
-- `skater-bound-1.png`, `skater-bound-2.png`
 - `skater-hop-1.png`, `skater-hop-2.png`, `skater-hop-3.png`
 - `skater-squat-1.png`, `skater-squat-2.png`, `skater-squat-3.png`
 - `skierg-1.png`, `skierg-2.png`, `skierg-3.png`
@@ -312,11 +298,8 @@ in the player today; the rest are on disk for sessions not yet written.
 - `sumo-deadlift-1.png`, `sumo-deadlift-2.png`, `sumo-deadlift-3.png`
 - `superman-1.png`, `superman-2.png`, `superman-3.png`
 - `superman-hold-1.png`, `superman-hold-2.png`, `superman-hold-3.png`
-- `supine-hamstring-stretch-1.png`, `supine-hamstring-stretch-2.png`
 - `swimming-1.png`, `swimming-2.png`, `swimming-3.png`
 - `t-bar-row-1.png`, `t-bar-row-2.png`, `t-bar-row-3.png`
-- `the-hundred-1.png`, `the-hundred-2.png`
-- `thoracic-rotation-1.png`, `thoracic-rotation-2.png`
 - `toe-touch-1.png`, `toe-touch-2.png`, `toe-touch-3.png`
 - `torso-twist-stretch-1.png`, `torso-twist-stretch-2.png`, `torso-twist-stretch-3.png`
 - `towel-hamstring-curl-1.png`, `towel-hamstring-curl-2.png`, `towel-hamstring-curl-3.png`
@@ -324,7 +307,6 @@ in the player today; the rest are on disk for sessions not yet written.
 - `towel-row-1.png`, `towel-row-2.png`, `towel-row-3.png`
 - `trap-bar-deadlift-1.png`, `trap-bar-deadlift-2.png`, `trap-bar-deadlift-3.png`
 - `treadmill-incline-walk-1.png`, `treadmill-incline-walk-2.png`, `treadmill-incline-walk-3.png`
-- `tree-pose-1.png`, `tree-pose-2.png`
 - `tricep-kickback-1.png`, `tricep-kickback-2.png`, `tricep-kickback-3.png`
 - `tricep-pushdown-1.png`, `tricep-pushdown-2.png`, `tricep-pushdown-3.png`
 - `typewriter-push-up-1.png`, `typewriter-push-up-2.png`, `typewriter-push-up-3.png`
