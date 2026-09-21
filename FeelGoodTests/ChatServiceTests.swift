@@ -250,6 +250,40 @@ struct ChatServiceTests {
         #expect(negation.message.contains("skipping hips") || negation.message.contains("no hips"))
     }
 
+    @Test("Card tags show body-focus labels, never the raw enum name")
+    func displayTagsUseBodyFocusLabels() {
+        let recommendation = StructuredRecommendation(
+            sessionID: "app-neck-and-shoulder-release",
+            title: "Neck and shoulder release",
+            subtitle: "",
+            durationMin: 3,
+            reason: "A gentle three minutes you can do sitting down.",
+            tags: ["Appetizer", "3 min", "Gentle", "neckShoulders"]
+        )
+
+        #expect(recommendation.displayTags == ["Appetizer", "3 min", "Gentle", "Neck & Shoulders"])
+    }
+
+    @Test("Local engine replies describe the session, never what it does to the body (no medical claims)")
+    func localEngineRepliesMakeNoBodilyOutcomeClaims() {
+        let prompts = [
+            "will this help with my back problem", "why this", "shake it out", "i'm restless",
+            "cold water splash", "progressive muscle relaxation", "brisk walk", "box breathing",
+            "something for the evening to unwind", "my wrists hurt from typing", "desk shoulder neck",
+        ]
+        let banned = [
+            "tension", "nervous system", "racing heart", "calming", "relaxation",
+            "blood flow", "brain fog", "dissipate", "ease down",
+        ]
+
+        for prompt in prompts {
+            let message = LocalStatefulChatEngine.orchestrate(prompt: prompt).message.lowercased()
+            for phrase in banned {
+                #expect(!message.contains(phrase), "\"\(prompt)\" reply says \"\(phrase)\": \(message)")
+            }
+        }
+    }
+
     @Test("Local stateful engine answers questions about a specific menu item from its own data")
     func localStatefulEngineAnswersFromTodaysMenu() {
         let todaysMenu = [
@@ -380,6 +414,29 @@ extension ChatServiceTests {
         let sent = await transport.lastHistoryReceived?.first?.text ?? ""
         #expect(!sent.lowercased().contains("pregnant"))
         #expect(!sent.contains("a@b.com"))
+    }
+
+    @Test("A failing edge call falls back to the on-device engine instead of returning nothing")
+    func failingTransportFallsBackLocally() async {
+        let service = ChatService(transport: ThrowingChatTransport(), isProUnlocked: { true }, hasChatConsent: { true })
+
+        let response = await service.describeDay(prompt: "gentle stretch please")
+
+        #expect(response != nil)
+    }
+}
+
+private struct ThrowingChatTransport: ChatTransport {
+    func sendChat(
+        prompt: String,
+        subscriberID: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation],
+        timeout: TimeInterval
+    ) async throws -> ChatResponse {
+        throw URLError(.timedOut)
     }
 }
 
