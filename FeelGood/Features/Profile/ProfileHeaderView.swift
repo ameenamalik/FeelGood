@@ -23,6 +23,7 @@ struct ProfileHeaderView: View {
     @Environment(PurchasesManager.self) private var purchasesManager
     @Environment(AuthService.self) private var authService
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
     @State private var errorMessage: String?
     @State private var errorTitle = "Error"
     @State private var isShowingAuthSheet = false
@@ -38,6 +39,8 @@ struct ProfileHeaderView: View {
     @State private var isShowingGoogleReauthPrompt = false
     @State private var isShowingPasswordReauthPrompt = false
     @State private var passwordForReauth = ""
+    @State private var notificationsEnabled = false
+    @State private var isUpdatingNotifications = false
     @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
     private var isMovementRecognitionEnabled = false
     @AppStorage(ChatConsent.key) private var chatConsentRaw = ChatConsent.Status.notAsked.rawValue
@@ -46,6 +49,7 @@ struct ProfileHeaderView: View {
         VStack(alignment: .leading, spacing: FGSpace.m) {
             identitySection
             subscriptionRow
+            notificationsSection
             if purchasesManager.isProUnlocked {
                 calendarPrivacySection
                 chatPrivacySection
@@ -55,6 +59,12 @@ struct ProfileHeaderView: View {
         }
         .padding(FGSpace.page)
         .padding(.bottom, FGSpace.s)
+        .onAppear(perform: refreshNotificationState)
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                refreshNotificationState()
+            }
+        }
         .sheet(isPresented: $isShowingAuthSheet) {
             AuthSheetView()
                 .environment(authService)
@@ -481,6 +491,48 @@ struct ProfileHeaderView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(purchasesManager.isProUnlocked ? "FeelGood Pro" : "Free plan")
         .accessibilityHint("Manage your subscription")
+    }
+
+    // MARK: Notifications
+
+    private var notificationsSection: some View {
+        Toggle(isOn: Binding(
+            get: { notificationsEnabled },
+            set: { setNotificationsEnabled($0) }
+        )) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Notifications")
+                    .font(FGFont.body.weight(.medium))
+                    .foregroundStyle(FGColor.ink)
+                Text("Paused-session reminders and occasional FeelGood nudges.")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(FGColor.controlAccent)
+        .disabled(isUpdatingNotifications)
+        .padding(FGSpace.m)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .accessibilityHint(notificationsEnabled ? "Turns push notifications off" : "Turns push notifications on")
+        .postHogMask()
+    }
+
+    private func refreshNotificationState() {
+        notificationsEnabled = OneSignalManager.shared.isPushEnabled
+    }
+
+    private func setNotificationsEnabled(_ enabled: Bool) {
+        isUpdatingNotifications = true
+        OneSignalManager.shared.setPushEnabled(enabled) { actualState in
+            Task { @MainActor in
+                notificationsEnabled = actualState
+                isUpdatingNotifications = false
+            }
+        }
     }
 
     // MARK: Calendar privacy
