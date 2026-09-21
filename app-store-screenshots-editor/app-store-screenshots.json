@@ -62,13 +62,62 @@
         ]
       },
       {
+        "id": "feelgood_7",
+        "layout": "hero",
+        "label": {
+          "en": ""
+        },
+        "headline": {
+          "en": "Check in, get your plan\n"
+        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/11.png",
+        "transforms": {
+          "device": {
+            "x": 153.18224783861672,
+            "y": 1112.7839999999999,
+            "width": 1013.6355043227666,
+            "height": 2064.96,
+            "rotation": 0,
+            "zIndex": 3
+          },
+          "caption": {
+            "x": 105.6,
+            "y": 258.12,
+            "width": 1108.8,
+            "height": 803.0400000000001,
+            "rotation": 0,
+            "zIndex": 4
+          }
+        },
+        "textElements": [
+          {
+            "id": "benefit",
+            "text": {
+              "en": "Energy, time and place in 30 seconds"
+            },
+            "transform": {
+              "x": 105.6,
+              "y": 655.6074766355136,
+              "width": 1108.8,
+              "height": 140,
+              "rotation": 0,
+              "zIndex": 5
+            },
+            "fontSize": 48,
+            "fontWeight": 400,
+            "color": "#706357",
+            "align": "center"
+          }
+        ]
+      },
+      {
         "id": "feelgood_2",
         "layout": "hero",
         "label": {
           "en": ""
         },
         "headline": {
-          "en": "Check in, get your plan"
+          "en": "Tell it how today feels"
         },
         "screenshot": "/screenshots/apple/iphone/{locale}/chat.png",
         "transforms": {
@@ -160,21 +209,29 @@
         ]
       },
       {
-        "id": "feelgood_4",
-        "layout": "device-top",
+        "id": "feelgood_6",
+        "layout": "hero",
         "label": {
           "en": ""
         },
         "headline": {
-          "en": "No streaks. No scores. No guilt."
+          "en": "A breathing pace that's easy to follow"
         },
-        "screenshot": "/screenshots/apple/iphone/{locale}/02.png",
+        "screenshot": "/screenshots/apple/iphone/{locale}/10.png",
         "transforms": {
+          "device": {
+            "x": 157.64953755824286,
+            "y": 795.6064299065422,
+            "width": 1013.6355043227666,
+            "height": 2064.96,
+            "rotation": 0,
+            "zIndex": 3
+          },
           "caption": {
             "x": 105.6,
-            "y": 1950,
-            "width": 1109,
-            "height": 630,
+            "y": 258.12,
+            "width": 1108.8,
+            "height": 803.0400000000001,
             "rotation": 0,
             "zIndex": 4
           }
@@ -183,11 +240,11 @@
           {
             "id": "benefit",
             "text": {
-              "en": "Take days off anytime without feeling behind"
+              "en": "Follow the orb for a calm two minutes"
             },
             "transform": {
-              "x": 114.53457943925233,
-              "y": 2325.364485981309,
+              "x": 101.13271001969673,
+              "y": 602.0000012997257,
               "width": 1109,
               "height": 140,
               "rotation": 0,
@@ -201,34 +258,25 @@
         ]
       },
       {
-        "id": "feelgood_5",
-        "layout": "device-top",
+        "id": "feelgood_8",
+        "layout": "two-devices",
         "label": {
           "en": ""
         },
         "headline": {
           "en": "Celebrate every little win"
         },
-        "screenshot": "/screenshots/apple/iphone/{locale}/09.png",
-        "transforms": {
-          "caption": {
-            "x": 105.6,
-            "y": 1950,
-            "width": 1109,
-            "height": 630,
-            "rotation": 0,
-            "zIndex": 4
-          }
-        },
+        "screenshot": "/screenshots/apple/iphone/{locale}/02.png",
+        "screenshotSecondary": "/screenshots/apple/iphone/{locale}/09.png",
         "textElements": [
           {
             "id": "benefit",
             "text": {
-              "en": "Gentle badges for showing up on your terms"
+              "en": "Take days off anytime without feeling behind"
             },
             "transform": {
               "x": 105.6,
-              "y": 2316.4299065420582,
+              "y": 655.6074766355136,
               "width": 1108.8,
               "height": 140,
               "rotation": 0,
