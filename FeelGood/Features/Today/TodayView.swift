@@ -167,7 +167,7 @@ struct TodayView: View {
                 .font(.system(.title, design: .rounded).weight(.bold))
                 .tracking(-0.4)
                 .foregroundStyle(FGColor.ink)
-                .lineLimit(2)
+                .lineLimit(model.checkIn == nil ? 2 : nil)
                 .fixedSize(horizontal: false, vertical: true)
 
             // Until there is a check-in, ask for one with a real card; after,
