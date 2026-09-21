@@ -299,7 +299,7 @@ struct ExploreView: View {
         return VStack(alignment: .leading, spacing: 14) {
             // Frosted Tags Row
             WrapRow(spacing: 6, lineSpacing: 6) {
-                ForEach(recommendation.tags, id: \.self) { tag in
+                ForEach(recommendation.displayTags, id: \.self) { tag in
                     Text(tag)
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(course.accentText)
