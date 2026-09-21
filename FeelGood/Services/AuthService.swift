@@ -216,6 +216,8 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         let mapped = Self.mapUser(user)
         self.currentUser = mapped
         FirestoreService.shared.startListening(for: mapped.uid)
+        // Subscription identity is secondary to authentication. Keep it in a
+        // separate task so RevenueCat can never hold the sign-in UI open.
         Task {
             await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         }
@@ -244,7 +246,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = false
             self.currentUser = mock
-            await PurchasesManager.shared.logIn(appUserID: mock.uid)
+            Task { await PurchasesManager.shared.logIn(appUserID: mock.uid) }
             return
         }
 
@@ -254,7 +256,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.lastAuthenticationCreatedAccount = false
             self.currentUser = mapped
             FirestoreService.shared.startListening(for: mapped.uid)
-            await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
             throw AuthError.mapFirebaseError(error)
         }
@@ -270,7 +271,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
-            await PurchasesManager.shared.logIn(appUserID: mock.uid)
+            Task { await PurchasesManager.shared.logIn(appUserID: mock.uid) }
             return
         }
 
@@ -280,7 +281,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mapped
             FirestoreService.shared.startListening(for: mapped.uid)
-            await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
             throw AuthError.mapFirebaseError(error)
         }
@@ -305,7 +305,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
-            await PurchasesManager.shared.logIn(appUserID: mock.uid)
+            Task { await PurchasesManager.shared.logIn(appUserID: mock.uid) }
             return
         }
 
@@ -320,7 +320,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let mapped = Self.mapUser(result.user)
             self.lastAuthenticationCreatedAccount = result.additionalUserInfo?.isNewUser ?? false
             self.currentUser = mapped
-            await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
             throw AuthError.mapFirebaseError(error)
         }
@@ -338,7 +337,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             )
             self.lastAuthenticationCreatedAccount = true
             self.currentUser = mock
-            await PurchasesManager.shared.logIn(appUserID: mock.uid)
+            Task { await PurchasesManager.shared.logIn(appUserID: mock.uid) }
             return
         }
 
@@ -369,7 +368,6 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
             let mapped = Self.mapUser(result.user)
             self.lastAuthenticationCreatedAccount = result.additionalUserInfo?.isNewUser ?? false
             self.currentUser = mapped
-            await PurchasesManager.shared.logIn(appUserID: mapped.uid)
         } catch {
             throw AuthError.mapFirebaseError(error)
         }
