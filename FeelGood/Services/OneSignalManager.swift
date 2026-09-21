@@ -30,6 +30,8 @@ nonisolated private final class OneSignalInAppClickListener: NSObject, OSInAppMe
 nonisolated final class OneSignalManager: Sendable {
     static let shared = OneSignalManager()
 
+    private static let reminderStatusTag = "reminder_status"
+
     /// The Journey waits this long before offering to resume a paused reset.
     /// Keep this in sync with the Wait Until expiration in OneSignal.
     private static let pausedSessionReminderDelay: TimeInterval = 2.5 * 60 * 60
@@ -165,12 +167,48 @@ nonisolated final class OneSignalManager: Sendable {
         OneSignal.User.pushSubscription.id
     }
 
+    /// `true` only when iOS permits notifications and this OneSignal push
+    /// subscription has not been opted out by the user.
+    var isPushEnabled: Bool {
+        OneSignal.Notifications.permission && OneSignal.User.pushSubscription.optedIn
+    }
+
     func addPushSubscriptionObserver(_ observer: PushSubscriptionObserver) {
         OneSignal.User.pushSubscription.addObserver(observer)
     }
 
     func requestPushPermission(completion: @escaping @Sendable (Bool) -> Void) {
         OneSignal.Notifications.requestPermission(completion, fallbackToSettings: true)
+    }
+
+    /// Updates push delivery without affecting In-App Messages. If permission
+    /// has never been granted, OneSignal shows the system prompt; if it was
+    /// previously denied, its settings fallback helps the user re-enable it.
+    func setPushEnabled(_ enabled: Bool, completion: @escaping @Sendable (Bool) -> Void) {
+        guard enabled else {
+            OneSignal.User.pushSubscription.optOut()
+            setTag(key: Self.reminderStatusTag, value: "off")
+            completion(false)
+            return
+        }
+
+        guard !OneSignal.Notifications.permission else {
+            OneSignal.User.pushSubscription.optIn()
+            setTag(key: Self.reminderStatusTag, value: "on")
+            completion(true)
+            return
+        }
+
+        requestPushPermission { granted in
+            if granted {
+                OneSignal.User.pushSubscription.optIn()
+            }
+            self.setTag(
+                key: Self.reminderStatusTag,
+                value: granted ? "on" : "off"
+            )
+            completion(granted)
+        }
     }
 
     nonisolated final class PushSubscriptionObserver: NSObject, OSPushSubscriptionObserver, @unchecked Sendable {
