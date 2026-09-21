@@ -9,6 +9,8 @@
 //
 
 import Foundation
+import os
+import PostHog
 
 /// Quick modifications requested through conversation or quick-pivot chips (PRD §10.1).
 nonisolated enum QuickFilter: String, Codable, Sendable, CaseIterable {
@@ -124,6 +126,13 @@ nonisolated struct StructuredRecommendation: Identifiable, Hashable, Codable, Se
         case tags
         case equipment
         case targetArea = "target_area"
+    }
+
+    /// Tags as shown on the card. The worker can send a raw `BodyFocus` value
+    /// (`neckShoulders`); `BodyFocus.label` is the one place that turns it
+    /// into words ("Neck & Shoulders").
+    var displayTags: [String] {
+        tags.map { BodyFocus(rawValue: $0)?.label ?? $0 }
     }
 
     init(
@@ -504,6 +513,8 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
 }
 
 actor ChatService: ChatProviding {
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.feelgood.app", category: "Chat")
+
     private let transport: any ChatTransport
     private let redactor: RedactionService
     private let timeout: TimeInterval
@@ -514,7 +525,7 @@ actor ChatService: ChatProviding {
     init(
         transport: any ChatTransport = URLSessionChatTransport(),
         redactor: RedactionService = .shared,
-        timeout: TimeInterval = 10.0,
+        timeout: TimeInterval = 20.0,
         isProUnlocked: @escaping @Sendable () async -> Bool = { await MainActor.run { PurchasesManager.shared.isProUnlocked } },
         subscriberID: @escaping @Sendable () async -> String = { await MainActor.run { PurchasesManager.shared.appUserID } },
         hasChatConsent: @escaping @Sendable () -> Bool = { ChatConsent.isGranted }
@@ -552,20 +563,31 @@ actor ChatService: ChatProviding {
         // through on the very next turn, as history.
         let sanitizedHistory = history.map { ChatTurnPayload(role: $0.role, text: redactor.sanitize($0.text)) }
 
-        guard let response = try? await transport.sendChat(
-            prompt: sanitized,
-            subscriberID: subID,
-            history: sanitizedHistory,
-            activeSessionID: activeSessionID,
-            userContext: userContext,
-            todaysMenu: todaysMenu,
-            timeout: timeout
-        ) else {
-            // Fall back to on-device stateful heuristic engine if offline / network fails
+        do {
+            return try await transport.sendChat(
+                prompt: sanitized,
+                subscriberID: subID,
+                history: sanitizedHistory,
+                activeSessionID: activeSessionID,
+                userContext: userContext,
+                todaysMenu: todaysMenu,
+                timeout: timeout
+            )
+        } catch {
+            // Fall back to the on-device engine if offline / the edge call fails.
+            // The fallback is deliberate, but it must not be silent: without a
+            // log, a slow or broken worker looks identical to "AI is off".
+            // Domain and code only — never the error's description or URL.
+            let nsError = error as NSError
+            Self.logger.error("Chat edge call failed, using on-device fallback: \(nsError.domain, privacy: .public) \(nsError.code, privacy: .public)")
+            await MainActor.run {
+                Analytics.log("chat_edge_fallback", level: .warn, attributes: [
+                    "error_domain": nsError.domain,
+                    "error_code": nsError.code,
+                ])
+            }
             return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext, todaysMenu: todaysMenu)
         }
-
-        return response
     }
 }
 
@@ -895,7 +917,7 @@ nonisolated enum LocalStatefulChatEngine {
             if lower.contains("can't sit still") || lower.contains("can not sit") || lower.contains("sitting") {
                 message = "Then move first. This one's standing."
                 if let s = sessionById("app-jump-rope-ninety") {
-                    recommendation = structuredRecommendation(for: s, reason: "Standing reset to dissipate restless energy before settling down.")
+                    recommendation = structuredRecommendation(for: s, reason: "A standing option for when sitting still isn't happening.")
                 }
             } else if lower.contains("back") {
                 // A direct yes/no question ("will this help with my back
@@ -903,7 +925,7 @@ nonisolated enum LocalStatefulChatEngine {
                 // of what the session does — the old copy never actually
                 // said yes. Framed as movement, not treatment: no diagnosis,
                 // no promise, just what the sequence moves through.
-                message = "Yes — this moves gently through your hips and spine, and many people feel that ease tension through the lower back too."
+                message = "Yes, it's gentle on the back: it moves through your hips and spine within a comfortable range. It's movement, not treatment, so go by how it feels and skip anything that doesn't sit right."
             } else if lower.contains("why") {
                 message = "This sequence moves gently through your hips and spine, staying well within a comfortable range."
             } else {
@@ -958,7 +980,7 @@ nonisolated enum LocalStatefulChatEngine {
             // Explicit Dopamine Menu & targeted micro-action triggers
             if lower.contains("shake") || lower.contains("restless") || lower.contains("overwhelm") {
                 if let s = sessionById("app-shake-out-five") {
-                    message = "A physical shake-out to release tension and reset your nervous system."
+                    message = "A quick shake-out for restless energy."
                     recommendation = structuredRecommendation(for: s)
                 }
             } else if lower.contains("power pose") || lower.contains("confidence") {
@@ -968,12 +990,12 @@ nonisolated enum LocalStatefulChatEngine {
                 }
             } else if lower.contains("cold water") || lower.contains("splash") || lower.contains("panic") {
                 if let s = sessionById("app-cold-water-splash") {
-                    message = "Quick dive-reflex reset to immediately slow a racing heart."
+                    message = "A quick cold-water splash to change the moment."
                     recommendation = structuredRecommendation(for: s)
                 }
             } else if lower.contains("progressive muscle") || lower.contains("pmr") {
                 if let s = sessionById("dessert-pmr-ten") {
-                    message = "Full-body progressive relaxation to release holding from toes to crown."
+                    message = "A slow full-body tense-and-let-go, from toes to crown."
                     recommendation = structuredRecommendation(for: s)
                 }
             } else if lower.contains("gratitude") {
@@ -993,7 +1015,7 @@ nonisolated enum LocalStatefulChatEngine {
                 }
             } else if lower.contains("walk") || lower.contains("brisk") {
                 if let s = sessionById("main-brisk-walk-ten") {
-                    message = "A brisk 10-minute walk to clear brain fog and elevate blood flow."
+                    message = "A brisk 10-minute walk to get some air and get moving."
                     recommendation = structuredRecommendation(for: s)
                 }
             } else if lower.contains("desk") && (lower.contains("shoulder") || lower.contains("neck")) {
@@ -1003,17 +1025,17 @@ nonisolated enum LocalStatefulChatEngine {
                 }
             } else if lower.contains("wrist") || lower.contains("forearm") || lower.contains("typing") {
                 if let s = sessionById("side-desk-wrist-reset") {
-                    message = "Gentle release for wrists and hands from typing."
+                    message = "Gentle wrist and hand moves for after typing."
                     recommendation = structuredRecommendation(for: s)
                 }
             } else if lower.contains("box breathing") || lower.contains("box breath") {
                 if let s = sessionById("app-box-breathing") {
-                    message = "Four rounds of calming box breathing."
+                    message = "Four rounds of slow box breathing."
                     recommendation = structuredRecommendation(for: s)
                 }
             } else if lower.contains("evening") || lower.contains("night") || lower.contains("sleep") || lower.contains("unwind") {
                 if let s = sessionById("dessert-tea-and-quiet-stretch") {
-                    message = "Grounding evening floor relaxation to ease down before sleep."
+                    message = "A quiet evening stretch on the floor, nothing to achieve."
                     recommendation = structuredRecommendation(for: s)
                 }
             }
