@@ -1,4 +1,5 @@
 import { handleChat, isValidChatPayload } from "./chat";
+import { acceptCopyLine } from "./copyLine";
 import { hasProEntitlement } from "./entitlement";
 import { privacyPolicyResponse, supportResponse, termsResponse } from "./legal";
 import { playerResponse } from "./player";
@@ -132,44 +133,55 @@ export default {
   },
 };
 
+// Ordered: the first model that answers wins. Only the 2.5 models think by
+// default, and thinking tokens count against maxOutputTokens, so on those the
+// budget is set to zero — otherwise the visible line can be cut off after a
+// few words. (2.0 rejects a thinkingConfig, so it only goes to 2.5.)
+const COPY_MODELS = ["gemini-2.0-flash", "gemini-2.5-flash"];
+
+function copyRequestBody(model: string, body: unknown): string {
+  const generationConfig: Record<string, unknown> = {
+    temperature: 0.7,
+    maxOutputTokens: 256,
+  };
+  if (model.startsWith("gemini-2.5")) {
+    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  }
+  return JSON.stringify({
+    systemInstruction: {
+      parts: [{ text: COPY_SYSTEM_PROMPT }],
+    },
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: `Here is the user context and today's picks payload: ${JSON.stringify(body)}. Write a single warm, grounded headline line.` }],
+      },
+    ],
+    generationConfig,
+  });
+}
+
 async function generateGeminiCopy(body: unknown, apiKey: string): Promise<string | null> {
   try {
-    const payload = JSON.stringify({
-      systemInstruction: {
-        parts: [{ text: COPY_SYSTEM_PROMPT }],
-      },
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: `Here is the user context and today's picks payload: ${JSON.stringify(body)}. Write a single warm, grounded headline line.` }],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 150,
-      },
-    });
-
-    let resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: payload,
-    });
-
-    if (resp.status === 404 || resp.status === 429 || resp.status >= 500) {
-      resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    let resp: Response | null = null;
+    for (const model of COPY_MODELS) {
+      resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: payload,
+        body: copyRequestBody(model, body),
       });
+      // Next model on "not found" and transient failures; anything else is an answer.
+      if (!(resp.status === 404 || resp.status === 429 || resp.status >= 500)) break;
     }
 
-    if (!resp.ok) return null;
+    if (!resp || !resp.ok) return null;
     const data = (await resp.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string }> } }>;
     };
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    return text || null;
+    const candidate = data.candidates?.[0];
+    // A cut-off, multi-line, over-long or system-talk reply is worse than the
+    // template headline the client already has, so it is dropped here.
+    return acceptCopyLine(candidate?.content?.parts?.[0]?.text, candidate?.finishReason);
   } catch {
     return null;
   }
