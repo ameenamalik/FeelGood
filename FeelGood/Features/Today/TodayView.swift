@@ -161,18 +161,20 @@ struct TodayView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: FGSpace.xs) {
             Text(model.upgradedHeadline ?? model.menu.headline)
-                .font(FGFont.display)
-                .tracking(-0.8)
+                // The copy changes after check-in, but its visual hierarchy
+                // should not. A large-title-sized line made longer generated
+                // headlines feel dramatically bigger once they wrapped.
+                .font(.system(.title, design: .rounded).weight(.bold))
+                .tracking(-0.4)
                 .foregroundStyle(FGColor.ink)
+                .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
 
             // Until there is a check-in, ask for one with a real card; after,
             // collapse to the one-line summary.
             if model.checkIn == nil {
                 CheckInBanner { isCheckingIn = true }
-                    .padding(.top, FGSpace.m)
-                    // Room before "Your menu", matching the air around the headline.
-                    .padding(.bottom, 6)
+                    .padding(.top, FGSpace.s)
             } else {
                 checkInSubtitle
             }

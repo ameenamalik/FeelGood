@@ -31,12 +31,14 @@ struct CheckInBanner: View {
 
     var body: some View {
         Button(action: onTap) {
-            ZStack(alignment: .topTrailing) {
-                glow
-                mascots
+            HStack(alignment: .center, spacing: 8) {
                 content
+                mascotCluster
             }
-            .frame(maxWidth: .infinity, minHeight: 120, alignment: .topLeading)
+            .padding(.leading, 20)
+            .padding(.trailing, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(Self.gradient)
@@ -51,14 +53,13 @@ struct CheckInBanner: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("How are you feeling today?")
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
                 .tracking(-0.2)
                 .foregroundStyle(Self.cream)
                 .lineSpacing(0)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: 170, alignment: .leading)
 
             // Metadata, not a nested button: the whole card is the target.
             HStack(spacing: 4) {
@@ -69,46 +70,41 @@ struct CheckInBanner: View {
             }
             .foregroundStyle(Self.cream.opacity(0.85))
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// A soft warm light behind the fruit so they lift off the clay.
-    private var glow: some View {
-        Circle()
-            .fill(
-                RadialGradient(
-                    colors: [Color(light: 0xFFE8CD, dark: 0xFFE8CD).opacity(0.42), .clear],
-                    center: .center,
-                    startRadius: 0,
-                    endRadius: 60
+    /// One fixed-size illustration block keeps the fruit vertically centered
+    /// with the copy. None of its children ask for infinite height, so the
+    /// artwork can no longer make the card grow and leave an empty lower half.
+    private var mascotCluster: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color(light: 0xFFE8CD, dark: 0xFFE8CD).opacity(0.42), .clear],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 58
+                    )
                 )
-            )
-            .frame(width: 170, height: 170)
-            .offset(x: 30, y: -30)
-            .accessibilityHidden(true)
-    }
+                .frame(width: 126, height: 126)
 
-    /// Peach, pear and blueberry. Blueberry is the cool one on purpose: a red
-    /// fruit disappears into the clay.
-    private var mascots: some View {
-        ZStack(alignment: .topTrailing) {
-            mascot("IntentCalmPeach", size: 52, trailing: 76, top: 18)
-            mascot("IntentMobilityPear", size: 56, trailing: 12, top: 14)
-            mascot("IntentCalmBlueberryMascot", size: 48, trailing: 46, top: 62)
+            mascot("IntentCalmPeach", size: 42)
+                .offset(x: -38, y: -15)
+            mascot("IntentMobilityPear", size: 46)
+                .offset(x: 34, y: -14)
+            mascot("IntentCalmBlueberryMascot", size: 40)
+                .offset(x: 2, y: 24)
         }
+        .frame(width: 132, height: 80)
         .accessibilityHidden(true)
     }
 
-    private func mascot(_ name: String, size: CGFloat, trailing: CGFloat, top: CGFloat) -> some View {
+    private func mascot(_ name: String, size: CGFloat) -> some View {
         Image(name)
             .resizable()
             .scaledToFit()
             .frame(width: size, height: size)
-            .padding(.trailing, trailing)
-            .padding(.top, top)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
     }
 }
 
