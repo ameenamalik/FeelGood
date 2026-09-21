@@ -167,7 +167,9 @@ struct TodayView: View {
                 .font(.system(.title, design: .rounded).weight(.bold))
                 .tracking(-0.4)
                 .foregroundStyle(FGColor.ink)
-                .lineLimit(model.checkIn == nil ? 2 : nil)
+                // No line cap: the text is data, and a menu restored on launch
+                // carries its long personalised headline before any check-in.
+                .lineLimit(nil)
                 .fixedSize(horizontal: false, vertical: true)
 
             // Until there is a check-in, ask for one with a real card; after,
