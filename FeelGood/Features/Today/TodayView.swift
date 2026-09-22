@@ -56,7 +56,6 @@ struct TodayView: View {
     @State private var isShowingMyMenu = false
     @AppStorage("hasSeenDopamineMenuTour") private var hasSeenDopamineMenuTour = false
     @State private var isShowingDopamineMenuTour = false
-    @State private var hasTriggeredTourOnScroll = false
     @State private var selected: MenuItem?
     @State private var manualSwapTarget: MenuItem?
     @State private var littleWinCelebration: LittleWinCelebration?
@@ -97,31 +96,7 @@ struct TodayView: View {
                 .padding(FGSpace.page)
                 .containerRelativeFrame(.horizontal)
             }
-            .scrollBounceBehavior(.always)
-            .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                geometry.contentOffset.y
-            } action: { _, newValue in
-                guard !hasSeenDopamineMenuTour, !hasTriggeredTourOnScroll else { return }
-                if abs(newValue) > 15 {
-                    hasTriggeredTourOnScroll = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                        if !hasSeenDopamineMenuTour {
-                            isShowingDopamineMenuTour = true
-                        }
-                    }
-                }
-            }
-            .onScrollPhaseChange { _, newPhase in
-                guard !hasSeenDopamineMenuTour, !hasTriggeredTourOnScroll else { return }
-                if newPhase == .interacting || newPhase == .decelerating {
-                    hasTriggeredTourOnScroll = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                        if !hasSeenDopamineMenuTour {
-                            isShowingDopamineMenuTour = true
-                        }
-                    }
-                }
-            }
+            .scrollBounceBehavior(.basedOnSize)
         }
         .sheet(isPresented: $isCheckingIn, onDismiss: handleCheckInDismissal) {
             CheckInSheet(
@@ -188,9 +163,15 @@ struct TodayView: View {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-FGResetTour") {
                 hasSeenDopamineMenuTour = false
-                hasTriggeredTourOnScroll = false
             }
             #endif
+            if !hasSeenDopamineMenuTour {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    if !hasSeenDopamineMenuTour {
+                        isShowingDopamineMenuTour = true
+                    }
+                }
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .oneSignalOpenMyMenu)) { _ in
             // Let OneSignal's overlay finish dismissing before presenting the
@@ -694,25 +675,25 @@ private struct MenuItemCard: View {
                     guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
                     if !reduceMotion {
                         if gesture.translation.width < 0 {
-                            dragOffset = gesture.translation.width
+                            dragOffset = max(-80, gesture.translation.width * 0.75)
                         } else {
-                            dragOffset = min(20, gesture.translation.width * 0.2)
+                            dragOffset = min(15, gesture.translation.width * 0.2)
                         }
                     }
                 }
                 .onEnded { gesture in
                     guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
-                        withAnimation(FGMotion.swap) { dragOffset = 0 }
+                        withAnimation(FGMotion.gentle) { dragOffset = 0 }
                         return
                     }
-                    if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
+                    if gesture.translation.width < -30 || gesture.predictedEndTranslation.width < -75 {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onSkip()
-                        withAnimation(FGMotion.swap) {
+                        withAnimation(FGMotion.gentle) {
                             dragOffset = 0
                         }
                     } else {
-                        withAnimation(FGMotion.swap) {
+                        withAnimation(FGMotion.gentle) {
                             dragOffset = 0
                         }
                     }
@@ -812,25 +793,25 @@ private struct MenuItemRow: View {
                     guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
                     if !reduceMotion {
                         if gesture.translation.width < 0 {
-                            dragOffset = gesture.translation.width
+                            dragOffset = max(-80, gesture.translation.width * 0.75)
                         } else {
-                            dragOffset = min(20, gesture.translation.width * 0.2)
+                            dragOffset = min(15, gesture.translation.width * 0.2)
                         }
                     }
                 }
                 .onEnded { gesture in
                     guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
-                        withAnimation(FGMotion.swap) { dragOffset = 0 }
+                        withAnimation(FGMotion.gentle) { dragOffset = 0 }
                         return
                     }
-                    if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
+                    if gesture.translation.width < -30 || gesture.predictedEndTranslation.width < -75 {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onSkip()
-                        withAnimation(FGMotion.swap) {
+                        withAnimation(FGMotion.gentle) {
                             dragOffset = 0
                         }
                     } else {
-                        withAnimation(FGMotion.swap) {
+                        withAnimation(FGMotion.gentle) {
                             dragOffset = 0
                         }
                     }
