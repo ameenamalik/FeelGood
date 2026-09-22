@@ -23,7 +23,6 @@ struct ExploreView: View {
     @State private var service: any ChatProviding = ChatService()
     @State private var selectedSession: Session?
     @State private var selectedSessionReason: String?
-    @State private var activeTimeLabel: String = "15 min"
     @FocusState private var isFieldFocused: Bool
     @Environment(AuthService.self) private var authService
     @Environment(PurchasesManager.self) private var purchasesManager
@@ -80,6 +79,10 @@ struct ExploreView: View {
                                             .opacity.combined(with: .scale(scale: 0.9, anchor: .leading))
                                         )
                                 }
+
+                                Color.clear
+                                    .frame(height: 16)
+                                    .id("chatBottomAnchor")
                             }
                             .animation(FGMotion.gentle, value: isProcessing)
                             .padding(.horizontal, 16)
@@ -92,6 +95,14 @@ struct ExploreView: View {
                         }
                         .onChange(of: isProcessing) { _, _ in
                             scrollToBottom(proxy)
+                        }
+                        .onChange(of: isFieldFocused) { _, _ in
+                            scrollToBottom(proxy)
+                        }
+                        .onAppear {
+                            if !messages.isEmpty {
+                                scrollToBottom(proxy, animated: false)
+                            }
                         }
                     }
 
@@ -141,66 +152,71 @@ struct ExploreView: View {
         }
         .onAppear {
             loadPersistedHistory()
-            updateActiveTimeLabel()
         }
         .task {
             await purchasesManager.refreshCustomerInfo()
         }
     }
 
-    private func scrollToBottom(_ proxy: ScrollViewProxy) {
-        withAnimation(FGMotion.gentle) {
-            if isProcessing {
-                proxy.scrollTo("typingIndicator", anchor: .bottom)
-            } else if let last = messages.last {
-                proxy.scrollTo(last.id, anchor: .bottom)
+    private func scrollToBottom(_ proxy: ScrollViewProxy, animated: Bool = true) {
+        let performScroll = {
+            if animated {
+                withAnimation(FGMotion.gentle) {
+                    proxy.scrollTo("chatBottomAnchor", anchor: .bottom)
+                }
+            } else {
+                proxy.scrollTo("chatBottomAnchor", anchor: .bottom)
             }
+        }
+
+        performScroll()
+
+        DispatchQueue.main.async {
+            performScroll()
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            performScroll()
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            performScroll()
         }
     }
 
     // MARK: - Header Bar
 
     private var headerBar: some View {
-        HStack(alignment: .center) {
-            // Previous Conversation History Button
-            Button {
-                isShowingHistory = true
-            } label: {
-                Image(systemName: "clock.arrow.circlepath")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(FGColor.ink)
-                    .frame(width: 36, height: 36)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Chat History")
-
-            Spacer()
-
-            // Title
-            Text("Today's menu")
+        ZStack {
+            // Centered Title
+            Text("Chat")
                 .font(.custom("SFProRounded-Semibold", size: 18))
                 .foregroundStyle(FGColor.ink)
 
-            Spacer()
+            HStack(alignment: .center) {
+                // Previous Conversation History Button
+                Button {
+                    isShowingHistory = true
+                } label: {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(FGColor.ink)
+                        .frame(width: 36, height: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Chat History")
 
-            // Right side: Active Time Pill Badge + New Chat Button
-            HStack(spacing: 8) {
-                Text(activeTimeLabel)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(FGColor.inkMuted)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color(light: 0xF3EEE7, dark: 0x2A2724))
-                    .clipShape(Capsule())
+                Spacer()
 
+                // New Chat Button
                 Button {
                     startNewConversation()
                 } label: {
                     Image(systemName: "square.and.pencil")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(FGColor.ink)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 36, height: 36)
                         .background(Color(light: 0xF3EEE7, dark: 0x2A2724))
                         .clipShape(Circle())
                 }
@@ -515,7 +531,6 @@ struct ExploreView: View {
         withAnimation(FGMotion.settle) { messages.append(userMsg) }
         savePersistedHistory()
         inputText = ""
-        isFieldFocused = false
         isProcessing = true
 
         let completedEntries = model.history.filter(\.wasCompleted)
@@ -581,7 +596,6 @@ struct ExploreView: View {
 
                 if response.overrides.hasAnyOverrides {
                     model.applyConversationalCheckIn(response)
-                    updateActiveTimeLabel()
                 }
 
                 let assistantMsg = ConversationMessage(
@@ -647,7 +661,6 @@ struct ExploreView: View {
     private func commitRecommendationToToday(recommendation: StructuredRecommendation, messageID: UUID?) {
         if let session = resolveSession(from: recommendation) {
             model.commitSessionToToday(session)
-            updateActiveTimeLabel()
         }
 
         if let messageID, let index = messages.firstIndex(where: { $0.id == messageID }) {
@@ -686,15 +699,7 @@ struct ExploreView: View {
         model.menu.items.reduce(0) { $0 + $1.session.durationMin }
     }
 
-    private func updateActiveTimeLabel() {
-        if !model.menu.items.isEmpty {
-            activeTimeLabel = "\(todaysMenuMinutes) min"
-        } else if let time = model.checkIn?.time {
-            activeTimeLabel = time.checkInLabel
-        } else {
-            activeTimeLabel = "15 min"
-        }
-    }
+
 
     // MARK: - Thread Management & Persistence
 
