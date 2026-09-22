@@ -73,32 +73,32 @@ struct DopamineMenuTourView: View {
     // MARK: - Slides
 
     private var stepOne: some View {
-        VStack(spacing: FGSpace.l) {
+        VStack(spacing: FGSpace.xl) {
             Spacer()
 
-            Image("IntentEnergyClementine")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 140, height: 140)
+            ZStack {
+                Circle()
+                    .fill(FGAura.apricot.core.opacity(0.32))
+                    .frame(width: 130, height: 130)
 
-            VStack(spacing: FGSpace.s) {
+                Image("IntentEnergyClementine")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 108, height: 108)
+            }
+
+            VStack(spacing: FGSpace.m) {
                 Text("Meet your Dopamine Menu")
-                    .font(FGFont.display)
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
 
-                Text("Instead of an overwhelming to-do list, FeelGood gives you a fresh menu of movement every day.")
+                Text("A fresh selection of movement tailored to your energy today.\n\nPick what feels good — even one item is a complete win.")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.inkMuted)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(3)
+                    .lineSpacing(4)
                     .padding(.horizontal, FGSpace.s)
-
-                Text("Pick whatever fits your energy right now — even just 5 minutes is a complete win.")
-                    .font(FGFont.body.weight(.medium))
-                    .foregroundStyle(FGColor.ink)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 4)
             }
 
             Spacer()
@@ -181,7 +181,7 @@ struct DopamineMenuTourView: View {
                     .lineSpacing(3)
                     .padding(.horizontal, FGSpace.s)
 
-                Text("You can also tap '+ Custom Routine' to add your own favorite walks or stretches.")
+                Text("You can also tap '+ Routine' to add your own favorite walks or stretches.")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.inkMuted)
                     .multilineTextAlignment(.center)

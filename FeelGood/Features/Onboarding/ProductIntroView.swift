@@ -21,6 +21,7 @@ struct FirstRunFlow: View {
     @AppStorage(Self.hasSeenWelcomeSignUpKey) private var hasSeenWelcomeSignUp = false
     @AppStorage(Self.hasSeenOnboardingPaywallKey) private var hasSeenOnboardingPaywall = false
     @State private var pendingOnboardingModel: OnboardingModel?
+    @State private var settingUpModel: OnboardingModel?
 
     /// A signed-out account becomes a fresh local guest. Replay the product
     /// promises and account choice before asking for new preferences, but do
@@ -52,11 +53,17 @@ struct FirstRunFlow: View {
                         hasSeenWelcomeSignUp = true
                     }
                 )
+            } else if let settingUp = settingUpModel {
+                SettingUpMenuView {
+                    settingUpModel = nil
+                    onFinish(settingUp)
+                }
             } else if let pending = pendingOnboardingModel {
                 let completeOnboardingPaywall: () -> Void = {
                     hasSeenOnboardingPaywall = true
+                    let model = pending
                     pendingOnboardingModel = nil
-                    onFinish(pending)
+                    settingUpModel = model
                 }
                 FeelGoodPaywallView(onFinished: completeOnboardingPaywall)
             } else {
@@ -64,7 +71,7 @@ struct FirstRunFlow: View {
                     if !hasSeenOnboardingPaywall {
                         pendingOnboardingModel = onboarding
                     } else {
-                        onFinish(onboarding)
+                        settingUpModel = onboarding
                     }
                 }
             }
