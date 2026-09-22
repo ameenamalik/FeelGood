@@ -650,56 +650,79 @@ private struct MenuItemCard: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Button(action: onOpen) {
-                MenuItemBody(
-                    item: item,
-                    isDone: isDone,
-                    isInProgress: isInProgress,
-                    isHighlighted: false
-                )
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.feelGoodPress)
-
+        ZStack(alignment: .trailing) {
             if canSwap {
-                MenuSwapButton(item: item, isReset: isReset, action: onSelectManual)
-                    .padding(.top, 18)
-                    .padding(.trailing, 20)
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Swap")
+                        .font(FGFont.label.weight(.bold))
+                }
+                .foregroundStyle(FGColor.ink)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(FGAura.apricot.mid.opacity(0.35))
+                .clipShape(Capsule())
+                .padding(.trailing, 16)
+                .opacity(min(1, max(0, -dragOffset / 40)))
             }
-        }
-        .offset(x: dragOffset)
-        .simultaneousGesture(
-            canSwap ? DragGesture(minimumDistance: 15)
-                .onChanged { gesture in
-                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
-                    if !reduceMotion {
-                        if gesture.translation.width < 0 {
-                            dragOffset = max(-80, gesture.translation.width * 0.75)
+
+            ZStack(alignment: .topTrailing) {
+                Button(action: onOpen) {
+                    MenuItemBody(
+                        item: item,
+                        isDone: isDone,
+                        isInProgress: isInProgress,
+                        isHighlighted: false
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.feelGoodPress)
+
+                if canSwap {
+                    MenuSwapButton(item: item, isReset: isReset, action: onSelectManual)
+                        .padding(.top, 18)
+                        .padding(.trailing, 20)
+                }
+            }
+            .offset(x: dragOffset)
+            .highPriorityGesture(
+                canSwap ? DragGesture(minimumDistance: 12)
+                    .onChanged { gesture in
+                        if gesture.translation.width < 0 && abs(gesture.translation.width) > abs(gesture.translation.height) {
+                            if !reduceMotion {
+                                dragOffset = gesture.translation.width
+                            }
+                        }
+                    }
+                    .onEnded { gesture in
+                        guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
+                            withAnimation(FGMotion.gentle) { dragOffset = 0 }
+                            return
+                        }
+                        if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            if reduceMotion {
+                                onSkip()
+                            } else {
+                                withAnimation(.easeOut(duration: 0.18)) {
+                                    dragOffset = -UIScreen.main.bounds.width
+                                }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+                                    onSkip()
+                                    dragOffset = 0
+                                }
+                            }
                         } else {
-                            dragOffset = min(15, gesture.translation.width * 0.2)
+                            withAnimation(FGMotion.gentle) {
+                                dragOffset = 0
+                            }
                         }
                     }
-                }
-                .onEnded { gesture in
-                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
-                        withAnimation(FGMotion.gentle) { dragOffset = 0 }
-                        return
-                    }
-                    if gesture.translation.width < -30 || gesture.predictedEndTranslation.width < -75 {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        onSkip()
-                        withAnimation(FGMotion.gentle) {
-                            dragOffset = 0
-                        }
-                    } else {
-                        withAnimation(FGMotion.gentle) {
-                            dragOffset = 0
-                        }
-                    }
-                }
-            : nil
-        )
+                : nil
+            )
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
             "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : isInProgress ? "In progress. Resume. " : "")"
@@ -768,56 +791,79 @@ private struct MenuItemRow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Button(action: onOpen) {
-                MenuItemBody(
-                    item: item,
-                    isDone: isDone,
-                    isInProgress: isInProgress,
-                    isHighlighted: false
-                )
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.feelGoodPress)
-
+        ZStack(alignment: .trailing) {
             if canSwap {
-                MenuSwapButton(item: item, isReset: isReset, action: onSelectManual)
-                    .padding(.top, 18)
-                    .padding(.trailing, 20)
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Swap")
+                        .font(FGFont.label.weight(.bold))
+                }
+                .foregroundStyle(FGColor.ink)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(FGAura.apricot.mid.opacity(0.35))
+                .clipShape(Capsule())
+                .padding(.trailing, 16)
+                .opacity(min(1, max(0, -dragOffset / 40)))
             }
-        }
-        .offset(x: dragOffset)
-        .simultaneousGesture(
-            canSwap ? DragGesture(minimumDistance: 15)
-                .onChanged { gesture in
-                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
-                    if !reduceMotion {
-                        if gesture.translation.width < 0 {
-                            dragOffset = max(-80, gesture.translation.width * 0.75)
+
+            ZStack(alignment: .topTrailing) {
+                Button(action: onOpen) {
+                    MenuItemBody(
+                        item: item,
+                        isDone: isDone,
+                        isInProgress: isInProgress,
+                        isHighlighted: false
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.feelGoodPress)
+
+                if canSwap {
+                    MenuSwapButton(item: item, isReset: isReset, action: onSelectManual)
+                        .padding(.top, 18)
+                        .padding(.trailing, 20)
+                }
+            }
+            .offset(x: dragOffset)
+            .highPriorityGesture(
+                canSwap ? DragGesture(minimumDistance: 12)
+                    .onChanged { gesture in
+                        if gesture.translation.width < 0 && abs(gesture.translation.width) > abs(gesture.translation.height) {
+                            if !reduceMotion {
+                                dragOffset = gesture.translation.width
+                            }
+                        }
+                    }
+                    .onEnded { gesture in
+                        guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
+                            withAnimation(FGMotion.gentle) { dragOffset = 0 }
+                            return
+                        }
+                        if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            if reduceMotion {
+                                onSkip()
+                            } else {
+                                withAnimation(.easeOut(duration: 0.18)) {
+                                    dragOffset = -UIScreen.main.bounds.width
+                                }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+                                    onSkip()
+                                    dragOffset = 0
+                                }
+                            }
                         } else {
-                            dragOffset = min(15, gesture.translation.width * 0.2)
+                            withAnimation(FGMotion.gentle) {
+                                dragOffset = 0
+                            }
                         }
                     }
-                }
-                .onEnded { gesture in
-                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
-                        withAnimation(FGMotion.gentle) { dragOffset = 0 }
-                        return
-                    }
-                    if gesture.translation.width < -30 || gesture.predictedEndTranslation.width < -75 {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        onSkip()
-                        withAnimation(FGMotion.gentle) {
-                            dragOffset = 0
-                        }
-                    } else {
-                        withAnimation(FGMotion.gentle) {
-                            dragOffset = 0
-                        }
-                    }
-                }
-            : nil
-        )
+                : nil
+            )
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
             "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : isInProgress ? "In progress. Resume. " : "")"

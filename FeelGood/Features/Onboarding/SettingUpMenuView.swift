@@ -96,7 +96,7 @@ struct SettingUpMenuView: View {
         case 0:
             return "Tuning into your energy..."
         case 1:
-            return "Curating your 4 courses..."
+            return "Curating today's menu..."
         default:
             return "Your menu is ready!"
         }
@@ -116,7 +116,7 @@ struct SettingUpMenuView: View {
             return
         }
 
-        // Phase 1: Curating your 4 courses at 0.8s
+        // Phase 1: Curating today's menu at 0.8s
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             withAnimation(FGMotion.gentle) {
                 phase = 1
