@@ -393,6 +393,8 @@ nonisolated extension Reflection.Note {
             activities.count == 1
                 ? "\(activities[0].lookBackName.capitalisedFirst) more than anything."
                 : "\(activities[0].lookBackName.capitalisedFirst) and \(activities[1].lookBackName), mostly."
+        case .keepsReturningToSession(_, let title, _):
+            "You keep coming back to \(title)."
         case .keepsReturningTo(let activity):
             "You keep coming back to the \(activity.lookBackName) sessions."
         case .madeRoomForRest:
@@ -400,12 +402,31 @@ nonisolated extension Reflection.Note {
         }
     }
 
+    /// A short, actionable prompt for the card's tap target.
+    var actionLabel: String {
+        switch self {
+        case .keepsReturningToSession:
+            "Open in Library"
+        case .keepsReturningTo(let activity):
+            "Browse \(activity.lookBackName)"
+        case .activities(let activities):
+            "Browse \(activities[0].lookBackName)"
+        case .madeRoomForRest:
+            "Browse gentle movement"
+        case .mostly, .moved:
+            "Explore the Library"
+        }
+    }
+
     /// The one real, checkable thing this note can point at on *today's*
     /// menu — never a claim the menu can't back up, and never a rendered
-    /// gap. Only the two activity-shaped notes have something to point at;
+    /// gap. Only the activity-shaped notes have something to point at;
     /// everything else invites without pointing.
     func matchedItem(in menu: Menu) -> MenuItem? {
         switch self {
+        case .keepsReturningToSession(let sessionID, _, let activity):
+            menu.items.first { $0.session.id == sessionID }
+                ?? menu.items.first { $0.session.activity == activity }
         case .keepsReturningTo(let activity):
             menu.items.first { $0.session.activity == activity }
         case .activities(let activities):
@@ -424,7 +445,7 @@ nonisolated extension Reflection.Note {
         switch self {
         case .madeRoomForRest:
             return "Today's menu has something light too, if that's what fits."
-        case .moved, .mostly, .activities, .keepsReturningTo:
+        case .moved, .mostly, .activities, .keepsReturningTo, .keepsReturningToSession:
             return "Today's menu is ready when you are."
         }
     }

@@ -53,8 +53,9 @@ struct TodayView: View {
     @State private var isShowingAuthPrompt = false
     @Environment(AuthService.self) private var authService
     @Environment(\.colorScheme) private var colorScheme
-    @State private var isAdjusting = false
     @State private var isShowingMyMenu = false
+    @AppStorage("hasSeenDopamineMenuTour") private var hasSeenDopamineMenuTour = false
+    @State private var isShowingDopamineMenuTour = false
     @State private var selected: MenuItem?
     @State private var littleWinCelebration: LittleWinCelebration?
     @State private var pendingCheckInUpdate: PendingCheckInUpdate?
@@ -92,9 +93,8 @@ struct TodayView: View {
                     menuItems
                 }
                 .padding(FGSpace.page)
+                .containerRelativeFrame(.horizontal)
             }
-            // Content fits at ordinary type sizes; it only scrolls when the
-            // text is large enough to need it.
             .scrollBounceBehavior(.basedOnSize)
         }
         .sheet(isPresented: $isCheckingIn, onDismiss: handleCheckInDismissal) {
@@ -119,6 +119,11 @@ struct TodayView: View {
         .sheet(isPresented: $isShowingMyMenu, onDismiss: clearOneSignalDiscoveryTriggers) {
             MyMenuView(model: model)
         }
+        .sheet(isPresented: $isShowingDopamineMenuTour) {
+            DopamineMenuTourView {
+                hasSeenDopamineMenuTour = true
+            }
+        }
         .sheet(item: $selected, onDismiss: presentCompletionPaywallIfNeeded) { item in
             SessionDetailView(item: item, model: model) {
                 shouldOfferProAfterDismissal = true
@@ -142,6 +147,11 @@ struct TodayView: View {
             // Discovery messaging belongs to the moment after a completion,
             // never to app launch or the start of a calming session.
             clearOneSignalDiscoveryTriggers()
+            if !hasSeenDopamineMenuTour {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    isShowingDopamineMenuTour = true
+                }
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .oneSignalOpenMyMenu)) { _ in
             // Let OneSignal's overlay finish dismissing before presenting the
@@ -246,8 +256,10 @@ struct TodayView: View {
                 .opacity(isVisible ? 1 : 0)
                 .scaleEffect(isVisible ? 1 : 0.96, anchor: .top)
                 .offset(y: isVisible ? 0 : 10)
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-                .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: item.id)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal: .move(edge: .leading).combined(with: .opacity)
+                ))
                 .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: isVisible)
             }
         }
@@ -355,7 +367,7 @@ struct TodayView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 } else {
-                    Text("Check in for today • 30s")
+                    Text("Tailor today's menu • 30s")
                         .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundStyle(FGColor.inkMuted)
                         .lineLimit(1)
@@ -371,71 +383,49 @@ struct TodayView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(
             model.checkIn.map { "Today's check-in: \($0.detailedSummaryPhrase). Tap to adjust" }
-                ?? "Check in for today. Takes about 30 seconds"
+                ?? "Tailor today's menu. Takes about 30 seconds"
         )
     }
 
-    /// "Your menu", remaining minutes, and collapsible quick adjust drawer.
+    /// "Your menu" and the Routine button.
     private var menuHeading: some View {
-        VStack(alignment: .leading, spacing: FGSpace.s) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .center, spacing: FGSpace.s) {
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                HStack(alignment: .center, spacing: 8) {
                     Text("Your menu")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundStyle(FGColor.ink)
                         .accessibilityAddTraits(.isHeader)
 
-                    if model.hasCompletedActivityToday && model.isMenuCompletedToday {
-                        Text("Completed")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(FGColor.sageDeep)
+                    Button {
+                        isShowingDopamineMenuTour = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(FGColor.inkMuted)
                     }
+                    .buttonStyle(.feelGoodPress)
+                    .accessibilityLabel("How the Dopamine Menu works")
                 }
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
 
                 Spacer(minLength: FGSpace.s)
 
-                HStack(spacing: FGSpace.s) {
-                    #if compiler(>=6.2)
-                    if #available(iOS 26, *) {
-                        GlassEffectContainer(spacing: FGSpace.s) {
-                            HStack(spacing: FGSpace.s) {
-                                routineButtonLabel
-                                    .glassEffect(.regular.interactive(), in: Capsule())
-                                if model.isProUser {
-                                    adjustButtonLabel
-                                        .glassEffect(
-                                            isAdjusting ? .regular.tint(FGColor.surface).interactive() : .regular.interactive(),
-                                            in: Circle()
-                                        )
-                                }
-                            }
-                        }
-                    } else {
-                        legacyMenuControls
-                    }
-                    #else
+                #if compiler(>=6.2)
+                if #available(iOS 26, *) {
+                    routineButtonLabel
+                        .glassEffect(.regular.interactive(), in: Capsule())
+                } else {
                     legacyMenuControls
-                    #endif
                 }
+                #else
+                legacyMenuControls
+                #endif
             }
 
-            // The remaining-minutes and "Completed" states already show inline
-            // next to the title above; this line only carries the one state
-            // that has nowhere else to go.
             if model.checkIn?.time.isZero == true || (model.checkIn == nil && model.menu.assumedCheckIn.time.isZero) {
                 Text("Rest day · Untimed")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundStyle(FGColor.inkMuted)
-            }
-
-            if isAdjusting {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    quickFilterRow
-                        .padding(.vertical, 2)
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -463,74 +453,10 @@ struct TodayView: View {
 
     @ViewBuilder
     private var legacyMenuControls: some View {
-        HStack(spacing: FGSpace.s) {
-            routineButtonLabel
-                .background(FGColor.surface)
-                .clipShape(Capsule())
-                .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
-
-            if model.isProUser {
-                adjustButtonLabel
-                    .background(isAdjusting ? FGColor.surface : FGColor.surface.opacity(0.6))
-                    .clipShape(Circle())
-                    .overlay(
-                        Circle().strokeBorder(isAdjusting ? FGColor.lineStrong : FGColor.line, lineWidth: 1)
-                    )
-            }
-        }
-    }
-
-    /// Only rendered for Pro users — see `menuHeading`.
-    private var adjustButtonLabel: some View {
-        Button {
-            withAnimation(FGMotion.gentle) {
-                isAdjusting.toggle()
-            }
-        } label: {
-            Image(systemName: isAdjusting ? "xmark" : "slider.horizontal.3")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(FGColor.ink)
-                .frame(width: 32, height: 32)
-                .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Adjust today's menu")
-    }
-
-    private var quickFilterRow: some View {
-        HStack(spacing: 8) {
-            ForEach(QuickFilter.allCases, id: \.self) { filter in
-                quickFilterButtonLabel(filter)
-                    .background(FGColor.surface)
-                    .clipShape(Capsule())
-                    .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
-            }
-        }
-    }
-
-    private func quickFilterButtonLabel(_ filter: QuickFilter) -> some View {
-        Button {
-            guard !isRegeneratingMenu else { return }
-            Task { @MainActor in
-                await regenerateMenu {
-                    model.applyQuickFilter(filter)
-                }
-            }
-        } label: {
-            HStack(spacing: 5) {
-                Image(systemName: filter.symbol)
-                    .font(.system(size: 11, weight: .medium))
-                Text(filter.label)
-                    .font(FGFont.label.weight(.medium))
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .foregroundStyle(FGColor.ink)
-            .fixedSize()
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .disabled(isRegeneratingMenu)
+        routineButtonLabel
+            .background(FGColor.surface)
+            .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
     }
 
     private var currentMenuAura: FGAura {
@@ -683,32 +609,79 @@ private struct MenuItemCard: View {
     let onOpen: () -> Void
     let onSwap: () -> Void
 
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Button(action: onOpen) {
-                MenuItemBody(
-                    item: item,
-                    isDone: isDone,
-                    isInProgress: isInProgress,
-                    isHighlighted: false
-                )
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.feelGoodPress)
+    @State private var dragOffset: CGFloat = 0
 
+    var body: some View {
+        ZStack(alignment: .trailing) {
             if canSwap {
-                MenuSwapButton(item: item, isReset: isReset, action: onSwap)
-                    .padding(.top, 18)
-                    .padding(.trailing, 20)
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Swap")
+                        .font(FGFont.label.weight(.bold))
+                }
+                .foregroundStyle(FGColor.ink)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(FGAura.apricot.mid.opacity(0.35))
+                .clipShape(Capsule())
+                .padding(.trailing, 16)
+                .opacity(min(1, max(0, -dragOffset / 40)))
             }
+
+            ZStack(alignment: .topTrailing) {
+                Button(action: onOpen) {
+                    MenuItemBody(
+                        item: item,
+                        isDone: isDone,
+                        isInProgress: isInProgress,
+                        isHighlighted: false
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.feelGoodPress)
+
+                if canSwap {
+                    MenuSwapButton(item: item, isReset: isReset, action: onSwap)
+                        .padding(.top, 18)
+                        .padding(.trailing, 20)
+                }
+            }
+            .offset(x: dragOffset)
+            .highPriorityGesture(
+                canSwap ? DragGesture(minimumDistance: 12)
+                    .onChanged { gesture in
+                        if gesture.translation.width < 0 && abs(gesture.translation.width) > abs(gesture.translation.height) {
+                            dragOffset = gesture.translation.width
+                        }
+                    }
+                    .onEnded { gesture in
+                        if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            withAnimation(.easeOut(duration: 0.18)) {
+                                dragOffset = -UIScreen.main.bounds.width
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+                                onSwap()
+                                dragOffset = 0
+                            }
+                        } else {
+                            withAnimation(FGMotion.gentle) {
+                                dragOffset = 0
+                            }
+                        }
+                    }
+                : nil
+            )
         }
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
             "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : isInProgress ? "In progress. Resume. " : "")"
             + "\(item.session.chips.joined(separator: ", ")). \(item.reasonText)"
         )
         .accessibilityAddTraits(.isButton)
-        .accessibilityAction(named: isReset ? "Start over \(item.course.label)" : "Shuffle \(item.course.label)") {
+        .accessibilityAction(named: isReset ? "Start over \(item.course.label)" : "Swap \(item.course.label)") {
             if canSwap { onSwap() }
         }
     }
@@ -762,32 +735,79 @@ private struct MenuItemRow: View {
     let onOpen: () -> Void
     let onSwap: () -> Void
 
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Button(action: onOpen) {
-                MenuItemBody(
-                    item: item,
-                    isDone: isDone,
-                    isInProgress: isInProgress,
-                    isHighlighted: false
-                )
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.feelGoodPress)
+    @State private var dragOffset: CGFloat = 0
 
+    var body: some View {
+        ZStack(alignment: .trailing) {
             if canSwap {
-                MenuSwapButton(item: item, isReset: isReset, action: onSwap)
-                    .padding(.top, 18)
-                    .padding(.trailing, 20)
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Swap")
+                        .font(FGFont.label.weight(.bold))
+                }
+                .foregroundStyle(FGColor.ink)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(FGAura.apricot.mid.opacity(0.35))
+                .clipShape(Capsule())
+                .padding(.trailing, 16)
+                .opacity(min(1, max(0, -dragOffset / 40)))
             }
+
+            ZStack(alignment: .topTrailing) {
+                Button(action: onOpen) {
+                    MenuItemBody(
+                        item: item,
+                        isDone: isDone,
+                        isInProgress: isInProgress,
+                        isHighlighted: false
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.feelGoodPress)
+
+                if canSwap {
+                    MenuSwapButton(item: item, isReset: isReset, action: onSwap)
+                        .padding(.top, 18)
+                        .padding(.trailing, 20)
+                }
+            }
+            .offset(x: dragOffset)
+            .highPriorityGesture(
+                canSwap ? DragGesture(minimumDistance: 12)
+                    .onChanged { gesture in
+                        if gesture.translation.width < 0 && abs(gesture.translation.width) > abs(gesture.translation.height) {
+                            dragOffset = gesture.translation.width
+                        }
+                    }
+                    .onEnded { gesture in
+                        if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            withAnimation(.easeOut(duration: 0.18)) {
+                                dragOffset = -UIScreen.main.bounds.width
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+                                onSwap()
+                                dragOffset = 0
+                            }
+                        } else {
+                            withAnimation(FGMotion.gentle) {
+                                dragOffset = 0
+                            }
+                        }
+                    }
+                : nil
+            )
         }
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
             "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : isInProgress ? "In progress. Resume. " : "")"
             + "\(item.session.durationLabel). \(item.reasonText)"
         )
         .accessibilityAddTraits(.isButton)
-        .accessibilityAction(named: isReset ? "Start over \(item.course.label)" : "Shuffle \(item.course.label)") {
+        .accessibilityAction(named: isReset ? "Start over \(item.course.label)" : "Swap \(item.course.label)") {
             if canSwap { onSwap() }
         }
     }
@@ -808,19 +828,9 @@ private struct MenuItemBody: View {
         // mascot needs to clear it even when the title is one short line.
         HStack(alignment: .bottom, spacing: FGSpace.m) {
             VStack(alignment: .leading, spacing: 10) {
-                // Top metadata row: White pill badges matching design reference
+                // Top metadata row: White pill badge matching design reference
                 HStack(alignment: .center, spacing: 6) {
                     Text(item.course.label.uppercased())
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .lineLimit(1)
-                        .fixedSize()
-                        .foregroundStyle(item.course.accentText)
-                        .padding(.horizontal, 11)
-                        .padding(.vertical, 5)
-                        .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
-                        .clipShape(Capsule())
-
-                    Text(item.session.durationLabel.uppercased())
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .lineLimit(1)
                         .fixedSize()
@@ -892,15 +902,20 @@ private struct MenuSwapButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: isReset ? "arrow.counterclockwise" : "shuffle")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(item.course.accentText)
-                .frame(width: 30, height: 30)
-                .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
-                .clipShape(Circle())
+            HStack(spacing: 4) {
+                Image(systemName: isReset ? "arrow.counterclockwise" : "arrow.triangle.2.circlepath")
+                    .font(.system(size: 11, weight: .bold))
+                Text(isReset ? "Reset" : "Swap")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(item.course.accentText)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
+            .clipShape(Capsule())
         }
         .buttonStyle(.feelGoodPress)
-        .accessibilityLabel(isReset ? "Start over" : "Shuffle")
+        .accessibilityLabel(isReset ? "Start over" : "Swap \(item.course.label)")
         .accessibilityHint(
             isReset
                 ? "Cycles back to the first \(item.course.label.lowercased()) options"

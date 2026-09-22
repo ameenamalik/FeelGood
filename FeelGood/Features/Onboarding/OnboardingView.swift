@@ -174,7 +174,7 @@ struct OnboardingView: View {
             artworkAlignment: .top,
             contentPlacement: .bottomLeading,
             preferredHeight: 156,
-            showsAuraAtRest: true,
+            showsAuraAtRest: false,
             aura: intentAura(intent),
             isSelected: model.intents.contains(intent)
         ) {

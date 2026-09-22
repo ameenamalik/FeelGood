@@ -210,6 +210,70 @@ struct LookBackTests {
         #expect(reflect([]).headline == nil)
     }
 
+    @Test("A repeatedly completed session is named by its real title when known")
+    func namesSpecificSessionWhenReturnedTo() {
+        let session = Fixture.session(
+            id: "m-morning-stretch",
+            title: "Morning Stretch",
+            activity: .stretching
+        )
+        let history = [
+            completed("m-morning-stretch", .stretching, daysAgo: 1),
+            completed("m-morning-stretch", .stretching, daysAgo: 3),
+            completed("other-1", .pilates, daysAgo: 2),
+        ]
+        let reflection = LookBack.reflect(
+            history: history,
+            sessions: [session],
+            context: Fixture.context()
+        )
+        #expect(reflection.notes.contains(
+            .keepsReturningToSession(sessionID: "m-morning-stretch", title: "Morning Stretch", activity: .stretching)
+        ))
+        #expect(reflection.headline == .keepsReturningToSession(
+            sessionID: "m-morning-stretch",
+            title: "Morning Stretch",
+            activity: .stretching
+        ))
+    }
+
+    @Test("Headline prioritizes specific session over activity-level notes")
+    func headlinePrefersSessionOverActivity() {
+        let stretchSession = Fixture.session(
+            id: "m-morning-stretch",
+            title: "Morning Stretch",
+            activity: .stretching
+        )
+        let history = [
+            completed("p1", .pilates, daysAgo: 1),
+            completed("p2", .pilates, daysAgo: 2),
+            completed("p3", .pilates, daysAgo: 3),
+            completed("m-morning-stretch", .stretching, daysAgo: 4, feel: .lovedIt),
+            completed("m-morning-stretch", .stretching, daysAgo: 5, feel: .lovedIt),
+        ]
+        let reflection = LookBack.reflect(
+            history: history,
+            sessions: [stretchSession],
+            context: Fixture.context()
+        )
+        #expect(reflection.headline == .keepsReturningToSession(
+            sessionID: "m-morning-stretch",
+            title: "Morning Stretch",
+            activity: .stretching
+        ))
+    }
+
+    @Test("keepsReturningToSession generates clean copy and actionable label")
+    func sessionNoteCopyAndActionLabel() {
+        let note = Reflection.Note.keepsReturningToSession(
+            sessionID: "s1",
+            title: "Daily Flow",
+            activity: .yoga
+        )
+        #expect(note.line == "You keep coming back to Daily Flow.")
+        #expect(note.actionLabel == "Open in Library")
+    }
+
     // MARK: Pointing at something real, on today's actual menu
 
     private func menu(with session: Session) -> Menu {
@@ -278,6 +342,7 @@ struct LookBackTests {
             .moved(times: 1), .moved(times: 7),
             .mostly(.morning), .mostly(.midday), .mostly(.evening), .mostly(.varies),
             .activities([.pilates]), .activities([.pilates, .walking]),
+            .keepsReturningToSession(sessionID: "s1", title: "Morning stretch", activity: .stretching),
             .keepsReturningTo(.stretching), .madeRoomForRest,
         ]
         for note in all {

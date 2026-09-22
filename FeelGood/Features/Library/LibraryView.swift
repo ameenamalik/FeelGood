@@ -12,11 +12,31 @@ import SwiftUI
 struct LibraryView: View {
     let model: TodayModel
 
+    @Environment(\.dismiss) private var dismiss
     @State private var selected: Session?
+    @State private var selectedActivity: Activity?
+
+    init(
+        model: TodayModel,
+        initialSession: Session? = nil,
+        initialActivity: Activity? = nil
+    ) {
+        self.model = model
+        _selected = State(initialValue: initialSession)
+        _selectedActivity = State(initialValue: initialActivity)
+    }
+
+    private var availableActivities: [Activity] {
+        let set = Set(model.everything.map(\.activity))
+        return Activity.allCases.filter { set.contains($0) }
+    }
 
     private var courses: [(course: Course, sessions: [Session])] {
         Course.allCases.compactMap { course in
-            let sessions = model.everything.filter { $0.course == course }
+            let sessions = model.everything.filter { session in
+                session.course == course
+                    && (selectedActivity == nil || session.activity == selectedActivity)
+            }
             return sessions.isEmpty ? nil : (course, sessions)
         }
     }
@@ -26,15 +46,41 @@ struct LibraryView: View {
             FGColor.bg.ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: FGSpace.xl) {
-                    VStack(alignment: .leading, spacing: FGSpace.s) {
-                        Text("Everything")
-                            .font(FGFont.title)
+                VStack(alignment: .leading, spacing: FGSpace.l) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: FGSpace.s) {
+                            Text("Library")
+                                .font(FGFont.title)
+                                .foregroundStyle(FGColor.ink)
+                            Text("Nothing here is chosen for you. That's the point of it.")
+                                .font(FGFont.reason)
+                                .foregroundStyle(FGColor.inkMuted)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer()
+                        Button("Done") { dismiss() }
+                            .font(FGFont.body.weight(.medium))
                             .foregroundStyle(FGColor.ink)
-                        Text("Nothing here is chosen for you. That's the point of it.")
-                            .font(FGFont.reason)
-                            .foregroundStyle(FGColor.inkMuted)
-                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: FGSpace.xs) {
+                            filterChip(
+                                title: "All",
+                                isSelected: selectedActivity == nil
+                            ) {
+                                selectedActivity = nil
+                            }
+
+                            ForEach(availableActivities, id: \.self) { activity in
+                                filterChip(
+                                    title: activity.label,
+                                    isSelected: selectedActivity == activity
+                                ) {
+                                    selectedActivity = selectedActivity == activity ? nil : activity
+                                }
+                            }
+                        }
                     }
 
                     ForEach(courses, id: \.course) { group in
@@ -59,6 +105,25 @@ struct LibraryView: View {
             SessionDetailView(session: session, model: model)
         }
         .presentationDragIndicator(.visible)
+    }
+
+    private func filterChip(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(FGFont.label.weight(isSelected ? .semibold : .regular))
+                .foregroundStyle(isSelected ? FGColor.onActionFill : FGColor.ink)
+                .padding(.horizontal, FGSpace.m)
+                .padding(.vertical, FGSpace.s)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? FGColor.actionFill : FGColor.surface)
+                )
+                .overlay(
+                    Capsule()
+                        .strokeBorder(isSelected ? Color.clear : FGColor.line, lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     private func row(_ session: Session) -> some View {

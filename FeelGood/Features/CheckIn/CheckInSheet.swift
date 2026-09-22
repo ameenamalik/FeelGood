@@ -122,10 +122,17 @@ struct CheckInSheet: View {
     // MARK: Questions
 
     private var title: some View {
-        Text("How's today?")
-            .font(FGFont.title)
-            .foregroundStyle(FGColor.ink)
-            .accessibilityAddTraits(.isHeader)
+        VStack(alignment: .leading, spacing: FGSpace.xs) {
+            Text("How's today?")
+                .font(FGFont.title)
+                .foregroundStyle(FGColor.ink)
+                .accessibilityAddTraits(.isHeader)
+
+            Text("Tell us how you're feeling and how much time you have right now. We'll tailor today's movement menu to fit.")
+                .font(FGFont.caption)
+                .foregroundStyle(FGColor.inkMuted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func energyQuestion(_ proxy: ScrollViewProxy) -> some View {
@@ -145,11 +152,18 @@ struct CheckInSheet: View {
 
     private func timeQuestion(_ proxy: ScrollViewProxy) -> some View {
         VStack(alignment: .leading, spacing: FGSpace.m) {
-            Text("How much time, really?")
-                .font(FGFont.itemTitle)
-                .foregroundStyle(FGColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.isHeader)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("How much time do you have to move today?")
+                    .font(FGFont.itemTitle)
+                    .foregroundStyle(FGColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
+
+                Text("No pressure to fill it — we'll choose sessions that fit your window.")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             if hasProAccess {
                 calendarContext(using: proxy)

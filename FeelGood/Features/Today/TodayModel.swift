@@ -158,6 +158,7 @@ final class TodayModel {
         // tab redraws when a session is finished.
         LookBack.reflect(
             history: history,
+            sessions: everything,
             context: PlanContext(now: now, calendar: calendar)
         )
     }
