@@ -121,6 +121,8 @@ struct RootView: View {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-FGForcePaywall") {
                 FeelGoodPaywallView()
+            } else if ProcessInfo.processInfo.arguments.contains("-FGForceSettingUpMenu") {
+                SettingUpMenuView(onComplete: {})
             } else {
                 routedContent
             }

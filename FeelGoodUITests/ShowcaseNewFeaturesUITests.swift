@@ -193,4 +193,50 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
             }
         }
     }
+
+    @MainActor
+    func testDopamineMenuTourUpdated() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let infoBtn = app.buttons["How the Dopamine Menu works"]
+        if infoBtn.waitForExistence(timeout: 5) {
+            infoBtn.tap()
+            sleep(1)
+
+            saveScreenshot(app, name: "tour_slide_1_welcome_updated")
+
+            let nextBtn = app.buttons["Next"]
+            if nextBtn.waitForExistence(timeout: 3) {
+                nextBtn.tap()
+                sleep(1)
+                saveScreenshot(app, name: "tour_slide_2_courses_updated")
+
+                nextBtn.tap()
+                sleep(1)
+                saveScreenshot(app, name: "tour_slide_3_swap_updated")
+
+                nextBtn.tap()
+                sleep(1)
+                saveScreenshot(app, name: "tour_slide_4_zeroguilt_updated")
+            }
+
+            let letsMove = app.buttons["Let's move!"]
+            if letsMove.waitForExistence(timeout: 3) {
+                letsMove.tap()
+            }
+        }
+    }
+
+    @MainActor
+    func testCaptureSettingUpMenuAnimation() throws {
+        let app = XCUIApplication()
+        app.launchArguments.append("-FGForceSettingUpMenu")
+        app.launch()
+
+        // Capture initial phase immediately
+        saveScreenshot(app, name: "setting_up_menu_phase_1")
+        sleep(1)
+        saveScreenshot(app, name: "setting_up_menu_phase_2")
+    }
 }
