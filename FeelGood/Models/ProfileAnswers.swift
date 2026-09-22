@@ -23,7 +23,7 @@ nonisolated struct ProfileAnswers: Hashable, Sendable {
     var moments: MovementMoments = .aCouple
     var realisticMinutes: Int = 20
     var bestTimeOfDay: TimeOfDay = .varies
-    var intents: Set<Intent> = [.energize]
+    var intents: Set<Intent> = []
     var workArounds: Set<WorkAround> = []
     var hiddenSessionIDs: Set<String> = []
 

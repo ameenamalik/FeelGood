@@ -236,7 +236,7 @@ struct OnboardingView: View {
     private var footer: some View {
         VStack(spacing: FGSpace.s) {
             if !model.canAdvance {
-                Text("Pick at least one in each section.")
+                Text(model.card == .intent ? "Pick at least one." : "Pick at least one in each section.")
                     .font(FGFont.caption)
                     .foregroundStyle(FGColor.inkMuted)
             }

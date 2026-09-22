@@ -89,7 +89,9 @@ final class OnboardingModel {
         switch card {
         case .access:
             accessSectionsAreComplete
-        case .intent, .workArounds:
+        case .intent:
+            !intents.isEmpty
+        case .workArounds:
             true
         }
     }
