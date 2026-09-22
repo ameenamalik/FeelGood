@@ -101,11 +101,12 @@ enum Fixture {
 
     static func session(
         id: String,
+        title: String? = nil,
         activity: Activity,
-        qualities: [Quality],
-        durationMin: Int,
-        intensity: Int,
-        course: Course,
+        qualities: [Quality] = [.mobility],
+        durationMin: Int = 10,
+        intensity: Int = 2,
+        course: Course = .main,
         equipment: [Equipment] = [.none],
         places: [Place] = [.home],
         energyFit: [Energy] = Energy.allCases,
@@ -115,7 +116,7 @@ enum Fixture {
     ) -> Session {
         Session(
             id: id,
-            title: id,
+            title: title ?? id,
             subtitle: "",
             activity: activity,
             qualities: qualities,

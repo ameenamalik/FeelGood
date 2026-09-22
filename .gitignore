@@ -76,3 +76,4 @@ htmlcov/
 .venv/
 venv/
 .cursor/
+screenshots/demo-video/

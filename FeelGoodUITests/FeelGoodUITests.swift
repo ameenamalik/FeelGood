@@ -160,6 +160,16 @@ final class FeelGoodUITests: XCTestCase {
     }
 
     @MainActor
+    func testYouTabScreenshot() throws {
+        let app = XCUIApplication()
+        app.launch()
+        completeOnboarding(app)
+        app.tabBars.buttons["You"].tap()
+        sleep(1)
+        screenshot(app, name: "YouTabLookBack", afterSteps: [])
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

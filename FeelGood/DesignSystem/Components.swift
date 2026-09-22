@@ -348,19 +348,21 @@ struct FGAuraTile: View {
                 alignment: contentPlacement == .bottomLeading ? .bottomLeading : .center
             )
             .background(surface)
+            .overlay(alignment: .topTrailing) {
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(FGColor.ink)
+                        .background(Circle().fill(Color.white).padding(2))
+                        .padding(10)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
             .overlay(
-                // On the boundary, not inset: the tile is a card in its own
-                // right, so the border is its edge. A neutral tile needs one at
-                // rest — `lineStrong` is the lightest grey that clears the 3:1
-                // WCAG 1.4.11 wants for a control's edge — while a washed one
-                // is already its own shape against the page.
-                // Only the picked tile is outlined. A hairline on every resting
-                // tile turned the grid into a page of boxes; the artboard lets
-                // the fill be the edge.
                 RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
                     .strokeBorder(
-                        isSelected ? selectedBorder : .clear,
-                        lineWidth: isSelected ? 1.5 : 0
+                        isSelected ? selectedBorder : FGColor.line,
+                        lineWidth: isSelected ? 2.5 : 1
                     )
             )
         }
@@ -402,7 +404,7 @@ struct FGAuraTile: View {
     }
 
     private var selectedBorder: Color {
-        colorScheme == .dark ? FGColor.ink : FGColor.inkOnAccent
+        FGColor.ink
     }
 
     /// Bright core at the upper left, a second bloom at the upper right, both

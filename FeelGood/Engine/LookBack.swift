@@ -33,6 +33,8 @@ nonisolated struct Reflection: Hashable, Sendable {
         case mostly(TimeOfDay)
         /// What they mostly were. One or two, never a ranked list.
         case activities([Activity])
+        /// A specific session that gets loved or repeated.
+        case keepsReturningToSession(sessionID: String, title: String, activity: Activity)
         /// The one that gets loved, as distinct from the one that gets done most.
         case keepsReturningTo(Activity)
         /// Rest counts as showing up. PRD §6 — recovery is part of the balance.
@@ -47,18 +49,19 @@ nonisolated struct Reflection: Hashable, Sendable {
 
     /// The single most interesting true thing, so the view can say one
     /// thing well instead of five things vaguely. Ranked by specificity —
-    /// "you keep coming back to stretching" names a real preference,
-    /// "you moved four times" is just a count — not by where `reflect`
-    /// happened to put it in `notes`. `moved` is always present once
-    /// anything has happened, so this is only `nil` when `isEarly` is.
+    /// naming an actual session is more specific than naming an activity,
+    /// which is more specific than a time of day, which is more specific
+    /// than a bare count. `moved` is always present once anything has
+    /// happened, so this is only `nil` when `isEarly` is.
     var headline: Note? {
         func specificity(_ note: Note) -> Int {
             switch note {
-            case .keepsReturningTo: 0
-            case .activities: 1
-            case .mostly: 2
-            case .madeRoomForRest: 3
-            case .moved: 4
+            case .keepsReturningToSession: 0
+            case .keepsReturningTo: 1
+            case .activities: 2
+            case .mostly: 3
+            case .madeRoomForRest: 4
+            case .moved: 5
             }
         }
         return notes.min { specificity($0) < specificity($1) }
@@ -74,7 +77,11 @@ nonisolated enum LookBack {
     /// to this" is a fair thing to say.
     static let minimumForReturning = 2
 
-    static func reflect(history: [HistoryEntry], context: PlanContext) -> Reflection {
+    static func reflect(
+        history: [HistoryEntry],
+        sessions: [Session] = [],
+        context: PlanContext
+    ) -> Reflection {
         let done = completedInWindow(history, context: context)
         guard !done.isEmpty else { return Reflection(notes: []) }
 
@@ -84,7 +91,9 @@ nonisolated enum LookBack {
         let top = topActivities(done)
         if !top.isEmpty { notes.append(.activities(top)) }
 
-        if let loved = mostLoved(done, excluding: Set(top)) {
+        if let returnedSession = mostReturnedSession(done, sessions: sessions) {
+            notes.append(returnedSession)
+        } else if let loved = mostLoved(done, excluding: Set(top)) {
             notes.append(.keepsReturningTo(loved))
         }
         if madeRoomForRest(done) { notes.append(.madeRoomForRest) }
@@ -146,6 +155,62 @@ nonisolated enum LookBack {
         guard let first = ranked.first else { return [] }
         if (counts[first] ?? 0) * 2 >= done.count { return [first] }
         return Array(ranked.prefix(2))
+    }
+
+    private static func mostReturnedSession(
+        _ done: [HistoryEntry],
+        sessions: [Session]
+    ) -> Reflection.Note? {
+        guard !sessions.isEmpty else { return nil }
+        let sessionsByID = Dictionary(sessions.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+
+        struct SessionStats {
+            var totalCount: Int = 0
+            var lovedCount: Int = 0
+            var latestDate: Date = .distantPast
+        }
+
+        var statsByID: [String: SessionStats] = [:]
+        for entry in done {
+            var s = statsByID[entry.sessionID, default: SessionStats()]
+            s.totalCount += 1
+            if case .completed(let feel) = entry.outcome, feel == .lovedIt {
+                s.lovedCount += 1
+            }
+            if entry.date > s.latestDate {
+                s.latestDate = entry.date
+            }
+            statsByID[entry.sessionID] = s
+        }
+
+        let eligible = statsByID.filter { $0.value.totalCount >= minimumForReturning }
+        guard !eligible.isEmpty else { return nil }
+
+        let sorted = eligible.sorted { lhs, rhs in
+            if lhs.value.lovedCount != rhs.value.lovedCount {
+                return lhs.value.lovedCount > rhs.value.lovedCount
+            }
+            if lhs.value.totalCount != rhs.value.totalCount {
+                return lhs.value.totalCount > rhs.value.totalCount
+            }
+            if lhs.value.latestDate != rhs.value.latestDate {
+                return lhs.value.latestDate > rhs.value.latestDate
+            }
+            return lhs.key < rhs.key
+        }
+
+        guard let winnerID = sorted.first?.key,
+              let session = sessionsByID[winnerID],
+              !session.title.isEmpty
+        else {
+            return nil
+        }
+
+        return .keepsReturningToSession(
+            sessionID: session.id,
+            title: session.title,
+            activity: session.activity
+        )
     }
 
     private static func mostLoved(_ done: [HistoryEntry], excluding named: Set<Activity>) -> Activity? {

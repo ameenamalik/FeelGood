@@ -66,6 +66,8 @@ struct SessionDetailView: View {
                         ForEach(detailChips, id: \.self) { FGChip(text: $0) }
                     }
 
+                    benefitsSection
+
                     if !session.source.steps.isEmpty {
                         VStack(alignment: .leading, spacing: FGSpace.m) {
                             Divider()
@@ -455,6 +457,98 @@ struct SessionDetailView: View {
                         .foregroundStyle(FGColor.inkMuted)
                 }
             }
+        }
+    }
+
+    private var benefitsSection: some View {
+        HStack(alignment: .top, spacing: FGSpace.m) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(FGColor.ink)
+                .frame(width: 32, height: 32)
+                .background(FGAura.butter.core.opacity(0.4))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Why this feels good")
+                    .font(FGFont.label.weight(.semibold))
+                    .foregroundStyle(FGColor.ink)
+
+                Text(activityBenefits.headline)
+                    .font(FGFont.itemTitle)
+                    .foregroundStyle(FGColor.ink)
+
+                Text(activityBenefits.description)
+                    .font(FGFont.reason)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .lineSpacing(2)
+                    .padding(.top, 2)
+            }
+        }
+        .padding(FGSpace.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
+                .strokeBorder(FGColor.line, lineWidth: 1)
+        )
+    }
+
+    private var activityBenefits: (headline: String, description: String) {
+        switch session.activity {
+        case .pilates:
+            return (
+                "Deep core alignment & mindful strength",
+                "Pilates engages the deep stabilizing muscles of your core and spine with low-impact control, improving posture and leaving you feeling centered."
+            )
+        case .yoga:
+            return (
+                "Breath-led release & mental calm",
+                "Gentle yoga connects intentional breathing with full-body movement, downshifting the nervous system and easing lingering physical tension."
+            )
+        case .stretching:
+            return (
+                "Fascial release & joint mobility",
+                "Slow, deliberate stretching encourages blood flow to tight muscle groups, relieving stiffness from desk work and restoring your range of motion."
+            )
+        case .walking:
+            return (
+                "Circulation boost & dopamine reset",
+                "Brisk rhythmic movement stimulates circulation, clears brain fog, and prompts a natural lift in executive focus and endorphins."
+            )
+        case .strength:
+            return (
+                "Functional stability & steady power",
+                "Targeted resistance builds bone density and joint resilience, giving your body durable strength for everyday life."
+            )
+        case .dance:
+            return (
+                "Cardio joy & creative expression",
+                "Moving to rhythm releases dopamine and lifts energy fast, giving you cardiovascular benefits without feeling like a chore."
+            )
+        case .biking:
+            return (
+                "Smooth cardiovascular endurance",
+                "Low-impact pedal cadence elevates heart rate and stamina while protecting sensitive knee and ankle joints."
+            )
+        case .swimming:
+            return (
+                "Zero-impact, full-body decompression",
+                "Water buoyancy supports your joints while water resistance strengthens every major muscle group in complete comfort."
+            )
+        case .breathwork:
+            return (
+                "Vagus nerve activation & nervous system reset",
+                "Rhythmic, extended exhales signal safety to your brain, lowering heart rate and soothing mental overwhelm."
+            )
+        default:
+            return (
+                "Mindful movement for mental clarity",
+                "Taking intentional time to move shifts your physical state, relieves stagnant energy, and triggers natural feel-good neurotransmitters."
+            )
         }
     }
 }

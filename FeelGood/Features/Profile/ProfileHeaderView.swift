@@ -56,6 +56,7 @@ struct ProfileHeaderView: View {
             }
             accountDeletionSection
             legalLinks
+            medicalDisclaimer
         }
         .padding(FGSpace.page)
         .padding(.bottom, FGSpace.s)
@@ -661,6 +662,14 @@ struct ProfileHeaderView: View {
         }
         .font(FGFont.caption)
         .foregroundStyle(FGColor.inkMuted)
+    }
+
+    private var medicalDisclaimer: some View {
+        Text("FeelGood provides general wellness recommendations and is not a substitute for medical advice or physical therapy.")
+            .font(FGFont.caption)
+            .foregroundStyle(FGColor.inkMuted)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.top, FGSpace.xs)
     }
 }
 
