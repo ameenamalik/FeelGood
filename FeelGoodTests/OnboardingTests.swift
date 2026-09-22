@@ -92,9 +92,18 @@ struct OnboardingTests {
         model.advance()
 
         #expect(model.card == .intent)
+        #expect(!model.canAdvance)
+        model.intents = [.calm]
         #expect(model.canAdvance)
         #expect(model.makeProfile().cadence == .mostDays)
         #expect(model.makeProfile().moments == .aCouple)
+    }
+
+    @Test("Energy is not preselected on onboarding")
+    func intentsStartEmpty() {
+        let model = OnboardingModel()
+        #expect(model.intents.isEmpty)
+        #expect(!model.intents.contains(.energize))
     }
 
     @Test("Movement the card never asks about is never recorded as a preference")

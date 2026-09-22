@@ -144,6 +144,7 @@ struct ProfileHeaderView: View {
             isPresented: $isShowingPasswordReauthPrompt
         ) {
             SecureField("Password", text: $passwordForReauth)
+                .textContentType(.password)
             Button("Delete Account", role: .destructive) {
                 handlePasswordReauth()
             }
