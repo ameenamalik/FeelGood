@@ -201,6 +201,7 @@ struct TodayWidgetView: View {
                         .font(.subheadline)
                         .foregroundStyle(inkMuted)
                         .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer(minLength: 0)
