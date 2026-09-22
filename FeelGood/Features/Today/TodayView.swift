@@ -56,6 +56,7 @@ struct TodayView: View {
     @State private var isShowingMyMenu = false
     @AppStorage("hasSeenDopamineMenuTour") private var hasSeenDopamineMenuTour = false
     @State private var isShowingDopamineMenuTour = false
+    @State private var hasTriggeredTourOnScroll = false
     @State private var selected: MenuItem?
     @State private var manualSwapTarget: MenuItem?
     @State private var littleWinCelebration: LittleWinCelebration?
@@ -96,7 +97,31 @@ struct TodayView: View {
                 .padding(FGSpace.page)
                 .containerRelativeFrame(.horizontal)
             }
-            .scrollBounceBehavior(.basedOnSize)
+            .scrollBounceBehavior(.always)
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y
+            } action: { _, newValue in
+                guard !hasSeenDopamineMenuTour, !hasTriggeredTourOnScroll else { return }
+                if abs(newValue) > 15 {
+                    hasTriggeredTourOnScroll = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        if !hasSeenDopamineMenuTour {
+                            isShowingDopamineMenuTour = true
+                        }
+                    }
+                }
+            }
+            .onScrollPhaseChange { _, newPhase in
+                guard !hasSeenDopamineMenuTour, !hasTriggeredTourOnScroll else { return }
+                if newPhase == .interacting || newPhase == .decelerating {
+                    hasTriggeredTourOnScroll = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        if !hasSeenDopamineMenuTour {
+                            isShowingDopamineMenuTour = true
+                        }
+                    }
+                }
+            }
         }
         .sheet(isPresented: $isCheckingIn, onDismiss: handleCheckInDismissal) {
             CheckInSheet(
@@ -160,11 +185,12 @@ struct TodayView: View {
             // Discovery messaging belongs to the moment after a completion,
             // never to app launch or the start of a calming session.
             clearOneSignalDiscoveryTriggers()
-            if !hasSeenDopamineMenuTour {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    isShowingDopamineMenuTour = true
-                }
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-FGResetTour") {
+                hasSeenDopamineMenuTour = false
+                hasTriggeredTourOnScroll = false
             }
+            #endif
         }
         .onReceive(NotificationCenter.default.publisher(for: .oneSignalOpenMyMenu)) { _ in
             // Let OneSignal's overlay finish dismissing before presenting the
@@ -662,7 +688,7 @@ private struct MenuItemCard: View {
             }
         }
         .offset(x: dragOffset)
-        .highPriorityGesture(
+        .simultaneousGesture(
             canSwap ? DragGesture(minimumDistance: 15)
                 .onChanged { gesture in
                     guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
@@ -780,7 +806,7 @@ private struct MenuItemRow: View {
             }
         }
         .offset(x: dragOffset)
-        .highPriorityGesture(
+        .simultaneousGesture(
             canSwap ? DragGesture(minimumDistance: 15)
                 .onChanged { gesture in
                     guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
