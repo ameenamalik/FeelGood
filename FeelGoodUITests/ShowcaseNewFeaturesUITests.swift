@@ -257,4 +257,23 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
             sleep(2)
         }
     }
+
+    @MainActor
+    func testScrollTriggersDopamineMenuTour() throws {
+        let app = XCUIApplication()
+        app.launchArguments.append("-FGResetTour")
+        app.launch()
+
+        let todayTab = app.tabBars.buttons["Today"]
+        if todayTab.waitForExistence(timeout: 3) {
+            todayTab.tap()
+            sleep(1)
+        }
+
+        // Swipe up on the screen to scroll down the menu
+        app.swipeUp()
+        sleep(2)
+
+        saveScreenshot(app, name: "tour_after_scroll_fired")
+    }
 }
