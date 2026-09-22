@@ -290,7 +290,7 @@ nonisolated extension TimeBudget {
 extension PlaceIntent {
     var checkInLabel: String {
         switch self {
-        case .stayingIn: "Living room / Mat"
+        case .stayingIn: "Home"
         case .happyToGoOut: "Outdoors"
         case .atTheGym: "Gym / Studio"
         }
