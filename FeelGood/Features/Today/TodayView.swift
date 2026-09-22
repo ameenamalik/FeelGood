@@ -644,25 +644,25 @@ private struct MenuItemCard: View {
                     guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
                     if !reduceMotion {
                         if gesture.translation.width < 0 {
-                            dragOffset = max(-80, gesture.translation.width * 0.75)
+                            dragOffset = gesture.translation.width
                         } else {
-                            dragOffset = min(15, gesture.translation.width * 0.2)
+                            dragOffset = min(20, gesture.translation.width * 0.2)
                         }
                     }
                 }
                 .onEnded { gesture in
                     guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
-                        withAnimation(FGMotion.gentle) { dragOffset = 0 }
+                        withAnimation(FGMotion.swap) { dragOffset = 0 }
                         return
                     }
-                    if gesture.translation.width < -30 || gesture.predictedEndTranslation.width < -75 {
+                    if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onSwap()
-                        withAnimation(FGMotion.gentle) {
+                        withAnimation(FGMotion.swap) {
                             dragOffset = 0
                         }
                     } else {
-                        withAnimation(FGMotion.gentle) {
+                        withAnimation(FGMotion.swap) {
                             dragOffset = 0
                         }
                     }
@@ -758,25 +758,25 @@ private struct MenuItemRow: View {
                     guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
                     if !reduceMotion {
                         if gesture.translation.width < 0 {
-                            dragOffset = max(-80, gesture.translation.width * 0.75)
+                            dragOffset = gesture.translation.width
                         } else {
-                            dragOffset = min(15, gesture.translation.width * 0.2)
+                            dragOffset = min(20, gesture.translation.width * 0.2)
                         }
                     }
                 }
                 .onEnded { gesture in
                     guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
-                        withAnimation(FGMotion.gentle) { dragOffset = 0 }
+                        withAnimation(FGMotion.swap) { dragOffset = 0 }
                         return
                     }
-                    if gesture.translation.width < -30 || gesture.predictedEndTranslation.width < -75 {
+                    if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onSwap()
-                        withAnimation(FGMotion.gentle) {
+                        withAnimation(FGMotion.swap) {
                             dragOffset = 0
                         }
                     } else {
-                        withAnimation(FGMotion.gentle) {
+                        withAnimation(FGMotion.swap) {
                             dragOffset = 0
                         }
                     }
