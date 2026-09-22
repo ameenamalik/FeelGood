@@ -26,6 +26,14 @@ struct FeelGoodPaywallView: View {
             }
         }
 
+        /// Appended to the price on the CTA so the renewal terms are on the button itself.
+        var renewalSuffix: String {
+            switch self {
+            case .yearly: "/yr"
+            case .monthly: "/mo"
+            }
+        }
+
         var analyticsID: String {
             switch self {
             case .yearly: "yearly"
@@ -44,9 +52,9 @@ struct FeelGoodPaywallView: View {
 
     private static let menuTeasers: [MenuTeaser] = [
         MenuTeaser(course: .appetizer, title: "Four rounds of box breathing"),
-        MenuTeaser(course: .main, title: "Twenty minutes of gentle flow"),
-        MenuTeaser(course: .side, title: "Shoulder reset between meetings"),
-        MenuTeaser(course: .dessert, title: "Ten minutes in the light"),
+        MenuTeaser(course: .main, title: "Twenty minutes of flow"),
+        MenuTeaser(course: .side, title: "Shoulder reset"),
+        MenuTeaser(course: .dessert, title: "Dance to three songs"),
     ]
 
     /// Which illustration sits above a given slide's line. Most slides show
@@ -54,6 +62,7 @@ struct FeelGoodPaywallView: View {
     /// since that's the one benefit the menu card can't demonstrate on its own.
     private enum HeroScene {
         case menu
+        case quickPick
         case chat
     }
 
@@ -63,18 +72,23 @@ struct FeelGoodPaywallView: View {
     private struct HeroSlide {
         let title: String
         let scene: HeroScene
+        /// How long the slide stays up before the carousel advances. Chat
+        /// slides play a typing sequence first, so they need that time plus
+        /// enough left over to actually read the bubbles.
+        let dwell: Duration
     }
 
     private static let heroSlides: [HeroSlide] = [
-        HeroSlide(title: "Stop deciding. Start moving.", scene: .menu),
-        HeroSlide(title: "Know what to do in 10 seconds", scene: .menu),
-        HeroSlide(title: "Say how you're feeling", scene: .chat),
-        HeroSlide(title: "Talk to it when you're stuck", scene: .chat),
+        HeroSlide(title: "Stop deciding. Start moving.", scene: .menu, dwell: .seconds(3.5)),
+        HeroSlide(title: "Know what to do in 10 seconds", scene: .quickPick, dwell: .seconds(4.5)),
+        HeroSlide(title: "Say how you're feeling", scene: .chat, dwell: .seconds(5)),
+        HeroSlide(title: "Talk to it when you're stuck", scene: .chat, dwell: .seconds(7)),
     ]
 
     @Environment(\.dismiss) private var dismiss
     @Environment(PurchasesManager.self) private var purchasesManager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var onFinished: (() -> Void)?
 
@@ -87,9 +101,11 @@ struct FeelGoodPaywallView: View {
     #if DEBUG
     @State private var heroSlideIndex = Self.debugForcedHeroSlideIndex ?? 0
     @State private var chatPhase: ChatPhase = (Self.debugForcedHeroSlideIndex == 3) ? .assistantFollowUp : .userOpener
+    @State private var quickPickPhase: QuickPickPhase = (Self.debugForcedHeroSlideIndex == 1) ? .resultShown : .initial
     #else
     @State private var heroSlideIndex = 0
     @State private var chatPhase: ChatPhase = .userOpener
+    @State private var quickPickPhase: QuickPickPhase = .initial
     #endif
 
     #if DEBUG
@@ -165,13 +181,13 @@ struct FeelGoodPaywallView: View {
     private var content: some View {
         ScrollView {
             VStack(spacing: FGSpace.m) {
-                VStack(spacing: FGSpace.m) {
+                VStack(spacing: FGSpace.s + 4) {
                     heroCard {
                         topSceneContent
                     }
 
                     heroCarousel
-                        .padding(.top, FGSpace.s)
+                        .padding(.top, FGSpace.xs)
                 }
                 .contentShape(Rectangle())
                 .simultaneousGesture(heroSwipe)
@@ -184,17 +200,37 @@ struct FeelGoodPaywallView: View {
                 }
 
                 planPicker
-                    .padding(.top, FGSpace.m)
 
-                ctaSection
+                // At accessibility sizes a pinned bar would swallow the screen,
+                // so the buy section joins the scroll flow instead.
+                if typeSize.isAccessibilitySize {
+                    ctaButtons
+                }
+
+                legalSection
             }
             .padding(.horizontal, FGSpace.page)
             // Clears the close button overlay (pinned to the safe area's top
             // trailing corner) so it never sits on top of the hero card.
             .padding(.top, FGSize.minTouchTarget + FGSpace.s)
-            .padding(.bottom, FGSpace.m)
+            .padding(.bottom, FGSpace.l)
         }
         .scrollBounceBehavior(.basedOnSize)
+        // The buy button and its escape hatch stay pinned so they are on
+        // screen at every device size and Dynamic Type setting, while the
+        // proof and plans scroll behind them.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if !typeSize.isAccessibilitySize {
+                ctaButtons
+                    .padding(.horizontal, FGSpace.page)
+                    .padding(.top, FGSpace.s)
+                    .background(
+                        FGColor.bg
+                            .overlay(alignment: .top) { Divider().overlay(FGColor.line) }
+                            .ignoresSafeArea(edges: .bottom)
+                    )
+            }
+        }
     }
 
     // MARK: - Hero scene
@@ -208,10 +244,14 @@ struct FeelGoodPaywallView: View {
     @ViewBuilder
     private var topSceneContent: some View {
         ZStack(alignment: .top) {
-            if currentSlide.scene == .menu {
+            switch currentSlide.scene {
+            case .menu:
                 menuHeroContent
                     .transition(.opacity)
-            } else {
+            case .quickPick:
+                quickPickHeroContent
+                    .transition(.opacity)
+            case .chat:
                 chatSceneContent
                     .transition(.opacity)
             }
@@ -222,11 +262,17 @@ struct FeelGoodPaywallView: View {
     /// The shared "printed card" chrome both scenes sit inside, so swapping
     /// between them on a carousel tick reads as one card's content changing
     /// rather than two differently-shaped things trading places.
-    /// Pinned to `maxWidth: .infinity` and exact height 246 so the card frame,
-    /// background, border, and shadow never shift, shrink into a square, or glitch
-    /// regardless of child layout.
-    /// Sized to comfortably fit both scenes with room to spare.
-    private static let heroCardHeight: CGFloat = 260
+    /// Pinned to `maxWidth: .infinity`; height tracks the current scene
+    /// (menu/quick-pick are short, chat's four bubbles need more) and
+    /// animates between them, rather than one fixed height sized for the
+    /// tallest scene that leaves the shorter ones with dead space below.
+    private var heroCardHeight: CGFloat {
+        switch currentSlide.scene {
+        case .menu: 196
+        case .quickPick: 210
+        case .chat: 260
+        }
+    }
 
     private func heroCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         ZStack(alignment: .top) {
@@ -235,7 +281,7 @@ struct FeelGoodPaywallView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(FGSpace.m)
         .frame(maxWidth: .infinity)
-        .frame(height: Self.heroCardHeight, alignment: .top)
+        .frame(height: heroCardHeight, alignment: .top)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
                 .fill(FGColor.bg)
@@ -248,13 +294,13 @@ struct FeelGoodPaywallView: View {
         )
         .shadow(color: FGColor.ink.opacity(hasCardChrome ? 0.08 : 0), radius: 12, y: 6)
         .rotationEffect(.degrees(hasCardChrome ? -1 : 0))
-        .animation(reduceMotion ? nil : FGMotion.gentle, value: hasCardChrome)
+        .animation(reduceMotion ? nil : FGMotion.gentle, value: currentSlide.scene)
     }
 
     /// The printed-menu card frames the menu scene only. Chat bubbles float
     /// straight on the page, the way they do in the real Chat tab; the chrome
     /// fades rather than being removed so the frame never re-inserts.
-    private var hasCardChrome: Bool { currentSlide.scene == .menu }
+    private var hasCardChrome: Bool { currentSlide.scene != .chat }
 
     /// A single printed-menu card rather than four separate blocks — the
     /// "creative, skeuomorphic" read the user asked for, and far shorter than
@@ -263,14 +309,19 @@ struct FeelGoodPaywallView: View {
     /// way `FGMotion` describes items landing on the menu.
     private var menuHeroContent: some View {
         VStack(spacing: 0) {
-            Image(systemName: "fork.knife")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(FGColor.inkMuted)
-                .padding(.bottom, 6)
+            HStack(spacing: 6) {
+                Image(systemName: "fork.knife")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("TODAY'S MENU")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .tracking(0.5)
+            }
+            .foregroundStyle(FGColor.inkMuted)
+            .padding(.bottom, 4)
 
             Divider()
                 .overlay(FGColor.lineStrong)
-                .padding(.bottom, 10)
+                .padding(.bottom, 8)
 
             VStack(spacing: 0) {
                 ForEach(Array(Self.menuTeasers.enumerated()), id: \.offset) { index, teaser in
@@ -291,6 +342,112 @@ struct FeelGoodPaywallView: View {
         .accessibilityLabel("Today's menu preview")
     }
 
+    /// Live proof of the "10 seconds" headline, played out instead of stated:
+    /// a tap on Energy, a tap on Time — the app's own coarse check-in signals
+    /// (`Energy`, `TimeBudget`; see the allow-list in CLAUDE.md) — then one
+    /// answer, not a list to choose from. Auto-advances with the carousel,
+    /// the same way the chat scene mimes its exchange.
+    private enum QuickPickPhase: Int {
+        case initial
+        case energyPicked
+        case timePicked
+        case resultShown
+    }
+
+    private static let quickPickEnergyOptions = ["Low", "Steady", "Strong"]
+    private static let quickPickEnergySelection = 0
+    private static let quickPickTimeOptions = ["5 min", "15 min", "30 min"]
+    private static let quickPickTimeSelection = 1
+
+    private var quickPickHeroContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            quickPickChipRow(
+                label: "ENERGY",
+                options: Self.quickPickEnergyOptions,
+                selected: quickPickPhase.rawValue >= QuickPickPhase.energyPicked.rawValue ? Self.quickPickEnergySelection : nil
+            )
+            quickPickChipRow(
+                label: "TIME",
+                options: Self.quickPickTimeOptions,
+                selected: quickPickPhase.rawValue >= QuickPickPhase.timePicked.rawValue ? Self.quickPickTimeSelection : nil
+            )
+
+            Divider().overlay(FGColor.line)
+
+            HStack(spacing: FGSpace.s) {
+                Image(Course.dessert.menuMascotAsset)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 26, height: 26)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Barefoot porch breath")
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .foregroundStyle(FGColor.ink)
+                    Text("Slow and low-effort. No gear needed.")
+                        .font(FGFont.caption)
+                        .foregroundStyle(FGColor.inkMuted)
+                }
+                Spacer(minLength: 0)
+            }
+            .opacity(quickPickPhase == .resultShown ? 1 : 0)
+            .animation(reduceMotion ? nil : FGMotion.gentle, value: quickPickPhase)
+        }
+        .task(id: heroSlideIndex) { await handleQuickPickSlideChange(heroSlideIndex) }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Example. You pick: low energy, then 15 minutes. FeelGood answers: barefoot porch breath, slow and low-effort, no gear needed.")
+    }
+
+    private func quickPickChipRow(label: String, options: [String], selected: Int?) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .tracking(0.5)
+                .foregroundStyle(FGColor.inkMuted)
+            HStack(spacing: 6) {
+                ForEach(options.indices, id: \.self) { index in
+                    let isSelected = selected == index
+                    Text(options[index])
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(isSelected ? .white : FGColor.ink)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule().fill(isSelected ? AnyShapeStyle(Course.appetizer.accentGradient) : AnyShapeStyle(FGColor.surface))
+                        )
+                        .overlay(
+                            Capsule().strokeBorder(FGColor.line, lineWidth: isSelected ? 0 : 1)
+                        )
+                        .scaleEffect(isSelected ? 1.05 : 1)
+                        .animation(reduceMotion ? nil : FGMotion.swap, value: selected)
+                }
+            }
+        }
+    }
+
+    /// Plays only while slide 2 (index 1) is showing; any other index resets
+    /// so returning to this slide replays the tap-through from the top.
+    private func handleQuickPickSlideChange(_ index: Int) async {
+        guard !reduceMotion else {
+            quickPickPhase = .resultShown
+            return
+        }
+        guard index == 1 else {
+            quickPickPhase = .initial
+            return
+        }
+        quickPickPhase = .initial
+        try? await Task.sleep(for: .milliseconds(500))
+        guard !Task.isCancelled else { return }
+        quickPickPhase = .energyPicked
+        try? await Task.sleep(for: .milliseconds(700))
+        guard !Task.isCancelled else { return }
+        quickPickPhase = .timePicked
+        try? await Task.sleep(for: .milliseconds(700))
+        guard !Task.isCancelled else { return }
+        quickPickPhase = .resultShown
+    }
+
     /// "Talk to it when you're stuck," shown rather than told: a two-line
     /// exchange in the app's own bubble style (see `ExploreView`'s
     /// `userTextBubble`/`assistantTextBubble`) ending in a recommendation,
@@ -301,9 +458,10 @@ struct FeelGoodPaywallView: View {
     /// dropping the whole exchange on screen at once.
     private enum ChatPhase: Int {
         case userOpener
+        case assistantThinking1
         case assistantReplied
         case userFollowUp
-        case assistantThinking
+        case assistantThinking2
         case assistantFollowUp
     }
 
@@ -323,6 +481,15 @@ struct FeelGoodPaywallView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .transition(chatBubbleTransition)
+            }
+
+            // Turn 1: Assistant thinking
+            if chatPhase == .assistantThinking1 {
+                HStack {
+                    chatTypingIndicator
+                    Spacer(minLength: 24)
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
             }
 
             // Turn 1: Assistant gentle recommendation
@@ -375,7 +542,7 @@ struct FeelGoodPaywallView: View {
             }
 
             // Turn 2: Assistant thinking or follow-up reply
-            if chatPhase == .assistantThinking {
+            if chatPhase == .assistantThinking2 {
                 HStack {
                     chatTypingIndicator
                     Spacer(minLength: 24)
@@ -415,7 +582,7 @@ struct FeelGoodPaywallView: View {
         }
         .padding(.horizontal, FGSpace.s)
         .frame(maxWidth: .infinity, alignment: .top)
-        .animation(reduceMotion ? nil : FGMotion.gentle, value: chatPhase)
+        .animation(reduceMotion ? nil : FGMotion.settle, value: chatPhase)
         .task(id: heroSlideIndex) { await handleSlideChange(heroSlideIndex) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Example chat. You: my back is sore, I have 20 minutes, and I'm tired. FeelGood: here's something gentle for your back — ten gentle minutes on the mat. You: hmm, something else shorter? FeelGood: five minutes on the floor, zero pressure — living room floor unwind.")
@@ -450,20 +617,23 @@ struct FeelGoodPaywallView: View {
         }
         if index == 2 {
             chatPhase = .userOpener
-            try? await Task.sleep(for: .milliseconds(350))
+            try? await Task.sleep(for: .milliseconds(550))
+            guard !Task.isCancelled else { return }
+            chatPhase = .assistantThinking1
+            try? await Task.sleep(for: .milliseconds(950))
             guard !Task.isCancelled else { return }
             chatPhase = .assistantReplied
         } else if index == 3 {
             if chatPhase.rawValue < ChatPhase.assistantReplied.rawValue {
                 chatPhase = .assistantReplied
             }
-            try? await Task.sleep(for: .milliseconds(300))
+            try? await Task.sleep(for: .milliseconds(700))
             guard !Task.isCancelled else { return }
             chatPhase = .userFollowUp
-            try? await Task.sleep(for: .milliseconds(400))
-            guard !Task.isCancelled else { return }
-            chatPhase = .assistantThinking
             try? await Task.sleep(for: .milliseconds(550))
+            guard !Task.isCancelled else { return }
+            chatPhase = .assistantThinking2
+            try? await Task.sleep(for: .milliseconds(950))
             guard !Task.isCancelled else { return }
             chatPhase = .assistantFollowUp
         }
@@ -485,6 +655,7 @@ struct FeelGoodPaywallView: View {
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(FGColor.ink)
                 .lineLimit(1)
+                .minimumScaleFactor(0.85)
 
             Spacer(minLength: FGSpace.xs)
 
@@ -494,7 +665,7 @@ struct FeelGoodPaywallView: View {
                 .frame(width: 24, height: 24)
                 .accessibilityHidden(true)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 
     // MARK: - Hero carousel
@@ -526,7 +697,7 @@ struct FeelGoodPaywallView: View {
         }
         .frame(maxWidth: 340)
         .fgAnimation(FGMotion.gentle, value: heroSlideIndex)
-        // Keyed on the reset token so a manual swipe restarts the 3s timer
+        // Keyed on the reset token so a manual swipe restarts the dwell timer
         // instead of letting it fire right after the person moved on.
         .task(id: carouselResetToken) { await runHeroCarousel() }
     }
@@ -559,16 +730,18 @@ struct FeelGoodPaywallView: View {
     private func runHeroCarousel() async {
         guard !reduceMotion else { return }
         while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(3))
+            try? await Task.sleep(for: currentSlide.dwell)
             guard !Task.isCancelled else { return }
             heroSlideIndex = (heroSlideIndex + 1) % Self.heroSlides.count
         }
     }
 
+    // MARK: - Proof and boundary
+
     // MARK: - Plan picker
 
     private var planPicker: some View {
-        VStack(spacing: FGSpace.s) {
+        VStack(spacing: FGSpace.s + 4) {
             if let yearlyPackage {
                 planCard(.yearly, package: yearlyPackage)
             }
@@ -592,31 +765,42 @@ struct FeelGoodPaywallView: View {
                             .foregroundStyle(FGColor.ink)
                     }
 
-                    Text(priceLine(for: package, plan: plan))
-                        .font(FGFont.caption)
-                        .foregroundStyle(FGColor.inkMuted)
+                    HStack(spacing: 4) {
+                        Text(priceLine(for: package, plan: plan))
+                            .font(FGFont.caption)
+                            .foregroundStyle(isSelected ? FGColor.inkMuted : FGColor.ink.opacity(0.75))
+
+                        // Makes the yearly savings concrete rather than abstract —
+                        // the percent badge says "cheaper," this says how cheap.
+                        if plan == .yearly, let monthlyEquivalent = monthlyEquivalentCaption(for: package) {
+                            Text("· \(monthlyEquivalent)")
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                .foregroundStyle(isSelected ? FGColor.ink.opacity(0.7) : FGColor.ink.opacity(0.55))
+                        }
+                    }
                 }
 
                 Spacer(minLength: 0)
 
                 selectionMark(isSelected: isSelected)
             }
-            .padding(FGSpace.m)
-            .frame(minHeight: FGSize.minTouchTarget + 8)
+            .padding(.horizontal, FGSpace.m)
+            .padding(.vertical, FGSpace.m)
+            .frame(minHeight: FGSize.minTouchTarget + 16)
             .background(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
                     .fill(isSelected ? AnyShapeStyle(Course.appetizer.accentGradient) : AnyShapeStyle(FGColor.surface))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .strokeBorder(isSelected ? FGColor.ink.opacity(0.2) : FGColor.line, lineWidth: 1)
+                    .strokeBorder(isSelected ? FGColor.ink.opacity(0.2) : FGColor.lineStrong, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
         .overlay(alignment: .topTrailing) {
             // Straddles the card's top edge, clear of the plan name.
             if plan == .yearly, let savingsPercent {
-                Text("SAVE ABOUT \(savingsPercent)%")
+                Text("SAVE \(savingsPercent)%")
                     .font(.system(.caption2, design: .rounded).weight(.heavy))
                     .tracking(0.4)
                     .foregroundStyle(.white)
@@ -660,15 +844,20 @@ struct FeelGoodPaywallView: View {
     private func priceLine(for package: Package, plan: Plan) -> String {
         let product = package.storeProduct
         let unit = plan == .yearly ? "a year" : "a month"
-        if let discount = product.introductoryDiscount, discount.paymentMode == .freeTrial {
-            return "\(trialLengthNoun(discount.subscriptionPeriod)) free, then \(product.localizedPriceString) \(unit)"
-        }
         return "\(product.localizedPriceString) \(unit)"
     }
 
+    /// "~just $2.92/mo" — RevenueCat/StoreKit's own per-month breakdown
+    /// (`localizedPricePerMonth`), already formatted in the product's real
+    /// currency and locale rather than a hand-rolled division.
+    private func monthlyEquivalentCaption(for package: Package) -> String? {
+        guard let perMonth = package.storeProduct.localizedPricePerMonth else { return nil }
+        return "~just \(perMonth)/mo"
+    }
+
     /// Plain plural noun ("7 days", "1 week") for a sentence that already
-    /// supplies its own verb — "Start my 7 days free," not the clipped
-    /// "Start my 7-day free."
+    /// supplies its own verb — "1 week free, then…," not the clipped
+    /// "1-week free."
     private func trialLengthNoun(_ period: SubscriptionPeriod) -> String {
         let unit: String
         switch period.unit {
@@ -691,13 +880,13 @@ struct FeelGoodPaywallView: View {
         guard let selectedPackage else { return "Continue" }
         guard let discount = selectedPackage.storeProduct.introductoryDiscount,
               discount.paymentMode == .freeTrial else {
-            return "Subscribe"
+            return "Subscribe, \(selectedPackage.storeProduct.localizedPriceString)\(selectedPlan.renewalSuffix)"
         }
-        return "Start my \(trialLengthNoun(discount.subscriptionPeriod)) free"
+        return "\(trialLengthNoun(discount.subscriptionPeriod)) free, then \(selectedPackage.storeProduct.localizedPriceString)\(selectedPlan.renewalSuffix)"
     }
 
-    private var ctaSection: some View {
-        VStack(spacing: FGSpace.xs) {
+    private var ctaButtons: some View {
+        VStack(spacing: 0) {
             FGPrimaryButton(title: ctaTitle, isEnabled: selectedPackage != nil && !isPurchasing) {
                 purchaseSelectedPlan()
             }
@@ -707,36 +896,44 @@ struct FeelGoodPaywallView: View {
                 finish()
             } label: {
                 Text("Continue with free menu")
-                    .font(FGFont.caption.weight(.medium))
-                    .foregroundStyle(FGColor.inkMuted)
+                    .font(.system(.subheadline).weight(.medium))
+                    .foregroundStyle(FGColor.ink.opacity(0.7))
                     .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-
-            Text("Auto-renews until canceled. Cancel anytime in Settings.")
-                .font(FGFont.caption)
-                .foregroundStyle(FGColor.inkMuted.opacity(0.8))
-
-            ViewThatFits(in: .horizontal) {
-                legalLinks(spacing: FGSpace.xs, isStacked: false)
-                legalLinks(spacing: FGSpace.xs, isStacked: true)
-            }
-            .font(FGFont.caption)
-            .foregroundStyle(FGColor.inkMuted.opacity(0.8))
         }
+    }
+
+    /// One line instead of two stacked blocks: the renewal disclosure and
+    /// the legal links read as a single fine-print row, falling back to a
+    /// stack only if a device is too narrow to fit it on one line.
+    private var legalSection: some View {
+        ViewThatFits(in: .horizontal) {
+            legalLinks(spacing: FGSpace.xs, isStacked: false)
+            legalLinks(spacing: FGSpace.xs, isStacked: true)
+        }
+        .font(FGFont.caption)
+        .foregroundStyle(FGColor.inkMuted.opacity(0.8))
     }
 
     @ViewBuilder
     private func legalLinks(spacing: CGFloat, isStacked: Bool) -> some View {
         if isStacked {
             VStack(spacing: spacing) {
-                Link("Terms of Use", destination: LegalLinks.termsOfUse)
-                Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
-                restoreButton
+                Text("Auto-renews. Cancel anytime.")
+                HStack(spacing: spacing) {
+                    Link("Terms of Use", destination: LegalLinks.termsOfUse)
+                    Text("·")
+                    Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
+                    Text("·")
+                    restoreButton
+                }
             }
         } else {
             HStack(spacing: spacing) {
+                Text("Auto-renews")
+                Text("·")
                 Link("Terms of Use", destination: LegalLinks.termsOfUse)
                 Text("·")
                 Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
@@ -762,7 +959,7 @@ struct FeelGoodPaywallView: View {
             if isRestoring {
                 ProgressView()
             } else {
-                Text("Restore purchases")
+                Text("Restore")
             }
         }
         .buttonStyle(.plain)
