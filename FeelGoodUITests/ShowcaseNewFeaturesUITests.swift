@@ -239,4 +239,22 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
         sleep(1)
         saveScreenshot(app, name: "setting_up_menu_phase_2")
     }
+
+    @MainActor
+    func testSwipeSwapAnimationVerification() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let todayTab = app.tabBars.buttons["Today"]
+        if todayTab.waitForExistence(timeout: 3) {
+            todayTab.tap()
+            sleep(1)
+        }
+
+        let mainCard = app.buttons.matching(NSPredicate(format: "label CONTAINS 'MAIN' OR label CONTAINS 'Main'")).firstMatch
+        if mainCard.waitForExistence(timeout: 3) {
+            mainCard.swipeLeft()
+            sleep(2)
+        }
+    }
 }

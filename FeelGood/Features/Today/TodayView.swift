@@ -207,59 +207,65 @@ struct TodayView: View {
         .accessibilityElement(children: .contain)
     }
 
+    private var cardSwapTransition: AnyTransition {
+        if reduceMotion {
+            return .opacity
+        } else {
+            return .asymmetric(
+                insertion: .move(edge: .trailing).combined(with: .opacity),
+                removal: .move(edge: .leading).combined(with: .opacity)
+            )
+        }
+    }
+
+    private func performSwap(_ item: MenuItem) {
+        if model.hasRemainingSwaps {
+            withAnimation(FGMotion.swap) {
+                model.swap(item)
+            }
+            if let updated = model.menu.items.first(where: { $0.course == item.course }) {
+                AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
+            }
+        } else {
+            isShowingPaywall = true
+        }
+    }
+
     private var menuItems: some View {
         VStack(spacing: FGSpace.s) {
-            ForEach(Array(model.menu.items.enumerated()), id: \.element.id) { index, item in
+            ForEach(Array(model.menu.items.enumerated()), id: \.offset) { index, item in
                 let isVisible = index < visibleMenuCardCount
 
-                Group {
-                    if item.course == .main {
-                        MenuItemCard(
-                            item: item,
-                            isDone: model.isCompleted(item),
-                            isInProgress: model.isInProgress(item),
-                            canSwap: (model.canSwap(item) || !model.hasRemainingSwaps) && !model.isCompleted(item) && !model.isInProgress(item),
-                            isReset: model.isCycleReset(item),
-                            onOpen: { openSession(item) },
-                            onSwap: {
-                                if model.hasRemainingSwaps {
-                                    withAnimation(FGMotion.swap) { model.swap(item) }
-                                    if let updated = model.menu.items.first(where: { $0.course == item.course }) {
-                                        AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
-                                    }
-                                } else {
-                                    isShowingPaywall = true
-                                }
-                            }
-                        )
-                    } else {
-                        MenuItemRow(
-                            item: item,
-                            isDone: model.isCompleted(item),
-                            isInProgress: model.isInProgress(item),
-                            canSwap: (model.canSwap(item) || !model.hasRemainingSwaps) && !model.isCompleted(item) && !model.isInProgress(item),
-                            isReset: model.isCycleReset(item),
-                            onOpen: { openSession(item) },
-                            onSwap: {
-                                if model.hasRemainingSwaps {
-                                    withAnimation(FGMotion.swap) { model.swap(item) }
-                                    if let updated = model.menu.items.first(where: { $0.course == item.course }) {
-                                        AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
-                                    }
-                                } else {
-                                    isShowingPaywall = true
-                                }
-                            }
-                        )
+                ZStack {
+                    ForEach([item], id: \.id) { currentItem in
+                        if currentItem.course == .main {
+                            MenuItemCard(
+                                item: currentItem,
+                                isDone: model.isCompleted(currentItem),
+                                isInProgress: model.isInProgress(currentItem),
+                                canSwap: (model.canSwap(currentItem) || !model.hasRemainingSwaps) && !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
+                                isReset: model.isCycleReset(currentItem),
+                                onOpen: { openSession(currentItem) },
+                                onSwap: { performSwap(currentItem) }
+                            )
+                            .transition(cardSwapTransition)
+                        } else {
+                            MenuItemRow(
+                                item: currentItem,
+                                isDone: model.isCompleted(currentItem),
+                                isInProgress: model.isInProgress(currentItem),
+                                canSwap: (model.canSwap(currentItem) || !model.hasRemainingSwaps) && !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
+                                isReset: model.isCycleReset(currentItem),
+                                onOpen: { openSession(currentItem) },
+                                onSwap: { performSwap(currentItem) }
+                            )
+                            .transition(cardSwapTransition)
+                        }
                     }
                 }
                 .opacity(isVisible ? 1 : 0)
                 .scaleEffect(isVisible ? 1 : 0.96, anchor: .top)
                 .offset(y: isVisible ? 0 : 10)
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing).combined(with: .opacity),
-                    removal: .move(edge: .leading).combined(with: .opacity)
-                ))
                 .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: isVisible)
             }
         }
@@ -609,6 +615,9 @@ private struct MenuItemCard: View {
     let onOpen: () -> Void
     let onSwap: () -> Void
 
+    @State private var dragOffset: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         ZStack(alignment: .topTrailing) {
             Button(action: onOpen) {
@@ -628,12 +637,34 @@ private struct MenuItemCard: View {
                     .padding(.trailing, 20)
             }
         }
+        .offset(x: dragOffset)
         .highPriorityGesture(
-            canSwap ? DragGesture(minimumDistance: 20)
+            canSwap ? DragGesture(minimumDistance: 15)
+                .onChanged { gesture in
+                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
+                    if !reduceMotion {
+                        if gesture.translation.width < 0 {
+                            dragOffset = max(-80, gesture.translation.width * 0.75)
+                        } else {
+                            dragOffset = min(15, gesture.translation.width * 0.2)
+                        }
+                    }
+                }
                 .onEnded { gesture in
-                    if gesture.translation.width < -30 && abs(gesture.translation.width) > abs(gesture.translation.height) {
+                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
+                        withAnimation(FGMotion.gentle) { dragOffset = 0 }
+                        return
+                    }
+                    if gesture.translation.width < -30 || gesture.predictedEndTranslation.width < -75 {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onSwap()
+                        withAnimation(FGMotion.gentle) {
+                            dragOffset = 0
+                        }
+                    } else {
+                        withAnimation(FGMotion.gentle) {
+                            dragOffset = 0
+                        }
                     }
                 }
             : nil
@@ -698,6 +729,9 @@ private struct MenuItemRow: View {
     let onOpen: () -> Void
     let onSwap: () -> Void
 
+    @State private var dragOffset: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         ZStack(alignment: .topTrailing) {
             Button(action: onOpen) {
@@ -717,12 +751,34 @@ private struct MenuItemRow: View {
                     .padding(.trailing, 20)
             }
         }
+        .offset(x: dragOffset)
         .highPriorityGesture(
-            canSwap ? DragGesture(minimumDistance: 20)
+            canSwap ? DragGesture(minimumDistance: 15)
+                .onChanged { gesture in
+                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
+                    if !reduceMotion {
+                        if gesture.translation.width < 0 {
+                            dragOffset = max(-80, gesture.translation.width * 0.75)
+                        } else {
+                            dragOffset = min(15, gesture.translation.width * 0.2)
+                        }
+                    }
+                }
                 .onEnded { gesture in
-                    if gesture.translation.width < -30 && abs(gesture.translation.width) > abs(gesture.translation.height) {
+                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
+                        withAnimation(FGMotion.gentle) { dragOffset = 0 }
+                        return
+                    }
+                    if gesture.translation.width < -30 || gesture.predictedEndTranslation.width < -75 {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         onSwap()
+                        withAnimation(FGMotion.gentle) {
+                            dragOffset = 0
+                        }
+                    } else {
+                        withAnimation(FGMotion.gentle) {
+                            dragOffset = 0
+                        }
                     }
                 }
             : nil
