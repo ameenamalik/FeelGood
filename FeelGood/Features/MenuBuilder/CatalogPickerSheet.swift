@@ -11,15 +11,22 @@ import SwiftUI
 struct CatalogPickerSheet: View {
     let model: TodayModel
     let preferredCourse: Course
+    var lockCourse: Bool = false
     let onSelect: (Session) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
     @State private var selectedCourse: Course
 
-    init(model: TodayModel, preferredCourse: Course, onSelect: @escaping (Session) -> Void) {
+    init(
+        model: TodayModel,
+        preferredCourse: Course,
+        lockCourse: Bool = false,
+        onSelect: @escaping (Session) -> Void
+    ) {
         self.model = model
         self.preferredCourse = preferredCourse
+        self.lockCourse = lockCourse
         self.onSelect = onSelect
         _selectedCourse = State(initialValue: preferredCourse)
     }
@@ -45,32 +52,34 @@ struct CatalogPickerSheet: View {
                 FGColor.bg.ignoresSafeArea()
 
                 VStack(spacing: FGSpace.m) {
-                    // Course tabs
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: FGSpace.s) {
-                            ForEach([Course.appetizer, Course.main, Course.side, Course.dessert], id: \.self) { course in
-                                Button {
-                                    withAnimation(FGMotion.gentle) {
-                                        selectedCourse = course
+                    if !lockCourse {
+                        // Course tabs
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: FGSpace.s) {
+                                ForEach([Course.appetizer, Course.main, Course.side, Course.dessert], id: \.self) { course in
+                                    Button {
+                                        withAnimation(FGMotion.gentle) {
+                                            selectedCourse = course
+                                        }
+                                    } label: {
+                                        HStack(spacing: 6) {
+                                            Text(course.label)
+                                                .font(FGFont.label.weight(.semibold))
+                                        }
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 8)
+                                        .foregroundStyle(selectedCourse == course ? course.tagText : FGColor.inkMuted)
+                                        .background(selectedCourse == course ? course.tagFill : FGColor.surface)
+                                        .clipShape(Capsule())
+                                        .overlay(
+                                            Capsule().strokeBorder(selectedCourse == course ? course.tagText.opacity(0.3) : FGColor.line, lineWidth: 1)
+                                        )
                                     }
-                                } label: {
-                                    HStack(spacing: 6) {
-                                        Text(course.label)
-                                            .font(FGFont.label.weight(.semibold))
-                                    }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
-                                    .foregroundStyle(selectedCourse == course ? course.tagText : FGColor.inkMuted)
-                                    .background(selectedCourse == course ? course.tagFill : FGColor.surface)
-                                    .clipShape(Capsule())
-                                    .overlay(
-                                        Capsule().strokeBorder(selectedCourse == course ? course.tagText.opacity(0.3) : FGColor.line, lineWidth: 1)
-                                    )
+                                    .buttonStyle(.feelGoodPress)
                                 }
-                                .buttonStyle(.feelGoodPress)
                             }
+                            .padding(.horizontal, FGSpace.page)
                         }
-                        .padding(.horizontal, FGSpace.page)
                     }
 
                     // Search Field
@@ -166,7 +175,7 @@ struct CatalogPickerSheet: View {
                 }
                 .padding(.top, FGSpace.m)
             }
-            .navigationTitle("Pick from Library")
+            .navigationTitle(lockCourse ? "Swap \(preferredCourse.label)" : "Pick from Library")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

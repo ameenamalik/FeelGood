@@ -57,6 +57,7 @@ struct TodayView: View {
     @AppStorage("hasSeenDopamineMenuTour") private var hasSeenDopamineMenuTour = false
     @State private var isShowingDopamineMenuTour = false
     @State private var selected: MenuItem?
+    @State private var manualSwapTarget: MenuItem?
     @State private var littleWinCelebration: LittleWinCelebration?
     @State private var pendingCheckInUpdate: PendingCheckInUpdate?
     @State private var isRegeneratingMenu = false
@@ -127,6 +128,18 @@ struct TodayView: View {
         .sheet(item: $selected, onDismiss: presentCompletionPaywallIfNeeded) { item in
             SessionDetailView(item: item, model: model) {
                 shouldOfferProAfterDismissal = true
+            }
+        }
+        .sheet(item: $manualSwapTarget) { item in
+            CatalogPickerSheet(
+                model: model,
+                preferredCourse: item.course,
+                lockCourse: true
+            ) { selectedSession in
+                withAnimation(FGMotion.swap) {
+                    model.setTodayCourseOverride(session: selectedSession, for: item.course)
+                }
+                AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(selectedSession.title)").post()
             }
         }
         .sheet(item: $littleWinCelebration) { celebration in
@@ -218,7 +231,7 @@ struct TodayView: View {
         }
     }
 
-    private func performSwap(_ item: MenuItem) {
+    private func performSwipeSkip(_ item: MenuItem) {
         if model.hasRemainingSwaps {
             withAnimation(FGMotion.swap) {
                 model.swap(item)
@@ -226,6 +239,14 @@ struct TodayView: View {
             if let updated = model.menu.items.first(where: { $0.course == item.course }) {
                 AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
             }
+        } else {
+            isShowingPaywall = true
+        }
+    }
+
+    private func handleSwapButtonTap(_ item: MenuItem) {
+        if model.isProUser {
+            manualSwapTarget = item
         } else {
             isShowingPaywall = true
         }
@@ -243,10 +264,11 @@ struct TodayView: View {
                                 item: currentItem,
                                 isDone: model.isCompleted(currentItem),
                                 isInProgress: model.isInProgress(currentItem),
-                                canSwap: (model.canSwap(currentItem) || !model.hasRemainingSwaps) && !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
+                                canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
                                 isReset: model.isCycleReset(currentItem),
                                 onOpen: { openSession(currentItem) },
-                                onSwap: { performSwap(currentItem) }
+                                onSelectManual: { handleSwapButtonTap(currentItem) },
+                                onSkip: { performSwipeSkip(currentItem) }
                             )
                             .transition(cardSwapTransition)
                         } else {
@@ -254,10 +276,11 @@ struct TodayView: View {
                                 item: currentItem,
                                 isDone: model.isCompleted(currentItem),
                                 isInProgress: model.isInProgress(currentItem),
-                                canSwap: (model.canSwap(currentItem) || !model.hasRemainingSwaps) && !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
+                                canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
                                 isReset: model.isCycleReset(currentItem),
                                 onOpen: { openSession(currentItem) },
-                                onSwap: { performSwap(currentItem) }
+                                onSelectManual: { handleSwapButtonTap(currentItem) },
+                                onSkip: { performSwipeSkip(currentItem) }
                             )
                             .transition(cardSwapTransition)
                         }
@@ -613,7 +636,8 @@ private struct MenuItemCard: View {
     let canSwap: Bool
     let isReset: Bool
     let onOpen: () -> Void
-    let onSwap: () -> Void
+    let onSelectManual: () -> Void
+    let onSkip: () -> Void
 
     @State private var dragOffset: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -632,7 +656,7 @@ private struct MenuItemCard: View {
             .buttonStyle(.feelGoodPress)
 
             if canSwap {
-                MenuSwapButton(item: item, isReset: isReset, action: onSwap)
+                MenuSwapButton(item: item, isReset: isReset, action: onSelectManual)
                     .padding(.top, 18)
                     .padding(.trailing, 20)
             }
@@ -657,7 +681,7 @@ private struct MenuItemCard: View {
                     }
                     if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        onSwap()
+                        onSkip()
                         withAnimation(FGMotion.swap) {
                             dragOffset = 0
                         }
@@ -676,7 +700,10 @@ private struct MenuItemCard: View {
         )
         .accessibilityAddTraits(.isButton)
         .accessibilityAction(named: isReset ? "Start over \(item.course.label)" : "Swap \(item.course.label)") {
-            if canSwap { onSwap() }
+            if canSwap { onSelectManual() }
+        }
+        .accessibilityAction(named: "Quick skip \(item.course.label)") {
+            if canSwap { onSkip() }
         }
     }
 }
@@ -727,7 +754,8 @@ private struct MenuItemRow: View {
     let canSwap: Bool
     let isReset: Bool
     let onOpen: () -> Void
-    let onSwap: () -> Void
+    let onSelectManual: () -> Void
+    let onSkip: () -> Void
 
     @State private var dragOffset: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -746,7 +774,7 @@ private struct MenuItemRow: View {
             .buttonStyle(.feelGoodPress)
 
             if canSwap {
-                MenuSwapButton(item: item, isReset: isReset, action: onSwap)
+                MenuSwapButton(item: item, isReset: isReset, action: onSelectManual)
                     .padding(.top, 18)
                     .padding(.trailing, 20)
             }
@@ -771,7 +799,7 @@ private struct MenuItemRow: View {
                     }
                     if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        onSwap()
+                        onSkip()
                         withAnimation(FGMotion.swap) {
                             dragOffset = 0
                         }
@@ -790,7 +818,10 @@ private struct MenuItemRow: View {
         )
         .accessibilityAddTraits(.isButton)
         .accessibilityAction(named: isReset ? "Start over \(item.course.label)" : "Swap \(item.course.label)") {
-            if canSwap { onSwap() }
+            if canSwap { onSelectManual() }
+        }
+        .accessibilityAction(named: "Quick skip \(item.course.label)") {
+            if canSwap { onSkip() }
         }
     }
 }
