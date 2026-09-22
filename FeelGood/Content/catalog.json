@@ -1709,63 +1709,6 @@
       ]
     },
     {
-      "id": "side-carry-the-shopping",
-      "title": "Carry the shopping in one trip",
-      "subtitle": "Grip work that was happening anyway",
-      "activity": "carries",
-      "qualities": [
-        "grip",
-        "strength"
-      ],
-      "durationMin": 5,
-      "intensity": 2,
-      "energyFit": [
-        "low",
-        "steady",
-        "strong"
-      ],
-      "equipment": [
-        "none"
-      ],
-      "places": [
-        "home",
-        "outdoors"
-      ],
-      "bodyFocus": [
-        "full"
-      ],
-      "intents": [
-        "strengthen"
-      ],
-      "course": "side",
-      "source": {
-        "type": "authored",
-        "steps": [
-          {
-            "name": "Load up",
-            "seconds": 30,
-            "cue": "Split the weight evenly between both hands."
-          },
-          {
-            "name": "Stand tall",
-            "seconds": 30,
-            "cue": "Shoulders back, ribs down. This is the whole exercise.",
-            "glossaryID": "farmers-carry"
-          },
-          {
-            "name": "Walk it in",
-            "seconds": 180,
-            "cue": "Slow and steady. Put things down before your grip fails."
-          },
-          {
-            "name": "Open your hands",
-            "seconds": 60,
-            "cue": "Stretch the fingers wide a few times."
-          }
-        ]
-      }
-    },
-    {
       "id": "dessert-three-songs",
       "title": "Dance to three songs",
       "subtitle": "That's it. That's the session.",
