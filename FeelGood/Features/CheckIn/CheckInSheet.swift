@@ -151,8 +151,10 @@ struct CheckInSheet: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
 
-            calendarContext(using: proxy)
-                .postHogMask()
+            if hasProAccess {
+                calendarContext(using: proxy)
+                    .postHogMask()
+            }
 
             TimeBudgetScale(selection: time) { option in
                 time = option
@@ -160,6 +162,11 @@ struct CheckInSheet: View {
                 reveal(after: 1, didAnswer: true, using: proxy)
             }
             .postHogMask()
+
+            if !hasProAccess, time != nil {
+                calendarProPrompt
+                    .transition(.opacity)
+            }
         }
         .id(1)
         .transition(
@@ -171,59 +178,77 @@ struct CheckInSheet: View {
 
     @ViewBuilder
     private func calendarContext(using proxy: ScrollViewProxy) -> some View {
-        if hasProAccess {
-            switch calendarConnectionState {
-            case .notRequested:
-                calendarCard(
-                    title: "Work around your day",
-                    detail: "Use today's event times on this device to find a realistic opening.",
-                    buttonTitle: "Connect Calendar"
-                ) {
-                    Task { await connectCalendar() }
-                }
-
-            case .connected:
-                movementRecognitionToggle
-                movementPlanContext
-
-                if isLoadingCalendar {
-                    HStack(spacing: FGSpace.s) {
-                        ProgressView()
-                        Text("Looking for an opening in today…")
-                            .font(FGFont.caption)
-                            .foregroundStyle(FGColor.inkMuted)
-                    }
-                    .padding(.horizontal, FGSpace.s)
-                } else if let calendarOpening {
-                    let message = calendarMessage(for: calendarOpening)
-                    calendarCard(
-                        title: message.title,
-                        detail: message.detail,
-                        buttonTitle: "Choose \(calendarOpening.budget.maxMinutes) minutes",
-                        isSelected: selectedCalendarOpening == calendarOpening
-                    ) {
-                        time = calendarOpening.budget
-                        selectedCalendarOpening = calendarOpening
-                        reveal(after: 1, didAnswer: true, using: proxy)
-                    }
-                } else if calendarLoadFailed {
-                    calendarStatus("Calendar couldn't be checked. Choose a time below.")
-                } else {
-                    calendarStatus("No clear opening left today. Choose what feels realistic below.")
-                }
-
-            case .denied:
-                calendarStatus("Calendar access is off. You can still choose a time below.")
-            }
-        } else {
+        switch calendarConnectionState {
+        case .notRequested:
             calendarCard(
                 title: "Work around your day",
-                detail: "FeelGood Pro can use today’s Calendar openings to suggest a realistic time.",
-                buttonTitle: "See FeelGood Pro"
+                detail: "Use today's event times on this device to find a realistic opening.",
+                buttonTitle: "Connect Calendar"
             ) {
-                isShowingPaywall = true
+                Task { await connectCalendar() }
             }
+
+        case .connected:
+            movementRecognitionToggle
+            movementPlanContext
+
+            if isLoadingCalendar {
+                HStack(spacing: FGSpace.s) {
+                    ProgressView()
+                    Text("Looking for an opening in today…")
+                        .font(FGFont.caption)
+                        .foregroundStyle(FGColor.inkMuted)
+                }
+                .padding(.horizontal, FGSpace.s)
+            } else if let calendarOpening {
+                let message = calendarMessage(for: calendarOpening)
+                calendarCard(
+                    title: message.title,
+                    detail: message.detail,
+                    buttonTitle: "Choose \(calendarOpening.budget.maxMinutes) minutes",
+                    isSelected: selectedCalendarOpening == calendarOpening
+                ) {
+                    time = calendarOpening.budget
+                    selectedCalendarOpening = calendarOpening
+                    reveal(after: 1, didAnswer: true, using: proxy)
+                }
+            } else if calendarLoadFailed {
+                calendarStatus("Calendar couldn't be checked. Choose a time below.")
+            } else {
+                calendarStatus("No clear opening left today. Choose what feels realistic below.")
+            }
+
+        case .denied:
+            calendarStatus("Calendar access is off. You can still choose a time below.")
         }
+    }
+
+    private var calendarProPrompt: some View {
+        Button {
+            isShowingPaywall = true
+        } label: {
+            HStack(alignment: .firstTextBaseline, spacing: FGSpace.s) {
+                Image(systemName: "calendar.badge.clock")
+                    .accessibilityHidden(true)
+
+                Text("Want FeelGood to find openings in your calendar?")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("See Pro")
+                    .fontWeight(.semibold)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.semibold))
+                    .accessibilityHidden(true)
+            }
+            .font(FGFont.caption)
+            .foregroundStyle(FGColor.inkMuted)
+            .frame(minHeight: FGSize.minTouchTarget)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("See how FeelGood Pro can find openings in your calendar")
+        .accessibilityHint("Opens FeelGood Pro options")
     }
 
     private var movementRecognitionToggle: some View {

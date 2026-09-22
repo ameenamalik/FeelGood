@@ -22,6 +22,14 @@ struct FirstRunFlow: View {
     @AppStorage(Self.hasSeenOnboardingPaywallKey) private var hasSeenOnboardingPaywall = false
     @State private var pendingOnboardingModel: OnboardingModel?
 
+    /// A signed-out account becomes a fresh local guest. Replay the product
+    /// promises and account choice before asking for new preferences, but do
+    /// not replay the one-time onboarding paywall.
+    static func resetForSignedOutUser(defaults: UserDefaults = .standard) {
+        defaults.set(false, forKey: hasSeenIntroKey)
+        defaults.set(false, forKey: hasSeenWelcomeSignUpKey)
+    }
+
     var body: some View {
         Group {
             if !hasSeenIntro {

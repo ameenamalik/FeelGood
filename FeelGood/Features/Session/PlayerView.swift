@@ -211,6 +211,11 @@ struct PlayerView: View {
                     .transition(.opacity)
             }
         }
+        // The full player surface accepts horizontal navigation while every
+        // existing control remains tappable. A deliberate horizontal bias and
+        // distance threshold keep vertical movement and slightly messy button
+        // taps from changing exercises.
+        .simultaneousGesture(routineSwipeGesture)
         .task(id: index) {
             guard let step else { return }
             // Runs exactly once per distinct `index` — including the very
@@ -1044,9 +1049,9 @@ struct PlayerView: View {
 
     private func advance() {
         if index + 1 < steps.count {
-            withAnimation(FGMotion.gentle) { index += 1 }
+            withAnimation(reduceMotion ? .none : FGMotion.gentle) { index += 1 }
         } else {
-            withAnimation(FGMotion.gentle) {
+            withAnimation(reduceMotion ? .none : FGMotion.gentle) {
                 // Move beyond the last valid index so going back changes the
                 // task identity and restarts that exercise's timer.
                 index = steps.endIndex
@@ -1088,7 +1093,7 @@ struct PlayerView: View {
 
     private func goBack() {
         guard !steps.isEmpty else { return }
-        withAnimation(FGMotion.gentle) {
+        withAnimation(reduceMotion ? .none : FGMotion.gentle) {
             if isDone {
                 let previousIndex = steps.index(before: steps.endIndex)
                 index = previousIndex
@@ -1114,6 +1119,32 @@ struct PlayerView: View {
                 index -= 1
             }
         }
+    }
+
+    /// Swipe left advances; swipe right returns to the previous exercise.
+    /// The completion screen also accepts a right swipe, matching its Back
+    /// button. Bottom controls remain available for precision and VoiceOver.
+    private var routineSwipeGesture: some Gesture {
+        DragGesture(minimumDistance: 24, coordinateSpace: .local)
+            .onEnded { value in
+                let horizontal = value.translation.width
+                let vertical = value.translation.height
+                guard abs(horizontal) > abs(vertical) * 1.25 else { return }
+
+                let projected = value.predictedEndTranslation.width
+                let distance = abs(projected) > abs(horizontal) ? projected : horizontal
+                guard abs(distance) >= 72 else { return }
+
+                if distance < 0 {
+                    guard !isDone, !steps.isEmpty else { return }
+                    advance()
+                } else {
+                    guard isDone || index > steps.startIndex else { return }
+                    goBack()
+                }
+
+                UISelectionFeedbackGenerator().selectionChanged()
+            }
     }
 
     private func symbol(for feel: Feel) -> String {

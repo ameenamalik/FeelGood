@@ -123,6 +123,7 @@ private struct FGQuietGlass: ViewModifier {
 /// The visual, detail, and accent are optional so each flow can keep its own
 /// expression without changing the choice's typography or selection styling.
 struct FGChoice: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var typeSize
 
     let title: String
@@ -159,7 +160,7 @@ struct FGChoice: View {
                         .font(.title2)
                         .symbolRenderingMode(.monochrome)
                         .frame(width: 32, height: typeSize.isAccessibilitySize ? nil : 24)
-                        .foregroundStyle(isSelected ? accent.text : FGColor.ink)
+                        .foregroundStyle(selectedForeground)
                         .accessibilityHidden(true)
                 }
 
@@ -197,7 +198,7 @@ struct FGChoice: View {
                     .fill(FGColor.surface)
                     .overlay(
                         RoundedRectangle(cornerRadius: hasVisual ? 20 : FGRadius.button, style: .continuous)
-                            .fill(isSelected ? accent.fill.opacity(0.3) : .clear)
+                            .fill(isSelected && colorScheme != .dark ? accent.fill.opacity(0.3) : .clear)
                     )
             )
             .overlay(
@@ -205,7 +206,7 @@ struct FGChoice: View {
                 // gains weight too, while its hue connects it to the tint.
                 RoundedRectangle(cornerRadius: hasVisual ? 20 : FGRadius.button, style: .continuous)
                     .strokeBorder(
-                        isSelected ? accent.text.opacity(0.95) : FGColor.lineStrong,
+                        selectionBorder,
                         lineWidth: isSelected ? 1.5 : 1
                     )
             )
@@ -213,6 +214,16 @@ struct FGChoice: View {
         .buttonStyle(.plain)
         .accessibilityLabel([title, detail].compactMap(\.self).joined(separator: ", "))
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    private var selectedForeground: Color {
+        guard isSelected else { return FGColor.ink }
+        return colorScheme == .dark ? FGColor.ink : accent.text
+    }
+
+    private var selectionBorder: Color {
+        guard isSelected else { return FGColor.lineStrong }
+        return colorScheme == .dark ? FGColor.ink : accent.text.opacity(0.95)
     }
 }
 
@@ -235,6 +246,7 @@ struct FGChoice: View {
 /// lines and is available on iOS 18, but it interpolates its own way between
 /// control points and would not land on the values these stops were chosen for.
 struct FGAuraTile: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var typeSize
 
     let title: String
@@ -276,7 +288,7 @@ struct FGAuraTile: View {
     /// Ink that flips with the appearance when the tile is neutral; ink that
     /// does not when it is washed, because the wash does not either.
     private var foreground: Color {
-        (isSelected || showsAuraAtRest) ? FGColor.inkOnAccent : FGColor.ink
+        usesAuraSurface ? FGColor.inkOnAccent : FGColor.ink
     }
 
     var body: some View {
@@ -347,7 +359,7 @@ struct FGAuraTile: View {
                 // the fill be the edge.
                 RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
                     .strokeBorder(
-                        isSelected ? FGColor.inkOnAccent : .clear,
+                        isSelected ? selectedBorder : .clear,
                         lineWidth: isSelected ? 1.5 : 0
                     )
             )
@@ -375,12 +387,22 @@ struct FGAuraTile: View {
 
     @ViewBuilder
     private var surface: some View {
-        if isSelected || showsAuraAtRest {
+        if usesAuraSurface {
             wash.opacity(isSelected ? 1 : 0.58)
         } else {
             RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
                 .fill(FGAura.resting)
         }
+    }
+
+    /// In dark mode a selection should not flash a pale replacement surface.
+    /// The resting card stays put and the stronger outline carries selection.
+    private var usesAuraSurface: Bool {
+        showsAuraAtRest || (isSelected && colorScheme != .dark)
+    }
+
+    private var selectedBorder: Color {
+        colorScheme == .dark ? FGColor.ink : FGColor.inkOnAccent
     }
 
     /// Bright core at the upper left, a second bloom at the upper right, both
@@ -426,6 +448,8 @@ struct FGAuraTile: View {
 /// things to rule out, and a grid of colour fields makes ruling something out
 /// feel weightier than it is.
 struct FGPill: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let title: String
     var selectedAura: FGAura? = nil
     let isSelected: Bool
@@ -442,7 +466,7 @@ struct FGPill: View {
                 .background(Capsule().fill(pillFill))
                 .overlay(
                     Capsule().strokeBorder(
-                        isSelected ? FGColor.inkOnAccent.opacity(0.72) : FGColor.lineStrong,
+                        pillBorder,
                         lineWidth: isSelected ? 1.5 : 1
                     )
                 )
@@ -453,6 +477,9 @@ struct FGPill: View {
     }
 
     private var pillFill: AnyShapeStyle {
+        if isSelected, colorScheme == .dark {
+            return AnyShapeStyle(FGColor.surface)
+        }
         if isSelected, let selectedAura {
             return AnyShapeStyle(
                 LinearGradient(
@@ -467,7 +494,13 @@ struct FGPill: View {
 
     private var pillForeground: Color {
         guard isSelected else { return FGColor.ink }
+        if colorScheme == .dark { return FGColor.ink }
         return selectedAura == nil ? FGColor.bg : FGColor.inkOnAccent
+    }
+
+    private var pillBorder: Color {
+        guard isSelected else { return FGColor.lineStrong }
+        return colorScheme == .dark ? FGColor.ink : FGColor.inkOnAccent.opacity(0.72)
     }
 }
 
