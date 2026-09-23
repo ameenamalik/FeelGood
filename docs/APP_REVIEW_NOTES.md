@@ -28,7 +28,8 @@ To reach the main flows:
 Health note: FeelGood offers general wellness and movement suggestions only. It
 makes no medical claims. Optional "work-arounds" (e.g. low back, pregnancy) are
 stored only on the device and are used to filter suggestions; they are never
-sent to a server.
+sent to a server, an analytics provider, or an AI provider, and are not part of
+account sync.
 Calendar access is optional and read-only, used to plan around today's events.
 
 Contact: TODO support email / phone
@@ -56,5 +57,5 @@ Notes:
   If you decide any of it is health data, add **Health** (App Functionality)
   here and in the manifest.
 - "Do you or your third-party partners use data for tracking?" → **No**.
-- Privacy Policy URL: https://feelgood-web.vercel.app/privacy (the live copy;
-  it lives in the separate web repo, not `docs/privacy-policy.html`, which is stale).
+- Privacy Policy URL: https://feelgood-web.vercel.app/privacy (the live copy,
+  it lives in the separate web repo).

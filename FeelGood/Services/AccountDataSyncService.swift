@@ -227,19 +227,15 @@ enum AccountDataSyncService {
         FirestoreService.completionID(sessionID: sessionID, startedAt: startedAt)
     }
 
-    /// `pregnancy`, `postpartum`, and `pelvicFloor` are reproductive health
-    /// data (see CLAUDE.md and `CopyPayload.swift`). `CopyPayload` and the
-    /// PostHog mask already keep them off the LLM-copy and session-replay
-    /// channels; Firestore account sync is a third channel that needs the
-    /// same boundary, since it's what a linked identity and the privacy
-    /// manifest actually see.
-    private static let deviceOnlyWorkArounds: Set<WorkAround> = [.pregnancy, .postpartum, .pelvicFloor]
+    /// Work-arounds never leave the device. Pregnancy, postpartum, and pelvic
+    /// floor are reproductive health data (see CLAUDE.md and `CopyPayload.swift`),
+    /// and the rest (low back, knees, wrists, fatigue) are still body
+    /// information the privacy policy promises stays local. Firestore account
+    /// sync is a third channel, beside the LLM copy and analytics, that needs
+    /// the same boundary. `FirestoreService.saveUserPreferences` also deletes
+    /// any `workArounds` field an older build wrote.
 
-    private static func preferenceData(from profile: UserProfile) -> [String: Any] {
-        let syncableWorkArounds = profile.answers.workArounds
-            .subtracting(deviceOnlyWorkArounds)
-            .map(\.rawValue)
-            .sorted()
+    static func preferenceData(from profile: UserProfile) -> [String: Any] {
         var data: [String: Any] = [
             "activities": profile.activitiesRaw,
             "sports": profile.sportsRaw,
@@ -250,7 +246,6 @@ enum AccountDataSyncService {
             "realisticMinutes": profile.realisticMinutes,
             "bestTimeOfDay": profile.bestTimeOfDayRaw,
             "intents": profile.intentsRaw,
-            "workArounds": syncableWorkArounds,
             "hiddenSessionIDs": profile.hiddenSessionIDsRaw,
             "nickname": profile.nickname,
             "avatarID": profile.avatar.rawValue,
@@ -263,7 +258,7 @@ enum AccountDataSyncService {
         return data
     }
 
-    private static func apply(_ data: [String: Any], to profile: UserProfile) {
+    static func apply(_ data: [String: Any], to profile: UserProfile) {
         let current = profile.answers
         let answers = ProfileAnswers(
             activities: decodedSet(data["activities"], fallback: current.activities),
@@ -275,11 +270,9 @@ enum AccountDataSyncService {
             realisticMinutes: data["realisticMinutes"] as? Int ?? current.realisticMinutes,
             bestTimeOfDay: (data["bestTimeOfDay"] as? String).flatMap(TimeOfDay.init(rawValue:)) ?? current.bestTimeOfDay,
             intents: decodedSet(data["intents"], fallback: current.intents),
-            // Subtracting here too, not just on upload, guards against a
-            // document written before this boundary existed still carrying
-            // one of the three values.
-            workArounds: decodedSet(data["workArounds"], fallback: current.workArounds)
-                .subtracting(deviceOnlyWorkArounds),
+            // Never read back from the cloud: a document written before this
+            // boundary existed may still carry values, and they are ignored.
+            workArounds: current.workArounds,
             hiddenSessionIDs: Set((data["hiddenSessionIDs"] as? [String]) ?? Array(current.hiddenSessionIDs))
         )
         profile.apply(answers, now: Date())

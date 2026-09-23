@@ -1,7 +1,7 @@
 import { handleChat, isValidChatPayload } from "./chat";
 import { acceptCopyLine } from "./copyLine";
 import { hasProEntitlement } from "./entitlement";
-import { privacyPolicyResponse, supportResponse, termsResponse } from "./legal";
+import { supportResponse, termsResponse } from "./legal";
 import { playerResponse } from "./player";
 import { isRateLimited } from "./rateLimit";
 import { COPY_SYSTEM_PROMPT } from "./systemPrompt";
@@ -23,7 +23,6 @@ export default {
           chat: "POST /chat",
           copy: "POST /copy",
           player: "GET /player?v=<id>",
-          privacy: "GET /privacy",
           terms: "GET /terms",
           support: "GET /support",
         },
@@ -31,9 +30,6 @@ export default {
     }
 
     // Static Legal & Policy routes (App Store Review requirement)
-    if (url.pathname === "/privacy" || url.pathname === "/privacy-policy.html") {
-      return privacyPolicyResponse();
-    }
     if (url.pathname === "/terms" || url.pathname === "/terms.html") {
       return termsResponse();
     }
