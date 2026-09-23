@@ -364,6 +364,7 @@ struct ExploreView: View {
 
             // Secondary Action: Add to today
             Button {
+                Analytics.capture(ChatAnalytics.cardCommittedEvent, properties: ChatAnalytics.cardCommitted(source: .card))
                 commitRecommendationToToday(recommendation: recommendation, messageID: messageID)
             } label: {
                 HStack(spacing: 5) {
@@ -573,6 +574,7 @@ struct ExploreView: View {
             LocalStatefulChatEngine.structuredRecommendation(for: $0.session, reason: $0.reasonText)
         }
 
+        let startedAt = Date()
         Task {
             let response = await service.describeDay(
                 prompt: trimmed,
@@ -584,7 +586,9 @@ struct ExploreView: View {
 
             await MainActor.run {
                 isProcessing = false
+                let latencyMs = Int(Date().timeIntervalSince(startedAt) * 1000)
                 guard let response else {
+                    Analytics.capture(ChatAnalytics.replyFailedEvent, properties: ChatAnalytics.replyFailed(latencyMs: latencyMs))
                     withAnimation(FGMotion.settle) {
                         messages.append(ConversationMessage(
                             role: .assistant,
@@ -593,6 +597,16 @@ struct ExploreView: View {
                     }
                     return
                 }
+
+                Analytics.capture(ChatAnalytics.replyReceivedEvent, properties: ChatAnalytics.replyReceived(
+                    mode: response.mode,
+                    intent: response.intent,
+                    phase: response.phase,
+                    hasCard: response.recommendation != nil,
+                    quickReplyCount: response.quickReplies.count,
+                    latencyMs: latencyMs,
+                    hadCheckInOverrides: response.overrides.hasAnyOverrides
+                ))
 
                 if response.overrides.hasAnyOverrides {
                     model.applyConversationalCheckIn(response)
@@ -614,6 +628,7 @@ struct ExploreView: View {
     }
 
     private func executeQuickReply(_ chip: QuickReplyAction) {
+        Analytics.capture(ChatAnalytics.quickReplyTappedEvent, properties: ChatAnalytics.quickReplyTapped(chip.actionType))
         switch chip.actionType {
         case .filterShorter:
             inputText = "Something shorter"
@@ -649,6 +664,7 @@ struct ExploreView: View {
 
         case .commitToToday:
             if let lastRec = messages.reversed().compactMap(\.recommendation).first {
+                Analytics.capture(ChatAnalytics.cardCommittedEvent, properties: ChatAnalytics.cardCommitted(source: .chip))
                 commitRecommendationToToday(recommendation: lastRec, messageID: nil)
             }
 

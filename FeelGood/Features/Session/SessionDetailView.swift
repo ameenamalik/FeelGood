@@ -201,7 +201,7 @@ struct SessionDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Hide this exercise", role: .destructive) {
-                Analytics.capture("session_hidden", properties: ["session_id": session.id, "title": session.title])
+                Analytics.capture("session_hidden", properties: RoutineAnalytics.sessionHiddenProperties(sessionID: session.id))
                 trackDiscardIfNeeded()
                 model.hide(session)
                 dismiss()
