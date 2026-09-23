@@ -312,6 +312,9 @@ public final class FirestoreService: Sendable {
 
     public func saveUserPreferences(userId: String, data: sending [String: Any]) async throws {
         guard let db else { return }
+        var data = data
+        // Work-arounds are device-only. Clears the field an older build wrote.
+        data["workArounds"] = FieldValue.delete()
         try await db.collection("users")
             .document(userId)
             .setData(data, merge: true)
