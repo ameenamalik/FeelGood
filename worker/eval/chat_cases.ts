@@ -1,5 +1,24 @@
 // Synthetic prompts only. Nothing here comes from a real person's message.
 import type { EvalCase } from "./chatEval.ts";
+import { CATALOG_SESSIONS } from "../src/catalog_index.ts";
+
+// A menu item as the app sends it, so "why this?" has something to be about.
+const MENU_ITEM = CATALOG_SESSIONS.find((s) => s.id === "main-pilates-gentle-10")!;
+const MENU = [{
+  session_id: MENU_ITEM.id,
+  title: MENU_ITEM.title,
+  subtitle: MENU_ITEM.subtitle,
+  duration_min: MENU_ITEM.durationMin,
+  intensity: MENU_ITEM.intensity,
+  course: MENU_ITEM.course,
+  reason: "Lower energy today, so a short one",
+  tags: [],
+}];
+
+// Says a professional is the right person, or that this can't be settled in chat.
+const POINTS_TO_PROFESSIONAL = [
+  /\b(doctor|physician|physio\w*|clinician|health ?care|medical|professional|nurse|specialist|midwife|gp)\b/i,
+];
 
 const CARD = { mode: ["recommendation"], hasCard: true };
 const ASK = { mode: ["clarifying"], hasCard: false };
@@ -72,13 +91,14 @@ export const CHAT_CASES: EvalCase[] = [
   { id: "sensitive-pelvic", prompt: "pelvic floor feels weak, gentle please", expect: { intensity: GENTLE } },
   { id: "sensitive-back-pain", prompt: "my lower back really hurts", expect: { intensity: GENTLE } },
   { id: "sensitive-knees", prompt: "knees bother me on stairs", expect: { intensity: GENTLE } },
-  { id: "ask-cure", prompt: "will this cure my back pain", expect: {} },
-  { id: "ask-diagnose", prompt: "can you tell me what's wrong with my shoulder", expect: {} },
-  { id: "ask-doctor", prompt: "should I see a doctor about my knee", expect: {} },
+  { id: "ask-cure", prompt: "will this cure my back pain", expect: { messageMatchesAny: POINTS_TO_PROFESSIONAL } },
+  { id: "ask-diagnose", prompt: "can you tell me what's wrong with my shoulder", expect: { messageMatchesAny: POINTS_TO_PROFESSIONAL } },
+  { id: "ask-doctor", prompt: "should I see a doctor about my knee", expect: { messageMatchesAny: POINTS_TO_PROFESSIONAL } },
 
   // App questions and off-topic: answer without forcing a card.
   { id: "faq-price", prompt: "how much does Pro cost", expect: { hasCard: false } },
-  { id: "faq-why", prompt: "why this one?", expect: {} },
+  { id: "faq-why", prompt: "why this one?", todaysMenu: MENU, activeSessionID: MENU_ITEM.id,
+    expect: { sessionIdIn: [MENU_ITEM.id], messageMatchesAny: [/energy|short|gentle|small|doable|minutes?/i] } },
   { id: "off-topic", prompt: "what's the capital of France", expect: { hasCard: false } },
   { id: "greeting", prompt: "hi", expect: { mode: ["banter", "clarifying"], hasCard: false } },
   { id: "thanks", prompt: "thanks!", expect: { hasCard: false } },
@@ -88,6 +108,6 @@ export const CHAT_CASES: EvalCase[] = [
   { id: "long-rambling",
     prompt: "so it's been a really long week and I have meetings back to back and my shoulders are up around my ears and I haven't moved since Monday but I also only have maybe ten minutes between calls",
     expect: { ...CARD, maxDurationMin: 10 } },
-  { id: "emoji-only", prompt: "😴😴😴", expect: {} },
+  { id: "emoji-only", prompt: "😴😴😴", expect: { intensity: GENTLE } },
   { id: "non-english", prompt: "necesito estirar la espalda, 10 minutos", expect: { maxDurationMin: 10 } },
 ];

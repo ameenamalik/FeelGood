@@ -49,3 +49,25 @@ describe("chat eval cases", () => {
     }
   });
 });
+
+import { summarizeRuns } from "../eval/chatEval.ts";
+
+describe("chat eval extras", () => {
+  it("requires a message to point to a professional when asked", () => {
+    const c: EvalCase = { id: "t", prompt: "p", expect: { messageMatchesAny: [/doctor|professional/i] } };
+    assert.deepEqual(checkReply(c, { message: "A physio can help with that." }).length, 1);
+    assert.deepEqual(checkReply(c, { message: "Worth checking with a doctor." }), []);
+  });
+
+  it("restricts a card to the allowed session ids", () => {
+    const c: EvalCase = { id: "t", prompt: "p", expect: { sessionIdIn: ["app-box-breathing"] } };
+    const other = { session_id: "app-hip-openers", duration_min: 5, intensity: "gentle" };
+    assert.equal(checkReply(c, { message: "x", recommendation: other }).length, 1);
+  });
+
+  it("calls a case flaky when only some runs pass", () => {
+    assert.equal(summarizeRuns([[], [], []]).status, "stable");
+    assert.equal(summarizeRuns([[], ["x"], []]).status, "flaky");
+    assert.equal(summarizeRuns([["x"], ["y"]]).status, "failing");
+  });
+});
