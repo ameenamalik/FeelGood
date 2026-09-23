@@ -1,0 +1,51 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import { checkReply, type EvalCase } from "../eval/chatEval.ts";
+import { CHAT_CASES } from "../eval/chat_cases.ts";
+import { CATALOG_SESSIONS } from "../src/catalog_index.ts";
+
+const base: EvalCase = { id: "t", prompt: "p", expect: {} };
+const card = { session_id: "app-box-breathing", duration_min: 2, intensity: "gentle" };
+
+describe("chat eval checks", () => {
+  it("passes a clean reply", () => {
+    const c = { ...base, expect: { mode: ["recommendation"], hasCard: true, maxDurationMin: 5 } };
+    assert.deepEqual(checkReply(c, { message: "Here you go.", mode: "recommendation", recommendation: card }), []);
+  });
+
+  it("catches a missing or unexpected card, wrong mode, and a too-long card", () => {
+    assert.equal(checkReply({ ...base, expect: { hasCard: true } }, { message: "x", mode: "banter" }).length, 1);
+    assert.equal(checkReply({ ...base, expect: { hasCard: false } }, { message: "x", recommendation: card }).length, 1);
+    assert.equal(checkReply({ ...base, expect: { mode: ["clarifying"] } }, { message: "x", mode: "banter" }).length, 1);
+    assert.equal(checkReply({ ...base, expect: { maxDurationMin: 1 } }, { message: "x", recommendation: card }).length, 1);
+  });
+
+  it("catches an excluded card coming back and an invented session id", () => {
+    assert.equal(checkReply({ ...base, expect: { notSessionIds: [card.session_id] } }, { message: "x", recommendation: card }).length, 1);
+    assert.equal(checkReply(base, { message: "x", recommendation: { ...card, session_id: "made-up" } }).length, 1);
+  });
+
+  it("applies the tone rules to every reply", () => {
+    assert.equal(checkReply(base, { message: "This will cure your back pain." }).length, 1);
+    assert.equal(checkReply(base, { message: "You've got this, honey." }).length, 1);
+    assert.equal(checkReply(base, { message: "  " }).length, 1);
+  });
+});
+
+describe("chat eval cases", () => {
+  it("have unique ids", () => {
+    assert.equal(new Set(CHAT_CASES.map((c) => c.id)).size, CHAT_CASES.length);
+  });
+
+  it("only reference real catalog sessions", () => {
+    const ids = new Set(CATALOG_SESSIONS.map((s) => s.id));
+    for (const c of CHAT_CASES) {
+      const referenced = [
+        ...(c.expect.notSessionIds ?? []),
+        ...((c.userContext?.hiddenSessionIDs as string[] | undefined) ?? []),
+        ...((c.userContext?.shownSessionIDs as string[] | undefined) ?? []),
+      ];
+      for (const id of referenced) assert.ok(ids.has(id), `${c.id} references unknown session ${id}`);
+    }
+  });
+});
