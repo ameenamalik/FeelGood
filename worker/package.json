@@ -10,7 +10,8 @@
     "deploy": "wrangler deploy",
     "deploy:production": "wrangler deploy --env production",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"test/*.test.ts\""
+    "test": "node --test \"test/*.test.ts\"",
+    "eval:chat": "node scripts/run_chat_eval.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260919.1",

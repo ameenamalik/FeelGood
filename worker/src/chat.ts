@@ -1,3 +1,4 @@
+import { buildChatOutcome, logChatOutcome, type ChatFailure, type ChatOutcomeInput } from "./chatOutcome";
 import { Env } from "./types";
 import { CATALOG_SESSIONS, findSessionById, matchBestSession, CatalogSessionItem, searchGlossary } from "./catalog_index";
 import { queryAISearch } from "./ai_search";
@@ -396,6 +397,24 @@ async function handleGeminiChat(
   apiKey: string,
   knowledgeContext?: string | null
 ): Promise<Response> {
+  const startedAt = Date.now();
+  let modelUsed: string | null = null;
+  let upstreamStatus: number | null = null;
+  const historyTurns = payload.history?.length ?? 0;
+  const logOutcome = (failure: ChatFailure, extra: Partial<ChatOutcomeInput> = {}) =>
+    logChatOutcome(
+      buildChatOutcome({
+        prompt: payload.prompt,
+        historyTurns,
+        startedAt,
+        now: Date.now(),
+        model: modelUsed,
+        upstreamStatus,
+        failure,
+        ...extra,
+      })
+    );
+
   const contents = [];
   if (payload.history && payload.history.length > 0) {
     for (const item of payload.history.slice(-8)) {
@@ -523,6 +542,7 @@ async function handleGeminiChat(
       let response: Response | null = null;
 
       for (const model of candidateModels) {
+        modelUsed = model;
         response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
           {
@@ -541,7 +561,9 @@ async function handleGeminiChat(
 
       if (!response || !response.ok) {
         const errText = response ? await response.text() : "No response";
-        console.error("Gemini API error:", response?.status, errText);
+        // Status only. The body is the provider's error text and can echo
+        // request content, which is never logged.
+        console.error("Gemini API error:", response?.status);
         return { res: response || new Response("gemini 404", { status: 404 }), candidateText: null, errorDetail: errText };
       }
 
@@ -554,12 +576,15 @@ async function handleGeminiChat(
     }
   );
 
+  upstreamStatus = res.status;
   if (!res.ok) {
+    logOutcome("gemini_error");
     const detail = (res as any).errorDetail || "";
     return new Response(`upstream error: gemini ${res.status} - ${detail}`, { status: 500 });
   }
 
   if (!candidateText) {
+    logOutcome("empty_response");
     return new Response("empty response from gemini", { status: 500 });
   }
 
@@ -639,5 +664,14 @@ async function handleGeminiChat(
     extracted_check_in: Object.keys(extractedCheckIn).length > 0 ? extractedCheckIn : null,
   };
 
+  logOutcome("none", {
+    mode: data.mode,
+    intent: data.intent,
+    phase: data.phase,
+    hasCard: finalRecommendation !== null,
+    modelProposedCard: Boolean(parsed.session_id),
+    quickReplyCount: quickReplies.length,
+    extractedCheckIn: data.extracted_check_in !== null,
+  });
   return Response.json(data);
 }
