@@ -404,7 +404,7 @@
     },
     {
       "id": "app-morning-qigong",
-      "title": "Five minutes of qi gong",
+      "title": "Five minutes of qigong",
       "subtitle": "Slow, standing, and surprisingly waking",
       "activity": "qigong",
       "qualities": [
@@ -968,7 +968,7 @@
     },
     {
       "id": "main-qigong-20",
-      "title": "Twenty minutes of qi gong",
+      "title": "Twenty minutes of qigong",
       "subtitle": "Standing, slow, and quietly restorative",
       "activity": "qigong",
       "qualities": [
@@ -4595,7 +4595,7 @@
     },
     {
       "id": "main-qigong-12",
-      "title": "Twelve minutes of qi gong",
+      "title": "Twelve minutes of qigong",
       "subtitle": "Standing, slow, and short enough for a busy day",
       "activity": "qigong",
       "qualities": [
