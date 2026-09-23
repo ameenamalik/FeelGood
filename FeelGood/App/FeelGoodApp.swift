@@ -119,7 +119,9 @@ struct RootView: View {
     var body: some View {
         Group {
             #if DEBUG
-            if ProcessInfo.processInfo.arguments.contains("-FGForcePaywall") {
+            if ProcessInfo.processInfo.arguments.contains("-FGForceChatConsent") {
+                DebugChatConsentHost()
+            } else if ProcessInfo.processInfo.arguments.contains("-FGForcePaywall") {
                 FeelGoodPaywallView()
             } else if ProcessInfo.processInfo.arguments.contains("-FGForceSettingUpMenu") {
                 SettingUpMenuView(onComplete: {})
@@ -304,6 +306,23 @@ struct RootView: View {
         }
     }
 }
+
+#if DEBUG
+private struct DebugChatConsentHost: View {
+    @State private var isPresented = false
+
+    var body: some View {
+        ZStack {
+            FGColor.bg.ignoresSafeArea()
+            FGBrandWash().ignoresSafeArea()
+        }
+        .task { isPresented = true }
+        .sheet(isPresented: $isPresented) {
+            ChatConsentSheet { _ in }
+        }
+    }
+}
+#endif
 
 /// Owns the day's model so a swap or a check-in survives a re-render.
 private struct TodayScreen: View {

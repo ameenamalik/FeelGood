@@ -181,27 +181,32 @@ struct ActivityHistorySection: View {
     }
 
     private var emptyCard: some View {
-        HStack(alignment: .center, spacing: FGSpace.m) {
-            VStack(alignment: .leading, spacing: FGSpace.xs) {
-                Text("Your movement log")
-                    .font(FGFont.itemTitle)
-                    .foregroundStyle(FGColor.ink)
-
-                Text("Completed sessions will appear here as you log them. Every session is worth noticing — no streaks required.")
-                    .font(FGFont.reason)
-                    .foregroundStyle(FGColor.inkMuted)
-                    .lineSpacing(2)
-            }
-
-            Spacer()
-
+        HStack(spacing: FGSpace.m) {
             Image("MascotShowingUpBanana")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 64, height: 64)
+                .frame(width: 48, height: 48)
+                .frame(width: 58, height: 58)
+                .background(FGAura.butter.core, in: Circle())
+                .overlay {
+                    Circle()
+                        .strokeBorder(FGAura.butter.mid.opacity(0.7), lineWidth: 1)
+                }
                 .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: FGSpace.xs) {
+                Text("Nothing here yet")
+                    .font(FGFont.itemTitle)
+                    .foregroundStyle(FGColor.ink)
+
+                Text("Completed routines will appear here.")
+                    .font(FGFont.reason)
+                    .foregroundStyle(FGColor.inkMuted)
+            }
+
+            Spacer()
         }
-        .padding(FGSpace.m)
+        .padding(FGSpace.s)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
                 .fill(FGColor.surface)

@@ -78,8 +78,12 @@ struct DopamineMenuTourView: View {
 
             ZStack {
                 Circle()
-                    .fill(FGAura.apricot.core.opacity(0.32))
+                    .fill(FGAura.apricot.core)
                     .frame(width: 130, height: 130)
+                    .overlay {
+                        Circle()
+                            .strokeBorder(FGAura.apricot.mid.opacity(0.7), lineWidth: 1)
+                    }
 
                 Image("IntentEnergyClementine")
                     .resizable()
@@ -93,7 +97,7 @@ struct DopamineMenuTourView: View {
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
 
-                Text("A fresh selection of movement tailored to your energy today.\n\nPick what feels good — even one item is a complete win.")
+                Text("Movement picked for your energy and time. Choose one thing — that counts.")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.inkMuted)
                     .multilineTextAlignment(.center)
@@ -116,7 +120,7 @@ struct DopamineMenuTourView: View {
                 courseRow(
                     title: "Appetizers",
                     time: "3–5 min",
-                    subtitle: "Low-friction warm-ups to break inertia.",
+                    subtitle: "Quick starts that break inertia.",
                     icon: "sun.max.fill",
                     aura: .apricot
                 )
@@ -124,7 +128,7 @@ struct DopamineMenuTourView: View {
                 courseRow(
                     title: "Mains",
                     time: "10–25 min",
-                    subtitle: "Core pilates, yoga, or steady strength.",
+                    subtitle: "Pilates, yoga, or steady strength.",
                     icon: "figure.cross.training",
                     aura: .lilac
                 )
@@ -132,7 +136,7 @@ struct DopamineMenuTourView: View {
                 courseRow(
                     title: "Sides",
                     time: "5–15 min",
-                    subtitle: "Stretches and midday desk resets.",
+                    subtitle: "Stretches and desk resets.",
                     icon: "figure.flexibility",
                     aura: .sage
                 )
@@ -140,13 +144,13 @@ struct DopamineMenuTourView: View {
                 courseRow(
                     title: "Desserts",
                     time: "5–10 min",
-                    subtitle: "Soothing breathwork and calming wind-downs.",
+                    subtitle: "Breathwork and wind-downs.",
                     icon: "sparkles",
                     aura: .butter
                 )
             }
 
-            Text("You never have to finish every item. Do one or two that feel good, and leave the rest.")
+            Text("Pick one or two. Leave the rest.")
                 .font(FGFont.caption)
                 .foregroundStyle(FGColor.inkMuted)
                 .multilineTextAlignment(.center)
@@ -174,14 +178,14 @@ struct DopamineMenuTourView: View {
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
 
-                Text("Don't want what's suggested? Swipe left on any card or tap 'Swap' to get a new option instantly.")
+                Text("Not feeling a suggestion? Swipe left or tap Swap.")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.inkMuted)
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
                     .padding(.horizontal, FGSpace.s)
 
-                Text("You can also tap '+ Routine' to add your own favorite walks or stretches.")
+                Text("Tap + Routine to add your own.")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.inkMuted)
                     .multilineTextAlignment(.center)
@@ -196,10 +200,20 @@ struct DopamineMenuTourView: View {
         VStack(spacing: FGSpace.l) {
             Spacer()
 
-            Image("IntentShowingUpBanana")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 130, height: 130)
+            ZStack {
+                Circle()
+                    .fill(FGAura.butter.core)
+                    .frame(width: 150, height: 150)
+                    .overlay {
+                        Circle()
+                            .strokeBorder(FGAura.butter.mid.opacity(0.7), lineWidth: 1)
+                    }
+
+                Image("IntentShowingUpBanana")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 130, height: 130)
+            }
 
             VStack(spacing: FGSpace.s) {
                 Text("Zero guilt, zero streaks")
@@ -207,7 +221,7 @@ struct DopamineMenuTourView: View {
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
 
-                Text("No red numbers, no guilt mechanics, and no streak-broken alerts. FeelGood gently notices your patterns, never your pauses.")
+                Text("No guilt and no broken-streak alerts. FeelGood notices what helps — not how long you’ve been away.")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.inkMuted)
                     .multilineTextAlignment(.center)
@@ -240,8 +254,8 @@ struct DopamineMenuTourView: View {
                 .font(FGFont.itemTitle)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(FGColor.ink)
-                .foregroundStyle(Color.white)
+                .background(FGColor.actionFill)
+                .foregroundStyle(FGColor.onActionFill)
                 .clipShape(RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous))
         }
         .buttonStyle(.feelGoodPress)

@@ -59,10 +59,11 @@ nonisolated enum FGColor {
 
     /// The dark fill of a primary action — the chat recommendation's "Start"
     /// and `FGPrimaryButton` both read this, so they can't drift apart.
-    /// Warm brown-black rather than `ink`, which flips to cream in dark mode.
-    static let actionFill = Color(light: 0x2C211C, dark: 0x1A1715)
+    /// Warm brown-black in light mode and clay in dark mode, where another
+    /// near-black fill would disappear into the page.
+    static let actionFill = Color(light: 0x2C211C, dark: 0xEAB79A)
     /// Label on `actionFill`.
-    static let onActionFill = Color.white
+    static let onActionFill = Color(light: 0xFFFFFF, dark: 0x241C15)
 
     /// Interactive controls whose fill must carry a white system affordance
     /// (for example, the thumb of a Toggle). Unlike the pastel accents below,
