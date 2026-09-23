@@ -94,6 +94,12 @@ struct FeelGoodPaywallView: View {
 
     @State private var selectedPlan: Plan = .yearly
     @State private var isPurchasing = false
+    /// Plans this person can still take a free trial on. Apple allows one
+    /// intro offer per subscription group per person, so a product having a
+    /// trial does not mean this person gets it. Starts empty and only ever
+    /// grows on a definite `.eligible`, so until the check answers (or if it
+    /// can't) the button never promises a trial.
+    @State private var trialEligiblePlans: Set<Plan> = []
     @State private var isRestoring = false
     @State private var restoreResultMessage: String?
     @State private var hasRevealedMenu = false
@@ -149,6 +155,7 @@ struct FeelGoodPaywallView: View {
             if yearlyPackage == nil, monthlyPackage != nil {
                 selectedPlan = .monthly
             }
+            await refreshTrialEligibility()
             Analytics.capture("paywall_impression", properties: ["plan": selectedPlan.analyticsID])
             withAnimation(reduceMotion ? nil : FGMotion.settle) {
                 hasRevealedMenu = true
@@ -839,6 +846,16 @@ struct FeelGoodPaywallView: View {
         return Int((saved * 100).rounded())
     }
 
+    private func refreshTrialEligibility() async {
+        var eligible: Set<Plan> = []
+        for (plan, package) in [(Plan.yearly, yearlyPackage), (Plan.monthly, monthlyPackage)] {
+            guard let package else { continue }
+            let status = await Purchases.shared.checkTrialOrIntroDiscountEligibility(product: package.storeProduct)
+            if status == .eligible { eligible.insert(plan) }
+        }
+        trialEligiblePlans = eligible
+    }
+
     private func priceLine(for package: Package, plan: Plan) -> String {
         let product = package.storeProduct
         let unit = plan == .yearly ? "a year" : "a month"
@@ -876,7 +893,8 @@ struct FeelGoodPaywallView: View {
     /// single, obvious next step.
     private var ctaTitle: String {
         guard let selectedPackage else { return "Continue" }
-        guard let discount = selectedPackage.storeProduct.introductoryDiscount,
+        guard trialEligiblePlans.contains(selectedPlan),
+              let discount = selectedPackage.storeProduct.introductoryDiscount,
               discount.paymentMode == .freeTrial else {
             return "Subscribe, \(selectedPackage.storeProduct.localizedPriceString)\(selectedPlan.renewalSuffix)"
         }
