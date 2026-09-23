@@ -407,13 +407,12 @@ struct AddRoutineSheet: View {
             )
         }
 
-        Analytics.capture(editingSession == nil ? "custom_routine_created" : "custom_routine_edited", properties: [
-            "title": trimmed,
-            "activity": activity.rawValue,
-            "duration": durationMin,
-            "course": course.rawValue,
-            "added_to_today": addToToday
-        ])
+        Analytics.capture(editingSession == nil ? "custom_routine_created" : "custom_routine_edited", properties: RoutineAnalytics.customRoutineProperties(
+            activity: activity.rawValue,
+            durationMin: durationMin,
+            course: course.rawValue,
+            addedToToday: addToToday
+        ))
 
         onSaved?(session)
         dismiss()

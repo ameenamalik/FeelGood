@@ -167,3 +167,63 @@ private final class FakeAnalyticsSink: AnalyticsSink {
         resetCount += 1
     }
 }
+
+@Suite("Routine analytics")
+struct RoutineAnalyticsTests {
+
+    private let typed = "Mom's sore back stretch"
+
+    @Test("Custom routine events carry no title, only the permitted keys")
+    func customRoutineHasNoTitle() throws {
+        let properties = RoutineAnalytics.customRoutineProperties(
+            activity: "stretching",
+            durationMin: 10,
+            course: "main",
+            addedToToday: true
+        )
+
+        #expect(Set(properties.keys) == RoutineAnalytics.customRoutineKeys)
+        #expect(properties["title"] == nil)
+    }
+
+    @Test("Session-hidden events carry the id and nothing typed")
+    func sessionHiddenHasOnlyID() {
+        let properties = RoutineAnalytics.sessionHiddenProperties(sessionID: "own-1234")
+
+        #expect(Set(properties.keys) == RoutineAnalytics.sessionHiddenKeys)
+        #expect(!String(describing: properties).contains(typed))
+    }
+}
+
+@Suite("Chat analytics")
+struct ChatAnalyticsTests {
+
+    @Test("Reply events carry the permitted keys and values are enums, numbers, or booleans")
+    func replyShape() {
+        let properties = ChatAnalytics.replyReceived(
+            mode: .recommendation,
+            intent: .refinement,
+            phase: .recommendationActive,
+            hasCard: true,
+            quickReplyCount: 4,
+            latencyMs: 812,
+            hadCheckInOverrides: true
+        )
+
+        #expect(Set(properties.keys) == ChatAnalytics.replyReceivedKeys)
+        for value in properties.values {
+            let isPermitted = value is Bool || value is Int
+                || ["clarifying", "banter", "recommendation", "refinement", "recommendation_active"]
+                    .contains(value as? String ?? "")
+            #expect(isPermitted, "\(value) is not a closed value")
+        }
+    }
+
+    @Test("Failure, chip, and card events carry only their own key")
+    func otherShapes() {
+        #expect(Set(ChatAnalytics.replyFailed(latencyMs: 1).keys) == ChatAnalytics.replyFailedKeys)
+        #expect(Set(ChatAnalytics.quickReplyTapped(.customPrompt).keys) == ChatAnalytics.quickReplyTappedKeys)
+        #expect(ChatAnalytics.quickReplyTapped(.customPrompt)["action_type"] as? String == "custom_prompt")
+        #expect(Set(ChatAnalytics.cardCommitted(source: .card).keys) == ChatAnalytics.cardCommittedKeys)
+    }
+}
