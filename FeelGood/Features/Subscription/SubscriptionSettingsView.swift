@@ -208,12 +208,17 @@ struct SubscriptionSettingsView: View {
                         .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
                 } else {
                     Text("Restore purchases")
-                        .font(FGFont.body.weight(.medium))
-                        .foregroundStyle(FGColor.inkMuted)
+                        .font(FGFont.body.weight(.semibold))
+                        .foregroundStyle(FGColor.ink)
                         .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
+                        .background(FGColor.surface.opacity(0.82), in: Capsule())
+                        .overlay {
+                            Capsule()
+                                .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+                        }
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.feelGoodPress)
             .disabled(isRestoring)
         }
         .frame(maxWidth: .infinity)

@@ -224,11 +224,9 @@ struct FeelGoodPaywallView: View {
                 ctaButtons
                     .padding(.horizontal, FGSpace.page)
                     .padding(.top, FGSpace.s)
-                    .background(
-                        FGColor.bg
-                            .overlay(alignment: .top) { Divider().overlay(FGColor.line) }
-                            .ignoresSafeArea(edges: .bottom)
-                    )
+                    .overlay(alignment: .top) {
+                        Divider().overlay(FGColor.line)
+                    }
             }
         }
     }
@@ -886,7 +884,7 @@ struct FeelGoodPaywallView: View {
     }
 
     private var ctaButtons: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: FGSpace.s) {
             FGPrimaryButton(title: ctaTitle, isEnabled: selectedPackage != nil && !isPurchasing) {
                 purchaseSelectedPlan()
             }
@@ -896,12 +894,17 @@ struct FeelGoodPaywallView: View {
                 finish()
             } label: {
                 Text("Continue with free menu")
-                    .font(.system(.subheadline).weight(.medium))
-                    .foregroundStyle(FGColor.ink.opacity(0.7))
+                    .font(.system(.subheadline).weight(.semibold))
+                    .foregroundStyle(FGColor.ink)
                     .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
                     .contentShape(Rectangle())
+                    .background(FGColor.surface.opacity(0.82), in: Capsule())
+                    .overlay {
+                        Capsule()
+                            .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+                    }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.feelGoodPress)
         }
     }
 

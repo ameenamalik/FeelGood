@@ -504,7 +504,11 @@ struct AuthSheetView: View {
 
     /// Fields and submit action configured for the given mode.
     private func emailFieldsAndSubmit(mode: AuthMode) -> some View {
-        VStack(spacing: FGSpace.s) {
+        let canSubmit = !isLoading
+            && !email.trimmingCharacters(in: .whitespaces).isEmpty
+            && !password.isEmpty
+
+        return VStack(spacing: FGSpace.s) {
             // Email Field
             TextField("Email address", text: $email)
                 .font(FGFont.body)
@@ -544,7 +548,7 @@ struct AuthSheetView: View {
                     Spacer()
                     if isLoading {
                         ProgressView()
-                            .tint(.white)
+                            .tint(FGColor.onActionFill)
                     } else {
                         Text(mode == .signIn ? "Sign In" : "Create Account")
                             .font(FGFont.body.weight(.semibold))
@@ -552,13 +556,12 @@ struct AuthSheetView: View {
                     Spacer()
                 }
                 .padding(.vertical, 14)
-                .foregroundStyle(Color.white)
-                .background(Color(light: 0x231F1C, dark: 0x1A1715))
+                .foregroundStyle(canSubmit ? FGColor.onActionFill : FGColor.inkMuted)
+                .background(canSubmit ? FGColor.actionFill : FGColor.line)
                 .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
             }
-            .buttonStyle(.plain)
-            .disabled(isLoading || email.trimmingCharacters(in: .whitespaces).isEmpty || password.isEmpty)
-            .opacity(email.trimmingCharacters(in: .whitespaces).isEmpty || password.isEmpty ? 0.5 : 1.0)
+            .buttonStyle(.feelGoodPress)
+            .disabled(!canSubmit)
 
             if mode == .signIn {
                 Button("Forgot password?") {
