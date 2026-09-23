@@ -191,6 +191,12 @@ nonisolated struct PlanCheckIn: Hashable, Sendable {
     /// `nil` falls back to everything the profile allows.
     var place: PlaceIntent?
     var bodies: Set<BodyState>
+    /// What was said *today*, e.g. through the chat check-in ("I want to
+    /// calm down"). Overrides `profile.intents` for scoring this one menu —
+    /// it is not persisted (`CheckInRecord` has no column for it), so a
+    /// later swap the same day, or reopening tomorrow, falls back to the
+    /// profile's standing intents same as always.
+    var todayIntent: Intent?
 
     /// Compatibility for call sites that provide a single concern. New
     /// check-ins use `bodies`; reading this returns the first display-ordered
@@ -200,18 +206,20 @@ nonisolated struct PlanCheckIn: Hashable, Sendable {
         set { bodies = newValue.map { Set([$0]) } ?? [] }
     }
 
-    init(energy: Energy, time: TimeBudget, place: PlaceIntent? = nil, body: BodyState? = nil) {
+    init(energy: Energy, time: TimeBudget, place: PlaceIntent? = nil, body: BodyState? = nil, todayIntent: Intent? = nil) {
         self.energy = energy
         self.time = time
         self.place = place
         bodies = body.map { Set([$0]) } ?? []
+        self.todayIntent = todayIntent
     }
 
-    init(energy: Energy, time: TimeBudget, place: PlaceIntent? = nil, bodies: Set<BodyState>) {
+    init(energy: Energy, time: TimeBudget, place: PlaceIntent? = nil, bodies: Set<BodyState>, todayIntent: Intent? = nil) {
         self.energy = energy
         self.time = time
         self.place = place
         self.bodies = bodies
+        self.todayIntent = todayIntent
     }
 }
 

@@ -1272,7 +1272,7 @@ private struct SessionLiquidProgress: View {
 /// The liquid body and its animated surface. Wave height only eases near the
 /// exact empty/full edges, keeping visible swells throughout the session while
 /// still letting a completed step fully cover the top corners.
-private struct LiquidWaveShape: Shape {
+nonisolated private struct LiquidWaveShape: Shape {
     var progress: Double
     var amplitude: CGFloat
     var frequency: CGFloat
@@ -1322,7 +1322,7 @@ private struct LiquidWaveShape: Shape {
 /// The open waterline used for highlights, depth shadows, and underwater
 /// refraction. Keeping it separate avoids drawing an outline around the sides
 /// and bottom of the full liquid body.
-private struct LiquidSurfaceShape: Shape {
+nonisolated private struct LiquidSurfaceShape: Shape {
     var progress: Double
     var amplitude: CGFloat
     var frequency: CGFloat

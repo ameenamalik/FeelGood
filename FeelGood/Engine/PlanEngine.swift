@@ -19,6 +19,10 @@ nonisolated struct PlanWeights: Hashable, Sendable {
     var highIntensityOnLowEnergy: Double = -1.6
     var timeFit: Double = 2.0
     var intentMatch: Double = 2.0
+    /// What was said *today* (e.g. through the chat check-in) outranks a
+    /// standing profile intent, so the plan visibly follows what was just
+    /// asked for rather than a months-old onboarding answer.
+    var todayIntentMatch: Double = 3.5
     var affinity: Double = 2.5
     /// Per prior day in the variety window on which this activity was done.
     var repeatedActivity: Double = -2.5
@@ -236,7 +240,8 @@ nonisolated struct PlanEngine: Sendable {
         // Give every line on the menu something different to say.
         let spoken = distinctReasons(
             ordered: [appetizer, main] + trimmedSides + [trimmedDessert, special],
-            intents: input.profile.intents
+            intents: input.profile.intents,
+            todayIntent: checkIn.todayIntent
         )
         let reasons = Set(spoken.values.flatMap(\.reasons))
         func said(_ item: MenuItem?) -> MenuItem? { item.flatMap { spoken[$0.id] } }
@@ -257,7 +262,7 @@ nonisolated struct PlanEngine: Sendable {
     /// walking down this item's remaining reasons before falling back to
     /// something specific to the session itself. Menu order decides who keeps
     /// the good line, so this order matches the cards the person sees.
-    private func distinctReasons(ordered items: [MenuItem?], intents: Set<Intent>) -> [String: MenuItem] {
+    private func distinctReasons(ordered items: [MenuItem?], intents: Set<Intent>, todayIntent: Intent? = nil) -> [String: MenuItem] {
         var used: Set<String> = []
         var result: [String: MenuItem] = [:]
 
@@ -271,7 +276,7 @@ nonisolated struct PlanEngine: Sendable {
                     for: item.session,
                     codes: codes,
                     gapQuality: nil,
-                    intent: matchingIntent(for: item.session, from: intents)
+                    intent: matchingIntent(for: item.session, from: intents, today: todayIntent)
                 )
             }
             if used.contains(text) { text = MenuCopy.fallbackLine(for: item.session) }
@@ -514,8 +519,15 @@ nonisolated struct PlanEngine: Sendable {
             reasons.append(.varietyBreak)
         }
 
-        // Intent.
-        if input.profile.intents.contains(where: { sessionMatches($0, session: session) }) {
+        // Intent. What was said today overrides the standing profile intents
+        // for this menu — a louder, more specific signal than an onboarding
+        // answer that may be months old. Unstated, profile intents apply.
+        if let todayIntent = checkIn.todayIntent {
+            if sessionMatches(todayIntent, session: session) {
+                score += weights.todayIntentMatch
+                reasons.append(.matchesIntent)
+            }
+        } else if input.profile.intents.contains(where: { sessionMatches($0, session: session) }) {
             score += weights.intentMatch
             reasons.append(.matchesIntent)
         }
@@ -583,14 +595,20 @@ nonisolated struct PlanEngine: Sendable {
                 for: session,
                 codes: ordered,
                 gapQuality: gapQuality,
-                intent: matchingIntent(for: session, from: input.profile.intents)
+                intent: matchingIntent(for: session, from: input.profile.intents, today: checkIn.todayIntent)
             )
         )
         return Candidate(session: session, score: score, item: item)
     }
 
-    private func matchingIntent(for session: Session, from intents: Set<Intent>) -> Intent {
-        Intent.allCases.first { intents.contains($0) && sessionMatches($0, session: session) }
+    /// `today`, when stated, is what the reason line talks about — it's the
+    /// louder, just-asked-for signal `sessionMatches`/scoring above already
+    /// prefers. Falls through to the standing profile intents, in their
+    /// declared order, when nothing was said today or today's doesn't fit
+    /// this particular session.
+    private func matchingIntent(for session: Session, from intents: Set<Intent>, today: Intent? = nil) -> Intent {
+        if let today, sessionMatches(today, session: session) { return today }
+        return Intent.allCases.first { intents.contains($0) && sessionMatches($0, session: session) }
             ?? Intent.allCases.first(where: intents.contains)
             ?? .energize
     }

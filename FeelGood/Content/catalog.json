@@ -341,6 +341,69 @@
       ]
     },
     {
+      "id": "app-loaded-carry-anything",
+      "title": "Carry whatever's heavy",
+      "subtitle": "Two water jugs, a laundry basket, a stack of books",
+      "activity": "carries",
+      "qualities": [
+        "grip",
+        "strength"
+      ],
+      "durationMin": 3,
+      "intensity": 2,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "contraindications": [
+        "lowBack"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "appetizer",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Load up",
+            "seconds": 20,
+            "cue": "Two things of equal weight, one in each hand — jugs, bags, whatever's around."
+          },
+          {
+            "name": "Walk",
+            "seconds": 60,
+            "cue": "Walk slowly around the room. Ribs down, shoulders back, breathe."
+          },
+          {
+            "name": "Set down and shake out",
+            "seconds": 20,
+            "cue": "Put them down before your grip gives out, not after.",
+            "glossaryID": "full-body-shake"
+          },
+          {
+            "name": "Walk again",
+            "seconds": 60,
+            "cue": "One more pass. Same posture."
+          },
+          {
+            "name": "Finish",
+            "seconds": 20,
+            "cue": "Set down. Open and close your hands a few times."
+          }
+        ]
+      }
+    },
+    {
       "id": "app-farmers-carry",
       "title": "Farmer's carry",
       "subtitle": "Three minutes that your grip will thank you for",
