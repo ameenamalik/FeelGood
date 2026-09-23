@@ -345,6 +345,11 @@ private struct TodayScreen: View {
     @State private var tab = Destination.today
     /// A session the widget asked for. Cleared once Today has opened it.
     @State private var requestedSessionID: String?
+    /// `model` is built once and lives for the process, so nothing else
+    /// notices the calendar day rolling over while the app sat suspended in
+    /// the background — a warm resume the next morning would otherwise keep
+    /// showing yesterday's menu.
+    @Environment(\.scenePhase) private var scenePhase
 
     /// Named `Destination` rather than `Tab`: a nested type called `Tab`
     /// shadows SwiftUI's `Tab` view and the TabView stops compiling.
@@ -370,6 +375,11 @@ private struct TodayScreen: View {
         }
         .toolbarBackground(.ultraThinMaterial, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                model.refreshForNewDay()
+            }
+        }
     }
 
     private var tabView: some View {

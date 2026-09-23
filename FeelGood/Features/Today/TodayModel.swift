@@ -188,6 +188,39 @@ final class TodayModel {
         return BanditEngine.coarsenedPreferences(from: state)
     }
 
+    /// Warm resume never re-runs `init`, so nothing else notices the
+    /// calendar day rolling over while the app sat suspended in the
+    /// background. Call this when the app becomes active; it is a no-op if
+    /// `menu.dayStart` is still today. Otherwise it re-derives today's
+    /// check-in and menu the same day-keyed way `init` does: reuse what's
+    /// already stored for today if something is, generate fresh if not.
+    func refreshForNewDay(now: Date = Date()) {
+        let today = calendar.startOfDay(for: now)
+        guard !calendar.isDate(menu.dayStart, inSameDayAs: today) else { return }
+
+        checkIn = log.checkIn(on: today)
+        calendarOpening = nil
+        swappedAway = []
+        todayCustomOverrides = [:]
+        history = log.history(before: now)
+        littleWins = LittleWins.progress(in: log.allHistory(), sessions: everything)
+        dailySwapsCount = Self.swapCount(in: history, on: now, calendar: calendar)
+
+        let sessions = Dictionary(
+            everything.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        if let stored = log.day(today, resolving: { sessions[$0] }) {
+            menu = stored
+        } else {
+            menu = engine.makeMenu(input(now: now))
+            log.save(menu, generatedAt: now)
+        }
+        refreshCompletedToday(now: now)
+        publishSnapshot(now: now)
+        requestCopyUpgrade(now: now)
+    }
+
     /// Rebuilds against whatever the store now holds. Used when history
     /// changes underneath the screen rather than because of it.
     func reload(now: Date = Date()) {

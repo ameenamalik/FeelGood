@@ -203,7 +203,8 @@ nonisolated struct ConversationalOverrides: Hashable, Sendable {
         let finalTime = time ?? fallback?.time ?? .twentyMinutes
         let finalPlace = place ?? fallback?.place
         let finalBody = body ?? fallback?.body
-        return PlanCheckIn(energy: finalEnergy, time: finalTime, place: finalPlace, body: finalBody)
+        let finalIntent = intent ?? fallback?.todayIntent
+        return PlanCheckIn(energy: finalEnergy, time: finalTime, place: finalPlace, body: finalBody, todayIntent: finalIntent)
     }
 
     var hasAnyOverrides: Bool {
