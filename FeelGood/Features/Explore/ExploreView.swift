@@ -575,6 +575,8 @@ struct ExploreView: View {
         }
 
         let startedAt = Date()
+        let workArounds = model.profile.workArounds
+        let lookupSession: (String) -> Session? = { id in model.everything.first { $0.id == id } }
         Task {
             let response = await service.describeDay(
                 prompt: trimmed,
@@ -586,6 +588,24 @@ struct ExploreView: View {
 
             await MainActor.run {
                 isProcessing = false
+                // The server never sees work-arounds, so the check that keeps a
+                // conflicting session out of chat happens here, on the phone.
+                let response = response.map { reply in
+                    ChatSafety.apply(
+                        to: reply,
+                        workArounds: workArounds,
+                        lookup: lookupSession,
+                        replacement: { rejected in
+                            LocalStatefulChatEngine.matchBestSession(
+                                targetDuration: rejected.durationMin,
+                                intensity: rejected.intensity,
+                                excludeID: rejected.sessionID,
+                                userContext: userContext,
+                                workArounds: workArounds
+                            )
+                        }
+                    )
+                }
                 let latencyMs = Int(Date().timeIntervalSince(startedAt) * 1000)
                 guard let response else {
                     Analytics.capture(ChatAnalytics.replyFailedEvent, properties: ChatAnalytics.replyFailed(latencyMs: latencyMs))

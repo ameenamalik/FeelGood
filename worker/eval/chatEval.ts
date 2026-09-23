@@ -16,6 +16,10 @@ export interface EvalExpect {
   intensity?: string[];
   /** If a card comes back, none of these session ids may be it. */
   notSessionIds?: string[];
+  /** If a card comes back, it must be one of these session ids. */
+  sessionIdIn?: string[];
+  /** The message must match at least one of these. Used for "points to a professional" style rules. */
+  messageMatchesAny?: RegExp[];
 }
 
 export interface EvalCase {
@@ -23,6 +27,9 @@ export interface EvalCase {
   prompt: string;
   history?: { role: "user" | "model"; text: string }[];
   userContext?: Record<string, unknown>;
+  /** Today's menu as the app sends it, for questions about an item on screen. */
+  todaysMenu?: Record<string, unknown>[];
+  activeSessionID?: string;
   expect: EvalExpect;
 }
 
@@ -60,10 +67,25 @@ export function checkReply(testCase: EvalCase, reply: EvalReply): string[] {
     if (expect.notSessionIds?.includes(card.session_id)) {
       failures.push(`card ${card.session_id} was excluded but came back`);
     }
+    if (expect.sessionIdIn && !expect.sessionIdIn.includes(card.session_id)) {
+      failures.push(`card ${card.session_id} is not one of [${expect.sessionIdIn.join(", ")}]`);
+    }
   }
   const message = reply.message ?? "";
   if (message.trim().length === 0) failures.push("empty message");
+  if (expect.messageMatchesAny && !expect.messageMatchesAny.some((pattern) => pattern.test(message))) {
+    failures.push("message does not say what this case requires");
+  }
   if (MEDICAL_CLAIM.test(message)) failures.push("message makes a medical claim");
   if (ENDEARMENT.test(message)) failures.push("message uses a term of endearment");
   return failures;
+}
+
+export type CaseStatus = "stable" | "flaky" | "failing";
+
+/** One case, run several times: stable only if every run passed. */
+export function summarizeRuns(runs: string[][]): { status: CaseStatus; passes: number; total: number } {
+  const passes = runs.filter((failures) => failures.length === 0).length;
+  const status: CaseStatus = passes === runs.length ? "stable" : passes === 0 ? "failing" : "flaky";
+  return { status, passes, total: runs.length };
 }
