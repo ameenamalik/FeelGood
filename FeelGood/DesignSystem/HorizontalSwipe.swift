@@ -87,7 +87,7 @@ extension View {
         isEnabled: Bool,
         offset: Binding<CGFloat>,
         reduceMotion: Bool,
-        onSkip: @escaping () -> Void
+        onSkip: @escaping () -> Bool
     ) -> some View {
         gesture(
             FGHorizontalSwipe(
@@ -102,14 +102,20 @@ extension View {
                     if x < -50 || predicted < -100 {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         if reduceMotion {
-                            onSkip()
+                            _ = onSkip()
                         } else {
                             withAnimation(.easeOut(duration: 0.18)) {
                                 offset.wrappedValue = -UIScreen.main.bounds.width
                             }
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
-                                onSkip()
-                                offset.wrappedValue = 0
+                                let didReplaceCard = onSkip()
+                                // A replacement gets fresh local state. Resetting
+                                // this binding as the old card transitions out
+                                // briefly pulls that card back to the origin and
+                                // causes a visible hitch at the handoff.
+                                if !didReplaceCard {
+                                    offset.wrappedValue = 0
+                                }
                             }
                         }
                     } else {
