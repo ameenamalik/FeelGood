@@ -164,7 +164,7 @@ The app already has **Little Wins** (`Features/LittleWins/`): six lifetime miles
 1. Token migration of hardcoded literals. No visual change. Ship. **Done in the working tree, uncommitted:** 15 roles added to `FGColor`, every literal in `Features/` moved, and `DesignTokenBoundaryTests` fails on any new one. The widget target keeps its own literals until phase 5.
 2. Trait/bridge spike and `FGTheme` type. No visual change. **Spike answered (§13): the bridge works.** **`FGThemeID`, the trait, the bridge and `Color(light:dark:overrides:)` are built** (`DesignSystem/Theme.swift`), with 10 passing tests. Every token is unchanged until a theme overrides it. Deviation from §5 step 4: themes are per-token `overrides` on each colour, not one big `FGTheme` struct of every role, so a theme can be filled in one token at a time. **The theme is on the app root** (`.fgTheme(...)`, backed by `ThemeSettings` in `Services/`), and sheets and full-screen covers are verified in the running app (§13).
 3. Kiln + Moss as the new default (replaces current colours). Ship.
-4. Indigo, unlock, and the Look picker. Ship.
+4. Indigo, unlock, and the Look picker. Ship. **Built, uncommitted:** Indigo light and dark as per-token overrides, unlocked by the Variety Pack win (`FGThemeID.unlocked(by:)`), a "Your look" picker in You that does not exist on screen until a second look is earned, and one extra line in the Variety Pack celebration. Verified in the running app in both appearances, and with an unearned choice falling back to Kiln silently. Debug flags: `-FGUnlockAllThemes`, `-fgTheme indigo`. Not built: a "Try it" button in the unlock moment, and a crossfade when switching.
 5. Widget follows theme.
 
 ## 12. Risks

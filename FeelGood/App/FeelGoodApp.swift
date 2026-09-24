@@ -99,10 +99,7 @@ struct FeelGoodApp: App {
                     RootView(content: content)
                 }
             }
-            // The theme rides the trait bridge (Theme.swift), so every token
-            // under here — and every sheet presented over it — resolves against
-            // it without a view passing it along.
-            .fgTheme(themeSettings.selected)
+            .environment(themeSettings)
         }
         .modelContainer(storage.container)
         .environment(PurchasesManager.shared)
@@ -350,6 +347,7 @@ private struct TodayScreen: View {
     /// Which tab is showing, so a deep link can bring Today forward even if
     /// the app was last left on the reflection.
     @State private var tab = Destination.today
+    @Environment(ThemeSettings.self) private var themeSettings
     /// A session the widget asked for. Cleared once Today has opened it.
     @State private var requestedSessionID: String?
     /// `model` is built once and lives for the process, so nothing else
@@ -380,6 +378,10 @@ private struct TodayScreen: View {
 
             tabView
         }
+        // The theme rides the trait bridge (Theme.swift), so every token under
+        // here — and every sheet presented over it — resolves against it without
+        // a view passing it along. Onboarding sits outside this and stays Kiln.
+        .fgTheme(themeSettings.effective(unlocked: FGThemeID.unlocked(by: model.littleWins)))
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 model.refreshForNewDay()

@@ -836,10 +836,10 @@ private struct MenuItemBody: View {
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .lineLimit(1)
                         .fixedSize()
-                        .foregroundStyle(item.course.accentText)
+                        .foregroundStyle(item.course.chipText)
                         .padding(.horizontal, 11)
                         .padding(.vertical, 5)
-                        .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
+                        .background(item.course.chipFill)
                         .clipShape(Capsule())
 
                     if isDone {
@@ -873,7 +873,7 @@ private struct MenuItemBody: View {
                 .scaledToFit()
                 .frame(width: 52, height: 52)
                 .padding(4)
-                .background(Circle().fill(FGColor.plate))
+                .background(Circle().fill(item.course.plate))
                 .accessibilityHidden(true)
                 .padding(.bottom, 2)
         }
