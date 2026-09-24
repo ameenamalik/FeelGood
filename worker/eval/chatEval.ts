@@ -4,6 +4,7 @@
 // behavior and not on phrasing.
 
 import { CATALOG_SESSIONS } from "../src/catalog_index.ts";
+import { isSessionAvailable, parseAvailability } from "../src/availability.ts";
 
 export interface EvalExpect {
   /** Reply mode must be one of these. */
@@ -18,6 +19,8 @@ export interface EvalExpect {
   notSessionIds?: string[];
   /** If a card comes back, it must be one of these session ids. */
   sessionIdIn?: string[];
+  /** If a card comes back, its session must focus on this body area (e.g. "upperBody"). No card is also acceptable: an honest "nothing for that" beats an unrelated card. */
+  focusOrNoCard?: string;
   /** The message must match at least one of these. Used for "points to a professional" style rules. */
   messageMatchesAny?: RegExp[];
 }
@@ -69,6 +72,15 @@ export function checkReply(testCase: EvalCase, reply: EvalReply): string[] {
     }
     if (expect.sessionIdIn && !expect.sessionIdIn.includes(card.session_id)) {
       failures.push(`card ${card.session_id} is not one of [${expect.sessionIdIn.join(", ")}]`);
+    }
+    const session = CATALOG_SESSIONS.find((s) => s.id === card.session_id);
+    // Holds for every case that sends availability: a card the person can't do is a failure.
+    const availability = parseAvailability(testCase.userContext);
+    if (session && availability && !isSessionAvailable(session, availability)) {
+      failures.push(`card ${card.session_id} needs equipment, a place or an activity this person doesn't have`);
+    }
+    if (session && expect.focusOrNoCard && !session.bodyFocus.includes(expect.focusOrNoCard)) {
+      failures.push(`card ${card.session_id} focuses on [${session.bodyFocus.join(", ")}], not ${expect.focusOrNoCard}`);
     }
   }
   const message = reply.message ?? "";

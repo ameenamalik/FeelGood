@@ -242,7 +242,7 @@ nonisolated extension Energy {
 nonisolated extension TimeBudget {
     var checkInLabel: String {
         switch self {
-        case .zeroMinutes: "Rest day"
+        case .zeroMinutes: "Recovery day"
         case .fiveMinutes: "Five minutes"
         case .aLittle: "Ten minutes"
         case .fifteenMinutes: "Fifteen minutes"

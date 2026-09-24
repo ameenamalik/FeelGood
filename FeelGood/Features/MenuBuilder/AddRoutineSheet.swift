@@ -63,12 +63,21 @@ struct AddRoutineSheet: View {
         } ?? false)
     }
 
-    private var isValid: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && parts.contains { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    /// What's typed in the "Add a part" field but not yet added. Saving takes
+    /// it as the last part, so one step never needs a trip to the plus button.
+    private var pendingPart: CustomRoutinePart? {
+        let trimmed = partTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : CustomRoutinePart(title: trimmed, durationMin: partDurationMin)
     }
 
-    private var totalDurationMin: Int { parts.reduce(0) { $0 + $1.durationMin } }
+    private var allParts: [CustomRoutinePart] { parts + [pendingPart].compactMap { $0 } }
+
+    private var isValid: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && allParts.contains { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
+    private var totalDurationMin: Int { allParts.reduce(0) { $0 + $1.durationMin } }
 
     var body: some View {
         NavigationStack {
@@ -195,8 +204,8 @@ struct AddRoutineSheet: View {
                                         .strokeBorder(isPartTitleFocused ? FGColor.clayDeep : FGColor.line, lineWidth: isPartTitleFocused ? 1.5 : 1)
                                 )
 
-                                if !parts.isEmpty {
-                                    Text("\(parts.count) \(parts.count == 1 ? "part" : "parts") · \(totalDurationMin) min total")
+                                if !allParts.isEmpty {
+                                    Text("\(allParts.count) \(allParts.count == 1 ? "part" : "parts") · \(totalDurationMin) min total")
                                         .font(FGFont.caption)
                                         .foregroundStyle(FGColor.inkMuted)
                                 }
@@ -374,7 +383,7 @@ struct AddRoutineSheet: View {
         let trimmedDescription = sessionDescription.trimmingCharacters(in: .whitespacesAndNewlines)
 
         let description = trimmedDescription.isEmpty ? nil : trimmedDescription
-        let cleanedParts = parts.compactMap { part -> CustomRoutinePart? in
+        let cleanedParts = allParts.compactMap { part -> CustomRoutinePart? in
             let partTitle = part.title.trimmingCharacters(in: .whitespacesAndNewlines)
             return partTitle.isEmpty ? nil : CustomRoutinePart(id: part.id, title: partTitle, durationMin: part.durationMin)
         }

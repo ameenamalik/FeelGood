@@ -2,7 +2,8 @@
 //  ChatSafety.swift
 //  FeelGood
 //
-//  Chat suggestions get the same work-around filter the plan engine applies.
+//  Chat suggestions get the same work-around and availability filters the plan
+//  engine applies (availability: see ChatAvailability).
 //
 //  The chat server never learns someone's work-arounds (they are reproductive
 //  and body health data and have no path off the device), so it cannot filter
@@ -31,18 +32,23 @@ nonisolated enum ChatSafety {
     static func apply(
         to response: ChatResponse,
         workArounds: Set<WorkAround>,
+        availability: ChatAvailability? = nil,
         lookup: (String) -> Session?,
         replacement: (StructuredRecommendation) -> Session?
     ) -> ChatResponse {
-        guard !workArounds.isEmpty, let card = response.recommendation else { return response }
+        guard !workArounds.isEmpty || availability != nil, let card = response.recommendation else { return response }
+
+        func isAcceptable(_ session: Session) -> Bool {
+            !conflicts(session, workArounds: workArounds) && availability?.allows(session) ?? true
+        }
 
         // A card whose session cannot be found is treated as unsafe: the
         // screen would otherwise open a fuzzy match nobody checked.
-        if let session = lookup(card.sessionID), !conflicts(session, workArounds: workArounds) {
+        if let session = lookup(card.sessionID), isAcceptable(session) {
             return response
         }
 
-        if let safe = replacement(card), !conflicts(safe, workArounds: workArounds) {
+        if let safe = replacement(card), isAcceptable(safe) {
             return ChatResponse(
                 message: replacementMessage,
                 mode: .recommendation,
