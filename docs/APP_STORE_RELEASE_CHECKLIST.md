@@ -14,7 +14,7 @@ Last audited: 2026-09-19 (Build 14; project bumped to Build 15)
 - [x] The free daily swap survives an app relaunch.
 - [x] The Worker fails closed when its RevenueCat secret is absent and verifies `pro` server-side before an AI request.
 - [x] Terms (`https://feelgood-web.vercel.app/terms`), Privacy Policy (`https://feelgood-web.vercel.app/privacy`), Support mailto, Calendar usage copy, and privacy manifests (`PrivacyInfo.xcprivacy` in app, widget, and OneSignal extension) are present and verified.
-- [x] Target device family configured as iPhone-only (`TARGETED_DEVICE_FAMILY = 1`), eliminating iPad screenshot upload blockers.
+- [x] Device family is iPhone and iPad (`TARGETED_DEVICE_FAMILY = "1,2"`), as shipped in 1.0.1. The listing needs iPad screenshots.
 - [x] Screenshot-based PostHog session replay is disabled in Release; allow-listed analytics events remain enabled.
 - [x] Swift Release build, full iOS unit suite, Worker typecheck, and backend agent tests pass.
 - [x] The paywall shows a free trial only when RevenueCat reports the person eligible for it (`checkTrialOrIntroDiscountEligibility`); otherwise the button reads "Subscribe, $X".

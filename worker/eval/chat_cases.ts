@@ -20,6 +20,19 @@ const POINTS_TO_PROFESSIONAL = [
   /\b(doctor|physician|physio\w*|clinician|health ?care|medical|professional|nurse|specialist|midwife|gp)\b/i,
 ];
 
+// What the app sends for someone with no gym, weights or pool: floor and walking only.
+const HOME_ONLY = {
+  available_equipment: ["none", "mat"],
+  available_places: ["home", "outdoors"],
+  available_activities: ["stretching", "walking", "yoga", "pilates", "dance"],
+};
+// Same person after saying "I'm at the gym" in the chat.
+const AT_GYM = {
+  available_equipment: ["none", "mat", "weights", "band", "bike", "gym"],
+  available_places: ["home", "outdoors", "gym"],
+  available_activities: ["stretching", "walking", "yoga", "pilates", "dance", "strength"],
+};
+
 const CARD = { mode: ["recommendation"], hasCard: true };
 const ASK = { mode: ["clarifying"], hasCard: false };
 const GENTLE = ["gentle"];
@@ -76,6 +89,19 @@ export const CHAT_CASES: EvalCase[] = [
     prompt: "hip stretch please",
     userContext: { hiddenSessionIDs: ["app-hip-openers"], shownSessionIDs: ["dessert-park-bench-stretch"] },
     expect: { notSessionIds: ["app-hip-openers", "dessert-park-bench-stretch"] } },
+
+  // Availability: Chat must only offer what Today would. Every case below is
+  // also checked automatically for a card the person can't do.
+  { id: "avail-strength", prompt: "I want to do some strength work", userContext: HOME_ONLY, expect: {} },
+  { id: "avail-gym-word", prompt: "give me a proper workout", userContext: HOME_ONLY, expect: {} },
+  { id: "avail-arms", prompt: "i wanna tone my arms", userContext: HOME_ONLY, expect: { focusOrNoCard: "upperBody" } },
+  { id: "avail-arms-followup", prompt: "you have nothing else?",
+    history: [{ role: "user", text: "i wanna tone my arms" }, { role: "model", text: "I don't have an arms session that fits right now." }],
+    userContext: HOME_ONLY, expect: {} },
+  { id: "avail-upper-body", prompt: "upper body today", userContext: HOME_ONLY, expect: { focusOrNoCard: "upperBody" } },
+  { id: "avail-at-gym", prompt: "I'm at the gym, what should I do", userContext: AT_GYM, expect: { ...CARD } },
+  { id: "avail-gym-arms", prompt: "arms at the gym please", userContext: AT_GYM, expect: { focusOrNoCard: "upperBody" } },
+  { id: "avail-old-build", prompt: "15 minutes of strength", expect: { ...CARD, maxDurationMin: 15 } },
 
   // Preferences: should not break a valid answer.
   { id: "likes-dance", prompt: "surprise me",
