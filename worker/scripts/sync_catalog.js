@@ -111,6 +111,7 @@ export function matchBestSession(params: {
   preferredIntensityTier?: "gentle" | "moderate" | "dynamic";
   topExploredActivities?: string[];
   fatigueSensitivity?: number;
+  isAvailable?: (s: CatalogSessionItem) => boolean;
 }): CatalogSessionItem {
   let best: CatalogSessionItem = CATALOG_SESSIONS[0]!;
   let bestScore = -999;
@@ -118,6 +119,7 @@ export function matchBestSession(params: {
   for (const s of CATALOG_SESSIONS) {
     if (params.hiddenSessionIds && params.hiddenSessionIds.includes(s.id)) continue;
     if (params.excludeId && s.id === params.excludeId) continue;
+    if (params.isAvailable && !params.isAvailable(s)) continue;
     let score = 0;
 
     if (params.targetDuration) {
