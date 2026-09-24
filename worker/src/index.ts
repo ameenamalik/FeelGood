@@ -2,6 +2,7 @@ import { handleChat, isValidChatPayload } from "./chat";
 import { acceptCopyLine } from "./copyLine";
 import { hasProEntitlement } from "./entitlement";
 import { supportResponse, termsResponse } from "./legal";
+import { appSiteAssociationResponse } from "./appSiteAssociation";
 import { playerResponse } from "./player";
 import { isRateLimited } from "./rateLimit";
 import { COPY_SYSTEM_PROMPT } from "./systemPrompt";
@@ -27,6 +28,14 @@ export default {
           support: "GET /support",
         },
       });
+    }
+
+    // Password AutoFill domain check. Apple looks in both places.
+    if (
+      url.pathname === "/.well-known/apple-app-site-association" ||
+      url.pathname === "/apple-app-site-association"
+    ) {
+      return appSiteAssociationResponse();
     }
 
     // Static Legal & Policy routes (App Store Review requirement)
