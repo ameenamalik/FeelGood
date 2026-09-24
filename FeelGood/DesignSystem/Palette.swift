@@ -46,12 +46,12 @@ nonisolated enum FGColor {
     // MARK: Surfaces
 
     /// The page. Linen by day, deep moss by night.
-    static let bg = Color(light: 0xF4EEE3, dark: 0x1D2922)
+    static let bg = Color(light: 0xF4EEE3, dark: 0x1D2922, overrides: [.indigo: FGThemePair(light: 0xECE8E1, dark: 0x131829)])
     /// Cards and sheets.
-    static let surface = Color(light: 0xFBF6EC, dark: 0x2A3A31)
+    static let surface = Color(light: 0xFBF6EC, dark: 0x2A3A31, overrides: [.indigo: FGThemePair(light: 0xFBF9F5, dark: 0x212948)])
     /// Decorative hairlines — chip outlines, the progress track. Nothing is
     /// identified by these alone, so they stay quiet at ~1.2:1.
-    static let line = Color(light: 0xE3DACB, dark: 0x33453A)
+    static let line = Color(light: 0xE3DACB, dark: 0x33453A, overrides: [.indigo: FGThemePair(light: 0xDDD8CE, dark: 0x2E3760)])
 
     /// The boundary of anything you can tap.
     ///
@@ -59,23 +59,23 @@ nonisolated enum FGColor {
     /// edge — WCAG 1.4.11 wants 3:1 for that. These are the lightest warm
     /// greys that clear it against both the card fill and the page: 3.63:1
     /// and 3.42:1 in light; 4.6:1 and 3.7:1 in dark.
-    static let lineStrong = Color(light: 0x8E857B, dark: 0x7A9484)
+    static let lineStrong = Color(light: 0x8E857B, dark: 0x7A9484, overrides: [.indigo: FGThemePair(light: 0x858282, dark: 0x7480B0)])
 
     // MARK: Type
 
     /// Primary type. 14.0:1 on the page in light, 12.9:1 in dark.
-    static let ink = Color(light: 0x2A1E18, dark: 0xF3EDE0)
+    static let ink = Color(light: 0x2A1E18, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0x1F2233, dark: 0xEEF0F8)])
     /// Secondary type. 5.3:1 on the page in light, 8.6:1 in dark. Not for use on
     /// the glaze cards in light mode (3.5–4.1:1 there); use `ink` on those.
-    static let inkMuted = Color(light: 0x6B6155, dark: 0xBCC6B8)
+    static let inkMuted = Color(light: 0x6B6155, dark: 0xBCC6B8, overrides: [.indigo: FGThemePair(light: 0x555A73, dark: 0xB9BFD8)])
 
     /// The dark fill of a primary action — the chat recommendation's "Start"
     /// and `FGPrimaryButton` both read this, so they can't drift apart.
     /// Kiln plum in light mode and soft sage in dark mode, where a dark fill
     /// would disappear into the moss page.
-    static let actionFill = Color(light: 0x4B2A3A, dark: 0xC6DAC4)
+    static let actionFill = Color(light: 0x4B2A3A, dark: 0xC6DAC4, overrides: [.indigo: FGThemePair(light: 0x2F3A5F, dark: 0xEFE6D2)])
     /// Label on `actionFill`.
-    static let onActionFill = Color(light: 0xFBF3E8, dark: 0x2B1A1A)
+    static let onActionFill = Color(light: 0xFBF3E8, dark: 0x2B1A1A, overrides: [.indigo: FGThemePair(light: 0xF5F1EA, dark: 0x1F2233)])
 
     /// Interactive controls whose fill must carry a white system affordance
     /// (for example, the thumb of a Toggle). Unlike the pastel accents below,
@@ -146,9 +146,9 @@ nonisolated enum FGColor {
     /// trough included: 4.78:1 at the core, 5.31:1 at the middle, 4.98:1 at
     /// the edge.
     static let washGradient = Gradient(colors: [
-        Color(light: 0xF9DEE0, dark: 0x2E3A30),
-        Color(light: 0xF7EFE4, dark: 0x223027),
-        Color(light: 0xF3E8CE, dark: 0x2A3324),
+        Color(light: 0xF9DEE0, dark: 0x2E3A30, overrides: [.indigo: FGThemePair(light: 0xE4E8F6, dark: 0x1D2547)]),
+        Color(light: 0xF7EFE4, dark: 0x223027, overrides: [.indigo: FGThemePair(light: 0xEDEBE6, dark: 0x161C33)]),
+        Color(light: 0xF3E8CE, dark: 0x2A3324, overrides: [.indigo: FGThemePair(light: 0xEEE6D6, dark: 0x191F38)]),
     ])
 
     // MARK: Roles that used to be literals in feature files
@@ -159,31 +159,31 @@ nonisolated enum FGColor {
 
     /// A recessed panel on the page: the assistant's chat bubble and the small
     /// tinted pills on the paywall.
-    static let panel = Color(light: 0xEBE2D2, dark: 0x33453A)
+    static let panel = Color(light: 0xEBE2D2, dark: 0x33453A, overrides: [.indigo: FGThemePair(light: 0xE2DED6, dark: 0x2B3457)])
     /// A panel one step above `panel`, for a small tappable control that sits
     /// on it (the new-chat button).
-    static let panelRaised = Color(light: 0xEBE2D2, dark: 0x3A4D40)
+    static let panelRaised = Color(light: 0xEBE2D2, dark: 0x3A4D40, overrides: [.indigo: FGThemePair(light: 0xE2DED6, dark: 0x323C66)])
     /// The chat composer's text field.
-    static let inputFill = Color(light: 0xEBE2D2, dark: 0x26352C)
+    static let inputFill = Color(light: 0xEBE2D2, dark: 0x26352C, overrides: [.indigo: FGThemePair(light: 0xE2DED6, dark: 0x1B2240)])
     /// The open conversation's row in the chat history list.
-    static let selectedRow = Color(light: 0xEFE6D6, dark: 0x33453A)
+    static let selectedRow = Color(light: 0xEFE6D6, dark: 0x33453A, overrides: [.indigo: FGThemePair(light: 0xE6E2DA, dark: 0x2B3457)])
     /// The assistant's reply inside the check-in, tinted sage.
-    static let sagePanel = Color(light: 0xE6EEDD, dark: 0x26402F)
+    static let sagePanel = Color(light: 0xE6EEDD, dark: 0x26402F, overrides: [.indigo: FGThemePair(light: 0xE2EAE0, dark: 0x24392F)])
 
     /// The person's own chat bubble and the paywall's speech-bubble pills.
-    static let userBubble = Color(light: 0x2A1E18, dark: 0x3E5145)
+    static let userBubble = Color(light: 0x2A1E18, dark: 0x3E5145, overrides: [.indigo: FGThemePair(light: 0x2F3A5F, dark: 0x3A4675)])
     /// Type on a deep fill (`userBubble`, `sideBadge`). Does not flip with the
     /// appearance, because the fills underneath it are dark in both.
     static let onDeepFill = Color(light: 0xFFFFFF, dark: 0xFFFFFF)
 
     /// The chat send button.
     static let sendGradient = LinearGradient(
-        colors: [Color(light: 0xFCCAB5, dark: 0x6E4032), Color(light: 0xF5B2A3, dark: 0x5C2E24)],
+        colors: [Color(light: 0xFCCAB5, dark: 0x6E4032, overrides: [.indigo: FGThemePair(light: 0x2F3A5F, dark: 0xEFE6D2)]), Color(light: 0xF5B2A3, dark: 0x5C2E24, overrides: [.indigo: FGThemePair(light: 0x2F3A5F, dark: 0xEFE6D2)])],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
     /// The arrow on `sendGradient`.
-    static let onSend = Color(light: 0x37241D, dark: 0xFCEFEA)
+    static let onSend = Color(light: 0x37241D, dark: 0xFCEFEA, overrides: [.indigo: FGThemePair(light: 0xF5F1EA, dark: 0x1F2233)])
 
     /// The saturated end of the Side course's sage: a pill that leads instead
     /// of receding into the card. White type on it clears 4.5:1.
@@ -193,23 +193,24 @@ nonisolated enum FGColor {
     /// type in Kiln; soft sage with ink type in Moss, where a dark block would
     /// vanish. Sage rather than blush because the peach mascot disappeared on
     /// blush. Flat (two equal stops) so it stays a `LinearGradient` for callers.
+    static let bannerFill = Color(light: 0x4B2A3A, dark: 0xC6DAC4, overrides: [.indigo: FGThemePair(light: 0x2F3A5F, dark: 0xEFE6D2)])
     static let bannerGradient = LinearGradient(
-        colors: [Color(light: 0x4B2A3A, dark: 0xC6DAC4), Color(light: 0x4B2A3A, dark: 0xC6DAC4)],
+        colors: [bannerFill, bannerFill],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
     /// Type on the banner. 11.3:1 on plum, 11.2:1 on sage.
-    static let onBanner = Color(light: 0xFBF3E8, dark: 0x2B1A1A)
+    static let onBanner = Color(light: 0xFBF3E8, dark: 0x2B1A1A, overrides: [.indigo: FGThemePair(light: 0xF5F1EA, dark: 0x1F2233)])
     /// The soft glow behind the banner's mascots.
-    static let bannerGlow = Color(light: 0xFFE8CD, dark: 0xFFFFFF)
+    static let bannerGlow = Color(light: 0xFFE8CD, dark: 0xFFFFFF, overrides: [.indigo: FGThemePair(light: 0xD5D9EA, dark: 0xFFFFFF)])
 
     /// The outline of the tab bar. Ink in light; a lifted moss in dark (4.6:1 on the page, 3.7:1 on the bar), where
     /// ink would be near-white and too loud around a bar. 3:1 or better on the page.
-    static let tabBarEdge = Color(light: 0x2A1E18, dark: 0x7A9484)
+    static let tabBarEdge = Color(light: 0x2A1E18, dark: 0x7A9484, overrides: [.indigo: FGThemePair(light: 0x1F2233, dark: 0x7480B0)])
 
     /// The round plate a mascot sits on, so its colour never depends on the
     /// card behind it (the orange fruit vanished into the peach card).
-    static let plate = Color(light: 0xFBF6EC, dark: 0xF3EDE0)
+    static let plate = Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xFBF9F5, dark: 0xF3EDE0)])
 
     /// The stand-in for the app icon while it loads. Fixed: it imitates an
     /// artwork, not a surface.
@@ -439,14 +440,15 @@ nonisolated extension Course {
     }
 
     /// The course's glaze, as a flat colour. Kiln glazes by day, Moss glazes by
-    /// night; ink (or cream) type on each clears 7.7:1.
+    /// night; ink (or cream) type on each clears 7.7:1. Indigo drops the glaze
+    /// for paper (dark: ink cloth) and moves the colour to the chip and plate.
     var fill: Color {
         switch self {
-        case .appetizer: Color(light: 0xF0C9A8, dark: 0x5A3A32)
-        case .main: Color(light: 0xE9D392, dark: 0x4F4A25)
-        case .side: Color(light: 0xBBD0B6, dark: 0x2F4A3C)
-        case .dessert: Color(light: 0xE3B9C4, dark: 0x5B3446)
-        case .special: Color(light: 0xD9CFBE, dark: 0x3A3A34)
+        case .appetizer: Color(light: 0xF0C9A8, dark: 0x5A3A32, overrides: [.indigo: FGThemePair(light: 0xFBF9F5, dark: 0x212948)])
+        case .main: Color(light: 0xE9D392, dark: 0x4F4A25, overrides: [.indigo: FGThemePair(light: 0xFBF9F5, dark: 0x212948)])
+        case .side: Color(light: 0xBBD0B6, dark: 0x2F4A3C, overrides: [.indigo: FGThemePair(light: 0xFBF9F5, dark: 0x212948)])
+        case .dessert: Color(light: 0xE3B9C4, dark: 0x5B3446, overrides: [.indigo: FGThemePair(light: 0xFBF9F5, dark: 0x212948)])
+        case .special: Color(light: 0xD9CFBE, dark: 0x3A3A34, overrides: [.indigo: FGThemePair(light: 0xFBF9F5, dark: 0x212948)])
         }
     }
 
@@ -454,11 +456,11 @@ nonisolated extension Course {
     /// tappable card has a visible boundary (WCAG 1.4.11).
     var edge: Color {
         switch self {
-        case .appetizer: Color(light: 0xA47F61, dark: 0x91685A)
-        case .main: Color(light: 0x9C8543, dark: 0x7C7538)
-        case .side: Color(light: 0x768C6F, dark: 0x517B66)
-        case .dessert: Color(light: 0xA97A87, dark: 0x94647B)
-        case .special: Color(light: 0x8F8676, dark: 0x7B7A6C)
+        case .appetizer: Color(light: 0xA47F61, dark: 0x91685A, overrides: [.indigo: FGThemePair(light: 0x858282, dark: 0x5C6694)])
+        case .main: Color(light: 0x9C8543, dark: 0x7C7538, overrides: [.indigo: FGThemePair(light: 0x858282, dark: 0x5C6694)])
+        case .side: Color(light: 0x768C6F, dark: 0x517B66, overrides: [.indigo: FGThemePair(light: 0x858282, dark: 0x5C6694)])
+        case .dessert: Color(light: 0xA97A87, dark: 0x94647B, overrides: [.indigo: FGThemePair(light: 0x858282, dark: 0x5C6694)])
+        case .special: Color(light: 0x8F8676, dark: 0x7B7A6C, overrides: [.indigo: FGThemePair(light: 0x858282, dark: 0x5C6694)])
         }
     }
 
@@ -468,24 +470,60 @@ nonisolated extension Course {
         LinearGradient(colors: [fill, fill], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
+    /// The round plate the course's mascot sits on. The same cream in Kiln and
+    /// Moss; in Indigo it carries the course's colour, since the card does not.
+    var plate: Color {
+        switch self {
+        case .appetizer: Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xF6D3B8, dark: 0xF6D3B8)])
+        case .main: Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xEFDDA0, dark: 0xEFDDA0)])
+        case .side: Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xCBDCC6, dark: 0xCBDCC6)])
+        case .dessert: Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xF0CBD3, dark: 0xF0CBD3)])
+        case .special: Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xE2DED6, dark: 0xD8D2C7)])
+        }
+    }
+
+    /// The label pill on a Today card ("APPETIZER"). Cream with ink type in
+    /// Kiln and Moss; a tint of the course's own colour in Indigo.
+    var chipFill: Color {
+        switch self {
+        case .appetizer: Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xF6D3B8, dark: 0x5A3520)])
+        case .main: Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xEFDDA0, dark: 0x4F4210)])
+        case .side: Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xCBDCC6, dark: 0x24463A)])
+        case .dessert: Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xF0CBD3, dark: 0x5E2A44)])
+        case .special: Color(light: 0xFBF6EC, dark: 0xF3EDE0, overrides: [.indigo: FGThemePair(light: 0xE2DED6, dark: 0x33395A)])
+        }
+    }
+
+    /// Type on `chipFill`.
+    var chipText: Color {
+        switch self {
+        case .appetizer: Color(light: 0x2A1E18, dark: 0x2B1A1A, overrides: [.indigo: FGThemePair(light: 0x5E2E0E, dark: 0xF6D3B8)])
+        case .main: Color(light: 0x2A1E18, dark: 0x2B1A1A, overrides: [.indigo: FGThemePair(light: 0x4F3A00, dark: 0xEFDDA0)])
+        case .side: Color(light: 0x2A1E18, dark: 0x2B1A1A, overrides: [.indigo: FGThemePair(light: 0x1E3B2B, dark: 0xCBDCC6)])
+        case .dessert: Color(light: 0x2A1E18, dark: 0x2B1A1A, overrides: [.indigo: FGThemePair(light: 0x5E1F3A, dark: 0xF0CBD3)])
+        case .special: Color(light: 0x2A1E18, dark: 0x2B1A1A, overrides: [.indigo: FGThemePair(light: 0x1F2233, dark: 0xEEF0F8)])
+        }
+    }
+
     /// The course tag as a soft pill: cream on the light glazes, a darker tint
     /// of the glaze on the dark ones (where `tagText` is the light Deep variant).
+    /// Indigo uses the same tint as `chipFill`.
     var tagFill: Color {
         switch self {
-        case .appetizer: Color(light: 0xFBF6EC, dark: 0x382018)
-        case .main: Color(light: 0xFBF6EC, dark: 0x332812)
-        case .side: Color(light: 0xFBF6EC, dark: 0x1E2B1C)
-        case .dessert: Color(light: 0xFBF6EC, dark: 0x331A24)
+        case .appetizer: Color(light: 0xFBF6EC, dark: 0x382018, overrides: [.indigo: FGThemePair(light: 0xF6D3B8, dark: 0x5A3520)])
+        case .main: Color(light: 0xFBF6EC, dark: 0x332812, overrides: [.indigo: FGThemePair(light: 0xEFDDA0, dark: 0x4F4210)])
+        case .side: Color(light: 0xFBF6EC, dark: 0x1E2B1C, overrides: [.indigo: FGThemePair(light: 0xCBDCC6, dark: 0x24463A)])
+        case .dessert: Color(light: 0xFBF6EC, dark: 0x331A24, overrides: [.indigo: FGThemePair(light: 0xF0CBD3, dark: 0x5E2A44)])
         case .special: FGColor.line
         }
     }
 
     var tagText: Color {
         switch self {
-        case .appetizer: FGColor.clayDeep
-        case .main: FGColor.goldDeep
-        case .side: FGColor.sageDeep
-        case .dessert: FGColor.roseDeep
+        case .appetizer: Color(light: 0x8B4218, dark: 0xEACAB8, overrides: [.indigo: FGThemePair(light: 0x5E2E0E, dark: 0xF6D3B8)])
+        case .main: Color(light: 0x745611, dark: 0xE8D7B0, overrides: [.indigo: FGThemePair(light: 0x4F3A00, dark: 0xEFDDA0)])
+        case .side: Color(light: 0x395922, dark: 0xCEE1C1, overrides: [.indigo: FGThemePair(light: 0x1E3B2B, dark: 0xCBDCC6)])
+        case .dessert: Color(light: 0x772230, dark: 0xE9C4CA, overrides: [.indigo: FGThemePair(light: 0x5E1F3A, dark: 0xF0CBD3)])
         case .special: FGColor.ink
         }
     }

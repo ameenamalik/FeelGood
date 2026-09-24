@@ -244,6 +244,12 @@ struct LittleWinCelebrationView: View {
                         .font(FGFont.body)
                         .foregroundStyle(FGColor.inkMuted)
                         .multilineTextAlignment(.center)
+                    if let themeLine = celebration.featured.win.themeUnlockLine {
+                        Text(themeLine)
+                            .font(FGFont.body.weight(.semibold))
+                            .foregroundStyle(FGColor.ink)
+                            .multilineTextAlignment(.center)
+                    }
 
                     if celebration.wins.count > 1 {
                         Text("And \(celebration.wins.count - 1) more little win\(celebration.wins.count == 2 ? "" : "s").")

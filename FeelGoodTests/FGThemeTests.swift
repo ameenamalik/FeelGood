@@ -61,14 +61,26 @@ struct FGThemeTests {
         #expect(dark.red > 0.9 && dark.green > 0.9, "dark r\(dark.red) g\(dark.green)")
     }
 
-    @Test("Every existing token is unchanged by the theme until a theme overrides it")
-    func existingTokensAreThemeInert() {
-        let tokens: [Color] = [FGColor.bg, FGColor.surface, FGColor.ink, FGColor.clay, FGColor.panel, FGColor.userBubble]
+    @Test("Tokens with no override look the same in every theme")
+    func tokensWithoutOverridesAreThemeInert() {
+        // The accents are the same pastel fills in every look, by design.
+        let tokens: [Color] = [FGColor.clay, FGColor.gold, FGColor.rose, FGColor.sage, FGColor.sky, FGColor.inkOnAccent, FGColor.sideBadge, FGColor.onDeepFill]
         for token in tokens {
             for dark in [false, true] {
                 let a = resolve(token, theme: .kiln, dark: dark)
                 let b = resolve(token, theme: .indigo, dark: dark)
                 #expect(a.red == b.red && a.green == b.green && a.blue == b.blue)
+            }
+        }
+    }
+
+    @Test("Indigo restyles the page, the type and the primary action")
+    func indigoRestylesCoreTokens() {
+        for token in [FGColor.bg, FGColor.surface, FGColor.ink, FGColor.actionFill] {
+            for dark in [false, true] {
+                let a = resolve(token, theme: .kiln, dark: dark)
+                let b = resolve(token, theme: .indigo, dark: dark)
+                #expect(!(a.red == b.red && a.green == b.green && a.blue == b.blue))
             }
         }
     }
@@ -191,5 +203,47 @@ struct FGThemeTests {
                             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
         ctx?.draw(cg, in: CGRect(x: -4, y: -(cg.height - y - 1), width: cg.width, height: cg.height))
         return (Int(px[0]), Int(px[1]), Int(px[2]))
+    }
+}
+
+// MARK: - Which looks are earned
+
+@Suite("Theme unlocks")
+struct ThemeUnlockTests {
+
+    private func progress(unlocked wins: Set<LittleWin>) -> [LittleWinProgress] {
+        LittleWin.allCases.map {
+            LittleWinProgress(win: $0, current: 0, unlockedAt: wins.contains($0) ? Date(timeIntervalSince1970: 0) : nil)
+        }
+    }
+
+    @Test("Everyone has Kiln, and nothing else before earning it")
+    func kilnOnly() {
+        #expect(FGThemeID.unlocked(by: progress(unlocked: [])) == [.kiln])
+        #expect(FGThemeID.unlocked(by: progress(unlocked: [.firstMove, .homebody, .tinyWins])) == [.kiln])
+    }
+
+    @Test("Variety Pack unlocks Indigo")
+    func varietyUnlocksIndigo() {
+        #expect(FGThemeID.unlocked(by: progress(unlocked: [.varietyPack])) == [.kiln, .indigo])
+    }
+
+    @Test("An unearned choice draws as Kiln, without an error")
+    @MainActor
+    func unearnedFallsBack() {
+        let defaults = UserDefaults(suiteName: "FGThemeTests.\(UUID().uuidString)")!
+        let settings = ThemeSettings(defaults: defaults)
+        settings.selected = .indigo
+        #expect(settings.effective(unlocked: [.kiln]) == .kiln)
+        #expect(settings.effective(unlocked: [.kiln, .indigo]) == .indigo)
+        // The choice itself is kept, so earning it later restores it.
+        #expect(settings.selected == .indigo)
+    }
+
+    @Test("Only the Variety Pack win mentions a new look")
+    func themeUnlockLine() {
+        for win in LittleWin.allCases {
+            #expect((win.themeUnlockLine != nil) == (win == .varietyPack))
+        }
     }
 }

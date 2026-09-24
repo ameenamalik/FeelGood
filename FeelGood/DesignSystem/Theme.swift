@@ -119,6 +119,15 @@ private struct FGWindowThemeInstaller: UIViewRepresentable {
             apply()
         }
 
+        /// Leaving the window (for example back to onboarding) puts the window
+        /// back to the default, so a theme never outlives the screens it was for.
+        override func willMove(toWindow newWindow: UIWindow?) {
+            super.willMove(toWindow: newWindow)
+            if newWindow == nil, let window, window.traitCollection.fgTheme != FGThemeTrait.defaultValue {
+                window.traitOverrides.fgTheme = FGThemeTrait.defaultValue
+            }
+        }
+
         private func apply() {
             // Compare against the resolved trait, not `traitOverrides`: reading
             // an override that was never set is an assertion failure in UIKit.

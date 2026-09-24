@@ -114,6 +114,8 @@ struct YouView: View {
                     ActivityHistorySection(model: model)
 
                     LittleWinsSection(progress: model.littleWins)
+
+                    ThemePickerSection(unlocked: FGThemeID.unlocked(by: model.littleWins))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, FGSpace.page)
