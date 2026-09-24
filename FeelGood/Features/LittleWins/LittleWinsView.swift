@@ -333,6 +333,8 @@ private struct LittleWinProfileRewardLabel: View {
             Text(win.profileReward.celebrationDescription)
                 .font(FGFont.caption)
                 .multilineTextAlignment(.center)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
 
             if showsPickerHint {
                 Text("Tap your profile picture on You to switch.")
