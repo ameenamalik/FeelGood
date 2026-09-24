@@ -462,6 +462,7 @@ struct AuthSheetView: View {
               let window = windowScene.windows.first(where: { $0.isKeyWindow }),
               var topVC = window.rootViewController else {
             Self.logger.error("Google sign-in failed: no presentation window")
+            errorMessage = "Google sign-in didn't go through. Try again, or use email."
             return
         }
         while let presented = topVC.presentedViewController {
@@ -487,8 +488,11 @@ struct AuthSheetView: View {
 
     /// Provider failures are generally configuration or system errors rather
     /// than something a person can repair in this sheet. Keep the raw detail
-    /// in Console/Xcode instead of exposing framework diagnostics in the UI.
+    /// in Console/Xcode instead of exposing framework diagnostics in the UI,
+    /// but still say something plain — a sheet that silently does nothing
+    /// after a tap reads as broken.
     private func logProviderFailure(_ provider: String, error: Error) {
+        errorMessage = "\(provider) sign-in didn't go through. Try again, or use email."
         let nsError = error as NSError
         Self.logger.error(
             "\(provider, privacy: .public) sign-in failed [\(nsError.domain, privacy: .public):\(nsError.code)]: \(nsError.localizedDescription)"
