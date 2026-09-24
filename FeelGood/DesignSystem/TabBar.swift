@@ -63,8 +63,6 @@ struct FGTabBar<Tag: Hashable>: View {
         .frame(maxWidth: .infinity)
         .padding(.bottom, 8)
         .accessibilityElement(children: .contain)
-        // The keyboard covers it, as it covers the system bar.
-        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 }
 
@@ -78,15 +76,39 @@ extension FGTabBar {
     static var height: CGFloat { 76 }
 }
 
+private struct KeyboardVisibleKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    /// True while the software keyboard is up. The tab bar lives in the
+    /// TabView's bottom inset, so the keyboard lifts it and it jumps above the
+    /// keyboard; the root hides the bar instead, and tabs stop reserving room
+    /// for it, so a composer sits straight on the keyboard.
+    var isKeyboardVisible: Bool {
+        get { self[KeyboardVisibleKey.self] }
+        set { self[KeyboardVisibleKey.self] = newValue }
+    }
+}
+
+private struct TabBarInsetModifier: ViewModifier {
+    @Environment(\.isKeyboardVisible) private var isKeyboardVisible
+
+    func body(content: Content) -> some View {
+        content.safeAreaInset(edge: .bottom, spacing: 0) {
+            Color.clear.frame(height: isKeyboardVisible ? 0 : FGTabBar<Int>.height)
+        }
+    }
+}
+
 extension View {
     /// Reserves the tab bar's space at the bottom of a tab's content.
     ///
     /// Needed because the bar lives outside the `TabView`: a safe-area inset
     /// applied out there does not reach each tab's scroll view, so the last
-    /// card sat under the bar with nothing to scroll it clear.
+    /// card sat under the bar with nothing to scroll it clear. Collapses while
+    /// the keyboard is up, because the bar is hidden then.
     func fgTabBarInset() -> some View {
-        safeAreaInset(edge: .bottom, spacing: 0) {
-            Color.clear.frame(height: FGTabBar<Int>.height)
-        }
+        modifier(TabBarInsetModifier())
     }
 }
