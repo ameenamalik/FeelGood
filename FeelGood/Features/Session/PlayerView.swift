@@ -66,6 +66,7 @@ struct PlayerView: View {
     @State private var isRunning = true
     @State private var isDone = false
     @State private var haveFeelChoicesLanded = false
+    @State private var selectedFeel: Feel?
     @State private var breathingStartedAt = Date()
     @State private var breathingPausedAt: Date?
     @State private var breathingAnchorIndex: Int?
@@ -861,6 +862,16 @@ struct PlayerView: View {
                     feelChoices
                         .padding(.top, typeSize.isAccessibilitySize ? FGSpace.m : FGSpace.l)
 
+                    if let selectedFeel {
+                        feedbackConfirmation(for: selectedFeel)
+                            .padding(.top, FGSpace.m)
+                            .transition(
+                                reduceMotion
+                                    ? .opacity
+                                    : .move(edge: .bottom).combined(with: .opacity)
+                            )
+                    }
+
                     Spacer(minLength: FGSpace.xl)
 
                     HStack(spacing: FGSpace.m) {
@@ -870,8 +881,14 @@ struct PlayerView: View {
 
                         Spacer(minLength: FGSpace.s)
 
-                        FGQuietButton("Skip feedback") {
-                            onFinish(.completed(nil))
+                        if let selectedFeel {
+                            FGQuietButton("Done") {
+                                onFinish(.completed(selectedFeel))
+                            }
+                        } else {
+                            FGQuietButton("Skip feedback") {
+                                onFinish(.completed(nil))
+                            }
                         }
                     }
                     .padding(.bottom, FGSpace.l)
@@ -917,8 +934,13 @@ struct PlayerView: View {
     }
 
     private func feelChoiceLabel(_ feel: Feel) -> some View {
-        Button {
-            onFinish(.completed(feel))
+        let isSelected = selectedFeel == feel
+
+        return Button {
+            UISelectionFeedbackGenerator().selectionChanged()
+            withAnimation(reduceMotion ? .none : FGMotion.gentle) {
+                selectedFeel = feel
+            }
         } label: {
             VStack(spacing: FGSpace.s) {
                 Image(systemName: symbol(for: feel))
@@ -932,18 +954,69 @@ struct PlayerView: View {
             .foregroundStyle(FGColor.ink)
             .background(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .fill(FGColor.surface.opacity(0.92))
+                    .fill(isSelected ? completionAura.core.opacity(0.72) : FGColor.surface.opacity(0.92))
                     .shadow(
                         color: completionAura.edge.opacity(0.12),
                         radius: 16,
                         x: 0,
                         y: 8
                     )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                            .stroke(
+                                isSelected ? completionAura.edge.opacity(0.72) : .clear,
+                                lineWidth: 2
+                            )
+                    }
             )
             .contentShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
         }
         .buttonStyle(.feelGoodPress)
         .accessibilityLabel(label(for: feel))
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private func feedbackConfirmation(for feel: Feel) -> some View {
+        HStack(alignment: .top, spacing: FGSpace.s) {
+            Image(systemName: "sparkles")
+                .font(FGFont.itemTitle)
+                .foregroundStyle(completionAura.edge)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("We'll remember that.")
+                    .font(FGFont.label)
+                    .foregroundStyle(FGColor.ink)
+
+                Text(feedbackConsequence(for: feel))
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(FGSpace.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                .fill(completionAura.core.opacity(0.32))
+                .overlay {
+                    RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                        .stroke(completionAura.edge.opacity(0.24), lineWidth: 1)
+                }
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    private func feedbackConsequence(for feel: Feel) -> String {
+        switch feel {
+        case .lovedIt:
+            "We'll bring you more movement like this."
+        case .fine:
+            "We'll use this when shaping your next menu."
+        case .tooMuch:
+            "We'll use this to make future picks gentler."
+        }
     }
 
     /// What a counted step is *for*, not something to tap through. Reps are

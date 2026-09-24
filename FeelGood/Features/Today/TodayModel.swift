@@ -169,6 +169,34 @@ final class TodayModel {
     var completedSessionCount: Int { history.filter(\.wasCompleted).count }
     var hasCustomRoutine: Bool { !ownSessions.isEmpty }
 
+    /// One optional, playable session that complements movement already on
+    /// Calendar. This intentionally uses authored content only: a quiet
+    /// automatic suggestion should always have a complete player experience.
+    func calendarCompanion(
+        for plan: CalendarMovementPlan,
+        phase: CalendarMovementCompanionPhase
+    ) -> MenuItem? {
+        guard let session = CalendarMovementCompanionSelector.session(
+            for: plan,
+            phase: phase,
+            from: store.sessions,
+            profile: profile
+        ) else { return nil }
+
+        let reasonText = switch phase {
+        case .warmUp:
+            "An optional warm-up for your \(plan.activity.label.lowercased())."
+        case .recovery:
+            "A gentle follow-up after your \(plan.activity.label.lowercased())."
+        }
+        return MenuItem(
+            session: session,
+            course: session.course,
+            reasons: phase == .recovery ? [.recoveryBalance] : [.matchesIntent],
+            reasonText: reasonText
+        )
+    }
+
     private func input(now: Date) -> PlanInput {
         let memory: PlanMemory = isProUser
             ? .full(history: history, affinity: log.affinity())
