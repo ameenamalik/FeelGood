@@ -553,6 +553,11 @@ struct ExploreView: View {
             return false
         }
         let banditPrefs = model.banditCoarsenedPreferences
+        // Same access Today uses, widened by anything said in this conversation.
+        let availability = ChatAvailability(
+            profile: model.profile,
+            conversation: messages.filter { $0.role == .user }.map(\.text)
+        )
         let userContext = ChatUserContext(
             likedActivities: Array(Set(liked)),
             lastFeel: lastFeel,
@@ -562,7 +567,8 @@ struct ExploreView: View {
             shownSessionIDs: Array(Set(messages.compactMap { $0.recommendation?.sessionID })),
             preferredIntensityTier: banditPrefs.preferredIntensityTier,
             topExploredActivities: banditPrefs.topExploredActivities,
-            fatigueSensitivity: banditPrefs.fatigueSensitivity
+            fatigueSensitivity: banditPrefs.fatigueSensitivity,
+            availability: availability
         )
         let wireHistory = messages.suffix(4).map {
             ChatTurnPayload(role: $0.role == .user ? "user" : "model", text: $0.text)
@@ -593,6 +599,7 @@ struct ExploreView: View {
                     ChatSafety.apply(
                         to: reply,
                         workArounds: workArounds,
+                        availability: availability,
                         lookup: lookupSession,
                         replacement: { rejected in
                             LocalStatefulChatEngine.matchBestSession(
@@ -600,7 +607,8 @@ struct ExploreView: View {
                                 intensity: rejected.intensity,
                                 excludeID: rejected.sessionID,
                                 userContext: userContext,
-                                workArounds: workArounds
+                                workArounds: workArounds,
+                                availability: availability
                             )
                         }
                     )

@@ -121,6 +121,23 @@ struct CheckInSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            // Recovery is an answer, not the far end of a slider. Doing less is
+            // a plan the app can make, so it gets its own visible choice.
+            VStack(alignment: .leading, spacing: FGSpace.xs) {
+                FGPill(
+                    title: TimeBudget.zeroMinutes.checkInLabel,
+                    selectedAura: .lilac,
+                    isSelected: time == .zeroMinutes
+                ) {
+                    time = .zeroMinutes
+                    reveal(after: 1, didAnswer: true, using: proxy)
+                }
+                Text("Breathing and an optional stretch. Doing less counts.")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             TimeBudgetScale(selection: time) { option in
                 time = option
                 reveal(after: 1, didAnswer: true, using: proxy)
@@ -360,7 +377,7 @@ private struct TimeBudgetScale: View {
             .frame(height: FGSize.minTouchTarget)
 
             HStack {
-                Text("Rest")
+                Text("Recovery")
                 Spacer()
                 Text("1 hr")
             }
@@ -385,7 +402,7 @@ private struct TimeBudgetScale: View {
 
     private func compactLabel(for option: TimeBudget) -> String {
         if option.isZero {
-            return "Rest day (0 min)"
+            return "Recovery day"
         }
         return option.maxMinutes == 60 ? "1 hr" : "\(option.maxMinutes) min"
     }

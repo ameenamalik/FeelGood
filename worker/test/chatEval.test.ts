@@ -70,4 +70,16 @@ describe("chat eval extras", () => {
     assert.equal(summarizeRuns([[], ["x"], []]).status, "flaky");
     assert.equal(summarizeRuns([["x"], ["y"]]).status, "failing");
   });
+
+  it("fails a card the person can't do, and a card for the wrong body area", () => {
+    const homeOnly = { available_equipment: ["none", "mat"], available_places: ["home"], available_activities: ["stretching"] };
+    const gymCard = { session_id: "side-gym-pull-8", duration_min: 8, intensity: "moderate" };
+    assert.equal(checkReply({ ...base, userContext: homeOnly }, { message: "x", recommendation: gymCard }).length, 1);
+    // No availability sent (older app build): nothing to enforce.
+    assert.equal(checkReply(base, { message: "x", recommendation: gymCard }).length, 0);
+
+    const lowerBody = { session_id: "side-skater-bounds", duration_min: 5, intensity: "moderate" };
+    assert.equal(checkReply({ ...base, expect: { focusOrNoCard: "upperBody" } }, { message: "x", recommendation: lowerBody }).length, 1);
+    assert.equal(checkReply({ ...base, expect: { focusOrNoCard: "upperBody" } }, { message: "No arms session right now." }).length, 0);
+  });
 });

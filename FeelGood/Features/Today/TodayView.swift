@@ -345,6 +345,10 @@ struct TodayView: View {
                     if currentItem.course == .main {
                         MenuItemCard(
                             item: currentItem,
+                            caption: MenuCopy.cardLine(
+                                for: currentItem,
+                                checkIn: model.checkIn ?? model.menu.assumedCheckIn
+                            ),
                             isDone: model.isCompleted(currentItem),
                             isInProgress: model.isInProgress(currentItem),
                             canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
@@ -553,7 +557,7 @@ struct TodayView: View {
             }
 
             if model.checkIn?.time.isZero == true || (model.checkIn == nil && model.menu.assumedCheckIn.time.isZero) {
-                Text("Rest day · Untimed")
+                Text("Recovery day · Untimed")
                     .font(.system(size: 14, weight: .regular))
                     .foregroundStyle(FGColor.inkMuted)
             }
@@ -968,6 +972,8 @@ private struct CalendarCompanionCard: View {
 
 private struct MenuItemCard: View {
     let item: MenuItem
+    /// One sentence on why this is the main pick. The rows below carry none.
+    let caption: String?
     let isDone: Bool
     let isInProgress: Bool
     let canSwap: Bool
@@ -1001,6 +1007,7 @@ private struct MenuItemCard: View {
                 Button(action: onOpen) {
                     MenuItemBody(
                         item: item,
+                        caption: caption,
                         isDone: isDone,
                         isInProgress: isInProgress,
                         isHighlighted: false
@@ -1149,6 +1156,7 @@ private struct MenuItemRow: View {
 /// the session, and why it is there.
 private struct MenuItemBody: View {
     let item: MenuItem
+    var caption: String? = nil
     let isDone: Bool
     let isInProgress: Bool
     let isHighlighted: Bool
@@ -1200,6 +1208,13 @@ private struct MenuItemBody: View {
                     .foregroundStyle(isDone ? FGColor.inkMuted : item.course.accentText)
                     .lineSpacing(-2)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if let caption, !isDone {
+                    Text(caption)
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundStyle(item.course.accentText.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
 
