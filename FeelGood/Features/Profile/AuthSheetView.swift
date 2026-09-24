@@ -703,7 +703,7 @@ private struct FeelGoodAppIcon: View {
                     .scaledToFit()
             } else {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Color(light: 0x0D0C15, dark: 0x0D0C15))
+                    .fill(FGColor.appIconFallback)
                     .overlay {
                         Image(systemName: "heart.fill")
                             .font(.system(size: size * 0.34, weight: .medium))

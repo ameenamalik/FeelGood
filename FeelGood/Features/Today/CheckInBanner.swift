@@ -16,19 +16,6 @@ import SwiftUI
 struct CheckInBanner: View {
     let onTap: () -> Void
 
-    // The banner is the one saturated block on the page, so its colours are
-    // fixed rather than adaptive: a warm clay card with cream type reads the
-    // same in light and dark.
-    private static let gradient = LinearGradient(
-        colors: [
-            Color(light: 0xCB6C46, dark: 0xCB6C46),
-            Color(light: 0xB4532F, dark: 0xB4532F),
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-    private static let cream = Color(light: 0xFFFDF9, dark: 0xFFFDF9)
-
     var body: some View {
         Button(action: onTap) {
             HStack(alignment: .center, spacing: 8) {
@@ -41,7 +28,7 @@ struct CheckInBanner: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Self.gradient)
+                    .fill(FGColor.bannerGradient)
             )
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -57,7 +44,7 @@ struct CheckInBanner: View {
             Text("How are you feeling today?")
                 .font(.system(size: 20, weight: .semibold, design: .rounded))
                 .tracking(-0.2)
-                .foregroundStyle(Self.cream)
+                .foregroundStyle(FGColor.onBanner)
                 .lineSpacing(0)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -68,7 +55,7 @@ struct CheckInBanner: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 11, weight: .bold))
             }
-            .foregroundStyle(Self.cream.opacity(0.85))
+            .foregroundStyle(FGColor.onBanner.opacity(0.85))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -81,7 +68,7 @@ struct CheckInBanner: View {
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color(light: 0xFFE8CD, dark: 0xFFE8CD).opacity(0.42), .clear],
+                        colors: [FGColor.bannerGlow.opacity(0.42), .clear],
                         center: .center,
                         startRadius: 0,
                         endRadius: 58

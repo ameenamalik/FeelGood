@@ -368,7 +368,7 @@ struct ProductIntroView: View {
                 .accessibilityHidden(true)
         } else {
             RoundedRectangle(cornerRadius: 21, style: .continuous)
-                .fill(Color(light: 0x0D0C15, dark: 0x0D0C15))
+                .fill(FGColor.appIconFallback)
                 .frame(width: 92, height: 92)
                 .overlay {
                     Image(systemName: "heart.fill")

@@ -2,9 +2,10 @@
 //  Palette.swift
 //  FeelGood
 //
-//  Clay studio. Warm terracotta and botanical sage on a near-white page: white
-//  cards lift off warm cream, ink type, and clay/gold/rose/sage used as small
-//  accents rather than as surfaces.
+//  Kiln (light) and Moss (dark). Glazed ceramic on linen by day, a botanical
+//  evening by night: the page is linen or deep moss, cards are glazes that
+//  hold ink (or cream) type at 7:1 or better, and clay/gold/rose/sage stay
+//  small accents. Values are from docs/PRD-themes.md §4.
 //
 //  The accessibility rule that shapes every use below: all four accents are
 //  light. Against ink they are 9.0:1 or better; against white they are
@@ -24,9 +25,15 @@ nonisolated extension Color {
     /// isolation, but SwiftUI resolves colours on a background rendering
     /// thread — a main-actor-isolated provider closure trips the executor
     /// assert and traps the process the first time a colour is drawn.
-    init(light: UInt32, dark: UInt32) {
+    ///
+    /// `overrides` restyles the token for a theme (see `FGThemeID`). A theme
+    /// with no entry gets `light` / `dark`, so every existing call site keeps
+    /// its exact colour until a theme says otherwise. The theme arrives as a
+    /// trait, not a parameter, so no view has to pass it.
+    init(light: UInt32, dark: UInt32, overrides: [FGThemeID: FGThemePair] = [:]) {
         self.init(uiColor: UIColor { traits in
-            UIColor(hex: traits.userInterfaceStyle == .dark ? dark : light)
+            let pair = overrides[traits.fgTheme] ?? FGThemePair(light: light, dark: dark)
+            return UIColor(hex: traits.userInterfaceStyle == .dark ? pair.dark : pair.light)
         })
     }
 }
@@ -34,36 +41,37 @@ nonisolated extension Color {
 nonisolated enum FGColor {
     // MARK: Surfaces
 
-    /// The page. Warm near-white, so white cards still lift off it.
-    static let bg = Color(light: 0xFAF8F5, dark: 0x14100D)
+    /// The page. Linen by day, deep moss by night.
+    static let bg = Color(light: 0xF4EEE3, dark: 0x1D2922)
     /// Cards and sheets.
-    static let surface = Color(light: 0xFFFFFF, dark: 0x1C1712)
+    static let surface = Color(light: 0xFBF6EC, dark: 0x2A3A31)
     /// Decorative hairlines — chip outlines, the progress track. Nothing is
     /// identified by these alone, so they stay quiet at ~1.2:1.
-    static let line = Color(light: 0xF0ECE5, dark: 0x2A241E)
+    static let line = Color(light: 0xE3DACB, dark: 0x33453A)
 
     /// The boundary of anything you can tap.
     ///
     /// A white tile on the page is 1.06:1, so the border *is* the control's
     /// edge — WCAG 1.4.11 wants 3:1 for that. These are the lightest warm
     /// greys that clear it against both the card fill and the page: 3.63:1
-    /// and 3.42:1 in light, 3.02:1 and 3.21:1 in dark.
-    static let lineStrong = Color(light: 0x8E857B, dark: 0x6B635B)
+    /// and 3.42:1 in light; 4.6:1 and 3.7:1 in dark.
+    static let lineStrong = Color(light: 0x8E857B, dark: 0x7A9484)
 
     // MARK: Type
 
-    /// Primary type. 16.8:1 on white, 15.8:1 on the page.
-    static let ink = Color(light: 0x241C15, dark: 0xF7F3EC)
-    /// Secondary type. 6.1:1 on white — still comfortable at footnote sizes.
-    static let inkMuted = Color(light: 0x6B6155, dark: 0xB8AC9C)
+    /// Primary type. 14.0:1 on the page in light, 12.9:1 in dark.
+    static let ink = Color(light: 0x2A1E18, dark: 0xF3EDE0)
+    /// Secondary type. 5.3:1 on the page in light, 8.6:1 in dark. Not for use on
+    /// the glaze cards in light mode (3.5–4.1:1 there); use `ink` on those.
+    static let inkMuted = Color(light: 0x6B6155, dark: 0xBCC6B8)
 
     /// The dark fill of a primary action — the chat recommendation's "Start"
     /// and `FGPrimaryButton` both read this, so they can't drift apart.
-    /// Warm brown-black in light mode and clay in dark mode, where another
-    /// near-black fill would disappear into the page.
-    static let actionFill = Color(light: 0x2C211C, dark: 0xEAB79A)
+    /// Kiln plum in light mode and soft sage in dark mode, where a dark fill
+    /// would disappear into the moss page.
+    static let actionFill = Color(light: 0x4B2A3A, dark: 0xC6DAC4)
     /// Label on `actionFill`.
-    static let onActionFill = Color(light: 0xFFFFFF, dark: 0x241C15)
+    static let onActionFill = Color(light: 0xFBF3E8, dark: 0x2B1A1A)
 
     /// Interactive controls whose fill must carry a white system affordance
     /// (for example, the thumb of a Toggle). Unlike the pastel accents below,
@@ -134,10 +142,74 @@ nonisolated enum FGColor {
     /// trough included: 4.78:1 at the core, 5.31:1 at the middle, 4.98:1 at
     /// the edge.
     static let washGradient = Gradient(colors: [
-        Color(light: 0xF9DEE0, dark: 0x3A2226),
-        Color(light: 0xF7EFE4, dark: 0x241E17),
-        Color(light: 0xF3E8CE, dark: 0x332A14),
+        Color(light: 0xF9DEE0, dark: 0x2E3A30),
+        Color(light: 0xF7EFE4, dark: 0x223027),
+        Color(light: 0xF3E8CE, dark: 0x2A3324),
     ])
+
+    // MARK: Roles that used to be literals in feature files
+    //
+    // Every value below was lifted, unchanged, from a `Color(light:dark:)` call
+    // in a view. Named by the job they do so a theme can restyle them without a
+    // view being edited. Feature code must not spell a hex value.
+
+    /// A recessed panel on the page: the assistant's chat bubble and the small
+    /// tinted pills on the paywall.
+    static let panel = Color(light: 0xEBE2D2, dark: 0x33453A)
+    /// A panel one step above `panel`, for a small tappable control that sits
+    /// on it (the new-chat button).
+    static let panelRaised = Color(light: 0xEBE2D2, dark: 0x3A4D40)
+    /// The chat composer's text field.
+    static let inputFill = Color(light: 0xEBE2D2, dark: 0x26352C)
+    /// The open conversation's row in the chat history list.
+    static let selectedRow = Color(light: 0xEFE6D6, dark: 0x33453A)
+    /// The assistant's reply inside the check-in, tinted sage.
+    static let sagePanel = Color(light: 0xE6EEDD, dark: 0x26402F)
+
+    /// The person's own chat bubble and the paywall's speech-bubble pills.
+    static let userBubble = Color(light: 0x2A1E18, dark: 0x3E5145)
+    /// Type on a deep fill (`userBubble`, `sideBadge`). Does not flip with the
+    /// appearance, because the fills underneath it are dark in both.
+    static let onDeepFill = Color(light: 0xFFFFFF, dark: 0xFFFFFF)
+
+    /// The chat send button.
+    static let sendGradient = LinearGradient(
+        colors: [Color(light: 0xFCCAB5, dark: 0x6E4032), Color(light: 0xF5B2A3, dark: 0x5C2E24)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    /// The arrow on `sendGradient`.
+    static let onSend = Color(light: 0x37241D, dark: 0xFCEFEA)
+
+    /// The saturated end of the Side course's sage: a pill that leads instead
+    /// of receding into the card. White type on it clears 4.5:1.
+    static let sideBadge = Color(light: 0x3F6B26, dark: 0x4C7A2E)
+
+    /// The check-in banner: the one bold block on Today. Deep plum with cream
+    /// type in Kiln; soft sage with ink type in Moss, where a dark block would
+    /// vanish. Sage rather than blush because the peach mascot disappeared on
+    /// blush. Flat (two equal stops) so it stays a `LinearGradient` for callers.
+    static let bannerGradient = LinearGradient(
+        colors: [Color(light: 0x4B2A3A, dark: 0xC6DAC4), Color(light: 0x4B2A3A, dark: 0xC6DAC4)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    /// Type on the banner. 11.3:1 on plum, 11.2:1 on sage.
+    static let onBanner = Color(light: 0xFBF3E8, dark: 0x2B1A1A)
+    /// The soft glow behind the banner's mascots.
+    static let bannerGlow = Color(light: 0xFFE8CD, dark: 0xFFFFFF)
+
+    /// The outline of the tab bar. Ink in light; a lifted moss in dark (4.6:1 on the page, 3.7:1 on the bar), where
+    /// ink would be near-white and too loud around a bar. 3:1 or better on the page.
+    static let tabBarEdge = Color(light: 0x2A1E18, dark: 0x7A9484)
+
+    /// The round plate a mascot sits on, so its colour never depends on the
+    /// card behind it (the orange fruit vanished into the peach card).
+    static let plate = Color(light: 0xFBF6EC, dark: 0xF3EDE0)
+
+    /// The stand-in for the app icon while it loads. Fixed: it imitates an
+    /// artwork, not a surface.
+    static let appIconFallback = Color(light: 0x0D0C15, dark: 0x0D0C15)
 }
 
 /// A selectable answer's colour: the fill, and the only text colour that
@@ -362,51 +434,44 @@ nonisolated extension Course {
         FGColor.ink
     }
 
-    /// The authentic FeelGood warm organic gradients from Chat & CheckIn aura tiles:
-    /// Appetizer (peach coral), Main (warm apricot cream), Side (botanical sage),
-    /// Dessert (delicate rose blush).
-    var accentGradient: LinearGradient {
+    /// The course's glaze, as a flat colour. Kiln glazes by day, Moss glazes by
+    /// night; ink (or cream) type on each clears 7.7:1.
+    var fill: Color {
         switch self {
-        case .appetizer:
-            return LinearGradient(
-                colors: [Color(light: 0xFEE4D3, dark: 0x3D261C), Color(light: 0xF5B4AB, dark: 0x4A2222)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .main:
-            return LinearGradient(
-                colors: [Color(light: 0xFDF1E2, dark: 0x3A2616), Color(light: 0xF3C89B, dark: 0x4A2F1B)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .side:
-            return LinearGradient(
-                colors: [Color(light: 0xE8EEE4, dark: 0x202B1D), Color(light: 0xACC5AA, dark: 0x2E422C)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .dessert:
-            return LinearGradient(
-                colors: [Color(light: 0xFCEEF3, dark: 0x381C26), Color(light: 0xE6B2BE, dark: 0x482330)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .special:
-            return LinearGradient(
-                colors: [Color(light: 0xEDE8DF, dark: 0x262320), Color(light: 0xD8D2C7, dark: 0x36322E)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+        case .appetizer: Color(light: 0xF0C9A8, dark: 0x5A3A32)
+        case .main: Color(light: 0xE9D392, dark: 0x4F4A25)
+        case .side: Color(light: 0xBBD0B6, dark: 0x2F4A3C)
+        case .dessert: Color(light: 0xE3B9C4, dark: 0x5B3446)
+        case .special: Color(light: 0xD9CFBE, dark: 0x3A3A34)
         }
     }
 
-    /// The course tag as a soft pill rather than a saturated capsule.
+    /// The card's edge. At least 3:1 against the page in both appearances, so a
+    /// tappable card has a visible boundary (WCAG 1.4.11).
+    var edge: Color {
+        switch self {
+        case .appetizer: Color(light: 0xA47F61, dark: 0x91685A)
+        case .main: Color(light: 0x9C8543, dark: 0x7C7538)
+        case .side: Color(light: 0x768C6F, dark: 0x517B66)
+        case .dessert: Color(light: 0xA97A87, dark: 0x94647B)
+        case .special: Color(light: 0x8F8676, dark: 0x7B7A6C)
+        }
+    }
+
+    /// `fill` as the two-stop gradient existing call sites expect. Flat on
+    /// purpose: the glaze is one colour, and edge and plate do the rest.
+    var accentGradient: LinearGradient {
+        LinearGradient(colors: [fill, fill], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
+    /// The course tag as a soft pill: cream on the light glazes, a darker tint
+    /// of the glaze on the dark ones (where `tagText` is the light Deep variant).
     var tagFill: Color {
         switch self {
-        case .appetizer: Color(light: 0xFDF0E7, dark: 0x382018)
-        case .main: Color(light: 0xFAF1DA, dark: 0x332812)
-        case .side: Color(light: 0xEDF3EB, dark: 0x1E2B1C)
-        case .dessert: Color(light: 0xFAECF1, dark: 0x331A24)
+        case .appetizer: Color(light: 0xFBF6EC, dark: 0x382018)
+        case .main: Color(light: 0xFBF6EC, dark: 0x332812)
+        case .side: Color(light: 0xFBF6EC, dark: 0x1E2B1C)
+        case .dessert: Color(light: 0xFBF6EC, dark: 0x331A24)
         case .special: FGColor.line
         }
     }

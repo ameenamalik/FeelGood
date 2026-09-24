@@ -112,6 +112,9 @@ struct ExploreView: View {
                     // Input Bar
                     bottomInputBar
                 }
+                // Inside the NavigationStack: an inset applied outside it never
+                // reaches this VStack, and the composer sat under the tab bar.
+                .fgTabBarInset()
             }
             .navigationBarHidden(true)
         }
@@ -217,7 +220,7 @@ struct ExploreView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(FGColor.ink)
                         .frame(width: 36, height: 36)
-                        .background(Color(light: 0xF3EEE7, dark: 0x2A2724))
+                        .background(FGColor.panelRaised)
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -277,7 +280,7 @@ struct ExploreView: View {
                 .lineSpacing(4)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                .background(Color(light: 0xF3EEE7, dark: 0x262320))
+                .background(FGColor.panel)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
 
             Spacer(minLength: 44)
@@ -290,11 +293,11 @@ struct ExploreView: View {
 
             Text(text)
                 .font(.system(size: 16, weight: .regular))
-                .foregroundStyle(Color.white)
+                .foregroundStyle(FGColor.onDeepFill)
                 .lineSpacing(4)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .background(Color(light: 0x26231F, dark: 0x36322E))
+                .background(FGColor.userBubble)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
@@ -404,7 +407,7 @@ struct ExploreView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
-        .background(Color(light: 0xF3EEE7, dark: 0x262320))
+        .background(FGColor.panel)
         .clipShape(Capsule())
     }
 
@@ -430,7 +433,7 @@ struct ExploreView: View {
                         .foregroundStyle(FGColor.ink)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 9)
-                        .background(Color(light: 0xFFFFFF, dark: 0x1C1712))
+                        .background(FGColor.surface)
                         .clipShape(Capsule())
                         .overlay(
                             Capsule()
@@ -472,7 +475,7 @@ struct ExploreView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
-                .background(Color(light: 0xF1ECE5, dark: 0x25221F))
+                .background(FGColor.inputFill)
                 .clipShape(Capsule())
 
             Button {
@@ -480,14 +483,10 @@ struct ExploreView: View {
             } label: {
                 Image(systemName: "arrow.up")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Color(light: 0x37241D, dark: 0xFCEFEA))
+                    .foregroundStyle(FGColor.onSend)
                     .frame(width: 46, height: 46)
                     .background(
-                        LinearGradient(
-                            colors: [Color(light: 0xFCCAB5, dark: 0x6E4032), Color(light: 0xF5B2A3, dark: 0x5C2E24)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        FGColor.sendGradient
                     )
                     .clipShape(Circle())
             }
