@@ -174,7 +174,7 @@ nonisolated struct FGAccent: Equatable {
 /// studio family. Nothing outside this file reads meaning into which case is
 /// which; see the spread rule below.
 nonisolated enum FGAura: Sendable, CaseIterable {
-    case apricot, lilac, blush, sage, butter
+    case apricot, lilac, blush, sage, butter, sky
 
     /// Stable name for handing an aura across a process boundary (the widget).
     var key: String {
@@ -184,6 +184,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
         case .blush: "blush"
         case .sage: "sage"
         case .butter: "butter"
+        case .sky: "sky"
         }
     }
 
@@ -213,6 +214,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
         case .blush: Color(light: 0xFCE2E8, dark: 0xFCE2E8)
         case .sage: Color(light: 0xEAF0DE, dark: 0xEAF0DE)
         case .butter: Color(light: 0xFFF8D8, dark: 0xFFF8D8)
+        case .sky: Color(light: 0xE2F1F7, dark: 0xE2F1F7)
         }
     }
 
@@ -223,6 +225,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
         case .blush: Color(light: 0xF2C4D3, dark: 0xF2C4D3)
         case .sage: Color(light: 0xC6D8BE, dark: 0xC6D8BE)
         case .butter: Color(light: 0xF4DF91, dark: 0xF4DF91)
+        case .sky: Color(light: 0xBEDCE8, dark: 0xBEDCE8)
         }
     }
 
@@ -233,6 +236,7 @@ nonisolated enum FGAura: Sendable, CaseIterable {
         case .blush: Color(light: 0xE0AEC2, dark: 0xE0AEC2)
         case .sage: Color(light: 0xB2C8AF, dark: 0xB2C8AF)
         case .butter: Color(light: 0xE8CC69, dark: 0xE8CC69)
+        case .sky: Color(light: 0x9CC8D9, dark: 0x9CC8D9)
         }
     }
 }

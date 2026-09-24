@@ -89,7 +89,8 @@ struct YouView: View {
                 background: Binding(
                     get: { profile.avatarBackground },
                     set: { saveAvatarBackground($0) }
-                )
+                ),
+                littleWins: model.littleWins
             )
         }
         #if DEBUG

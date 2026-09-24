@@ -158,6 +158,10 @@ struct LittleWinDetailView: View {
                         .font(FGFont.body)
                         .foregroundStyle(FGColor.inkMuted)
                         .multilineTextAlignment(.center)
+
+                    if progress.isUnlocked {
+                        LittleWinProfileRewardLabel(win: progress.win)
+                    }
                 }
 
                 if progress.isUnlocked {
@@ -245,6 +249,11 @@ struct LittleWinCelebrationView: View {
                         .foregroundStyle(FGColor.inkMuted)
                         .multilineTextAlignment(.center)
 
+                    LittleWinProfileRewardLabel(
+                        win: celebration.featured.win,
+                        showsPickerHint: true
+                    )
+
                     if celebration.wins.count > 1 {
                         Text("And \(celebration.wins.count - 1) more little win\(celebration.wins.count == 2 ? "" : "s").")
                             .font(FGFont.caption.weight(.semibold))
@@ -303,6 +312,30 @@ struct LittleWinCelebrationView: View {
             ActivityShareSheet(items: items.items)
                 .presentationDetents([.medium, .large])
         }
+    }
+}
+
+private struct LittleWinProfileRewardLabel: View {
+    let win: LittleWin
+    var showsPickerHint = false
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Label("Profile reward unlocked", systemImage: "person.crop.circle.badge.checkmark")
+                .font(FGFont.caption.weight(.bold))
+
+            Text(win.profileReward.celebrationDescription)
+                .font(FGFont.caption)
+                .multilineTextAlignment(.center)
+
+            if showsPickerHint {
+                Text("Tap your profile picture on You to switch.")
+                    .font(FGFont.caption.weight(.semibold))
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .foregroundStyle(FGColor.inkMuted)
+        .padding(.top, FGSpace.xs)
     }
 }
 
