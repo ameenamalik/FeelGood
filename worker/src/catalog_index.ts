@@ -139,6 +139,27 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     ]
   },
   {
+    "id": "app-loaded-carry-anything",
+    "title": "Carry whatever's heavy",
+    "subtitle": "Two water jugs, a laundry basket, a stack of books",
+    "durationMin": 3,
+    "intensity": "moderate",
+    "course": "appetizer",
+    "activity": "carries",
+    "places": [
+      "home"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
     "id": "app-farmers-carry",
     "title": "Farmer's carry",
     "subtitle": "Three minutes that your grip will thank you for",
@@ -162,7 +183,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   },
   {
     "id": "app-morning-qigong",
-    "title": "Five minutes of qi gong",
+    "title": "Five minutes of qigong",
     "subtitle": "Slow, standing, and surprisingly waking",
     "durationMin": 5,
     "intensity": "gentle",
@@ -300,7 +321,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   },
   {
     "id": "main-qigong-20",
-    "title": "Twenty minutes of qi gong",
+    "title": "Twenty minutes of qigong",
     "subtitle": "Standing, slow, and quietly restorative",
     "durationMin": 20,
     "intensity": "moderate",
@@ -540,28 +561,6 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     ],
     "intents": [
       "energize"
-    ],
-    "equipment": [
-      "none"
-    ]
-  },
-  {
-    "id": "side-carry-the-shopping",
-    "title": "Carry the shopping in one trip",
-    "subtitle": "Grip work that was happening anyway",
-    "durationMin": 5,
-    "intensity": "moderate",
-    "course": "side",
-    "activity": "carries",
-    "places": [
-      "home",
-      "outdoors"
-    ],
-    "bodyFocus": [
-      "full"
-    ],
-    "intents": [
-      "strengthen"
     ],
     "equipment": [
       "none"
@@ -1637,7 +1636,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   },
   {
     "id": "main-qigong-12",
-    "title": "Twelve minutes of qi gong",
+    "title": "Twelve minutes of qigong",
     "subtitle": "Standing, slow, and short enough for a busy day",
     "durationMin": 12,
     "intensity": "gentle",
@@ -1907,6 +1906,802 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     ],
     "equipment": [
       "none"
+    ]
+  },
+  {
+    "id": "side-standing-arms-five",
+    "title": "Five minutes of standing arms",
+    "subtitle": "Wall push-ups and chair dips. No floor, no equipment",
+    "durationMin": 5,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen",
+      "energize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-arms-shoulders-ten",
+    "title": "Ten minutes of arms and shoulders",
+    "subtitle": "Incline push-ups, dips, and plank taps. Just you and a chair",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-push-ups-planks-fifteen",
+    "title": "Fifteen minutes of push-ups and planks",
+    "subtitle": "A push-up progression with planks and a slow core finish",
+    "durationMin": 15,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody",
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-low-impact-circuit-ten",
+    "title": "Ten minutes of low-impact circuit",
+    "subtitle": "Two rounds of four easy moves. No jumping, no equipment",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-standing-core-five",
+    "title": "Five minutes of standing core",
+    "subtitle": "Twists, knee lifts, and side reaches. All on your feet",
+    "durationMin": 5,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-morning-mobility-ten",
+    "title": "Ten minutes of morning mobility",
+    "subtitle": "Ten easy moves to start the day. Floor, no equipment",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "mobilize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "app-sitting-day-mobility-three",
+    "title": "Three moves after a long sit",
+    "subtitle": "Hips, spine and chest. Three minutes, no equipment",
+    "durationMin": 3,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "hips",
+      "back"
+    ],
+    "intents": [
+      "mobilize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-full-body-stretch-ten",
+    "title": "Ten minutes of full-body stretches",
+    "subtitle": "A run through the whole body, top to bottom",
+    "durationMin": 10,
+    "intensity": "gentle",
+    "course": "main",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-ankle-mobility-five",
+    "title": "Five minutes of ankle mobility",
+    "subtitle": "Circles, calf work and a wall stretch",
+    "durationMin": 5,
+    "intensity": "gentle",
+    "course": "side",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody"
+    ],
+    "intents": [
+      "mobilize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-arm-hand-glides-three",
+    "title": "Three minutes of arm and hand glides",
+    "subtitle": "Slow, easy wrist, forearm and neck moves",
+    "durationMin": 3,
+    "intensity": "gentle",
+    "course": "side",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody",
+      "neckShoulders"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-sixty-seconds-mobility-ten",
+    "title": "Ten minutes, sixty seconds each",
+    "subtitle": "Ten mobility moves, one minute apiece. Follow the timer",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "mobilize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-morning-energy-twelve",
+    "title": "Twelve-minute morning energy",
+    "subtitle": "Twelve easy, bouncy moves, one minute each",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "agility",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "play"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-gentle-reset-five",
+    "title": "Five-minute gentle movement reset",
+    "subtitle": "Bounces, rag doll and reaches. Easy and rhythmic",
+    "durationMin": 5,
+    "intensity": "gentle",
+    "course": "side",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-morning-floor-five",
+    "title": "Five minutes of morning floor moves",
+    "subtitle": "Knees to chest, twists, cat-cow and marching",
+    "durationMin": 5,
+    "intensity": "gentle",
+    "course": "side",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "mobilize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-core-control-five",
+    "title": "Five minutes of core control",
+    "subtitle": "Slow, precise core work on the floor",
+    "durationMin": 5,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-gentle-core-five",
+    "title": "Five minutes of gentle core",
+    "subtitle": "Pelvic tilts, bridges and slow breathing",
+    "durationMin": 5,
+    "intensity": "gentle",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-core-mat-twenty",
+    "title": "Twenty-minute core mat workout",
+    "subtitle": "Pilates-style mat work with an upbeat pace",
+    "durationMin": 20,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen",
+      "energize"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "side-ab-circuit-eight",
+    "title": "Eight minutes of ab circuit",
+    "subtitle": "Four floor moves, two rounds",
+    "durationMin": 8,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-beginner-calisthenics-fifteen",
+    "title": "Fifteen minutes of beginner calisthenics",
+    "subtitle": "Bodyweight strength on the floor. Take breaks as you need",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-triceps-five",
+    "title": "Five minutes of triceps",
+    "subtitle": "Chair dips and close push-ups",
+    "durationMin": 5,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-shoulders-core-thirty",
+    "title": "Thirty minutes of shoulders and core",
+    "subtitle": "A longer bodyweight session. Rests are built in",
+    "durationMin": 30,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody",
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-dumbbell-chest-shoulders-ten",
+    "title": "Ten minutes of dumbbell chest and shoulders",
+    "subtitle": "Four moves, a pair of dumbbells, a floor",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "weights"
+    ]
+  },
+  {
+    "id": "main-bed-yoga-ten",
+    "title": "Ten minutes of yoga in bed",
+    "subtitle": "Start where you are. Slow moves, no mat needed",
+    "durationMin": 10,
+    "intensity": "gentle",
+    "course": "main",
+    "activity": "yoga",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm",
+      "mobilize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-gentle-yoga-five-poses",
+    "title": "Five gentle yoga poses",
+    "subtitle": "A slow sequence, five poses, no rush",
+    "durationMin": 10,
+    "intensity": "gentle",
+    "course": "main",
+    "activity": "yoga",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm",
+      "mobilize"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "app-two-minute-breath-pause",
+    "title": "Two-minute breathing pause",
+    "subtitle": "Slow breathing, seated, anywhere",
+    "durationMin": 2,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "breathwork",
+    "places": [
+      "home",
+      "outdoors",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "app-craving-free-pause-two",
+    "title": "Two-minute reset pause",
+    "subtitle": "Stand, stretch and breathe. A short break from what you were doing",
+    "durationMin": 2,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "breathwork",
+    "places": [
+      "home",
+      "outdoors",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "calm",
+      "energize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "app-pilates-breath-pelvic-three",
+    "title": "Three minutes of Pilates breathing",
+    "subtitle": "Ribs, breath and pelvic tilts on the mat",
+    "durationMin": 3,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "calm",
+      "strengthen"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "side-pilates-hundred-five",
+    "title": "Five minutes of Pilates warm-up",
+    "subtitle": "Breath, tilts and the Hundred, head down or lifted",
+    "durationMin": 5,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen",
+      "energize"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "side-pilates-back-extension-five",
+    "title": "Five minutes of back extension",
+    "subtitle": "Swan prep, swimming and superman on your front",
+    "durationMin": 5,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "side-pilates-side-lying-five",
+    "title": "Five minutes of side-lying work",
+    "subtitle": "Side kicks and clamshells. Hips and glutes",
+    "durationMin": 5,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "hips",
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "main-pilates-head-down-fifteen",
+    "title": "Fifteen minutes of mat, head down",
+    "subtitle": "A full mat session with no forward-flexion. Head stays on the floor",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core",
+      "hips"
+    ],
+    "intents": [
+      "strengthen",
+      "calm"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "main-pilates-classic-fifteen",
+    "title": "Fifteen minutes of classic mat",
+    "subtitle": "Hundred, roll-up, circles, rolling and stretches",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "main-pilates-legs-glutes-twenty",
+    "title": "Twenty minutes of legs and glutes",
+    "subtitle": "Bridges and side-lying work on the mat",
+    "durationMin": 20,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "main-pilates-standing-ten",
+    "title": "Ten minutes of standing Pilates",
+    "subtitle": "No mat, no floor. Roll-downs, leg lifts and arm work",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "strengthen",
+      "mobilize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "dessert-pilates-stretch-ten",
+    "title": "Ten minutes of Pilates cool-down",
+    "subtitle": "Slow spine work and stretches to finish",
+    "durationMin": 10,
+    "intensity": "gentle",
+    "course": "dessert",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "back",
+      "hips"
+    ],
+    "intents": [
+      "calm",
+      "mobilize"
+    ],
+    "equipment": [
+      "mat"
     ]
   }
 ];
@@ -4476,6 +5271,156 @@ export const CATALOG_GLOSSARY: CatalogGlossaryItem[] = [
       "nervous system regulation",
       "posture"
     ]
+  },
+  {
+    "id": "roll-up",
+    "name": "Roll-up",
+    "aka": [],
+    "instructions": [
+      "Lie on your back, legs long, arms overhead.",
+      "Reach your arms up and slowly peel your head, then shoulders, then spine off the mat.",
+      "Fold forward over your legs, then reverse slowly, one segment at a time.",
+      "Bend your knees if your legs pop up.",
+      "Move with your breath, not momentum."
+    ],
+    "muscles": [
+      "deep core",
+      "front of the hips"
+    ]
+  },
+  {
+    "id": "single-leg-circle",
+    "name": "Single leg circle",
+    "aka": [],
+    "instructions": [
+      "Lie on your back, one leg extended toward the ceiling, the other long or bent.",
+      "Draw small circles with the raised leg, keeping your pelvis still.",
+      "Reverse direction halfway, then switch legs.",
+      "Keep your shoulders relaxed and your hips level."
+    ],
+    "muscles": [
+      "deep core",
+      "hips"
+    ]
+  },
+  {
+    "id": "rolling-like-a-ball",
+    "name": "Rolling like a ball",
+    "aka": [],
+    "instructions": [
+      "Sit near the front of your mat, hold your shins, and tuck your chin.",
+      "Balance on your sitting bones with your feet just off the floor.",
+      "Rock back to your shoulder blades and roll up again, staying round.",
+      "Keep your head off the mat and never roll onto your neck."
+    ],
+    "muscles": [
+      "deep core",
+      "back"
+    ]
+  },
+  {
+    "id": "double-leg-stretch",
+    "name": "Double leg stretch",
+    "aka": [],
+    "instructions": [
+      "Lie on your back, knees to your chest, head and shoulders lifted.",
+      "Reach your arms overhead and your legs long at once.",
+      "Circle your arms around and hug your knees back in.",
+      "Keep your lower back heavy on the mat."
+    ],
+    "muscles": [
+      "deep core",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "spine-stretch-forward",
+    "name": "Spine stretch forward",
+    "aka": [],
+    "instructions": [
+      "Sit tall with your legs open about mat-width, feet flexed, arms reaching forward.",
+      "Nod your chin and curve forward over an imaginary ball.",
+      "Stack your spine back up one bone at a time.",
+      "Keep your shoulders down and sit evenly on both sitting bones."
+    ],
+    "muscles": [
+      "back",
+      "hamstrings"
+    ]
+  },
+  {
+    "id": "pilates-swimming",
+    "name": "Pilates swimming",
+    "aka": [],
+    "instructions": [
+      "Lie on your front with your arms and legs long.",
+      "Lift your arms, chest and legs slightly.",
+      "Flutter opposite arm and leg up and down in small, steady beats, breathing evenly.",
+      "Draw your belly in gently so your lower back doesn't sink."
+    ],
+    "muscles": [
+      "back",
+      "glutes"
+    ]
+  },
+  {
+    "id": "swan-prep",
+    "name": "Swan prep",
+    "aka": [],
+    "instructions": [
+      "Lie on your front, hands under your shoulders, elbows close.",
+      "Press gently into your hands and lift your chest a little, keeping your neck long.",
+      "Lower slowly.",
+      "Keep the lift small and don't push hard through your hands."
+    ],
+    "muscles": [
+      "back",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "side-kick",
+    "name": "Side kick",
+    "aka": [],
+    "instructions": [
+      "Lie on your side, legs slightly forward, top leg lifted to hip height.",
+      "Swing the top leg forward, then reach it back without moving your torso.",
+      "Keep your waist long and your hips stacked.",
+      "Keep the swing small so your torso and pelvis stay still."
+    ],
+    "muscles": [
+      "hips",
+      "glutes",
+      "deep core"
+    ]
+  },
+  {
+    "id": "roll-down",
+    "name": "Roll down",
+    "aka": [],
+    "instructions": [
+      "Stand tall with your feet hip-width apart.",
+      "Nod your chin and slowly peel your spine forward, one segment at a time.",
+      "Hang for a moment with soft knees, then stack back up slowly."
+    ],
+    "muscles": [
+      "back",
+      "hamstrings"
+    ]
+  },
+  {
+    "id": "standing-leg-lift",
+    "name": "Standing leg lift",
+    "aka": [],
+    "instructions": [
+      "Stand tall holding a wall or chair for balance.",
+      "Lift one leg out to the side, keeping your hips level.",
+      "Lower with control. Switch legs halfway."
+    ],
+    "muscles": [
+      "hips",
+      "glutes"
+    ]
   }
 ];
 
@@ -4514,6 +5459,7 @@ export function matchBestSession(params: {
   preferredIntensityTier?: "gentle" | "moderate" | "dynamic";
   topExploredActivities?: string[];
   fatigueSensitivity?: number;
+  isAvailable?: (s: CatalogSessionItem) => boolean;
 }): CatalogSessionItem {
   let best: CatalogSessionItem = CATALOG_SESSIONS[0]!;
   let bestScore = -999;
@@ -4521,6 +5467,7 @@ export function matchBestSession(params: {
   for (const s of CATALOG_SESSIONS) {
     if (params.hiddenSessionIds && params.hiddenSessionIds.includes(s.id)) continue;
     if (params.excludeId && s.id === params.excludeId) continue;
+    if (params.isAvailable && !params.isAvailable(s)) continue;
     let score = 0;
 
     if (params.targetDuration) {
