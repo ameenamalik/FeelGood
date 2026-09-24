@@ -20,60 +20,28 @@ import PostHog
 
 struct CheckInSheet: View {
     let current: PlanCheckIn?
-    let currentCalendarOpening: CalendarOpening?
-    let isProUser: Bool
-    let preferredTime: TimeOfDay
-    let realisticMinutes: Int
-    private let calendarProvider: any CalendarAvailabilityProviding
-    let onDone: (PlanCheckIn, CalendarOpening?, CalendarMovementPlan?) -> Void
+    let onDone: (PlanCheckIn) -> Void
 
     @State private var energy: Energy?
     @State private var time: TimeBudget?
     @State private var place: PlaceIntent?
     @State private var bodies: Set<BodyState>
-    @State private var calendarOpening: CalendarOpening?
-    @State private var selectedCalendarOpening: CalendarOpening?
-    @State private var calendarConnectionState: CalendarConnectionState
-    @State private var isLoadingCalendar = false
-    @State private var calendarLoadFailed = false
-    @State private var movementPlan: CalendarMovementPlan?
-    @State private var confirmedMovementPlan: CalendarMovementPlan?
-    @State private var isLoadingMovementPlans = false
-    @State private var isShowingPaywall = false
-    @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
-    private var isMovementRecognitionEnabled = false
     /// How many questions are on screen. Only ever grows within a sitting —
     /// taking an answer back must not make a question you have already seen
     /// disappear out from under you.
     @State private var revealed: Int
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(PurchasesManager.self) private var purchasesManager
 
     init(
         current: PlanCheckIn?,
-        currentCalendarOpening: CalendarOpening? = nil,
-        isProUser: Bool = false,
-        preferredTime: TimeOfDay = .varies,
-        realisticMinutes: Int = 20,
-        calendarProvider: any CalendarAvailabilityProviding = EventKitCalendarAvailabilityService.shared,
-        onDone: @escaping (PlanCheckIn, CalendarOpening?, CalendarMovementPlan?) -> Void
+        onDone: @escaping (PlanCheckIn) -> Void
     ) {
         self.current = current
-        self.currentCalendarOpening = currentCalendarOpening
-        self.isProUser = isProUser
-        self.preferredTime = preferredTime
-        self.realisticMinutes = realisticMinutes
-        self.calendarProvider = calendarProvider
         self.onDone = onDone
         _energy = State(initialValue: current?.energy)
         _time = State(initialValue: current?.time)
         _place = State(initialValue: current?.place)
         _bodies = State(initialValue: current?.bodies ?? [])
-        _calendarOpening = State(initialValue: currentCalendarOpening)
-        _selectedCalendarOpening = State(initialValue: currentCalendarOpening)
-        _calendarConnectionState = State(initialValue: calendarProvider.connectionState)
-        _movementPlan = State(initialValue: nil)
-        _confirmedMovementPlan = State(initialValue: nil)
         // Coming back to change one answer should not re-run the reveal — the
         // whole sheet is already yours at that point.
         _revealed = State(initialValue: current == nil ? 1 : CheckInFlow.stepCount)
@@ -105,18 +73,6 @@ struct CheckInSheet: View {
         .sensoryFeedback(.selection, trigger: selection)
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .sheet(isPresented: $isShowingPaywall) {
-            FeelGoodPaywallView()
-        }
-        .task { await loadCalendarContextIfConnected() }
-        .onChange(of: isMovementRecognitionEnabled) { _, isEnabled in
-            if isEnabled {
-                Task { await loadMovementPlansIfEnabled() }
-            } else {
-                movementPlan = nil
-                confirmedMovementPlan = nil
-            }
-        }
     }
 
     // MARK: Questions
@@ -165,22 +121,11 @@ struct CheckInSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if hasProAccess {
-                calendarContext(using: proxy)
-                    .postHogMask()
-            }
-
             TimeBudgetScale(selection: time) { option in
                 time = option
-                selectedCalendarOpening = nil
                 reveal(after: 1, didAnswer: true, using: proxy)
             }
             .postHogMask()
-
-            if !hasProAccess, time != nil {
-                calendarProPrompt
-                    .transition(.opacity)
-            }
         }
         .id(1)
         .transition(
@@ -188,236 +133,6 @@ struct CheckInSheet: View {
                 ? .opacity
                 : .opacity.combined(with: .offset(y: 16))
         )
-    }
-
-    @ViewBuilder
-    private func calendarContext(using proxy: ScrollViewProxy) -> some View {
-        switch calendarConnectionState {
-        case .notRequested:
-            calendarCard(
-                title: "Work around your day",
-                detail: "Use today's event times on this device to find a realistic opening.",
-                buttonTitle: "Connect Calendar"
-            ) {
-                Task { await connectCalendar() }
-            }
-
-        case .connected:
-            movementRecognitionToggle
-            movementPlanContext
-
-            if isLoadingCalendar {
-                HStack(spacing: FGSpace.s) {
-                    ProgressView()
-                    Text("Looking for an opening in today…")
-                        .font(FGFont.caption)
-                        .foregroundStyle(FGColor.inkMuted)
-                }
-                .padding(.horizontal, FGSpace.s)
-            } else if let calendarOpening {
-                let message = calendarMessage(for: calendarOpening)
-                calendarCard(
-                    title: message.title,
-                    detail: message.detail,
-                    buttonTitle: "Choose \(calendarOpening.budget.maxMinutes) minutes",
-                    isSelected: selectedCalendarOpening == calendarOpening
-                ) {
-                    time = calendarOpening.budget
-                    selectedCalendarOpening = calendarOpening
-                    reveal(after: 1, didAnswer: true, using: proxy)
-                }
-            } else if calendarLoadFailed {
-                calendarStatus("Calendar couldn't be checked. Choose a time below.")
-            } else {
-                calendarStatus("No clear opening left today. Choose what feels realistic below.")
-            }
-
-        case .denied:
-            calendarStatus("Calendar access is off. You can still choose a time below.")
-        }
-    }
-
-    private var calendarProPrompt: some View {
-        Button {
-            isShowingPaywall = true
-        } label: {
-            HStack(alignment: .firstTextBaseline, spacing: FGSpace.s) {
-                Image(systemName: "calendar.badge.clock")
-                    .accessibilityHidden(true)
-
-                Text("Want FeelGood to find openings in your calendar?")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text("See Pro")
-                    .fontWeight(.semibold)
-
-                Image(systemName: "chevron.right")
-                    .font(.caption2.weight(.semibold))
-                    .accessibilityHidden(true)
-            }
-            .font(FGFont.caption)
-            .foregroundStyle(FGColor.inkMuted)
-            .frame(minHeight: FGSize.minTouchTarget)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("See how FeelGood Pro can find openings in your calendar")
-        .accessibilityHint("Opens FeelGood Pro options")
-    }
-
-    private var movementRecognitionToggle: some View {
-        Toggle(isOn: $isMovementRecognitionEnabled) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Recognize movement plans")
-                    .font(FGFont.body.weight(.semibold))
-                    .foregroundStyle(FGColor.ink)
-                Text("Uses event names only on this device to spot workouts and classes.")
-                    .font(FGFont.caption)
-                    .foregroundStyle(FGColor.inkMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .tint(FGColor.controlAccent)
-        .padding(FGSpace.m)
-        .background(
-            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                .fill(FGColor.surface)
-        )
-        .postHogMask()
-    }
-
-    @ViewBuilder
-    private var movementPlanContext: some View {
-        if isMovementRecognitionEnabled {
-            if isLoadingMovementPlans {
-                calendarStatus("Looking for movement already planned today…")
-            } else if let movementPlan {
-                movementPlanCard(movementPlan)
-            }
-        }
-    }
-
-    private func movementPlanCard(_ plan: CalendarMovementPlan) -> some View {
-        let hasEnded = plan.end <= Date()
-        let isHappeningNow = plan.start <= Date() && !hasEnded
-
-        return VStack(alignment: .leading, spacing: FGSpace.s) {
-            HStack(spacing: FGSpace.xs) {
-                Image(systemName: "figure.mind.and.body")
-                Text(movementPlanTitle(plan, hasEnded: hasEnded, isHappeningNow: isHappeningNow))
-            }
-            .font(FGFont.body.weight(.semibold))
-            .foregroundStyle(FGColor.ink)
-
-            Text(movementPlanDetail(plan, hasEnded: hasEnded))
-                .font(FGFont.caption)
-                .foregroundStyle(FGColor.inkMuted)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if hasEnded {
-                WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
-                    FGPill(
-                        title: "Yes, count it",
-                        selectedAura: .sage,
-                        isSelected: confirmedMovementPlan == plan
-                    ) {
-                        confirmedMovementPlan = confirmedMovementPlan == plan ? nil : plan
-                    }
-                    FGPill(title: "Didn't happen", isSelected: false) {
-                        dismissMovementPlan(plan)
-                    }
-                    FGPill(title: "Not movement", isSelected: false) {
-                        dismissMovementPlan(plan)
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(FGSpace.m)
-        .background(
-            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                .fill(FGColor.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                .strokeBorder(confirmedMovementPlan == plan ? FGColor.ink : FGColor.lineStrong, lineWidth: 1)
-        )
-        .postHogMask()
-        .accessibilityElement(children: .contain)
-    }
-
-    private func movementPlanTitle(
-        _ plan: CalendarMovementPlan,
-        hasEnded: Bool,
-        isHappeningNow: Bool
-    ) -> String {
-        if hasEnded { return "Did your \(plan.activity.label.lowercased()) session happen?" }
-        if isHappeningNow { return "Movement is on your calendar now" }
-        return "Movement is already on your calendar"
-    }
-
-    private func movementPlanDetail(_ plan: CalendarMovementPlan, hasEnded: Bool) -> String {
-        if hasEnded {
-            return "Confirm it before FeelGood counts it. Calendar plans are never logged automatically."
-        }
-        return "A \(plan.activity.label.lowercased()) session is planned for \(plan.start.formatted(date: .omitted, time: .shortened)). Choose time below only if you want something extra."
-    }
-
-    private func dismissMovementPlan(_ plan: CalendarMovementPlan) {
-        CalendarMovementPreferences.markHandled(plan.id)
-        confirmedMovementPlan = nil
-        movementPlan = nil
-    }
-
-    private func calendarCard(
-        title: String,
-        detail: String,
-        buttonTitle: String,
-        isSelected: Bool = false,
-        action: @escaping () -> Void
-    ) -> some View {
-        VStack(alignment: .leading, spacing: FGSpace.s) {
-            HStack(spacing: FGSpace.xs) {
-                Image(systemName: "calendar")
-                Text(title)
-            }
-            .font(FGFont.body.weight(.semibold))
-            .foregroundStyle(FGColor.ink)
-
-            Text(detail)
-                .font(FGFont.caption)
-                .foregroundStyle(FGColor.inkMuted)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Button(buttonTitle, action: action)
-                .font(FGFont.caption.weight(.semibold))
-                .foregroundStyle(FGColor.inkOnAccent)
-                .padding(.horizontal, FGSpace.m)
-                .frame(minHeight: FGSize.minTouchTarget)
-                .background(Capsule().fill(FGColor.gold))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(FGSpace.m)
-        .background(
-            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                .fill(FGColor.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                .strokeBorder(isSelected ? FGColor.ink : FGColor.lineStrong, lineWidth: isSelected ? 1.5 : 1)
-        )
-        .accessibilityElement(children: .contain)
-    }
-
-    private func calendarStatus(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: FGSpace.s) {
-            Image(systemName: "calendar")
-                .accessibilityHidden(true)
-            Text(text)
-                .font(FGFont.caption)
-        }
-        .foregroundStyle(FGColor.inkMuted)
-        .padding(.horizontal, FGSpace.s)
     }
 
     private func placeQuestion(_ proxy: ScrollViewProxy) -> some View {
@@ -547,7 +262,7 @@ struct CheckInSheet: View {
         Analytics.capture(
             CheckInAnalytics(energy: energy, time: time, place: place, bodies: bodies)
         )
-        onDone(plan, selectedCalendarOpening, confirmedMovementPlan)
+        onDone(plan)
     }
 
     private func toggleBody(_ option: BodyState) {
@@ -561,81 +276,6 @@ struct CheckInSheet: View {
         }
     }
 
-    private func connectCalendar() async {
-        calendarConnectionState = await calendarProvider.requestAccess()
-        await loadCalendarContextIfConnected()
-    }
-
-    private func loadCalendarContextIfConnected() async {
-        await loadCalendarOpeningIfConnected()
-        await loadMovementPlansIfEnabled()
-    }
-
-    private func loadMovementPlansIfEnabled() async {
-        guard
-            hasProAccess,
-            calendarConnectionState == .connected,
-            isMovementRecognitionEnabled
-        else { return }
-
-        isLoadingMovementPlans = true
-        defer { isLoadingMovementPlans = false }
-
-        do {
-            let now = Date()
-            let plans = try await calendarProvider.movementPlans(on: now, calendar: .current)
-                .filter { !CalendarMovementPreferences.isHandled($0.id) }
-            movementPlan = plans
-                .filter { $0.end <= now }
-                .max { $0.end < $1.end }
-                ?? plans.filter { $0.end > now }.min { $0.start < $1.start }
-        } catch {
-            movementPlan = nil
-        }
-    }
-
-    private func loadCalendarOpeningIfConnected() async {
-        guard hasProAccess, calendarConnectionState == .connected else { return }
-        isLoadingCalendar = true
-        calendarLoadFailed = false
-        defer { isLoadingCalendar = false }
-
-        do {
-            calendarOpening = try await calendarProvider.suggestedOpening(
-                on: Date(),
-                preferredTime: preferredTime,
-                realisticMinutes: realisticMinutes,
-                calendar: .current
-            )
-        } catch {
-            calendarOpening = nil
-            calendarLoadFailed = true
-        }
-    }
-
-    private func openingPhrase(_ opening: CalendarOpening) -> String {
-        let hour = Calendar.current.component(.hour, from: opening.start)
-        if (11..<14).contains(hour) { return "around lunch" }
-        return "around \(opening.start.formatted(date: .omitted, time: .shortened))"
-    }
-
-    private func calendarMessage(for opening: CalendarOpening) -> (title: String, detail: String) {
-        let suggestion = "Plans change—would \(opening.budget.maxMinutes) minutes feel realistic?"
-        switch opening.context {
-        case .beforeNextEvent:
-            return ("Some space before your next event", suggestion)
-        case .openForRestOfDay:
-            return ("Your calendar looks open for the rest of today", suggestion)
-        case .openToday:
-            return ("Your calendar looks open today", suggestion)
-        case .uncertain:
-            return ("A possible opening \(openingPhrase(opening))", suggestion)
-        }
-    }
-
-    private var hasProAccess: Bool {
-        isProUser || purchasesManager.isProUnlocked
-    }
 }
 
 /// A clean time slider that maps its smooth visual track onto the durations
@@ -798,15 +438,13 @@ private struct TimeBudgetScale: View {
 }
 
 #Preview("Empty") {
-    CheckInSheet(current: nil) { _, _, _ in }
-        .environment(PurchasesManager.shared)
+    CheckInSheet(current: nil) { _ in }
 }
 
 #Preview("Answered") {
     CheckInSheet(
         current: PlanCheckIn(energy: .low, time: .aLittle, place: .stayingIn, body: .stiff)
-    ) { _, _, _ in }
-    .environment(PurchasesManager.shared)
+    ) { _ in }
 }
 
 #Preview("Aura tiles") {

@@ -54,6 +54,21 @@ nonisolated extension Activity {
         case .breathwork: "Breathwork"
         }
     }
+
+    /// A warm visual cue for Calendar-recognized movement. Calendar titles
+    /// never reach the view; the already-classified activity chooses a mascot.
+    var calendarMascotAsset: String {
+        switch self {
+        case .strength, .carries, .climbing, .martialArts:
+            "IntentStrengthApple"
+        case .stretching, .pilates, .yoga, .breathwork:
+            "IntentMobilityPear"
+        case .walking, .biking, .swimming, .skating, .dance, .jumpRope, .agility, .racquet:
+            "IntentEnergyClementine"
+        case .qigong:
+            "IntentCalmPeach"
+        }
+    }
 }
 
 nonisolated extension SportPreference {

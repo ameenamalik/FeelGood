@@ -251,6 +251,12 @@ final class TodayModel {
         requestCopyUpgrade(now: now)
     }
 
+    /// Updates only the optional Calendar context. Calendar suggestions never
+    /// affect the engine until the person accepts one through check-in.
+    func setCalendarOpening(_ opening: CalendarOpening?) {
+        calendarOpening = opening
+    }
+
     /// Applies structured conversational check-in and overrides.
     func applyConversationalCheckIn(_ response: ChatResponse, now: Date = Date()) {
         let newCheckIn = response.overrides.toPlanCheckIn(fallback: checkIn ?? menu.assumedCheckIn)
