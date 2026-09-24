@@ -18,22 +18,6 @@
 import SwiftUI
 import UIKit
 
-/// The looks the app can wear. Light and dark are not separate themes: each
-/// theme carries both, and the system appearance picks between them.
-///
-/// `kiln` is the default and what everyone gets. `indigo` is earned — the
-/// unlock rule lives in the Little Wins, not here.
-nonisolated enum FGThemeID: String, Codable, CaseIterable, Hashable, Sendable {
-    case kiln
-    case indigo
-}
-
-/// One colour, both appearances.
-nonisolated struct FGThemePair: Hashable, Sendable {
-    let light: UInt32
-    let dark: UInt32
-}
-
 // MARK: - The trait
 
 nonisolated struct FGThemeTrait: UITraitDefinition {

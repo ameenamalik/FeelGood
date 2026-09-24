@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import WidgetKit
 import SwiftData
 import os
 import PostHog
@@ -348,6 +349,11 @@ private struct TodayScreen: View {
     /// the app was last left on the reflection.
     @State private var tab = Destination.today
     @Environment(ThemeSettings.self) private var themeSettings
+
+    /// The look to wear: the person's choice if it is earned, otherwise Kiln.
+    private var effectiveTheme: FGThemeID {
+        themeSettings.effective(unlocked: FGThemeID.unlocked(by: model.littleWins))
+    }
     /// A session the widget asked for. Cleared once Today has opened it.
     @State private var requestedSessionID: String?
     /// `model` is built once and lives for the process, so nothing else
@@ -381,7 +387,13 @@ private struct TodayScreen: View {
         // The theme rides the trait bridge (Theme.swift), so every token under
         // here — and every sheet presented over it — resolves against it without
         // a view passing it along. Onboarding sits outside this and stays Kiln.
-        .fgTheme(themeSettings.effective(unlocked: FGThemeID.unlocked(by: model.littleWins)))
+        .fgTheme(effectiveTheme)
+        // The widget cannot read the trait, so it is told which look to wear. A
+        // reload is needed or the home screen keeps the old one until it refreshes.
+        .onChange(of: effectiveTheme, initial: true) { _, theme in
+            SharedContainer.writeTheme(theme)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 model.refreshForNewDay()
