@@ -356,6 +356,8 @@ private struct TodayScreen: View {
     }
     /// A session the widget asked for. Cleared once Today has opened it.
     @State private var requestedSessionID: String?
+    /// Whether the keyboard is up. Drives the tab bar (TabBar.swift).
+    @State private var isKeyboardVisible = false
     /// `model` is built once and lives for the process, so nothing else
     /// notices the calendar day rolling over while the app sat suspended in
     /// the background — a warm resume the next morning would otherwise keep
@@ -431,14 +433,23 @@ private struct TodayScreen: View {
         // The system bar is a see-through glass pill; ours is solid (TabBar.swift).
         .toolbarVisibility(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            FGTabBar(
-                items: [
-                    FGTabBarItem(tag: Destination.today, title: "Today", systemImage: "sun.max"),
-                    FGTabBarItem(tag: Destination.explore, title: "Chat", systemImage: "bubble.left.and.bubble.right"),
-                    FGTabBarItem(tag: Destination.you, title: "You", systemImage: "person"),
-                ],
-                selection: $tab
-            )
+            if !isKeyboardVisible {
+                FGTabBar(
+                    items: [
+                        FGTabBarItem(tag: Destination.today, title: "Today", systemImage: "sun.max"),
+                        FGTabBarItem(tag: Destination.explore, title: "Chat", systemImage: "bubble.left.and.bubble.right"),
+                        FGTabBarItem(tag: Destination.you, title: "You", systemImage: "person"),
+                    ],
+                    selection: $tab
+                )
+            }
+        }
+        .environment(\.isKeyboardVisible, isKeyboardVisible)
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            isKeyboardVisible = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            isKeyboardVisible = false
         }
         // Covers upgrades and restores: the widget learns the fruit on launch,
         // not only when it is next changed.
