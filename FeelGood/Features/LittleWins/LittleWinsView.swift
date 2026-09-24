@@ -248,6 +248,12 @@ struct LittleWinCelebrationView: View {
                         .font(FGFont.body)
                         .foregroundStyle(FGColor.inkMuted)
                         .multilineTextAlignment(.center)
+                    if let themeLine = celebration.featured.win.themeUnlockLine {
+                        Text(themeLine)
+                            .font(FGFont.body.weight(.semibold))
+                            .foregroundStyle(FGColor.ink)
+                            .multilineTextAlignment(.center)
+                    }
 
                     LittleWinProfileRewardLabel(
                         win: celebration.featured.win,

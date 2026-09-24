@@ -51,6 +51,13 @@ nonisolated enum LittleWin: String, CaseIterable, Codable, Hashable, Identifiabl
         }
     }
 
+    /// An extra line for a win that also unlocks a look. `nil` for the rest.
+    var themeUnlockLine: String? {
+        FGThemeID.allCases.contains { $0.unlockingWin == self }
+            ? "There's a new look waiting in You."
+            : nil
+    }
+
     var mascotAsset: String {
         switch self {
         case .firstMove: "LittleWinFirstMoveStrawberry"

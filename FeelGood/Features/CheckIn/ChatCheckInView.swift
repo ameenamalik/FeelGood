@@ -121,7 +121,7 @@ struct ChatCheckInView: View {
                         .font(.custom("SFProRounded-Medium", size: 15))
                         .foregroundStyle(FGColor.ink)
                         .padding(12)
-                        .background(Color(light: 0xF2F7EB, dark: 0x1B2615))
+                        .background(FGColor.sagePanel)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .postHogMask()
 

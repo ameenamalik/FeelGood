@@ -881,46 +881,14 @@ private struct MenuItemCard: View {
 
                 if canSwap {
                     MenuSwapButton(item: item, isReset: isReset, action: onSelectManual)
-                        .padding(.top, 18)
+                        .padding(.top, 14)
                         .padding(.trailing, 20)
                 }
             }
             .offset(x: dragOffset)
-            .highPriorityGesture(
-                canSwap ? DragGesture(minimumDistance: 12)
-                    .onChanged { gesture in
-                        if gesture.translation.width < 0 && abs(gesture.translation.width) > abs(gesture.translation.height) {
-                            if !reduceMotion {
-                                dragOffset = gesture.translation.width
-                            }
-                        }
-                    }
-                    .onEnded { gesture in
-                        guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
-                            withAnimation(FGMotion.gentle) { dragOffset = 0 }
-                            return
-                        }
-                        if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            if reduceMotion {
-                                onSkip()
-                            } else {
-                                withAnimation(.easeOut(duration: 0.18)) {
-                                    dragOffset = -UIScreen.main.bounds.width
-                                }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
-                                    onSkip()
-                                    dragOffset = 0
-                                }
-                            }
-                        } else {
-                            withAnimation(FGMotion.gentle) {
-                                dragOffset = 0
-                            }
-                        }
-                    }
-                : nil
-            )
+            // Not a DragGesture: any SwiftUI drag on a card stops it scrolling
+            // (HorizontalSwipe.swift), so vertical and diagonal drags must fail early.
+            .fgSwipeToSkip(isEnabled: canSwap, offset: $dragOffset, reduceMotion: reduceMotion, onSkip: onSkip)
         }
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
@@ -1022,46 +990,14 @@ private struct MenuItemRow: View {
 
                 if canSwap {
                     MenuSwapButton(item: item, isReset: isReset, action: onSelectManual)
-                        .padding(.top, 18)
+                        .padding(.top, 14)
                         .padding(.trailing, 20)
                 }
             }
             .offset(x: dragOffset)
-            .highPriorityGesture(
-                canSwap ? DragGesture(minimumDistance: 12)
-                    .onChanged { gesture in
-                        if gesture.translation.width < 0 && abs(gesture.translation.width) > abs(gesture.translation.height) {
-                            if !reduceMotion {
-                                dragOffset = gesture.translation.width
-                            }
-                        }
-                    }
-                    .onEnded { gesture in
-                        guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
-                            withAnimation(FGMotion.gentle) { dragOffset = 0 }
-                            return
-                        }
-                        if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            if reduceMotion {
-                                onSkip()
-                            } else {
-                                withAnimation(.easeOut(duration: 0.18)) {
-                                    dragOffset = -UIScreen.main.bounds.width
-                                }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
-                                    onSkip()
-                                    dragOffset = 0
-                                }
-                            }
-                        } else {
-                            withAnimation(FGMotion.gentle) {
-                                dragOffset = 0
-                            }
-                        }
-                    }
-                : nil
-            )
+            // Not a DragGesture: any SwiftUI drag on a card stops it scrolling
+            // (HorizontalSwipe.swift), so vertical and diagonal drags must fail early.
+            .fgSwipeToSkip(isEnabled: canSwap, offset: $dragOffset, reduceMotion: reduceMotion, onSkip: onSkip)
         }
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
@@ -1100,10 +1036,10 @@ private struct MenuItemBody: View {
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .lineLimit(1)
                         .fixedSize()
-                        .foregroundStyle(item.course.accentText)
+                        .foregroundStyle(item.course.chipText)
                         .padding(.horizontal, 11)
                         .padding(.vertical, 5)
-                        .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
+                        .background(item.course.chipFill)
                         .clipShape(Capsule())
 
                     Text(item.session.durationLabel.uppercased())
@@ -1135,20 +1071,25 @@ private struct MenuItemBody: View {
                     .lineSpacing(-2)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity, minHeight: 106, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
 
             // The course's mascot — the same fruit this course wears on My
             // Menu and the paywall, so a Side here and a Side there read as
             // the same thing. Bottom-anchored, clear of the shuffle button
             // floating over the top-trailing corner.
+            // On a plate, so the fruit never depends on the glaze behind it.
             Image(item.course.menuMascotAsset)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 64, height: 64)
+                .frame(width: 52, height: 52)
+                .padding(4)
+                .background(Circle().fill(item.course.plate))
                 .accessibilityHidden(true)
                 .padding(.bottom, 2)
         }
-        .padding(.vertical, 18)
+        // 14pt, not 18: the cards were ~140pt of mostly empty glaze, which pushed
+        // the fourth course under the tab bar. ~116pt keeps the whole menu in view.
+        .padding(.vertical, 14)
         .padding(.horizontal, 20)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -1156,12 +1097,7 @@ private struct MenuItemBody: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(
-                    isDone
-                        ? FGColor.line
-                        : Color.white.opacity(colorScheme == .dark ? 0.12 : 0.35),
-                    lineWidth: 1
-                )
+                .strokeBorder(isDone ? FGColor.line : item.course.edge, lineWidth: 1.5)
         )
         // Done reads as "chosen, not crossed off" — a quieter card rather
         // than a strikethrough, which read like a to-do list item.
