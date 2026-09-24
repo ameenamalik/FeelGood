@@ -344,9 +344,8 @@ struct TodayView: View {
                                 for: currentItem,
                                 checkIn: model.checkIn ?? model.menu.assumedCheckIn
                             ),
-                            isDone: model.isCompleted(currentItem),
                             isInProgress: model.isInProgress(currentItem),
-                            canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
+                            canSwap: !model.isInProgress(currentItem),
                             isReset: model.isCycleReset(currentItem),
                             onOpen: { openSession(currentItem) },
                             onSelectManual: { handleSwapButtonTap(currentItem) },
@@ -356,9 +355,8 @@ struct TodayView: View {
                     } else {
                         MenuItemRow(
                             item: currentItem,
-                            isDone: model.isCompleted(currentItem),
                             isInProgress: model.isInProgress(currentItem),
-                            canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
+                            canSwap: !model.isInProgress(currentItem),
                             isReset: model.isCycleReset(currentItem),
                             onOpen: { openSession(currentItem) },
                             onSelectManual: { handleSwapButtonTap(currentItem) },
@@ -969,7 +967,6 @@ private struct MenuItemCard: View {
     let item: MenuItem
     /// One sentence on why this is the main pick. The rows below carry none.
     let caption: String?
-    let isDone: Bool
     let isInProgress: Bool
     let canSwap: Bool
     let isReset: Bool
@@ -1003,7 +1000,6 @@ private struct MenuItemCard: View {
                     MenuItemBody(
                         item: item,
                         caption: caption,
-                        isDone: isDone,
                         isInProgress: isInProgress,
                         isHighlighted: false
                     )
@@ -1025,7 +1021,7 @@ private struct MenuItemCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
-            "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : isInProgress ? "In progress. Resume. " : "")"
+            "\(item.course.label). \(item.session.title). \(isInProgress ? "In progress. Resume. " : "")"
             + "\(item.session.chips.joined(separator: ", ")). \(item.reasonText)"
         )
         .accessibilityAddTraits(.isButton)
@@ -1035,29 +1031,6 @@ private struct MenuItemCard: View {
         .accessibilityAction(named: "Quick skip \(item.course.label)") {
             if canSwap { onSkip() }
         }
-    }
-}
-
-/// Marks something already done today. Not a score, not a count, and nothing
-/// accrues from it — it's here so a finished item stops asking to be started.
-private struct DoneMark: View {
-    /// Fires once, right after this view is inserted (see `MenuItemBody`'s
-    /// `.transition` on it) — a static checkmark landing in a scaled-in pill
-    /// reads as arrived, not achieved. The bounce is what actually sells
-    /// "you just did that."
-    @State private var hasBounced = false
-
-    var body: some View {
-        HStack(spacing: FGSpace.xs) {
-            Image(systemName: "checkmark.circle.fill")
-                .symbolEffect(.bounce, value: hasBounced)
-                .foregroundStyle(FGColor.sageDeep)
-            Text("Done")
-                .foregroundStyle(FGColor.sageDeep)
-        }
-        .font(.system(size: 13, weight: .semibold, design: .rounded))
-        .accessibilityHidden(true)
-        .onAppear { hasBounced.toggle() }
     }
 }
 
@@ -1079,7 +1052,6 @@ private struct ResumeMark: View {
 /// Everything that isn't the Main. Same information, one glance.
 private struct MenuItemRow: View {
     let item: MenuItem
-    let isDone: Bool
     let isInProgress: Bool
     let canSwap: Bool
     let isReset: Bool
@@ -1112,7 +1084,6 @@ private struct MenuItemRow: View {
                 Button(action: onOpen) {
                     MenuItemBody(
                         item: item,
-                        isDone: isDone,
                         isInProgress: isInProgress,
                         isHighlighted: false
                     )
@@ -1134,7 +1105,7 @@ private struct MenuItemRow: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
-            "\(item.course.label). \(item.session.title). \(isDone ? "Done today. " : isInProgress ? "In progress. Resume. " : "")"
+            "\(item.course.label). \(item.session.title). \(isInProgress ? "In progress. Resume. " : "")"
             + "\(item.session.durationLabel). \(item.reasonText)"
         )
         .accessibilityAddTraits(.isButton)
@@ -1152,7 +1123,6 @@ private struct MenuItemRow: View {
 private struct MenuItemBody: View {
     let item: MenuItem
     var caption: String? = nil
-    let isDone: Bool
     let isInProgress: Bool
     let isHighlighted: Bool
     @Environment(\.colorScheme) private var colorScheme
@@ -1185,11 +1155,7 @@ private struct MenuItemBody: View {
                         .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
                         .clipShape(Capsule())
 
-                    if isDone {
-                        DoneMark()
-                            .padding(.leading, 2)
-                            .transition(.scale(scale: 0.7).combined(with: .opacity))
-                    } else if isInProgress {
+                    if isInProgress {
                         ResumeMark()
                             .padding(.leading, 2)
                     }
@@ -1200,11 +1166,11 @@ private struct MenuItemBody: View {
                 // waits behind a tap, on the session's own detail screen.
                 Text(item.session.title)
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
-                    .foregroundStyle(isDone ? FGColor.inkMuted : item.course.accentText)
+                    .foregroundStyle(item.course.accentText)
                     .lineSpacing(-2)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if let caption, !isDone {
+                if let caption {
                     Text(caption)
                         .font(.system(size: 15, weight: .regular))
                         .foregroundStyle(item.course.accentText.opacity(0.85))
@@ -1237,12 +1203,8 @@ private struct MenuItemBody: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(isDone ? FGColor.line : item.course.edge, lineWidth: 1.5)
+                .strokeBorder(item.course.edge, lineWidth: 1.5)
         )
-        // Done reads as "chosen, not crossed off" — a quieter card rather
-        // than a strikethrough, which read like a to-do list item.
-        .opacity(isDone ? 0.6 : 1)
-        .fgAnimation(FGMotion.settle, value: isDone)
     }
 }
 
