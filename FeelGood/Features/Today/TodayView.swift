@@ -9,11 +9,10 @@
 import SwiftUI
 import UIKit
 import PostHog
+import EventKit
 
 private struct PendingCheckInUpdate {
     let checkIn: PlanCheckIn
-    let calendarOpening: CalendarOpening?
-    let completedMovementPlan: CalendarMovementPlan?
 }
 
 /// A quiet, check-in-colored glow behind today's rebuilt menu. Replacing the
@@ -53,6 +52,7 @@ struct TodayView: View {
     @State private var isShowingAuthPrompt = false
     @Environment(AuthService.self) private var authService
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
     @State private var isShowingMyMenu = false
     @AppStorage("hasSeenDopamineMenuTour") private var hasSeenDopamineMenuTour = false
     @State private var isShowingDopamineMenuTour = false
@@ -63,6 +63,14 @@ struct TodayView: View {
     @State private var isRegeneratingMenu = false
     @State private var isMenuCompressed = false
     @State private var visibleMenuCardCount = Int.max
+    @State private var calendarMovementPlan: CalendarMovementPlan?
+    @State private var countedCalendarPlanID: String?
+    @State private var calendarPlanAwaitingConfirmation: CalendarMovementPlan?
+    @State private var calendarRefreshTask: Task<Void, Never>?
+    @AppStorage(CalendarMovementPreferences.personalizationEnabledKey)
+    private var isCalendarPersonalizationEnabled = false
+    @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
+    private var isMovementRecognitionEnabled = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     #if DEBUG
     @State private var isDebugging = false
@@ -90,7 +98,6 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     header
                     menuHeading
-                    calendarFitCard
                     menuItems
                 }
                 .padding(FGSpace.page)
@@ -99,18 +106,8 @@ struct TodayView: View {
             .scrollBounceBehavior(.basedOnSize)
         }
         .sheet(isPresented: $isCheckingIn, onDismiss: handleCheckInDismissal) {
-            CheckInSheet(
-                current: model.checkIn,
-                currentCalendarOpening: model.calendarOpening,
-                isProUser: model.isProUser,
-                preferredTime: model.profile.bestTimeOfDay,
-                realisticMinutes: model.profile.realisticMinutes
-            ) { checkIn, calendarOpening, completedMovementPlan in
-                pendingCheckInUpdate = PendingCheckInUpdate(
-                    checkIn: checkIn,
-                    calendarOpening: calendarOpening,
-                    completedMovementPlan: completedMovementPlan
-                )
+            CheckInSheet(current: model.checkIn) { checkIn in
+                pendingCheckInUpdate = PendingCheckInUpdate(checkIn: checkIn)
                 isCheckingIn = false
             }
         }
@@ -153,10 +150,44 @@ struct TodayView: View {
                 subtitle: "You finished today's session! Create an account to keep your progress and daily menus across devices."
             )
         }
+        .confirmationDialog(
+            "Did this movement happen?",
+            isPresented: Binding(
+                get: { calendarPlanAwaitingConfirmation != nil },
+                set: { isPresented in
+                    if !isPresented { calendarPlanAwaitingConfirmation = nil }
+                }
+            ),
+            titleVisibility: .visible,
+            presenting: calendarPlanAwaitingConfirmation
+        ) { plan in
+            Button("Yes, count it") {
+                model.log(plan)
+                countedCalendarPlanID = plan.id
+                calendarPlanAwaitingConfirmation = nil
+                AccessibilityNotification.Announcement("Counted for today").post()
+            }
+
+            Button("No, it didn't happen", role: .destructive) {
+                calendarPlanAwaitingConfirmation = nil
+                dismissCalendarMovementPlan(plan)
+            }
+
+            Button("Cancel", role: .cancel) {
+                calendarPlanAwaitingConfirmation = nil
+            }
+        } message: { _ in
+            Text("FeelGood only adds it to your movement log when you confirm it.")
+        }
         .onChange(of: requestedSessionID.wrappedValue, initial: true) { _, id in
             openRequestedSession(id)
         }
         .onAppear {
+            // Calendar availability now shapes the menu quietly. Clear any
+            // exact-time reminder saved by the previous scheduling UI.
+            CalendarOpeningReminderService.shared.cancel()
+            model.setCalendarOpening(nil)
+
             // Discovery messaging belongs to the moment after a completion,
             // never to app launch or the start of a calming session.
             clearOneSignalDiscoveryTriggers()
@@ -173,6 +204,20 @@ struct TodayView: View {
                 }
             }
         }
+        .task(id: calendarPersonalizationTaskID) {
+            await refreshCalendarMovementPlan()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            scheduleCalendarMovementRefresh(after: .milliseconds(150))
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged)) { _ in
+            // EventKit commonly emits several notifications for one save.
+            // Coalesce them so the visible card changes once, after Calendar
+            // has finished committing the edit.
+            scheduleCalendarMovementRefresh(after: .milliseconds(350))
+        }
+        .onDisappear { calendarRefreshTask?.cancel() }
         .onReceive(NotificationCenter.default.publisher(for: .oneSignalOpenMyMenu)) { _ in
             // Let OneSignal's overlay finish dismissing before presenting the
             // My Menu sheet; competing presentations can otherwise drop it.
@@ -261,12 +306,22 @@ struct TodayView: View {
 
     private var menuItems: some View {
         VStack(spacing: FGSpace.s) {
+            if let calendarMovementPlan, !shouldCalendarMovementReplaceMain {
+                calendarMovementCard(calendarMovementPlan, replacesMain: false)
+                    .transition(cardSwapTransition)
+            }
+
             ForEach(Array(model.menu.items.enumerated()), id: \.offset) { index, item in
                 let isVisible = index < visibleMenuCardCount
 
                 ZStack {
                     ForEach([item], id: \.id) { currentItem in
-                        if currentItem.course == .main {
+                        if shouldCalendarMovementReplaceMain,
+                           currentItem.course == .main,
+                           let calendarMovementPlan {
+                            calendarMovementCard(calendarMovementPlan, replacesMain: true)
+                                .transition(cardSwapTransition)
+                        } else if currentItem.course == .main {
                             MenuItemCard(
                                 item: currentItem,
                                 isDone: model.isCompleted(currentItem),
@@ -298,6 +353,12 @@ struct TodayView: View {
                 .offset(y: isVisible ? 0 : 10)
                 .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: isVisible)
             }
+
+            if shouldCalendarMovementReplaceMain,
+               model.menu.main == nil,
+               let calendarMovementPlan {
+                calendarMovementCard(calendarMovementPlan, replacesMain: true)
+            }
         }
         .opacity(isMenuCompressed ? 0 : 1)
         .scaleEffect(
@@ -305,6 +366,14 @@ struct TodayView: View {
             y: isMenuCompressed ? 0.94 : 1,
             anchor: .top
         )
+    }
+
+    /// Calendar movement shapes the quiet default menu, but an explicit
+    /// non-rest check-in is a fresh statement of intent. If somebody says they
+    /// have 20 minutes now, keep the calendar acknowledgement and still give
+    /// them a normal menu that fits those 20 minutes.
+    private var shouldCalendarMovementReplaceMain: Bool {
+        calendarMovementPlan != nil && model.checkIn == nil
     }
 
 
@@ -510,25 +579,18 @@ struct TodayView: View {
         }
         pendingCheckInUpdate = nil
 
-        let didChange = model.checkIn != update.checkIn
-            || model.calendarOpening != update.calendarOpening
-
         Task { @MainActor in
+            let calendarAwareCheckIn = await checkInAdjustedForCalendar(update.checkIn)
+            let didChange = model.checkIn != calendarAwareCheckIn || model.calendarOpening != nil
+
             if didChange {
                 await regenerateMenu {
-                    apply(update)
+                    model.apply(calendarAwareCheckIn)
                 }
             } else {
-                apply(update)
+                model.apply(calendarAwareCheckIn)
             }
             presentPendingLittleWinCelebration()
-        }
-    }
-
-    private func apply(_ update: PendingCheckInUpdate) {
-        model.apply(update.checkIn, calendarOpening: update.calendarOpening)
-        if let completedMovementPlan = update.completedMovementPlan {
-            model.log(completedMovementPlan)
         }
     }
 
@@ -607,32 +669,170 @@ struct TodayView: View {
         ])
     }
 
-    @ViewBuilder
-    private var calendarFitCard: some View {
-        if let opening = model.calendarOpening, let main = model.menu.main {
-            HStack(alignment: .top, spacing: FGSpace.s) {
-                Image(systemName: "calendar.badge.clock")
-                    .foregroundStyle(FGColor.goldDeep)
+    private var calendarPersonalizationTaskID: String {
+        "\(model.isProUser)-\(isCalendarPersonalizationEnabled)-\(isMovementRecognitionEnabled)"
+    }
+
+    private func checkInAdjustedForCalendar(_ checkIn: PlanCheckIn) async -> PlanCheckIn {
+        guard
+            model.isProUser,
+            isCalendarPersonalizationEnabled,
+            EventKitCalendarAvailabilityService.shared.connectionState == .connected
+        else { return checkIn }
+
+        do {
+            guard let opening = try await EventKitCalendarAvailabilityService.shared.suggestedOpening(
+                on: Date(),
+                preferredTime: model.profile.bestTimeOfDay,
+                realisticMinutes: min(model.profile.realisticMinutes, checkIn.time.maxMinutes),
+                calendar: .current
+            ), opening.budget.maxMinutes < checkIn.time.maxMinutes else {
+                return checkIn
+            }
+
+            var adjusted = checkIn
+            adjusted.time = opening.budget
+            return adjusted
+        } catch {
+            return checkIn
+        }
+    }
+
+    private func refreshCalendarMovementPlan() async {
+        guard
+            model.isProUser,
+            isMovementRecognitionEnabled,
+            EventKitCalendarAvailabilityService.shared.connectionState == .connected
+        else {
+            calendarMovementPlan = nil
+            countedCalendarPlanID = nil
+            return
+        }
+
+        do {
+            let now = Date()
+            let plans = try await EventKitCalendarAvailabilityService.shared
+                .movementPlans(on: now, calendar: .current)
+                .filter { !CalendarMovementPreferences.isHandled($0.id) }
+
+            let nextPlan = plans
+                .filter { $0.end <= now }
+                .max { $0.end < $1.end }
+                ?? plans.filter { $0.end > now }.min { $0.start < $1.start }
+
+            guard nextPlan != calendarMovementPlan else { return }
+            withAnimation(reduceMotion ? nil : FGMotion.gentle) {
+                calendarMovementPlan = nextPlan
+                countedCalendarPlanID = nil
+            }
+        } catch {
+            // Keep the last known card during a transient EventKit read error.
+            // Clearing and restoring it on the next notification looks like a
+            // flash even though the calendar data never meaningfully changed.
+        }
+    }
+
+    private func scheduleCalendarMovementRefresh(after delay: Duration) {
+        calendarRefreshTask?.cancel()
+        calendarRefreshTask = Task { @MainActor in
+            do {
+                try await Task.sleep(for: delay)
+                try Task.checkCancellation()
+                await refreshCalendarMovementPlan()
+            } catch {
+                // A newer Calendar notification superseded this refresh.
+            }
+        }
+    }
+
+    private func calendarMovementCard(_ plan: CalendarMovementPlan, replacesMain: Bool) -> some View {
+        let now = Date()
+        let hasEnded = plan.end <= now
+        let isHappeningNow = plan.start <= now && !hasEnded
+        let wasCounted = countedCalendarPlanID == plan.id
+
+        return Button {
+            guard !wasCounted else { return }
+            calendarPlanAwaitingConfirmation = plan
+        } label: {
+            HStack(alignment: .top, spacing: FGSpace.m) {
+                Image(plan.activity.calendarMascotAsset)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 66, height: 66)
+                    .padding(8)
+                    .background(Circle().fill(FGColor.gold.opacity(0.28)))
                     .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("A good opening today")
-                        .font(FGFont.label.weight(.semibold))
+                VStack(alignment: .leading, spacing: FGSpace.xs) {
+                    HStack {
+                        Text(replacesMain ? "TODAY'S MAIN" : "FROM YOUR CALENDAR")
+                            .font(FGFont.caption.weight(.bold))
+                            .foregroundStyle(FGColor.inkMuted)
+
+                        Spacer(minLength: FGSpace.xs)
+
+                        if !wasCounted {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(FGColor.inkMuted)
+                                .accessibilityHidden(true)
+                        }
+                    }
+
+                    Text(plan.activity.label)
+                        .font(FGFont.itemTitle)
                         .foregroundStyle(FGColor.ink)
-                    Text("Try \(main.session.title) around \(opening.start.formatted(date: .omitted, time: .shortened)).")
+
+                    Label(calendarMovementTiming(plan, isHappeningNow: isHappeningNow), systemImage: "calendar")
+                        .font(FGFont.caption.weight(.semibold))
+                        .foregroundStyle(FGColor.inkMuted)
+
+                    Text(calendarMovementDetail(hasEnded: hasEnded, wasCounted: wasCounted))
                         .font(FGFont.caption)
                         .foregroundStyle(FGColor.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(FGSpace.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
             .background(
-                RoundedRectangle(cornerRadius: FGRadius.card - 4, style: .continuous)
-                    .fill(FGColor.surface.opacity(0.92))
+                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                    .fill(FGAura.sage.mid.opacity(colorScheme == .dark ? 0.26 : 0.38))
             )
-            .postHogMask()
-            .accessibilityElement(children: .combine)
+            .overlay(
+                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                    .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+                    .allowsHitTesting(false)
+            )
         }
+        .buttonStyle(.feelGoodPress)
+        .disabled(wasCounted)
+        .postHogMask()
+        .accessibilityLabel("Today's main, \(plan.activity.label). \(calendarMovementTiming(plan, isHappeningNow: isHappeningNow))")
+        .accessibilityHint(wasCounted ? "Counted for today" : "Double tap to say whether it happened")
+    }
+
+    private func calendarMovementTiming(_ plan: CalendarMovementPlan, isHappeningNow: Bool) -> String {
+        if isHappeningNow { return "On your calendar now" }
+        return "\(plan.durationMinutes) min · \(plan.start.formatted(date: .omitted, time: .shortened))"
+    }
+
+    private func calendarMovementDetail(hasEnded: Bool, wasCounted: Bool) -> String {
+        if wasCounted { return "Counted for today. Nice work." }
+        if hasEnded { return "Did this happen? FeelGood only counts it when you say so." }
+        return "Already part of your day, so we kept the rest of your menu light."
+    }
+
+    private func dismissCalendarMovementPlan(_ plan: CalendarMovementPlan) {
+        CalendarMovementPreferences.markHandled(plan.id)
+        withAnimation(FGMotion.settle) {
+            calendarMovementPlan = nil
+        }
+        AccessibilityNotification.Announcement("Your regular main routine is back").post()
+        scheduleCalendarMovementRefresh(after: .milliseconds(150))
     }
 }
 
@@ -897,6 +1097,16 @@ private struct MenuItemBody: View {
                 // Top metadata row: White pill badge matching design reference
                 HStack(alignment: .center, spacing: 6) {
                     Text(item.course.label.uppercased())
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .lineLimit(1)
+                        .fixedSize()
+                        .foregroundStyle(item.course.accentText)
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 5)
+                        .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
+                        .clipShape(Capsule())
+
+                    Text(item.session.durationLabel.uppercased())
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .lineLimit(1)
                         .fixedSize()

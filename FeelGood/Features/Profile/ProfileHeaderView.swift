@@ -13,6 +13,7 @@ import AuthenticationServices
 import PostHog
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct ProfileHeaderView: View {
     @Bindable var profile: UserProfile
@@ -41,6 +42,9 @@ struct ProfileHeaderView: View {
     @State private var passwordForReauth = ""
     @State private var notificationsEnabled = false
     @State private var isUpdatingNotifications = false
+    @State private var calendarConnectionState = EventKitCalendarAvailabilityService.shared.connectionState
+    @AppStorage(CalendarMovementPreferences.personalizationEnabledKey)
+    private var isCalendarPersonalizationEnabled = false
     @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
     private var isMovementRecognitionEnabled = false
     @AppStorage(ChatConsent.key) private var chatConsentRaw = ChatConsent.Status.notAsked.rawValue
@@ -60,10 +64,14 @@ struct ProfileHeaderView: View {
         }
         .padding(FGSpace.page)
         .padding(.bottom, FGSpace.s)
-        .onAppear(perform: refreshNotificationState)
+        .onAppear {
+            refreshNotificationState()
+            refreshCalendarState()
+        }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 refreshNotificationState()
+                refreshCalendarState()
             }
         }
         .sheet(isPresented: $isShowingAuthSheet) {
@@ -541,24 +549,103 @@ struct ProfileHeaderView: View {
     // MARK: Calendar privacy
 
     private var calendarPrivacySection: some View {
-        Toggle(isOn: $isMovementRecognitionEnabled) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Recognize movement plans")
-                    .font(FGFont.body.weight(.medium))
-                    .foregroundStyle(FGColor.ink)
-                Text("Checks Calendar event names on this device for workouts and classes. Names are never saved or shared.")
-                    .font(FGFont.caption)
-                    .foregroundStyle(FGColor.inkMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: FGSpace.m) {
+            HStack(spacing: FGSpace.s) {
+                Image(systemName: calendarConnectionState == .connected ? "calendar.badge.checkmark" : "calendar")
+                    .font(.title3)
+                    .foregroundStyle(calendarConnectionState == .connected ? FGColor.sageDeep : FGColor.goldDeep)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Calendar")
+                        .font(FGFont.body.weight(.semibold))
+                        .foregroundStyle(FGColor.ink)
+                    Text(calendarStatusText)
+                        .font(FGFont.caption)
+                        .foregroundStyle(FGColor.inkMuted)
+                }
+
+                Spacer()
+                calendarAccessButton
+            }
+
+            if calendarConnectionState == .connected {
+                Divider().overlay(FGColor.lineStrong)
+
+                Toggle(isOn: $isCalendarPersonalizationEnabled) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Shape my menu around my day")
+                            .font(FGFont.body.weight(.medium))
+                            .foregroundStyle(FGColor.ink)
+                        Text("Quietly uses free and busy times to keep session lengths realistic. It never creates calendar events.")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .tint(FGColor.controlAccent)
+
+                Toggle(isOn: $isMovementRecognitionEnabled) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Recognize movement plans")
+                            .font(FGFont.body.weight(.medium))
+                            .foregroundStyle(FGColor.ink)
+                        Text("Treats Pilates, yoga, gym and similar events as today's main movement. Event names stay on this device.")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .tint(FGColor.controlAccent)
             }
         }
-        .tint(FGColor.controlAccent)
         .padding(FGSpace.m)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
                 .fill(FGColor.surface)
         )
         .postHogMask()
+    }
+
+    @ViewBuilder
+    private var calendarAccessButton: some View {
+        switch calendarConnectionState {
+        case .notRequested:
+            Button("Connect") {
+                Task {
+                    calendarConnectionState = await EventKitCalendarAvailabilityService.shared.requestAccess()
+                    if calendarConnectionState == .connected {
+                        isCalendarPersonalizationEnabled = true
+                    }
+                }
+            }
+            .font(FGFont.caption.weight(.semibold))
+            .foregroundStyle(FGColor.ink)
+        case .connected:
+            Button("Settings", action: openSystemSettings)
+                .font(FGFont.caption.weight(.semibold))
+                .foregroundStyle(FGColor.inkMuted)
+        case .denied:
+            Button("Open Settings", action: openSystemSettings)
+                .font(FGFont.caption.weight(.semibold))
+                .foregroundStyle(FGColor.clayDeep)
+        }
+    }
+
+    private var calendarStatusText: String {
+        switch calendarConnectionState {
+        case .notRequested: "Not connected"
+        case .connected: "Connected · read-only and on-device"
+        case .denied: "Access is off"
+        }
+    }
+
+    private func refreshCalendarState() {
+        calendarConnectionState = EventKitCalendarAvailabilityService.shared.connectionState
+    }
+
+    private func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     // MARK: Chat privacy

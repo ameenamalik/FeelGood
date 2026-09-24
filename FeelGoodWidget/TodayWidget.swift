@@ -171,10 +171,10 @@ struct TodayWidgetView: View {
             }
         } else if isFruit {
             VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .top) {
+                HStack(alignment: .top, spacing: 4) {
                     if let item { courseTag(item) }
-                    Spacer(minLength: 0)
-                    mascot(size: 44)
+                    Spacer(minLength: 4)
+                    mascot(size: 40)
                 }
                 text(showingTag: false)
             }
@@ -234,13 +234,18 @@ struct TodayWidgetView: View {
 
     private func courseTag(_ item: TodayItem) -> some View {
         Text(item.courseLabel)
-            .font(.system(.caption2, design: .rounded).weight(.medium))
+            .font(.system(size: family == .systemSmall ? 9 : 11,
+                          weight: .semibold,
+                          design: .rounded))
             .textCase(.uppercase)
-            .tracking(1.1)
+            .tracking(family == .systemSmall ? 0.6 : 1.1)
+            .lineLimit(1)
+            .minimumScaleFactor(0.78)
+            .allowsTightening(true)
             // Ink on the accent, always. The accents are far too light to carry
             // white text, and this one does not flip with the appearance.
             .foregroundStyle(WidgetPalette.inkOnAccent)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, family == .systemSmall ? 6 : 8)
             .padding(.vertical, 3)
             // On a fruit colour the course accent would vanish into it, so the
             // pill goes translucent white there.
@@ -321,7 +326,7 @@ nonisolated extension Color {
 extension TodayItem {
     static let preview = TodayItem(
         sessionID: "main-pilates-gentle-10",
-        courseLabel: "Main",
+        courseLabel: "Appetizer",
         accentHex: 0xC7EA4E,
         title: "Ten gentle minutes on the mat",
         reason: "An easy way back in.",

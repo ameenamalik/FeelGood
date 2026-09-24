@@ -8,6 +8,7 @@
 
 @preconcurrency import EventKit
 import Foundation
+@preconcurrency import UserNotifications
 
 nonisolated enum CalendarConnectionState: Sendable, Equatable {
     case notRequested
@@ -47,6 +48,12 @@ nonisolated struct CalendarOpening: Hashable, Sendable {
         self.budget = budget
         self.context = context
     }
+
+    /// The part of the opening FeelGood is actually proposing, rather than
+    /// the whole free block that may extend for hours.
+    var suggestedEnd: Date {
+        min(end, start.addingTimeInterval(TimeInterval(budget.maxMinutes * 60)))
+    }
 }
 
 /// A calendar event whose title matched a small, on-device movement
@@ -79,28 +86,48 @@ nonisolated enum CalendarMovementTitleClassifier {
             candidates.contains(where: normalized.contains)
         }
 
-        if hasWord("pilates", "reformer") { return .pilates }
+        if hasWord("pilates", "reformer", "barre") { return .pilates }
         if hasWord("yoga") { return .yoga }
         if hasWord("qigong") || hasPhrase("qi gong", "tai chi") { return .qigong }
-        if hasWord("swim", "swimming") { return .swimming }
-        if hasWord("bike", "biking", "cycling", "spin") { return .biking }
-        if hasWord("skate", "skating") { return .skating }
-        if hasWord("dance", "dancing", "zumba") { return .dance }
-        if hasPhrase("jump rope") { return .jumpRope }
+        if hasWord("swim", "swimming", "aquafit", "aquacise")
+            || hasPhrase("water aerobics") { return .swimming }
+        if hasWord("bike", "biking", "cycle", "cycling", "spin", "spinning", "peloton") {
+            return .biking
+        }
+        if hasWord("skate", "skating", "rollerblade", "rollerblading") { return .skating }
+        if hasWord("dance", "dancing", "zumba", "ballet", "salsa", "tap") { return .dance }
+        if hasWord("jumprope", "skipping") || hasPhrase("jump rope") { return .jumpRope }
         if hasWord(
             "tennis", "pickleball", "badminton", "squash",
-            "basketball", "soccer", "football", "volleyball"
+            "basketball", "soccer", "football", "volleyball",
+            "baseball", "softball", "rugby", "cricket", "hockey",
+            "lacrosse", "handball", "netball", "golf", "futsal"
         ) { return .racquet }
         if hasWord("climb", "climbing", "bouldering") { return .climbing }
-        if hasWord("boxing", "kickboxing", "judo", "karate") || hasPhrase("martial arts") {
+        if hasWord(
+            "boxing", "kickboxing", "judo", "karate", "taekwondo",
+            "jiujitsu", "wrestling", "muaythai"
+        ) || hasPhrase("martial arts", "muay thai", "jiu jitsu", "jui jitsu") {
             return .martialArts
         }
-        if hasWord("breathwork") || hasPhrase("breath work") { return .breathwork }
-        if hasWord("stretch", "stretching", "mobility") { return .stretching }
-        if hasWord("walk", "walking", "hike", "hiking") { return .walking }
-        if hasWord("lifting", "weightlifting", "crossfit", "workout")
-            || hasPhrase("strength training", "gym session", "personal training") {
+        if hasWord("breathwork", "meditation") || hasPhrase("breath work") { return .breathwork }
+        if hasWord("stretch", "stretching", "mobility", "foamrolling")
+            || hasPhrase("foam rolling") { return .stretching }
+        if hasWord("walk", "walking", "hike", "hiking", "trek", "trekking") { return .walking }
+        if hasWord(
+            "gym", "lifting", "weightlifting", "weights", "crossfit", "workout",
+            "strength", "powerlifting", "bodybuilding", "calisthenics", "resistance",
+            "rowing", "row"
+        ) || hasPhrase("strength training", "gym session", "personal training", "weight training") {
             return .strength
+        }
+        if hasWord(
+            "run", "running", "jog", "jogging", "sprint", "sprinting",
+            "cardio", "hiit", "bootcamp", "aerobics", "gymnastics",
+            "ski", "skiing", "snowboard", "snowboarding", "surf", "surfing",
+            "kayak", "kayaking", "paddleboard", "paddleboarding"
+        ) || hasPhrase("circuit training", "track practice") {
+            return .agility
         }
         return nil
     }
@@ -110,6 +137,7 @@ nonisolated enum CalendarMovementTitleClassifier {
 /// every check-in. Only opaque event identifiers are stored, never titles.
 @MainActor
 enum CalendarMovementPreferences {
+    static let personalizationEnabledKey = "calendarPersonalizationEnabled"
     static let recognitionEnabledKey = "calendarMovementRecognitionEnabled"
     private static let handledEventIDsKey = "calendarMovementHandledEventIDs"
 
@@ -136,9 +164,35 @@ protocol CalendarAvailabilityProviding: AnyObject {
         realisticMinutes: Int,
         calendar: Calendar
     ) async throws -> CalendarOpening?
+    func suggestedOpenings(
+        on date: Date,
+        preferredTime: TimeOfDay,
+        realisticMinutes: Int,
+        calendar: Calendar
+    ) async throws -> [CalendarOpening]
+    func isOpeningStillAvailable(_ opening: CalendarOpening, calendar: Calendar) async throws -> Bool
 
     /// Call only after the person explicitly enables title recognition.
     func movementPlans(on date: Date, calendar: Calendar) async throws -> [CalendarMovementPlan]
+}
+
+extension CalendarAvailabilityProviding {
+    func suggestedOpenings(
+        on date: Date,
+        preferredTime: TimeOfDay,
+        realisticMinutes: Int,
+        calendar: Calendar
+    ) async throws -> [CalendarOpening] {
+        if let opening = try await suggestedOpening(
+            on: date,
+            preferredTime: preferredTime,
+            realisticMinutes: realisticMinutes,
+            calendar: calendar
+        ) {
+            return [opening]
+        }
+        return []
+    }
 }
 
 /// Deterministic stand-in for previews and view-level tests. Keeping it beside
@@ -170,6 +224,10 @@ final class InMemoryCalendarAvailabilityService: CalendarAvailabilityProviding {
         calendar: Calendar
     ) async throws -> CalendarOpening? {
         opening
+    }
+
+    func isOpeningStillAvailable(_ opening: CalendarOpening, calendar: Calendar) async throws -> Bool {
+        self.opening == opening
     }
 
     func movementPlans(on date: Date, calendar: Calendar) async throws -> [CalendarMovementPlan] {
@@ -214,10 +272,24 @@ final class EventKitCalendarAvailabilityService: CalendarAvailabilityProviding {
         realisticMinutes: Int,
         calendar: Calendar
     ) async throws -> CalendarOpening? {
-        guard connectionState == .connected else { return nil }
+        try await suggestedOpenings(
+            on: date,
+            preferredTime: preferredTime,
+            realisticMinutes: realisticMinutes,
+            calendar: calendar
+        ).first
+    }
+
+    func suggestedOpenings(
+        on date: Date,
+        preferredTime: TimeOfDay,
+        realisticMinutes: Int,
+        calendar: Calendar
+    ) async throws -> [CalendarOpening] {
+        guard connectionState == .connected else { return [] }
 
         let dayStart = calendar.startOfDay(for: date)
-        guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else { return nil }
+        guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else { return [] }
         let predicate = store.predicateForEvents(withStart: dayStart, end: dayEnd, calendars: nil)
 
         // Deliberately copy only temporal facts. No other EKEvent property is
@@ -227,13 +299,30 @@ final class EventKitCalendarAvailabilityService: CalendarAvailabilityProviding {
             return CalendarBusyInterval(start: event.startDate, end: event.endDate)
         }
 
-        return CalendarOpeningFinder.bestOpening(
+        return CalendarOpeningFinder.rankedOpenings(
             on: date,
             busy: busy,
             preferredTime: preferredTime,
             realisticMinutes: realisticMinutes,
             calendar: calendar
         )
+    }
+
+    func isOpeningStillAvailable(_ opening: CalendarOpening, calendar: Calendar) async throws -> Bool {
+        guard connectionState == .connected else { return false }
+
+        let buffer: TimeInterval = 10 * 60
+        let predicate = store.predicateForEvents(
+            withStart: opening.start.addingTimeInterval(-buffer),
+            end: opening.suggestedEnd.addingTimeInterval(buffer),
+            calendars: nil
+        )
+        return !store.events(matching: predicate).contains { event in
+            guard event.status != .canceled, event.availability != .free else { return false }
+            let busyStart = event.startDate.addingTimeInterval(-buffer)
+            let busyEnd = event.endDate.addingTimeInterval(buffer)
+            return busyStart < opening.suggestedEnd && busyEnd > opening.start
+        }
     }
 
     func movementPlans(on date: Date, calendar: Calendar) async throws -> [CalendarMovementPlan] {
@@ -249,20 +338,85 @@ final class EventKitCalendarAvailabilityService: CalendarAvailabilityProviding {
                 let activity = CalendarMovementTitleClassifier.activity(for: event.title ?? "")
             else { return nil }
 
-            let fallbackID = [
-                "calendar",
+            // An EventKit identifier can survive edits. Include the anonymous
+            // temporal/activity fingerprint so changing Yoga into Gym (or
+            // moving it to a new time) becomes a new plan instead of inheriting
+            // the old plan's handled decision.
+            let planID = [
+                event.eventIdentifier ?? "calendar",
                 String(event.startDate.timeIntervalSinceReferenceDate),
                 String(event.endDate.timeIntervalSinceReferenceDate),
                 activity.rawValue,
             ].joined(separator: "-")
             return CalendarMovementPlan(
-                id: event.eventIdentifier ?? fallbackID,
+                id: planID,
                 start: event.startDate,
                 end: event.endDate,
                 activity: activity
             )
         }
         .sorted { $0.start < $1.start }
+    }
+}
+
+/// A reminder is only created after a person explicitly asks for one. It is a
+/// local notification: Calendar remains read-only and no event data leaves the
+/// device.
+@MainActor
+final class CalendarOpeningReminderService {
+    static let shared = CalendarOpeningReminderService()
+    static let notificationID = "feelgood.calendar-opening-reminder"
+
+    private let center: UNUserNotificationCenter
+
+    init(center: UNUserNotificationCenter = .current()) {
+        self.center = center
+    }
+
+    func schedule(for opening: CalendarOpening) async -> Bool {
+        guard OneSignalManager.shared.isPushEnabled, opening.start.timeIntervalSinceNow > 30 else { return false }
+
+        let settings = await center.notificationSettings()
+        if settings.authorizationStatus == .notDetermined {
+            do {
+                guard try await center.requestAuthorization(options: [.alert, .sound]) else { return false }
+            } catch {
+                return false
+            }
+        } else if settings.authorizationStatus != .authorized && settings.authorizationStatus != .provisional {
+            return false
+        }
+
+        center.removePendingNotificationRequests(withIdentifiers: [Self.notificationID])
+        let content = UNMutableNotificationContent()
+        content.title = "Your FeelGood opening is here"
+        content.body = "You set aside \(opening.budget.maxMinutes) minutes for a reset."
+        content.sound = .default
+        content.userInfo = ["destination": "today"]
+
+        let components = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute, .second],
+            from: opening.start
+        )
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        do {
+            try await center.add(UNNotificationRequest(
+                identifier: Self.notificationID,
+                content: content,
+                trigger: trigger
+            ))
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    func cancel() {
+        center.removePendingNotificationRequests(withIdentifiers: [Self.notificationID])
+    }
+
+    func isScheduled() async -> Bool {
+        await center.pendingNotificationRequests().contains { $0.identifier == Self.notificationID }
     }
 }
 
@@ -277,14 +431,38 @@ nonisolated enum CalendarOpeningFinder {
         calendar: Calendar,
         bufferMinutes: Int = 10
     ) -> CalendarOpening? {
+        rankedOpenings(
+            on: now,
+            busy: busy,
+            preferredTime: preferredTime,
+            realisticMinutes: realisticMinutes,
+            calendar: calendar,
+            bufferMinutes: bufferMinutes,
+            limit: 1
+        ).first
+    }
+
+    /// Returns one recommended opening plus genuinely different alternatives.
+    /// The first item is always the best fit. When available, the second is a
+    /// sooner option and the third is the nearest later option.
+    static func rankedOpenings(
+        on now: Date,
+        busy: [CalendarBusyInterval],
+        preferredTime: TimeOfDay,
+        realisticMinutes: Int,
+        calendar: Calendar,
+        bufferMinutes: Int = 10,
+        limit: Int = 3
+    ) -> [CalendarOpening] {
+        guard limit > 0 else { return [] }
         let dayStart = calendar.startOfDay(for: now)
         guard
             let sevenAM = calendar.date(byAdding: .hour, value: 7, to: dayStart),
             let ninePM = calendar.date(byAdding: .hour, value: 21, to: dayStart)
-        else { return nil }
+        else { return [] }
 
         let searchStart = max(roundUpToFiveMinutes(now, calendar: calendar), sevenAM)
-        guard searchStart < ninePM else { return nil }
+        guard searchStart < ninePM else { return [] }
 
         let buffered = busy.compactMap { interval -> CalendarBusyInterval? in
             let start = calendar.date(byAdding: .minute, value: -bufferMinutes, to: interval.start) ?? interval.start
@@ -310,19 +488,29 @@ nonisolated enum CalendarOpeningFinder {
             openings.append((cursor, ninePM))
         }
 
-        let candidates = openings.compactMap { opening -> CalendarOpening? in
-            let available = max(0, Int(opening.end.timeIntervalSince(opening.start) / 60))
-            let capped = min(available, max(realisticMinutes, 5))
-            guard let budget = fittingBudget(minutes: capped) else { return nil }
-            return CalendarOpening(
-                start: opening.start,
-                end: opening.end,
-                budget: budget,
-                context: openingContext(for: opening, busy: busy)
-            )
+        let anchorHours = [9, 12, 18]
+        let candidates = openings.flatMap { opening -> [CalendarOpening] in
+            let anchors = anchorHours.compactMap { hour in
+                calendar.date(bySettingHour: hour, minute: 0, second: 0, of: dayStart)
+            }
+            let possibleStarts = [opening.start] + anchors.filter {
+                $0 > opening.start && $0 < opening.end
+            }
+
+            return possibleStarts.compactMap { start in
+                let available = max(0, Int(opening.end.timeIntervalSince(start) / 60))
+                let capped = min(available, max(realisticMinutes, 5))
+                guard let budget = fittingBudget(minutes: capped) else { return nil }
+                return CalendarOpening(
+                    start: start,
+                    end: opening.end,
+                    budget: budget,
+                    context: openingContext(for: (start, opening.end), busy: busy)
+                )
+            }
         }
 
-        return candidates.sorted {
+        let ranked = candidates.sorted {
             let lhsMatches = matchesPreference($0, preferredTime: preferredTime, calendar: calendar)
             let rhsMatches = matchesPreference($1, preferredTime: preferredTime, calendar: calendar)
             if lhsMatches != rhsMatches { return lhsMatches }
@@ -330,7 +518,31 @@ nonisolated enum CalendarOpeningFinder {
                 return $0.budget.maxMinutes > $1.budget.maxMinutes
             }
             return $0.start < $1.start
-        }.first
+        }
+
+        guard let best = ranked.first else { return [] }
+        var result = [best]
+
+        if let sooner = candidates
+            .filter({ $0.start < best.start && isDistinct($0, from: result) })
+            .min(by: { $0.start < $1.start }) {
+            result.append(sooner)
+        }
+        if result.count < limit, let later = candidates
+            .filter({ $0.start > best.start && isDistinct($0, from: result) })
+            .min(by: { $0.start < $1.start }) {
+            result.append(later)
+        }
+
+        for candidate in ranked where result.count < limit && isDistinct(candidate, from: result) {
+            result.append(candidate)
+        }
+        return Array(result.prefix(limit))
+    }
+
+    private static func isDistinct(_ candidate: CalendarOpening, from selected: [CalendarOpening]) -> Bool {
+        let minimumSeparation: TimeInterval = 30 * 60
+        return selected.allSatisfy { abs($0.start.timeIntervalSince(candidate.start)) >= minimumSeparation }
     }
 
     private static func merge(_ intervals: [CalendarBusyInterval]) -> [CalendarBusyInterval] {
@@ -374,7 +586,7 @@ nonisolated enum CalendarOpeningFinder {
         calendar: Calendar
     ) -> Bool {
         guard preferredTime != .varies else { return true }
-        let midpoint = opening.start.addingTimeInterval(opening.end.timeIntervalSince(opening.start) / 2)
+        let midpoint = opening.start.addingTimeInterval(opening.suggestedEnd.timeIntervalSince(opening.start) / 2)
         return TimeOfDay(hour: calendar.component(.hour, from: midpoint)) == preferredTime
     }
 
