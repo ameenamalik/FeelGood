@@ -11,6 +11,7 @@
 
 import AuthenticationServices
 import GoogleSignIn
+import OSLog
 import SwiftUI
 import UIKit
 
@@ -20,6 +21,10 @@ struct AuthSheetView: View {
     /// optical match for the adjacent custom provider buttons.
     private static let providerButtonFont = Font.system(size: 21, weight: .semibold)
     private static let providerIconSize: CGFloat = 20
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.ameenamalik.FeelGood",
+        category: "Authentication"
+    )
 
     var title: String = "Save your routine"
     var subtitle: String = "Keep your movement history and personalized daily menus synced safely across devices."
@@ -165,7 +170,7 @@ struct AuthSheetView: View {
             emailContinueButton
 
             Button("Already have an account? Sign in") {
-                path.append(.emailSignIn)
+                openEmailStage(.emailSignIn)
             }
             .font(.system(size: 19, weight: .medium))
             .foregroundStyle(FGColor.goldDeep)
@@ -183,7 +188,7 @@ struct AuthSheetView: View {
 
     private var emailContinueButton: some View {
         Button {
-            path.append(.emailCreate)
+            openEmailStage(.emailCreate)
         } label: {
             HStack(spacing: FGSpace.s) {
                 Image(systemName: "envelope.fill")
@@ -281,6 +286,18 @@ struct AuthSheetView: View {
             .scrollBounceBehavior(.basedOnSize)
         }
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Provider callbacks and email destinations share this view's
+            // state. Never carry an old provider failure into a fresh form.
+            errorMessage = nil
+            successMessage = nil
+        }
+    }
+
+    private func openEmailStage(_ stage: HeroStage) {
+        errorMessage = nil
+        successMessage = nil
+        path.append(stage)
     }
 
     // MARK: - Header
@@ -316,6 +333,7 @@ struct AuthSheetView: View {
         SignInWithAppleButton(
             label,
             onRequest: { request in
+                errorMessage = nil
                 let nonce = AuthService.randomNonceString()
                 currentRawNonce = nonce
                 request.requestedScopes = [.fullName, .email]
@@ -346,12 +364,12 @@ struct AuthSheetView: View {
                     dismissAfterAuth()
                 } catch {
                     isLoading = false
-                    errorMessage = error.localizedDescription
+                    logProviderFailure("Apple", error: error)
                 }
             }
         case .failure(let error):
             if (error as? ASAuthorizationError)?.code != .canceled {
-                errorMessage = error.localizedDescription
+                logProviderFailure("Apple", error: error)
             }
         }
     }
@@ -443,7 +461,7 @@ struct AuthSheetView: View {
             ?? UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first),
               let window = windowScene.windows.first(where: { $0.isKeyWindow }),
               var topVC = window.rootViewController else {
-            errorMessage = "Unable to find presentation window."
+            Self.logger.error("Google sign-in failed: no presentation window")
             return
         }
         while let presented = topVC.presentedViewController {
@@ -461,10 +479,20 @@ struct AuthSheetView: View {
             } catch {
                 isLoading = false
                 if (error as NSError).code != GIDSignInError.canceled.rawValue {
-                    errorMessage = error.localizedDescription
+                    logProviderFailure("Google", error: error)
                 }
             }
         }
+    }
+
+    /// Provider failures are generally configuration or system errors rather
+    /// than something a person can repair in this sheet. Keep the raw detail
+    /// in Console/Xcode instead of exposing framework diagnostics in the UI.
+    private func logProviderFailure(_ provider: String, error: Error) {
+        let nsError = error as NSError
+        Self.logger.error(
+            "\(provider, privacy: .public) sign-in failed [\(nsError.domain, privacy: .public):\(nsError.code)]: \(nsError.localizedDescription)"
+        )
     }
 
     // MARK: - Or Divider
