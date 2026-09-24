@@ -97,6 +97,12 @@ nonisolated enum SharedContainer {
 
     static func writeAppearance(_ appearance: WidgetAppearance) { write(appearance, to: "appearance.json") }
     static func readAppearance() -> WidgetAppearance? { read(WidgetAppearance.self, from: "appearance.json") }
+
+    /// The look the app is wearing right now, already resolved (an unearned
+    /// choice has been replaced by Kiln). Its own file, apart from the avatar,
+    /// because it changes for different reasons and is written from elsewhere.
+    static func writeTheme(_ theme: FGThemeID) { write(theme, to: "theme.json") }
+    static func readTheme() -> FGThemeID? { read(FGThemeID.self, from: "theme.json") }
 }
 
 /// The one URL shape the widget and the app both have to agree on.
