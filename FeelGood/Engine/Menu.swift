@@ -167,6 +167,48 @@ nonisolated enum MenuCopy {
         return "Here's today."
     }
 
+    /// The one sentence on the main card, built from at most two things about
+    /// the day. The fuller "why" stays on the session's own screen. Only what
+    /// the person told the check-in and how their week has gone — never
+    /// work-arounds, which stay on the device and out of copy.
+    static func cardLine(for item: MenuItem, checkIn: PlanCheckIn) -> String {
+        // A rest day speaks through the headline; a session line would argue with it.
+        if checkIn.time.isZero { return item.reasonText }
+        let minutes = item.session.durationMin
+        if item.reasons.contains(.returningAfterGap) {
+            return "It's been a little while, so this one starts small."
+        }
+        if checkIn.energy == .low && checkIn.time.isTight {
+            return "Low energy and \(minutes) minutes, so this one is gentle."
+        }
+        if checkIn.energy == .low {
+            return "Low energy today, so this one is gentle."
+        }
+        if item.reasons.contains(.recoveryBalance) {
+            return "Easier than the last couple of days, so today stays light."
+        }
+        if checkIn.time.isTight {
+            return "Short on time, so this fits in \(minutes) minutes."
+        }
+        if checkIn.energy == .strong && checkIn.todayIntent == .energize {
+            return "You wanted energy and you have it, so this one is active."
+        }
+        // The engine had a more specific reason than energy and time: use it.
+        // The engine writes a generic line when it has no reason to give, or
+        // when the reason was already spoken higher on the menu. Either says
+        // nothing about today, so skip it.
+        let isGeneric = item.reasonText == fallbackLine(for: item.session)
+            || item.reasonText == defaultLine(for: item.session)
+        if !item.reasons.isEmpty, !isGeneric { return item.reasonText }
+        // Nothing unusual about the day, which is itself the answer.
+        let window = checkIn.time.maxMinutes
+        switch checkIn.energy {
+        case .steady: return "Steady energy and \(window) minutes, so this is a good main."
+        case .strong: return "Good energy and \(window) minutes, so this one has some life in it."
+        case .low: return item.reasonText
+        }
+    }
+
     static func reason(for session: Session, codes: [ReasonCode], gapQuality: Quality?, intent: Intent) -> String {
         // One reason, the most specific one. More than one line of "why" turns
         // an answer back into a decision.
@@ -229,7 +271,7 @@ nonisolated enum MenuCopy {
         }
     }
 
-    private static func defaultLine(for session: Session) -> String {
+    static func defaultLine(for session: Session) -> String {
         switch session.course {
         // The duration has to come from the session: the appetizer course runs
         // from two minutes to ten, and telling someone "two minutes" about a
