@@ -283,17 +283,22 @@ struct TodayView: View {
         }
     }
 
-    private func performSwipeSkip(_ item: MenuItem) {
+    /// Returns whether the swipe replaced the card. The gesture keeps the old
+    /// card offscreen while its removal transition completes only in that case.
+    @discardableResult
+    private func performSwipeSkip(_ item: MenuItem) -> Bool {
         if model.hasRemainingSwaps {
             withAnimation(FGMotion.swap) {
                 model.swap(item)
             }
             if let updated = model.menu.items.first(where: { $0.course == item.course }) {
                 AccessibilityNotification.Announcement("Swapped \(item.course.label) to \(updated.session.title)").post()
+                return updated.id != item.id
             }
         } else {
             isShowingPaywall = true
         }
+        return false
     }
 
     private func handleSwapButtonTap(_ item: MenuItem) {
@@ -972,7 +977,7 @@ private struct MenuItemCard: View {
     let isReset: Bool
     let onOpen: () -> Void
     let onSelectManual: () -> Void
-    let onSkip: () -> Void
+    let onSkip: () -> Bool
 
     @State private var dragOffset: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -1029,7 +1034,7 @@ private struct MenuItemCard: View {
             if canSwap { onSelectManual() }
         }
         .accessibilityAction(named: "Quick skip \(item.course.label)") {
-            if canSwap { onSkip() }
+            if canSwap { _ = onSkip() }
         }
     }
 }
@@ -1057,7 +1062,7 @@ private struct MenuItemRow: View {
     let isReset: Bool
     let onOpen: () -> Void
     let onSelectManual: () -> Void
-    let onSkip: () -> Void
+    let onSkip: () -> Bool
 
     @State private var dragOffset: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -1113,7 +1118,7 @@ private struct MenuItemRow: View {
             if canSwap { onSelectManual() }
         }
         .accessibilityAction(named: "Quick skip \(item.course.label)") {
-            if canSwap { onSkip() }
+            if canSwap { _ = onSkip() }
         }
     }
 }
