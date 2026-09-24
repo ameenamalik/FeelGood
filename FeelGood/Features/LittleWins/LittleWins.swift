@@ -107,8 +107,8 @@ nonisolated struct LittleWinProfileReward: Hashable, Sendable {
     }
 
     var celebrationDescription: String {
-        let noun = avatars.count == 1 ? "character" : "characters"
-        return "\(shortDescription) unlocked — \(avatars.count) new \(noun) and a color for your profile."
+        let items = avatars.map(\.displayName) + [background.displayName]
+        return "\(items.formatted(.list(type: .and))) are now available."
     }
 }
 
