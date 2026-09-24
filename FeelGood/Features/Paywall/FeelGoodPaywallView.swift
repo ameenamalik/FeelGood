@@ -478,11 +478,11 @@ struct FeelGoodPaywallView: View {
                     Spacer(minLength: 24)
                     Text("My back is sore, I have 20 minutes, and I'm tired.")
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(FGColor.onDeepFill)
                         .multilineTextAlignment(.trailing)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 7)
-                        .background(Color(light: 0x26231F, dark: 0x36322E))
+                        .background(FGColor.userBubble)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .transition(chatBubbleTransition)
@@ -522,7 +522,7 @@ struct FeelGoodPaywallView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
-                    .background(Color(light: 0xF3EEE7, dark: 0x262320))
+                    .background(FGColor.panel)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                     Spacer(minLength: 24)
@@ -536,11 +536,11 @@ struct FeelGoodPaywallView: View {
                     Spacer(minLength: 24)
                     Text("Hmm, something else shorter?")
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(FGColor.onDeepFill)
                         .multilineTextAlignment(.trailing)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 7)
-                        .background(Color(light: 0x26231F, dark: 0x36322E))
+                        .background(FGColor.userBubble)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 .transition(chatBubbleTransition)
@@ -577,7 +577,7 @@ struct FeelGoodPaywallView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
-                    .background(Color(light: 0xF3EEE7, dark: 0x262320))
+                    .background(FGColor.panel)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                     Spacer(minLength: 24)
@@ -608,7 +608,7 @@ struct FeelGoodPaywallView: View {
         }
         .padding(.vertical, 6)
         .padding(.horizontal, 12)
-        .background(Color(light: 0xF3EEE7, dark: 0x262320))
+        .background(FGColor.panel)
         .clipShape(Capsule())
     }
 
@@ -808,13 +808,13 @@ struct FeelGoodPaywallView: View {
                 Text("SAVE \(savingsPercent)%")
                     .font(.system(.caption2, design: .rounded).weight(.heavy))
                     .tracking(0.4)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(FGColor.onDeepFill)
                     .padding(.horizontal, FGSpace.s + 2)
                     .padding(.vertical, 4)
                     // Deep botanical green — the saturated end of the Side
                     // course's sage — so white text clears 4.5:1 and the
                     // pill leads instead of receding into the card.
-                    .background(Capsule().fill(Color(light: 0x3F6B26, dark: 0x4C7A2E)))
+                    .background(Capsule().fill(FGColor.sideBadge))
                     .padding(.trailing, FGSpace.m)
                     .offset(y: -10)
                     .allowsHitTesting(false)

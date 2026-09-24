@@ -148,7 +148,7 @@ struct MyMenuView: View {
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(course.tagText.opacity(0.05), lineWidth: 0.75)
+                    .strokeBorder(course.edge, lineWidth: 1.5)
             )
         }
         .buttonStyle(.feelGoodPress)

@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import WidgetKit
 import SwiftData
 import os
 import PostHog
@@ -16,6 +17,7 @@ struct FeelGoodApp: App {
     /// Set when somebody chose to carry on without a store. Only reachable
     /// from `StoreUnavailableView`, and only for the life of this launch.
     @State private var isContinuingWithoutStore = false
+    @State private var themeSettings = ThemeSettings()
     /// Loaded once at launch and handed down; the catalog never changes while
     /// the app is running.
     private let content: ContentStore?
@@ -88,14 +90,17 @@ struct FeelGoodApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if storage.isEphemeral && !isContinuingWithoutStore {
-                StoreUnavailableView(
-                    onRetry: { storage = Storage.open() },
-                    onContinueAnyway: { isContinuingWithoutStore = true }
-                )
-            } else {
-                RootView(content: content)
+            Group {
+                if storage.isEphemeral && !isContinuingWithoutStore {
+                    StoreUnavailableView(
+                        onRetry: { storage = Storage.open() },
+                        onContinueAnyway: { isContinuingWithoutStore = true }
+                    )
+                } else {
+                    RootView(content: content)
+                }
             }
+            .environment(themeSettings)
         }
         .modelContainer(storage.container)
         .environment(PurchasesManager.shared)
@@ -343,6 +348,12 @@ private struct TodayScreen: View {
     /// Which tab is showing, so a deep link can bring Today forward even if
     /// the app was last left on the reflection.
     @State private var tab = Destination.today
+    @Environment(ThemeSettings.self) private var themeSettings
+
+    /// The look to wear: the person's choice if it is earned, otherwise Kiln.
+    private var effectiveTheme: FGThemeID {
+        themeSettings.effective(unlocked: FGThemeID.unlocked(by: model.littleWins))
+    }
     /// A session the widget asked for. Cleared once Today has opened it.
     @State private var requestedSessionID: String?
     /// `model` is built once and lives for the process, so nothing else
@@ -373,8 +384,16 @@ private struct TodayScreen: View {
 
             tabView
         }
-        .toolbarBackground(.ultraThinMaterial, for: .tabBar)
-        .toolbarBackground(.visible, for: .tabBar)
+        // The theme rides the trait bridge (Theme.swift), so every token under
+        // here — and every sheet presented over it — resolves against it without
+        // a view passing it along. Onboarding sits outside this and stays Kiln.
+        .fgTheme(effectiveTheme)
+        // The widget cannot read the trait, so it is told which look to wear. A
+        // reload is needed or the home screen keeps the old one until it refreshes.
+        .onChange(of: effectiveTheme, initial: true) { _, theme in
+            SharedContainer.writeTheme(theme)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 model.refreshForNewDay()
@@ -386,9 +405,12 @@ private struct TodayScreen: View {
         TabView(selection: $tab) {
             Tab("Today", systemImage: "sun.max", value: Destination.today) {
                 TodayView(model: model, requestedSessionID: $requestedSessionID)
+                    .fgTabBarInset()
+                    .toolbarVisibility(.hidden, for: .tabBar)
             }
             Tab("Chat", systemImage: "bubble.left.and.bubble.right", value: Destination.explore) {
                 ExploreView(model: model)
+                    .toolbarVisibility(.hidden, for: .tabBar)
             }
             Tab("You", systemImage: "person", value: Destination.you) {
                 YouView(model: model, profile: profile) { answers in
@@ -402,9 +424,22 @@ private struct TodayScreen: View {
                         }
                     }
                 }
+                .toolbarVisibility(.hidden, for: .tabBar)
             }
         }
         .tint(FGColor.ink)
+        // The system bar is a see-through glass pill; ours is solid (TabBar.swift).
+        .toolbarVisibility(.hidden, for: .tabBar)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            FGTabBar(
+                items: [
+                    FGTabBarItem(tag: Destination.today, title: "Today", systemImage: "sun.max"),
+                    FGTabBarItem(tag: Destination.explore, title: "Chat", systemImage: "bubble.left.and.bubble.right"),
+                    FGTabBarItem(tag: Destination.you, title: "You", systemImage: "person"),
+                ],
+                selection: $tab
+            )
+        }
         // Covers upgrades and restores: the widget learns the fruit on launch,
         // not only when it is next changed.
         .onAppear { profile.publishWidgetAppearance() }

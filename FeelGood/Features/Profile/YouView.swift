@@ -33,6 +33,9 @@ struct YouView: View {
     var body: some View {
         NavigationStack {
             page
+                // Inside the NavigationStack, where the scroll view is; an inset
+                // applied outside it does not reach this content.
+                .fgTabBarInset()
                 .toolbar(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $isShowingLibrary) {
@@ -112,6 +115,8 @@ struct YouView: View {
                     ActivityHistorySection(model: model)
 
                     LittleWinsSection(progress: model.littleWins)
+
+                    ThemePickerSection(unlocked: FGThemeID.unlocked(by: model.littleWins))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, FGSpace.page)

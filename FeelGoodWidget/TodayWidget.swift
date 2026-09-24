@@ -59,8 +59,13 @@ struct TodayEntry: TimelineEntry {
     /// The one thing this hour's entry says. `nil` renders the invitation.
     let item: TodayItem?
     var appearance: WidgetAppearance = .fallback
+    /// The look the app is wearing. Only the Plain widget follows it; the Fruit
+    /// widget sits on the pastel the person picked for their own fruit.
+    var theme: FGThemeID = .kiln
     var look: WidgetLook = .fruit
     var tint: WidgetTint = .match
+
+    var palette: WidgetThemePalette { .palette(for: theme) }
 
     /// The colour behind the fruit: the person's override, else the fruit's own.
     var aura: WidgetAura {
@@ -104,6 +109,7 @@ struct TodayProvider: AppIntentTimelineProvider {
             date: now,
             item: snapshot?.item(atHour: Calendar.current.component(.hour, from: now)),
             appearance: SharedContainer.readAppearance() ?? .fallback,
+            theme: SharedContainer.readTheme() ?? .kiln,
             look: configuration.look,
             tint: configuration.tint
         )
@@ -138,7 +144,7 @@ struct TodayWidget: Widget {
             LinearGradient(colors: [entry.aura.core, entry.aura.mid],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
         case .plain:
-            WidgetPalette.surface
+            Color(entry.palette.surface)
         }
     }
 }
@@ -151,9 +157,9 @@ struct TodayWidgetView: View {
     private var isFruit: Bool { entry.look == .fruit }
     /// The aura never flips with the appearance (neither does the app's), so on
     /// it the ink doesn't either.
-    private var ink: Color { isFruit ? WidgetPalette.inkOnAccent : WidgetPalette.ink }
+    private var ink: Color { isFruit ? WidgetPalette.inkOnAccent : Color(entry.palette.ink) }
     private var inkMuted: Color {
-        isFruit ? WidgetPalette.inkOnAccent.opacity(0.72) : WidgetPalette.inkMuted
+        isFruit ? WidgetPalette.inkOnAccent.opacity(0.72) : Color(entry.palette.inkMuted)
     }
 
     var body: some View {
@@ -233,7 +239,8 @@ struct TodayWidgetView: View {
     }
 
     private func courseTag(_ item: TodayItem) -> some View {
-        Text(item.courseLabel)
+        let pill = entry.palette.pill(forCourseLabel: item.courseLabel)
+        return Text(item.courseLabel)
             .font(.system(size: family == .systemSmall ? 9 : 11,
                           weight: .semibold,
                           design: .rounded))
@@ -242,14 +249,12 @@ struct TodayWidgetView: View {
             .lineLimit(1)
             .minimumScaleFactor(0.78)
             .allowsTightening(true)
-            // Ink on the accent, always. The accents are far too light to carry
-            // white text, and this one does not flip with the appearance.
-            .foregroundStyle(WidgetPalette.inkOnAccent)
+            // On a fruit colour: ink on translucent white, which never flips. On the
+            // Plain card: the theme's pill, the same as the course card in the app.
+            .foregroundStyle(isFruit ? WidgetPalette.inkOnAccent : Color(pill.text))
             .padding(.horizontal, family == .systemSmall ? 6 : 8)
             .padding(.vertical, 3)
-            // On a fruit colour the course accent would vanish into it, so the
-            // pill goes translucent white there.
-            .background(Capsule().fill(isFruit ? Color.white.opacity(0.55) : Color(hex: item.accentHex)))
+            .background(Capsule().fill(isFruit ? Color.white.opacity(0.55) : Color(pill.fill)))
     }
 }
 
@@ -292,16 +297,9 @@ enum WidgetAura: String {
     }
 }
 
-/// The four tokens the widget needs, restated.
-///
-/// The design system lives in the app target and pulls in `Course` and the rest
-/// of the content model with it; importing that here to get three colours would
-/// cost the extension the whole app. These values must stay in step with
-/// `FGColor` — they are the same hexes, for the same reasons.
+/// What the Fruit look needs that does not vary with the theme. The Plain look's
+/// surface, ink and pill come from `WidgetThemePalette` (FeelGoodShared).
 enum WidgetPalette {
-    static let surface = Color(light: 0xFFFFFF, dark: 0x181C20)
-    static let ink = Color(light: 0x14171A, dark: 0xF7F8FA)
-    static let inkMuted = Color(light: 0x565E6B, dark: 0xA8B0BC)
     /// Does not flip: the accent underneath it doesn't either.
     static let inkOnAccent = Color(light: 0x14171A, dark: 0x14171A)
 }
@@ -313,6 +311,11 @@ nonisolated extension Color {
             green: Double((hex >> 8) & 0xFF) / 255,
             blue: Double(hex & 0xFF) / 255
         )
+    }
+
+    /// One theme colour, both appearances.
+    init(_ pair: FGThemePair) {
+        self.init(light: pair.light, dark: pair.dark)
     }
 
     /// Resolves per appearance. `nonisolated` is load-bearing — SwiftUI
@@ -353,6 +356,7 @@ extension TodaySnapshot {
 } timeline: {
     TodayEntry(date: .now, item: .preview, look: .plain)
     TodayEntry(date: .now, item: nil, look: .plain)
+    TodayEntry(date: .now, item: .preview, theme: .indigo, look: .plain)
 }
 
 #Preview("Medium · fruit", as: .systemMedium) {
@@ -365,4 +369,5 @@ extension TodaySnapshot {
     TodayWidget()
 } timeline: {
     TodayEntry(date: .now, item: .preview, look: .plain)
+    TodayEntry(date: .now, item: .preview, theme: .indigo, look: .plain)
 }
