@@ -161,3 +161,137 @@ struct CalendarMovementTitleClassifierTests {
         #expect(CalendarMovementTitleClassifier.activity(for: title) == nil)
     }
 }
+
+@Suite("Calendar movement companion")
+struct CalendarMovementCompanionSelectorTests {
+    private let profile = PlanProfile(
+        availableActivities: Set(Activity.allCases),
+        equipment: [.none],
+        places: [.home]
+    )
+
+    @Test("Warm-up matches the planned movement's body area")
+    func warmUpMatchesBodyFocus() throws {
+        let plan = CalendarMovementPlan(
+            id: "walk",
+            start: Date().addingTimeInterval(3_600),
+            end: Date().addingTimeInterval(5_400),
+            activity: .walking
+        )
+        let calf = session(
+            id: "calf",
+            activity: .stretching,
+            qualities: [.mobility],
+            bodyFocus: [.lowerBody]
+        )
+        let shoulders = session(
+            id: "shoulders",
+            activity: .stretching,
+            qualities: [.mobility],
+            bodyFocus: [.neckShoulders]
+        )
+
+        let result = CalendarMovementCompanionSelector.session(
+            for: plan,
+            phase: .warmUp,
+            from: [shoulders, calf],
+            profile: profile
+        )
+
+        #expect(result?.id == calf.id)
+    }
+
+    @Test("Recovery prefers down-regulation")
+    func recoveryPrefersDownRegulation() throws {
+        let plan = CalendarMovementPlan(
+            id: "strength",
+            start: Date().addingTimeInterval(-3_600),
+            end: Date().addingTimeInterval(-1_800),
+            activity: .strength
+        )
+        let mobility = session(
+            id: "mobility",
+            activity: .stretching,
+            qualities: [.mobility],
+            bodyFocus: [.full]
+        )
+        let settle = session(
+            id: "settle",
+            activity: .breathwork,
+            qualities: [.mobility, .downRegulation],
+            bodyFocus: [.full]
+        )
+
+        let result = CalendarMovementCompanionSelector.session(
+            for: plan,
+            phase: .recovery,
+            from: [mobility, settle],
+            profile: profile
+        )
+
+        #expect(result?.id == settle.id)
+    }
+
+    @Test("Hidden and contraindicated sessions are never companions")
+    func honorsSafetyAndHiddenChoices() {
+        let plan = CalendarMovementPlan(
+            id: "yoga",
+            start: Date(),
+            end: Date().addingTimeInterval(3_600),
+            activity: .yoga
+        )
+        let unsafe = session(
+            id: "unsafe",
+            activity: .stretching,
+            qualities: [.mobility],
+            bodyFocus: [.back],
+            contraindications: [.lowBack]
+        )
+        let hidden = session(
+            id: "hidden",
+            activity: .qigong,
+            qualities: [.mobility],
+            bodyFocus: [.full]
+        )
+        let constrainedProfile = PlanProfile(
+            availableActivities: Set(Activity.allCases),
+            workArounds: [.lowBack],
+            hiddenSessionIDs: [hidden.id]
+        )
+
+        let result = CalendarMovementCompanionSelector.session(
+            for: plan,
+            phase: .warmUp,
+            from: [unsafe, hidden],
+            profile: constrainedProfile
+        )
+
+        #expect(result == nil)
+    }
+
+    private func session(
+        id: String,
+        activity: Activity,
+        qualities: [Quality],
+        bodyFocus: [BodyFocus],
+        contraindications: [WorkAround] = []
+    ) -> Session {
+        Session(
+            id: id,
+            title: id,
+            subtitle: "Test session",
+            activity: activity,
+            qualities: qualities,
+            durationMin: 4,
+            intensity: 1,
+            energyFit: Energy.allCases,
+            equipment: [.none],
+            places: [.home],
+            bodyFocus: bodyFocus,
+            contraindications: contraindications,
+            intents: [.mobilize],
+            course: .side,
+            source: .authored(steps: [])
+        )
+    }
+}
