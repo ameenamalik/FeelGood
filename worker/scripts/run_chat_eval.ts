@@ -36,6 +36,12 @@ let stable = 0;
 const flaky: string[] = [];
 const failing: string[] = [];
 
+function toSnakeCase(record: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(record).map(([key, value]) => [key.replace(/([A-Z])/g, (c) => `_${c.toLowerCase()}`).replace("_i_ds", "_ids"), value])
+  );
+}
+
 async function runOnce(testCase: (typeof CHAT_CASES)[number]): Promise<string[]> {
   try {
     const res = await fetch(`${baseURL}/chat`, {
@@ -45,8 +51,10 @@ async function runOnce(testCase: (typeof CHAT_CASES)[number]): Promise<string[]>
         prompt: testCase.prompt,
         subscriberID,
         history: testCase.history,
-        userContext: testCase.userContext,
-        todaysMenu: testCase.todaysMenu,
+        // The app's real wire shape. The camelCase keys this used to send are
+        // why a snake_case mismatch in the Worker went unnoticed.
+        user_context: testCase.userContext ? toSnakeCase(testCase.userContext) : undefined,
+        todays_menu: testCase.todaysMenu,
         activeSessionID: testCase.activeSessionID,
       }),
     });
