@@ -33,6 +33,9 @@ struct YouView: View {
     var body: some View {
         NavigationStack {
             page
+                // Inside the NavigationStack, where the scroll view is; an inset
+                // applied outside it does not reach this content.
+                .fgTabBarInset()
                 .toolbar(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $isShowingLibrary) {

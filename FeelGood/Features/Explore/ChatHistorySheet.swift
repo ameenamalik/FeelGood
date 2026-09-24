@@ -184,7 +184,7 @@ struct ChatHistorySheet: View {
                 .buttonStyle(.plain)
                 .listRowBackground(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(isActive ? Color(light: 0xFDFBF7, dark: 0x221D17) : FGColor.surface)
+                        .fill(isActive ? FGColor.selectedRow : FGColor.surface)
                         .padding(.vertical, 2)
                 )
                 .listRowSeparator(.hidden)
