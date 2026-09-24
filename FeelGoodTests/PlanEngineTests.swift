@@ -858,7 +858,7 @@ struct PlanEngineTests {
                 context: Fixture.context()
             )
             let menu = Fixture.engine.makeMenu(input)
-            #expect(menu.headline == "Rest is part of it. Take the day.")
+            #expect(menu.headline == "Recovery is the plan today.")
             #expect(menu.appetizer != nil)
             #expect(menu.main != nil)
             #expect(menu.sides.isEmpty)

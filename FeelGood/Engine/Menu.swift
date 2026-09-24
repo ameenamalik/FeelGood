@@ -144,7 +144,7 @@ nonisolated enum MenuCopy {
 
     static func headline(reasons: Set<ReasonCode>, checkIn: PlanCheckIn) -> String {
         if checkIn.time.isZero {
-            return "Rest is part of it. Take the day."
+            return "Recovery is the plan today."
         }
         if reasons.contains(.returningAfterGap) {
             return "Good to see you. Let's start small."
@@ -153,7 +153,7 @@ nonisolated enum MenuCopy {
             return "You've shown up a few days running — today's a lighter one on purpose."
         }
         if checkIn.energy == .low && checkIn.time.isTight {
-            return "Not much time, not much left in the tank. Here's a small one."
+            return "Low tank and a small window, so doing less is the plan."
         }
         if checkIn.energy == .low {
             return "Low tank today. Everything here is gentle."
