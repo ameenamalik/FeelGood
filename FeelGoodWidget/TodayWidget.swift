@@ -177,10 +177,10 @@ struct TodayWidgetView: View {
             }
         } else if isFruit {
             VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .top) {
+                HStack(alignment: .top, spacing: 4) {
                     if let item { courseTag(item) }
-                    Spacer(minLength: 0)
-                    mascot(size: 44)
+                    Spacer(minLength: 4)
+                    mascot(size: 40)
                 }
                 text(showingTag: false)
             }
@@ -241,13 +241,18 @@ struct TodayWidgetView: View {
     private func courseTag(_ item: TodayItem) -> some View {
         let pill = entry.palette.pill(forCourseLabel: item.courseLabel)
         return Text(item.courseLabel)
-            .font(.system(.caption2, design: .rounded).weight(.medium))
+            .font(.system(size: family == .systemSmall ? 9 : 11,
+                          weight: .semibold,
+                          design: .rounded))
             .textCase(.uppercase)
-            .tracking(1.1)
+            .tracking(family == .systemSmall ? 0.6 : 1.1)
+            .lineLimit(1)
+            .minimumScaleFactor(0.78)
+            .allowsTightening(true)
             // On a fruit colour: ink on translucent white, which never flips. On the
             // Plain card: the theme's pill, the same as the course card in the app.
             .foregroundStyle(isFruit ? WidgetPalette.inkOnAccent : Color(pill.text))
-            .padding(.horizontal, 8)
+            .padding(.horizontal, family == .systemSmall ? 6 : 8)
             .padding(.vertical, 3)
             .background(Capsule().fill(isFruit ? Color.white.opacity(0.55) : Color(pill.fill)))
     }
@@ -267,7 +272,7 @@ enum WidgetMascot {
 /// Restated from `FGAura` for the same reason as `WidgetPalette`: importing the
 /// design system would cost the extension the whole app. Keep the hexes in step.
 enum WidgetAura: String {
-    case apricot, lilac, blush, sage, butter
+    case apricot, lilac, blush, sage, butter, sky
 
     var core: Color {
         switch self {
@@ -276,6 +281,7 @@ enum WidgetAura: String {
         case .blush: Color(hex: 0xFCE2E8)
         case .sage: Color(hex: 0xEAF0DE)
         case .butter: Color(hex: 0xFFF8D8)
+        case .sky: Color(hex: 0xE2F1F7)
         }
     }
 
@@ -286,6 +292,7 @@ enum WidgetAura: String {
         case .blush: Color(hex: 0xF2C4D3)
         case .sage: Color(hex: 0xC6D8BE)
         case .butter: Color(hex: 0xF4DF91)
+        case .sky: Color(hex: 0xBEDCE8)
         }
     }
 }
@@ -324,7 +331,7 @@ nonisolated extension Color {
 extension TodayItem {
     static let preview = TodayItem(
         sessionID: "main-pilates-gentle-10",
-        courseLabel: "Main",
+        courseLabel: "Appetizer",
         accentHex: 0xC7EA4E,
         title: "Ten gentle minutes on the mat",
         reason: "An easy way back in.",
