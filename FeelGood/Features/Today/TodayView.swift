@@ -306,58 +306,21 @@ struct TodayView: View {
 
     private var menuItems: some View {
         VStack(spacing: FGSpace.s) {
-            if let calendarMovementPlan, !shouldCalendarMovementReplaceMain {
+            if shouldCalendarMovementReplaceMain, let calendarMovementPlan {
+                calendarMovementCard(calendarMovementPlan, replacesMain: true)
+                    .transition(cardSwapTransition)
+
+                if let companion = calendarCompanion(for: calendarMovementPlan) {
+                    calendarCompanionCard(companion.item, phase: companion.phase, plan: calendarMovementPlan)
+                        .transition(cardSwapTransition)
+                }
+            } else if let calendarMovementPlan {
                 calendarMovementCard(calendarMovementPlan, replacesMain: false)
                     .transition(cardSwapTransition)
-            }
 
-            ForEach(Array(model.menu.items.enumerated()), id: \.offset) { index, item in
-                let isVisible = index < visibleMenuCardCount
-
-                ZStack {
-                    ForEach([item], id: \.id) { currentItem in
-                        if shouldCalendarMovementReplaceMain,
-                           currentItem.course == .main,
-                           let calendarMovementPlan {
-                            calendarMovementCard(calendarMovementPlan, replacesMain: true)
-                                .transition(cardSwapTransition)
-                        } else if currentItem.course == .main {
-                            MenuItemCard(
-                                item: currentItem,
-                                isDone: model.isCompleted(currentItem),
-                                isInProgress: model.isInProgress(currentItem),
-                                canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
-                                isReset: model.isCycleReset(currentItem),
-                                onOpen: { openSession(currentItem) },
-                                onSelectManual: { handleSwapButtonTap(currentItem) },
-                                onSkip: { performSwipeSkip(currentItem) }
-                            )
-                            .transition(cardSwapTransition)
-                        } else {
-                            MenuItemRow(
-                                item: currentItem,
-                                isDone: model.isCompleted(currentItem),
-                                isInProgress: model.isInProgress(currentItem),
-                                canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
-                                isReset: model.isCycleReset(currentItem),
-                                onOpen: { openSession(currentItem) },
-                                onSelectManual: { handleSwapButtonTap(currentItem) },
-                                onSkip: { performSwipeSkip(currentItem) }
-                            )
-                            .transition(cardSwapTransition)
-                        }
-                    }
-                }
-                .opacity(isVisible ? 1 : 0)
-                .scaleEffect(isVisible ? 1 : 0.96, anchor: .top)
-                .offset(y: isVisible ? 0 : 10)
-                .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: isVisible)
-            }
-
-            if shouldCalendarMovementReplaceMain,
-               model.menu.main == nil,
-               let calendarMovementPlan {
-                calendarMovementCard(calendarMovementPlan, replacesMain: true)
+                regularMenuItems
+            } else {
+                regularMenuItems
             }
         }
         .opacity(isMenuCompressed ? 0 : 1)
@@ -368,12 +331,69 @@ struct TodayView: View {
         )
     }
 
+    private var regularMenuItems: some View {
+        ForEach(Array(model.menu.items.enumerated()), id: \.offset) { index, item in
+            let isVisible = index < visibleMenuCardCount
+
+            ZStack {
+                ForEach([item], id: \.id) { currentItem in
+                    if currentItem.course == .main {
+                        MenuItemCard(
+                            item: currentItem,
+                            isDone: model.isCompleted(currentItem),
+                            isInProgress: model.isInProgress(currentItem),
+                            canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
+                            isReset: model.isCycleReset(currentItem),
+                            onOpen: { openSession(currentItem) },
+                            onSelectManual: { handleSwapButtonTap(currentItem) },
+                            onSkip: { performSwipeSkip(currentItem) }
+                        )
+                        .transition(cardSwapTransition)
+                    } else {
+                        MenuItemRow(
+                            item: currentItem,
+                            isDone: model.isCompleted(currentItem),
+                            isInProgress: model.isInProgress(currentItem),
+                            canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
+                            isReset: model.isCycleReset(currentItem),
+                            onOpen: { openSession(currentItem) },
+                            onSelectManual: { handleSwapButtonTap(currentItem) },
+                            onSkip: { performSwipeSkip(currentItem) }
+                        )
+                        .transition(cardSwapTransition)
+                    }
+                }
+            }
+            .opacity(isVisible ? 1 : 0)
+            .scaleEffect(isVisible ? 1 : 0.96, anchor: .top)
+            .offset(y: isVisible ? 0 : 10)
+            .fgAnimation(FGMotion.settle.delay(FGMotion.stagger(index)), value: isVisible)
+        }
+    }
+
     /// Calendar movement shapes the quiet default menu, but an explicit
     /// non-rest check-in is a fresh statement of intent. If somebody says they
     /// have 20 minutes now, keep the calendar acknowledgement and still give
     /// them a normal menu that fits those 20 minutes.
     private var shouldCalendarMovementReplaceMain: Bool {
         calendarMovementPlan != nil && model.checkIn == nil
+    }
+
+    private func calendarCompanion(
+        for plan: CalendarMovementPlan,
+        now: Date = Date()
+    ) -> (item: MenuItem, phase: CalendarMovementCompanionPhase)? {
+        let phase: CalendarMovementCompanionPhase
+        if now < plan.start {
+            phase = .warmUp
+        } else if now >= plan.end, countedCalendarPlanID == plan.id {
+            phase = .recovery
+        } else {
+            return nil
+        }
+
+        guard let item = model.calendarCompanion(for: plan, phase: phase) else { return nil }
+        return (item, phase)
     }
 
 
@@ -815,6 +835,16 @@ struct TodayView: View {
         .accessibilityHint(wasCounted ? "Counted for today" : "Double tap to say whether it happened")
     }
 
+    private func calendarCompanionCard(
+        _ item: MenuItem,
+        phase: CalendarMovementCompanionPhase,
+        plan: CalendarMovementPlan
+    ) -> some View {
+        CalendarCompanionCard(item: item, phase: phase, activity: plan.activity) {
+            openSession(item)
+        }
+    }
+
     private func calendarMovementTiming(_ plan: CalendarMovementPlan, isHappeningNow: Bool) -> String {
         if isHappeningNow { return "On your calendar now" }
         return "\(plan.durationMinutes) min · \(plan.start.formatted(date: .omitted, time: .shortened))"
@@ -833,6 +863,101 @@ struct TodayView: View {
         }
         AccessibilityNotification.Announcement("Your regular main routine is back").post()
         scheduleCalendarMovementRefresh(after: .milliseconds(150))
+    }
+}
+
+private struct CalendarCompanionCard: View {
+    let item: MenuItem
+    let phase: CalendarMovementCompanionPhase
+    let activity: Activity
+    let onOpen: () -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var eyebrow: String {
+        phase == .warmUp ? "OPTIONAL WARM-UP" : "OPTIONAL RECOVERY"
+    }
+
+    private var detail: String {
+        switch phase {
+        case .warmUp:
+            "A little prep for your \(activity.label.lowercased()) — whenever it feels useful."
+        case .recovery:
+            "A gentle way to settle after your \(activity.label.lowercased())."
+        }
+    }
+
+    var body: some View {
+        Button(action: onOpen) {
+            HStack(spacing: FGSpace.m) {
+                mascot
+                copy
+                playButton
+            }
+            .padding(FGSpace.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
+            .background(cardBackground)
+            .overlay(cardBorder)
+        }
+        .buttonStyle(.feelGoodPress)
+        .postHogMask()
+        .accessibilityLabel("\(eyebrow), \(item.session.title), \(item.session.durationLabel)")
+        .accessibilityHint("Double tap to start")
+    }
+
+    private var mascot: some View {
+        Image(item.course.menuMascotAsset)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 58, height: 58)
+            .padding(8)
+            .background(Circle().fill(FGColor.rose.opacity(colorScheme == .dark ? 0.22 : 0.16)))
+            .accessibilityHidden(true)
+    }
+
+    private var copy: some View {
+        VStack(alignment: .leading, spacing: FGSpace.xs) {
+            HStack(spacing: FGSpace.xs) {
+                Text(eyebrow)
+                    .font(FGFont.caption.weight(.bold))
+                Spacer(minLength: 0)
+                Text(item.session.durationLabel.uppercased())
+                    .font(FGFont.caption.weight(.bold))
+            }
+            .foregroundStyle(FGColor.inkMuted)
+
+            Text(item.session.title)
+                .font(FGFont.itemTitle)
+                .foregroundStyle(FGColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(detail)
+                .font(FGFont.caption)
+                .foregroundStyle(FGColor.inkMuted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var playButton: some View {
+        Image(systemName: "play.fill")
+            .font(.system(size: 14, weight: .bold))
+            .foregroundStyle(FGColor.ink)
+            .frame(width: 38, height: 38)
+            .background(Circle().fill(FGColor.surface))
+            .accessibilityHidden(true)
+    }
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+            .fill(FGColor.surface.opacity(colorScheme == .dark ? 0.92 : 0.88))
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+            .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+            .allowsHitTesting(false)
     }
 }
 

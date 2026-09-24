@@ -11,6 +11,7 @@ import SwiftUI
 
 struct ActivityHistorySection: View {
     let model: TodayModel
+    private let previewLimit = 5
 
     private var completedEntries: [HistoryEntry] {
         model.history
@@ -18,44 +19,8 @@ struct ActivityHistorySection: View {
             .sorted { $0.date > $1.date }
     }
 
-    private var groupedEntries: [(dateString: String, entries: [HistoryEntry])] {
-        let calendar = Calendar.current
-        let grouped = Dictionary(grouping: completedEntries) { entry -> String in
-            if calendar.isDateInToday(entry.date) {
-                return "Today"
-            } else if calendar.isDateInYesterday(entry.date) {
-                return "Yesterday"
-            } else {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "EEEE, MMM d"
-                return formatter.string(from: entry.date)
-            }
-        }
-
-        var seenDays: [String] = []
-        var result: [(dateString: String, entries: [HistoryEntry])] = []
-
-        for entry in completedEntries {
-            let dayKey: String
-            if calendar.isDateInToday(entry.date) {
-                dayKey = "Today"
-            } else if calendar.isDateInYesterday(entry.date) {
-                dayKey = "Yesterday"
-            } else {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "EEEE, MMM d"
-                dayKey = formatter.string(from: entry.date)
-            }
-
-            if !seenDays.contains(dayKey) {
-                seenDays.append(dayKey)
-                if let entries = grouped[dayKey] {
-                    result.append((dateString: dayKey, entries: entries))
-                }
-            }
-        }
-
-        return result
+    private var previewEntries: [HistoryEntry] {
+        Array(completedEntries.prefix(previewLimit))
     }
 
     var body: some View {
@@ -65,20 +30,34 @@ struct ActivityHistorySection: View {
             if completedEntries.isEmpty {
                 emptyCard
             } else {
-                VStack(alignment: .leading, spacing: FGSpace.m) {
-                    ForEach(groupedEntries, id: \.dateString) { group in
-                        VStack(alignment: .leading, spacing: FGSpace.s) {
-                            Text(group.dateString)
+                ActivityHistoryList(entries: previewEntries, model: model)
+
+                if completedEntries.count > previewLimit {
+                    NavigationLink {
+                        ActivityHistoryView(entries: completedEntries, model: model)
+                    } label: {
+                        HStack(spacing: FGSpace.s) {
+                            Text("View all sessions")
+                                .font(FGFont.label.weight(.semibold))
+
+                            Spacer()
+
+                            Text("\(completedEntries.count)")
                                 .font(FGFont.label.weight(.semibold))
                                 .foregroundStyle(FGColor.inkMuted)
 
-                            VStack(spacing: FGSpace.xs) {
-                                ForEach(group.entries, id: \.self) { entry in
-                                    historyRow(for: entry)
-                                }
-                            }
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13, weight: .bold))
+                                .accessibilityHidden(true)
                         }
+                        .foregroundStyle(FGColor.ink)
+                        .padding(.horizontal, FGSpace.m)
+                        .frame(minHeight: FGSize.minTouchTarget)
+                        .background(FGColor.surface, in: Capsule())
+                        .overlay(Capsule().strokeBorder(FGColor.lineStrong, lineWidth: 1))
                     }
+                    .buttonStyle(.feelGoodPress)
+                    .accessibilityLabel("View all \(completedEntries.count) completed sessions")
                 }
             }
         }
@@ -102,81 +81,6 @@ struct ActivityHistorySection: View {
                     .clipShape(Capsule())
                     .overlay(Capsule().strokeBorder(FGColor.line, lineWidth: 1))
             }
-        }
-    }
-
-    private func historyRow(for entry: HistoryEntry) -> some View {
-        let aura = entry.activity.completionAura ?? .sage
-        return HStack(spacing: FGSpace.m) {
-            Image(systemName: entry.activity.onboardingSymbol)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(aura.mid)
-                .frame(width: 36, height: 36)
-                .background(aura.core.opacity(0.35))
-                .clipShape(Circle())
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(model.title(for: entry))
-                    .font(FGFont.itemTitle)
-                    .foregroundStyle(FGColor.ink)
-                    .lineLimit(1)
-
-                HStack(spacing: 6) {
-                    Text(entry.activity.label)
-                        .font(FGFont.label)
-                        .foregroundStyle(FGColor.inkMuted)
-
-                    Text("•")
-                        .font(FGFont.label)
-                        .foregroundStyle(FGColor.lineStrong)
-
-                    Text("\(max(1, entry.durationMin)) min")
-                        .font(FGFont.label)
-                        .foregroundStyle(FGColor.inkMuted)
-
-                    if case .completed(feel: let feel?) = entry.outcome {
-                        Text("•")
-                            .font(FGFont.label)
-                            .foregroundStyle(FGColor.lineStrong)
-
-                        Text(feelLabel(feel))
-                            .font(FGFont.label.weight(.medium))
-                            .foregroundStyle(feelColor(feel))
-                    }
-                }
-            }
-
-            Spacer()
-
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 16))
-                .foregroundStyle(FGColor.sageDeep)
-        }
-        .padding(.horizontal, FGSpace.m)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
-                .fill(FGColor.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
-                .strokeBorder(FGColor.line, lineWidth: 1)
-        )
-    }
-
-    private func feelLabel(_ feel: Feel) -> String {
-        switch feel {
-        case .lovedIt: "Loved it"
-        case .fine: "Felt good"
-        case .tooMuch: "Challenging"
-        }
-    }
-
-    private func feelColor(_ feel: Feel) -> Color {
-        switch feel {
-        case .lovedIt: FGAura.apricot.mid
-        case .fine: FGAura.sage.mid
-        case .tooMuch: FGColor.inkMuted
         }
     }
 
@@ -215,5 +119,160 @@ struct ActivityHistorySection: View {
             RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
                 .strokeBorder(FGColor.line, lineWidth: 1)
         )
+    }
+}
+
+private struct ActivityHistoryView: View {
+    let entries: [HistoryEntry]
+    let model: TodayModel
+
+    var body: some View {
+        ZStack {
+            FGColor.bg.ignoresSafeArea()
+            FGBrandWash(reach: 0.34).ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: FGSpace.m) {
+                    Text("Every session you chose to count, newest first.")
+                        .font(FGFont.reason)
+                        .foregroundStyle(FGColor.inkMuted)
+
+                    ActivityHistoryList(entries: entries, model: model)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, FGSpace.page)
+                .padding(.vertical, FGSpace.m)
+            }
+        }
+        .navigationTitle("Session history")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct ActivityHistoryList: View {
+    let entries: [HistoryEntry]
+    let model: TodayModel
+
+    private var groups: [ActivityHistoryDayGroup] {
+        ActivityHistoryDayGroup.make(from: entries)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: FGSpace.m) {
+            ForEach(groups) { group in
+                VStack(alignment: .leading, spacing: FGSpace.s) {
+                    Text(group.title)
+                        .font(FGFont.label.weight(.semibold))
+                        .foregroundStyle(FGColor.inkMuted)
+
+                    VStack(spacing: FGSpace.xs) {
+                        ForEach(group.entries, id: \.self) { entry in
+                            ActivityHistoryRow(entry: entry, title: model.title(for: entry))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct ActivityHistoryDayGroup: Identifiable {
+    let id: Date
+    let title: String
+    let entries: [HistoryEntry]
+
+    static func make(
+        from entries: [HistoryEntry],
+        calendar: Calendar = .current
+    ) -> [ActivityHistoryDayGroup] {
+        Dictionary(grouping: entries) { calendar.startOfDay(for: $0.date) }
+            .map { day, entries in
+                ActivityHistoryDayGroup(
+                    id: day,
+                    title: title(for: day, calendar: calendar),
+                    entries: entries.sorted { $0.date > $1.date }
+                )
+            }
+            .sorted { $0.id > $1.id }
+    }
+
+    private static func title(for day: Date, calendar: Calendar) -> String {
+        if calendar.isDateInToday(day) { return "Today" }
+        if calendar.isDateInYesterday(day) { return "Yesterday" }
+        return day.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+    }
+}
+
+private struct ActivityHistoryRow: View {
+    let entry: HistoryEntry
+    let title: String
+
+    private var aura: FGAura {
+        entry.activity.completionAura ?? .sage
+    }
+
+    var body: some View {
+        HStack(spacing: FGSpace.m) {
+            Image(systemName: entry.activity.onboardingSymbol)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(aura.mid)
+                .frame(width: 36, height: 36)
+                .background(aura.core.opacity(0.35))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(FGFont.itemTitle)
+                    .foregroundStyle(FGColor.ink)
+                    .lineLimit(1)
+
+                HStack(spacing: 6) {
+                    Text(entry.activity.label)
+                    Text("•").foregroundStyle(FGColor.lineStrong)
+                    Text("\(max(1, entry.durationMin)) min")
+
+                    if case .completed(feel: let feel?) = entry.outcome {
+                        Text("•").foregroundStyle(FGColor.lineStrong)
+                        Text(feelLabel(feel))
+                            .fontWeight(.medium)
+                            .foregroundStyle(feelColor(feel))
+                    }
+                }
+                .font(FGFont.label)
+                .foregroundStyle(FGColor.inkMuted)
+            }
+
+            Spacer()
+
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 16))
+                .foregroundStyle(FGColor.sageDeep)
+        }
+        .padding(.horizontal, FGSpace.m)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
+                .fill(FGColor.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
+                .strokeBorder(FGColor.line, lineWidth: 1)
+        )
+    }
+
+    private func feelLabel(_ feel: Feel) -> String {
+        switch feel {
+        case .lovedIt: "Loved it"
+        case .fine: "Felt good"
+        case .tooMuch: "Challenging"
+        }
+    }
+
+    private func feelColor(_ feel: Feel) -> Color {
+        switch feel {
+        case .lovedIt: FGAura.apricot.mid
+        case .fine: FGAura.sage.mid
+        case .tooMuch: FGColor.inkMuted
+        }
     }
 }
