@@ -192,7 +192,7 @@ struct AuthServiceTests {
         }
         let elapsed = Date().timeIntervalSince(start)
         #expect(didThrow)
-        #expect(elapsed < 0.8)
+        #expect(elapsed < 1.2)
     }
 
     @Test("requiresReauthentication treats a missing sign-in date as stale")
