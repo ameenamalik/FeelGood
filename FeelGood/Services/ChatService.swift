@@ -307,6 +307,11 @@ nonisolated struct ChatUserContext: Codable, Sendable {
     let preferredIntensityTier: String?
     let topExploredActivities: [String]?
     let fatigueSensitivity: Double?
+    /// What Today would allow: equipment, places and activities, plus anything
+    /// said in this conversation. Chat filters its catalog by these.
+    let availableEquipment: [String]?
+    let availablePlaces: [String]?
+    let availableActivities: [String]?
 
     enum CodingKeys: String, CodingKey {
         case likedActivities = "liked_activities"
@@ -318,6 +323,9 @@ nonisolated struct ChatUserContext: Codable, Sendable {
         case preferredIntensityTier = "preferred_intensity_tier"
         case topExploredActivities = "top_explored_activities"
         case fatigueSensitivity = "fatigue_sensitivity"
+        case availableEquipment = "available_equipment"
+        case availablePlaces = "available_places"
+        case availableActivities = "available_activities"
     }
 
     init(
@@ -329,7 +337,8 @@ nonisolated struct ChatUserContext: Codable, Sendable {
         shownSessionIDs: [String]? = nil,
         preferredIntensityTier: String? = nil,
         topExploredActivities: [String]? = nil,
-        fatigueSensitivity: Double? = nil
+        fatigueSensitivity: Double? = nil,
+        availability: ChatAvailability? = nil
     ) {
         self.likedActivities = likedActivities
         self.lastFeel = lastFeel
@@ -340,6 +349,9 @@ nonisolated struct ChatUserContext: Codable, Sendable {
         self.preferredIntensityTier = preferredIntensityTier
         self.topExploredActivities = topExploredActivities
         self.fatigueSensitivity = fatigueSensitivity
+        self.availableEquipment = availability.map { $0.equipment.map(\.rawValue).sorted() }
+        self.availablePlaces = availability.map { $0.places.map(\.rawValue).sorted() }
+        self.availableActivities = availability.map { $0.activities.map(\.rawValue).sorted() }
     }
 }
 
@@ -611,8 +623,10 @@ nonisolated enum LocalStatefulChatEngine {
         activity: Activity? = nil,
         excludeID: String? = nil,
         userContext: ChatUserContext? = nil,
-        workArounds: Set<WorkAround> = []
+        workArounds: Set<WorkAround> = [],
+        availability: ChatAvailability? = nil
     ) -> Session? {
+        let availability = availability ?? userContext?.availability
         guard !catalogSessions.isEmpty else { return nil }
 
         var candidates: [(session: Session, score: Int)] = []
@@ -622,6 +636,7 @@ nonisolated enum LocalStatefulChatEngine {
             if let shown = userContext?.shownSessionIDs, shown.contains(s.id) { continue }
             if let excludeID, s.id == excludeID { continue }
             if ChatSafety.conflicts(s, workArounds: workArounds) { continue }
+            if let availability, !availability.allows(s) { continue }
             if let excludedFocus, s.bodyFocus.contains(excludedFocus) { continue }
             var score = 0
 
@@ -902,6 +917,7 @@ nonisolated enum LocalStatefulChatEngine {
         }
         if lower.contains("neck") || lower.contains("shoulder") { targetFocus = .neckShoulders }
         else if lower.contains("core") { targetFocus = .core }
+        else if ["arm", "bicep", "tricep", "upper body", "upper-body"].contains(where: lower.contains) { targetFocus = .upperBody }
 
         var targetIntent: Intent?
         if lower.contains("energiz") || lower.contains("wake") { targetIntent = .energize }
