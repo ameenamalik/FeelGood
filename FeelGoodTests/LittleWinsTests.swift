@@ -70,6 +70,20 @@ struct LittleWinsTests {
         #expect(tiny.isUnlocked)
     }
 
+    @Test("Badge rewards cover every locked profile choice exactly once")
+    func profileRewardsCoverPicker() {
+        let rewards = LittleWin.allCases.map(\.profileReward)
+        let avatars = rewards.flatMap(\.avatars)
+        let backgrounds = rewards.map(\.background)
+
+        #expect(LittleWin.firstMove.profileReward.avatars.count == 2)
+        #expect(rewards.dropFirst().allSatisfy { $0.avatars.count == 1 })
+        #expect(Set(avatars).count == avatars.count)
+        #expect(Set(backgrounds).count == backgrounds.count)
+        #expect(Set(avatars) == Set(ProfileAvatar.allCases.filter { $0 != .defaultAvatar }))
+        #expect(Set(backgrounds) == Set(ProfileAvatarBackground.allCases.filter { $0 != .automatic }))
+    }
+
     private func entry(
         _ id: String,
         activity: Activity,

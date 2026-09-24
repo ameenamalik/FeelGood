@@ -69,6 +69,52 @@ nonisolated enum LittleWin: String, CaseIterable, Codable, Hashable, Identifiabl
         default: 5
         }
     }
+
+    /// Apple and Automatic remain available from the start. Badge rewards
+    /// cover every other bundled mascot and background exactly once.
+    var profileReward: LittleWinProfileReward {
+        switch self {
+        case .firstMove:
+            LittleWinProfileReward(avatars: [.plum, .banana], background: .blush)
+        case .homebody:
+            LittleWinProfileReward(avatars: [.pear], background: .sage)
+        case .gymRegular:
+            LittleWinProfileReward(avatars: [.blueberry], background: .lilac)
+        case .yogaEra:
+            LittleWinProfileReward(avatars: [.peach], background: .apricot)
+        case .tinyWins:
+            LittleWinProfileReward(avatars: [.clementine], background: .butter)
+        case .varietyPack:
+            LittleWinProfileReward(avatars: [.lime], background: .sky)
+        }
+    }
+}
+
+nonisolated struct LittleWinProfileReward: Hashable, Sendable {
+    let avatars: [ProfileAvatar]
+    let background: ProfileAvatarBackground
+
+    var shortDescription: String {
+        let names = avatars.map(\.displayName).formatted(.list(type: .and))
+        return "\(names) + \(background.displayName)"
+    }
+
+    var celebrationDescription: String {
+        let noun = avatars.count == 1 ? "character" : "characters"
+        return "\(shortDescription) unlocked — \(avatars.count) new \(noun) and a color for your profile."
+    }
+}
+
+nonisolated extension ProfileAvatar {
+    var unlockingWin: LittleWin? {
+        LittleWin.allCases.first { $0.profileReward.avatars.contains(self) }
+    }
+}
+
+nonisolated extension ProfileAvatarBackground {
+    var unlockingWin: LittleWin? {
+        LittleWin.allCases.first { $0.profileReward.background == self }
+    }
 }
 
 nonisolated struct LittleWinProgress: Hashable, Identifiable, Sendable {

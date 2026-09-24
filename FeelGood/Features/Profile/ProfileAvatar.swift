@@ -69,6 +69,7 @@ nonisolated enum ProfileAvatarBackground: String, CaseIterable, Identifiable, Se
     case butter
     case sage
     case lilac
+    case sky
 
     var id: String { rawValue }
 
@@ -80,6 +81,7 @@ nonisolated enum ProfileAvatarBackground: String, CaseIterable, Identifiable, Se
         case .butter: "Butter"
         case .sage: "Sage"
         case .lilac: "Lilac"
+        case .sky: "Sky"
         }
     }
 
@@ -91,6 +93,7 @@ nonisolated enum ProfileAvatarBackground: String, CaseIterable, Identifiable, Se
         case .butter: .butter
         case .sage: .sage
         case .lilac: .lilac
+        case .sky: .sky
         }
     }
 }
@@ -114,10 +117,16 @@ struct ProfileAvatarView: View {
 struct ProfileAvatarPickerView: View {
     @Binding var selection: ProfileAvatar
     @Binding var background: ProfileAvatarBackground
+    let littleWins: [LittleWinProgress]
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hoppingAvatar: ProfileAvatar?
     @State private var hopID: UUID?
+    @State private var lockedWin: LittleWin?
+
+    private var unlockedWins: Set<LittleWin> {
+        Set(littleWins.filter(\.isUnlocked).map(\.win))
+    }
 
     private let columns = [
         GridItem(.adaptive(minimum: 92), spacing: FGSpace.s)
@@ -132,7 +141,7 @@ struct ProfileAvatarPickerView: View {
                             .font(FGFont.title)
                             .foregroundStyle(FGColor.ink)
 
-                        Text("These are the same fruits already on your menu — pick whichever feels like you.")
+                        Text("Apple starts with you. Earn little-win badges to unlock more characters and colors.")
                             .font(FGFont.body)
                             .foregroundStyle(FGColor.inkMuted)
                     }
@@ -140,26 +149,53 @@ struct ProfileAvatarPickerView: View {
                     LazyVGrid(columns: columns, spacing: FGSpace.m) {
                         ForEach(ProfileAvatar.allCases) { avatar in
                             let isSelected = selection == avatar
+                            let isUnlocked = isAvatarUnlocked(avatar)
 
                             Button {
-                                selectAvatar(avatar)
+                                if isUnlocked {
+                                    selectAvatar(avatar)
+                                } else {
+                                    lockedWin = avatar.unlockingWin
+                                }
                             } label: {
-                                VStack(spacing: FGSpace.xs) {
+                                VStack(spacing: 5) {
                                     ProfileAvatarView(
                                         avatar: avatar,
                                         background: background,
-                                        size: 76
+                                        size: 68
                                     )
                                     .scaleEffect(hoppingAvatar == avatar ? 1.04 : 1)
                                     .rotationEffect(.degrees(hoppingAvatar == avatar ? -3 : 0))
                                     .offset(y: hoppingAvatar == avatar ? -6 : 0)
+                                    .saturation(isUnlocked ? 1 : 0)
+                                    .opacity(isUnlocked ? 1 : 0.55)
+                                    .blur(radius: isUnlocked ? 0 : 8)
 
-                                    Text(avatar.displayName)
+                                    Text(isUnlocked ? avatar.displayName : "Mystery friend")
                                         .font(FGFont.caption.weight(.semibold))
                                         .foregroundStyle(FGColor.ink)
                                         .lineLimit(1)
+
+                                    Group {
+                                        if !isUnlocked, let win = avatar.unlockingWin {
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "lock.fill")
+                                                Text(win.title)
+                                            }
+                                            .font(.caption2.weight(.semibold))
+                                            .foregroundStyle(FGColor.inkMuted)
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.72)
+                                        } else {
+                                            Color.clear
+                                                .accessibilityHidden(true)
+                                        }
+                                    }
+                                    .frame(height: 14)
                                 }
-                                .frame(maxWidth: .infinity, minHeight: 116)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 10)
+                                .frame(maxWidth: .infinity, minHeight: 128)
                                 .background(FGColor.surface)
                                 .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
                                 .overlay {
@@ -188,7 +224,12 @@ struct ProfileAvatarPickerView: View {
                             .zIndex(isSelected ? 1 : 0)
                             .fgAnimation(FGMotion.settle, value: isSelected)
                             .fgAnimation(FGMotion.settle, value: hoppingAvatar)
-                            .accessibilityLabel(avatar.displayName)
+                            .accessibilityLabel(isUnlocked ? avatar.displayName : "Locked mystery character")
+                            .accessibilityHint(
+                                isUnlocked
+                                    ? "Selects this profile character"
+                                    : "Unlocks with the \(avatar.unlockingWin?.title ?? "little win") badge"
+                            )
                             .accessibilityAddTraits(isSelected ? .isSelected : [])
                         }
                     }
@@ -206,6 +247,13 @@ struct ProfileAvatarPickerView: View {
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+        .alert(item: $lockedWin) { win in
+            Alert(
+                title: Text("Unlock with \(win.title)"),
+                message: Text("\(win.detail) Then come back here to meet your new profile friend and color."),
+                dismissButton: .default(Text("Got it"))
+            )
+        }
         .sensoryFeedback(.selection, trigger: selection)
         .sensoryFeedback(.selection, trigger: background)
     }
@@ -219,11 +267,16 @@ struct ProfileAvatarPickerView: View {
             LazyVGrid(columns: columns, spacing: FGSpace.s) {
                 ForEach(ProfileAvatarBackground.allCases) { choice in
                     let isSelected = background == choice
+                    let isUnlocked = isBackgroundUnlocked(choice)
 
                     Button {
-                        selectBackground(choice)
+                        if isUnlocked {
+                            selectBackground(choice)
+                        } else {
+                            lockedWin = choice.unlockingWin
+                        }
                     } label: {
-                        VStack(spacing: FGSpace.xs) {
+                        VStack(spacing: 5) {
                             Circle()
                                 .fill(choice.aura(for: selection).core)
                                 .frame(width: 46, height: 46)
@@ -249,20 +302,48 @@ struct ProfileAvatarPickerView: View {
                                 }
                                 .fgAnimation(FGMotion.gentle, value: background)
                                 .fgAnimation(FGMotion.gentle, value: selection)
+                                .opacity(isUnlocked ? 1 : 0.5)
+                                .blur(radius: isUnlocked ? 0 : 6)
 
-                            Text(choice.displayName)
+                            Text(isUnlocked ? choice.displayName : "Mystery color")
                                 .font(FGFont.caption.weight(.semibold))
                                 .foregroundStyle(FGColor.ink)
                                 .lineLimit(1)
+
+                            Group {
+                                if !isUnlocked, let win = choice.unlockingWin {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "lock.fill")
+                                        Text(win.title)
+                                    }
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(FGColor.inkMuted)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.72)
+                                } else {
+                                    Color.clear
+                                        .accessibilityHidden(true)
+                                }
+                            }
+                            .frame(height: 14)
                         }
-                        .frame(maxWidth: .infinity, minHeight: 82)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity, minHeight: 96)
                     }
                     .buttonStyle(.feelGoodPress)
                     .scaleEffect(isSelected ? 1.04 : 1)
                     .offset(y: isSelected ? -2 : 0)
                     .zIndex(isSelected ? 1 : 0)
                     .fgAnimation(FGMotion.settle, value: isSelected)
-                    .accessibilityLabel("\(choice.displayName) background")
+                    .accessibilityLabel(
+                        isUnlocked ? "\(choice.displayName) background" : "Locked mystery background"
+                    )
+                    .accessibilityHint(
+                        isUnlocked
+                            ? "Selects this profile background"
+                            : "Unlocks with the \(choice.unlockingWin?.title ?? "little win") badge"
+                    )
                     .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }
             }
@@ -306,5 +387,17 @@ struct ProfileAvatarPickerView: View {
         withAnimation(reduceMotion ? nil : FGMotion.gentle) {
             background = choice
         }
+    }
+
+    private func isAvatarUnlocked(_ avatar: ProfileAvatar) -> Bool {
+        avatar == .defaultAvatar
+            || avatar == selection
+            || avatar.unlockingWin.map(unlockedWins.contains) == true
+    }
+
+    private func isBackgroundUnlocked(_ choice: ProfileAvatarBackground) -> Bool {
+        choice == .automatic
+            || choice == background
+            || choice.unlockingWin.map(unlockedWins.contains) == true
     }
 }
