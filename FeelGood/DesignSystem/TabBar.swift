@@ -56,7 +56,11 @@ struct FGTabBar<Tag: Hashable>: View {
         .padding(8)
         .background(Capsule().fill(FGColor.surface))
         .overlay(Capsule().strokeBorder(FGColor.tabBarEdge, lineWidth: 1.5))
+        // A pill that spans a 13" iPad is a slab, so cap it and centre it. On a
+        // phone the screen is narrower than this and nothing changes.
+        .frame(maxWidth: FGTabBar.maxWidth)
         .padding(.horizontal, 36)
+        .frame(maxWidth: .infinity)
         .padding(.bottom, 8)
         .accessibilityElement(children: .contain)
         // The keyboard covers it, as it covers the system bar.
@@ -65,6 +69,10 @@ struct FGTabBar<Tag: Hashable>: View {
 }
 
 extension FGTabBar {
+    /// The widest the bar gets. About a phone plus generous room, so it reads as
+    /// the same control on iPad instead of stretching edge to edge.
+    static var maxWidth: CGFloat { 480 }
+
     /// The bar's height: two 8pt paddings around a 52pt row, plus the 8pt gap
     /// to the bottom safe area.
     static var height: CGFloat { 76 }
