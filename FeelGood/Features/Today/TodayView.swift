@@ -686,41 +686,9 @@ private struct MenuItemCard: View {
                 }
             }
             .offset(x: dragOffset)
-            .highPriorityGesture(
-                canSwap ? DragGesture(minimumDistance: 12)
-                    .onChanged { gesture in
-                        if gesture.translation.width < 0 && abs(gesture.translation.width) > abs(gesture.translation.height) {
-                            if !reduceMotion {
-                                dragOffset = gesture.translation.width
-                            }
-                        }
-                    }
-                    .onEnded { gesture in
-                        guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
-                            withAnimation(FGMotion.gentle) { dragOffset = 0 }
-                            return
-                        }
-                        if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            if reduceMotion {
-                                onSkip()
-                            } else {
-                                withAnimation(.easeOut(duration: 0.18)) {
-                                    dragOffset = -UIScreen.main.bounds.width
-                                }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
-                                    onSkip()
-                                    dragOffset = 0
-                                }
-                            }
-                        } else {
-                            withAnimation(FGMotion.gentle) {
-                                dragOffset = 0
-                            }
-                        }
-                    }
-                : nil
-            )
+            // Not a DragGesture: any SwiftUI drag on a card stops it scrolling
+            // (HorizontalSwipe.swift), so vertical and diagonal drags must fail early.
+            .fgSwipeToSkip(isEnabled: canSwap, offset: $dragOffset, reduceMotion: reduceMotion, onSkip: onSkip)
         }
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
@@ -827,41 +795,9 @@ private struct MenuItemRow: View {
                 }
             }
             .offset(x: dragOffset)
-            .highPriorityGesture(
-                canSwap ? DragGesture(minimumDistance: 12)
-                    .onChanged { gesture in
-                        if gesture.translation.width < 0 && abs(gesture.translation.width) > abs(gesture.translation.height) {
-                            if !reduceMotion {
-                                dragOffset = gesture.translation.width
-                            }
-                        }
-                    }
-                    .onEnded { gesture in
-                        guard abs(gesture.translation.width) > abs(gesture.translation.height) else {
-                            withAnimation(FGMotion.gentle) { dragOffset = 0 }
-                            return
-                        }
-                        if gesture.translation.width < -50 || gesture.predictedEndTranslation.width < -100 {
-                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                            if reduceMotion {
-                                onSkip()
-                            } else {
-                                withAnimation(.easeOut(duration: 0.18)) {
-                                    dragOffset = -UIScreen.main.bounds.width
-                                }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
-                                    onSkip()
-                                    dragOffset = 0
-                                }
-                            }
-                        } else {
-                            withAnimation(FGMotion.gentle) {
-                                dragOffset = 0
-                            }
-                        }
-                    }
-                : nil
-            )
+            // Not a DragGesture: any SwiftUI drag on a card stops it scrolling
+            // (HorizontalSwipe.swift), so vertical and diagonal drags must fail early.
+            .fgSwipeToSkip(isEnabled: canSwap, offset: $dragOffset, reduceMotion: reduceMotion, onSkip: onSkip)
         }
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)

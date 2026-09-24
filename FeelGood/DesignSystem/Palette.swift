@@ -32,7 +32,11 @@ nonisolated extension Color {
     /// trait, not a parameter, so no view has to pass it.
     init(light: UInt32, dark: UInt32, overrides: [FGThemeID: FGThemePair] = [:]) {
         self.init(uiColor: UIColor { traits in
-            let pair = overrides[traits.fgTheme] ?? FGThemePair(light: light, dark: dark)
+            // Most tokens have no override, and this runs for every colour on
+            // every draw, so skip the trait lookup for them.
+            let pair = overrides.isEmpty
+                ? FGThemePair(light: light, dark: dark)
+                : (overrides[traits.fgTheme] ?? FGThemePair(light: light, dark: dark))
             return UIColor(hex: traits.userInterfaceStyle == .dark ? pair.dark : pair.light)
         })
     }
