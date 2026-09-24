@@ -69,6 +69,100 @@ nonisolated struct CalendarMovementPlan: Hashable, Sendable, Identifiable {
     }
 }
 
+/// The one small session FeelGood can place around movement that is already
+/// on somebody's calendar. It is deliberately a before/after suggestion, not
+/// another appointment or a second "main" to complete.
+nonisolated enum CalendarMovementCompanionPhase: Hashable, Sendable {
+    case warmUp
+    case recovery
+}
+
+/// Pure, deterministic selection keeps Calendar personalization testable and
+/// on-device. Event titles never enter this selector; it only receives the
+/// coarse activity that the title classifier already produced.
+nonisolated enum CalendarMovementCompanionSelector {
+    static func session(
+        for plan: CalendarMovementPlan,
+        phase: CalendarMovementCompanionPhase,
+        from sessions: [Session],
+        profile: PlanProfile
+    ) -> Session? {
+        let targetFocus = bodyFocus(for: plan.activity)
+        let preferredActivities: Set<Activity> = switch phase {
+        case .warmUp: [.stretching, .qigong, .agility]
+        case .recovery: [.stretching, .breathwork, .qigong]
+        }
+
+        return sessions
+            .filter { candidate in
+                candidate.durationMin > 0
+                    && candidate.durationMin <= 5
+                    && candidate.intensity <= 2
+                    && candidate.needsNoEquipment
+                    && candidate.worksAtHome
+                    && !candidate.source.isVideo
+                    && !profile.hiddenSessionIDs.contains(candidate.id)
+                    && Set(candidate.contraindications).isDisjoint(with: profile.workArounds)
+                    && (candidate.activity.isAlwaysAvailable
+                        || profile.availableActivities.contains(candidate.activity))
+                    && preferredActivities.contains(candidate.activity)
+                    && candidate.activity != plan.activity
+            }
+            .sorted { lhs, rhs in
+                let lhsScore = score(lhs, phase: phase, targetFocus: targetFocus)
+                let rhsScore = score(rhs, phase: phase, targetFocus: targetFocus)
+                if lhsScore != rhsScore { return lhsScore > rhsScore }
+                if lhs.durationMin != rhs.durationMin { return lhs.durationMin < rhs.durationMin }
+                return lhs.id < rhs.id
+            }
+            .first
+    }
+
+    private static func score(
+        _ session: Session,
+        phase: CalendarMovementCompanionPhase,
+        targetFocus: Set<BodyFocus>
+    ) -> Int {
+        let focus = Set(session.bodyFocus)
+        var result = focus.isDisjoint(with: targetFocus) ? 0 : 12
+        if focus.contains(.full) { result += 3 }
+        if session.qualities.contains(.mobility) { result += 8 }
+
+        switch phase {
+        case .warmUp:
+            if session.activity == .stretching { result += 5 }
+            if session.qualities.contains(.balance) || session.qualities.contains(.coordination) {
+                result += 2
+            }
+        case .recovery:
+            if session.qualities.contains(.downRegulation) { result += 10 }
+            if session.activity == .breathwork { result += 4 }
+            result += max(0, 3 - session.intensity)
+        }
+
+        return result
+    }
+
+    private static func bodyFocus(for activity: Activity) -> Set<BodyFocus> {
+        switch activity {
+        case .pilates:
+            [.core, .hips, .back]
+        case .yoga:
+            [.full, .hips, .back]
+        case .strength:
+            [.full, .upperBody, .lowerBody, .core]
+        case .walking, .biking, .skating, .jumpRope, .agility:
+            [.lowerBody, .hips]
+        case .swimming, .racquet, .climbing, .carries:
+            [.upperBody, .back, .full]
+        case .martialArts:
+            [.full, .hips, .lowerBody]
+        case .qigong, .stretching, .dance, .breathwork:
+            [.full]
+        }
+    }
+}
+
 /// Pure, conservative title matching. A miss only means the event remains an
 /// ordinary busy interval; a false positive would ask an intrusive question.
 nonisolated enum CalendarMovementTitleClassifier {
