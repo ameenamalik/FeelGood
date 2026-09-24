@@ -5,6 +5,8 @@ import { queryAISearch } from "./ai_search";
 import { traceAgentTurn, traceChatModel, traceToolExecution } from "./tracing";
 import { excludedSessionIDs, isRejection, normalizeReply } from "./repeats";
 import { bodyFocusLabel } from "./labels";
+import { aliasSnakeCaseFields } from "./payloadKeys";
+import { isSessionAvailable, parseAvailability, type Availability, type AvailabilityFields } from "./availability";
 
 export type ChatRole = "user" | "assistant" | "model";
 
@@ -19,7 +21,7 @@ export interface ChatTurnPayload {
   text: string;
 }
 
-export interface UserPreferencesContext {
+export interface UserPreferencesContext extends AvailabilityFields {
   likedActivities?: string[];
   lastFeel?: "lovedIt" | "fine" | "tooMuch";
   recentCompletions?: number;
@@ -119,10 +121,18 @@ export interface ChatResponseData {
 }
 
 // Compact catalog summary embedded for high model accuracy
-const CATALOG_PROMPT_SUMMARY = CATALOG_SESSIONS.map(
-  (s) =>
-    `[${s.id}] "${s.title}" (${s.durationMin}m, ${s.intensity}, ${s.course}, focus: ${s.bodyFocus.join("/") || "full"}, places: ${s.places.join("/")}, intents: ${s.intents.join("/")})`
-).join("\n");
+const CATALOG_PLACEHOLDER = "{{CATALOG}}";
+
+// Only sessions this person can do today are shown to the model, so it cannot
+// pick a gym routine for someone with no gym.
+function buildCatalogSummary(availability: Availability | null): string {
+  return CATALOG_SESSIONS.filter((s) => isSessionAvailable(s, availability))
+    .map(
+      (s) =>
+        `[${s.id}] "${s.title}" (${s.durationMin}m, ${s.intensity}, ${s.course}, focus: ${s.bodyFocus.join("/") || "full"}, places: ${s.places.join("/")}, intents: ${s.intents.join("/")})`
+    )
+    .join("\n");
+}
 
 const CHAT_SYSTEM_PROMPT = `You are FeelGood, a warm, calm, unhurried daily wellness companion.
 Your user is conversing with you about their movement, how they feel today, adjusting routines, or asking questions about workouts and yoga.
@@ -132,7 +142,9 @@ CORE PRINCIPLES:
 1a. REGISTER: Plain, natural, and a little understated, never theatrical or old-fashioned. Address the person as "you" only. NEVER use terms of endearment or pet names of any kind ("my dear", "dear", "honey", "sweetheart", "darling", "love", "friend", "girl", "sis", "hun"), and do not open with a stage-y interjection like "Ah," or "Oh, my". Never assume the person's gender.
 2. Never make medical or diagnostic claims. Never mention streaks, calories, numbers, or guilt. Describe what a session involves (how it moves, how gentle it is, what it needs, how long it takes), never what it will do to the body or mind. Do not say a session will relieve, release, ease, treat, heal, fix, reset, calm, or reduce anything (tension, pain, stress, anxiety, tightness, a racing heart), and do not explain bodily or physiological effects.
 3. GROUNDING: You MUST recommend ONLY real routines from the catalog below using their exact session ID:
-${CATALOG_PROMPT_SUMMARY}
+${CATALOG_PLACEHOLDER}
+
+3a. BODY AREA: When the user names an area (arms, legs, core, back, shoulders), only recommend a session whose focus includes it. If nothing in the list above targets that area, do not offer an unrelated session: say plainly that you don't have one for it right now, and offer the closest thing (e.g. upper body or back work) as a question with no session_id.
 
 4. TIME BUDGET CEILING: When the user specifies a time limit or available duration (e.g., "10 minutes", "5 min", "2 min"), treat it as a strict upper bound. NEVER recommend a routine longer than their requested duration! Always pick a routine where durationMin <= requested time (e.g. if they say "10 min", pick a 3, 5, or 10 min routine, NEVER 15+ min).
 
@@ -159,6 +171,7 @@ export function isValidChatPayload(body: unknown): body is ChatPayload {
       if (textVal === undefined) return false;
     }
   }
+  aliasSnakeCaseFields(record);
   return true;
 }
 
@@ -209,7 +222,7 @@ function buildSystemPrompt(
   todaysMenu?: StructuredRecommendation[],
   activeSessionID?: string
 ): string {
-  let prompt = CHAT_SYSTEM_PROMPT;
+  let prompt = CHAT_SYSTEM_PROMPT.replace(CATALOG_PLACEHOLDER, () => buildCatalogSummary(parseAvailability(userContext)));
   if (todaysMenu && todaysMenu.length > 0) {
     const menuLines = todaysMenu
       .map((item) => `- session_id: ${item.session_id} | course: ${item.course} | title: "${item.title}" | duration: ${item.duration_min} min | reason: ${item.reason}`)
@@ -309,8 +322,9 @@ function resolveCanonicalRecommendation(
     intent,
     prompt,
   });
+  const availability = parseAvailability(userContext);
   let matchedSession: CatalogSessionItem | undefined = findSessionById(sessionId);
-  if (matchedSession && hidden.includes(matchedSession.id)) {
+  if (matchedSession && (hidden.includes(matchedSession.id) || !isSessionAvailable(matchedSession, availability))) {
     matchedSession = undefined;
   }
 
@@ -343,9 +357,10 @@ function resolveCanonicalRecommendation(
     }
 
     let bodyFocus: string | undefined;
-    if (prompt.includes("back") || extractedCheckIn.body === "stiff") bodyFocus = "lowerBack";
+    if (prompt.includes("back") || extractedCheckIn.body === "stiff") bodyFocus = "back";
     else if (prompt.includes("neck") || prompt.includes("shoulder")) bodyFocus = "neckShoulders";
     else if (prompt.includes("hip")) bodyFocus = "hips";
+    else if (/\b(arms?|biceps?|triceps?|upper body)\b/.test(prompt)) bodyFocus = "upperBody";
 
     matchedSession = matchBestSession({
       targetDuration: targetDur,
@@ -360,12 +375,13 @@ function resolveCanonicalRecommendation(
       preferredIntensityTier: userContext?.preferredIntensityTier || userContext?.preferred_intensity_tier,
       topExploredActivities: userContext?.topExploredActivities || userContext?.top_explored_activities,
       fatigueSensitivity: userContext?.fatigueSensitivity ?? userContext?.fatigue_sensitivity,
+      isAvailable: (s) => isSessionAvailable(s, availability),
     });
   }
 
   // matchBestSession seeds its answer with the first catalog entry, so if every
   // session is excluded it would hand one back anyway.
-  if (hidden.includes(matchedSession.id)) {
+  if (hidden.includes(matchedSession.id) || !isSessionAvailable(matchedSession, availability)) {
     return null;
   }
 
