@@ -532,7 +532,7 @@ struct TodayView: View {
             }
 
             if model.checkIn?.time.isZero == true || (model.checkIn == nil && model.menu.assumedCheckIn.time.isZero) {
-                Text("Rest day · Untimed")
+                Text("Recovery day · Untimed")
                     .font(.system(size: 14, weight: .regular))
                     .foregroundStyle(FGColor.inkMuted)
             }
