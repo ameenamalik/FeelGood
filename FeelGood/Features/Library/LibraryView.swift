@@ -63,22 +63,23 @@ struct LibraryView: View {
                             .foregroundStyle(FGColor.ink)
                     }
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: FGSpace.xs) {
-                            filterChip(
-                                title: "All",
-                                isSelected: selectedActivity == nil
-                            ) {
-                                selectedActivity = nil
-                            }
+                    // Keep one scroll axis on this sheet. A horizontal
+                    // ScrollView nested here could claim a vertical drag that
+                    // began over the filters, leaving the Library stuck.
+                    WrapRow(spacing: FGSpace.xs, lineSpacing: FGSpace.xs) {
+                        filterChip(
+                            title: "All",
+                            isSelected: selectedActivity == nil
+                        ) {
+                            selectedActivity = nil
+                        }
 
-                            ForEach(availableActivities, id: \.self) { activity in
-                                filterChip(
-                                    title: activity.label,
-                                    isSelected: selectedActivity == activity
-                                ) {
-                                    selectedActivity = selectedActivity == activity ? nil : activity
-                                }
+                        ForEach(availableActivities, id: \.self) { activity in
+                            filterChip(
+                                title: activity.label,
+                                isSelected: selectedActivity == activity
+                            ) {
+                                selectedActivity = selectedActivity == activity ? nil : activity
                             }
                         }
                     }
@@ -104,6 +105,7 @@ struct LibraryView: View {
         .sheet(item: $selected) { session in
             SessionDetailView(session: session, model: model)
         }
+        .presentationContentInteraction(.scrolls)
         .presentationDragIndicator(.visible)
     }
 
