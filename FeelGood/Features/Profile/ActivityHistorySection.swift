@@ -144,6 +144,7 @@ private struct ActivityHistoryView: View {
                 .padding(.vertical, FGSpace.m)
             }
         }
+        .fgTabBarInset()
         .navigationTitle("Session history")
         .navigationBarTitleDisplayMode(.inline)
     }
