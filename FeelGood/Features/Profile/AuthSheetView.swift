@@ -19,15 +19,15 @@ struct AuthSheetView: View {
     /// Apple's native authorization control owns its typography and renders
     /// slightly larger than an ordinary 19-point SwiftUI label. Use this
     /// optical match for the adjacent custom provider buttons.
-    private static let providerButtonFont = Font.system(size: 21, weight: .semibold)
-    private static let providerIconSize: CGFloat = 20
+    private static let providerButtonFont = Font.system(size: 18, weight: .semibold)
+    private static let providerIconSize: CGFloat = 18
     private static let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier ?? "com.ameenamalik.FeelGood",
         category: "Authentication"
     )
 
-    var title: String = "Save your routine"
-    var subtitle: String = "Keep your movement history and personalized daily menus synced safely across devices."
+    var title: String = "FeelGood"
+    var subtitle: String = "Keep your movement history and daily menus synced across devices."
     /// Swaps the small "sparkles" glyph for the brand-mark + fruit-cluster
     /// illustration, for the one entry point (onboarding's welcome screen)
     /// that's a first impression rather than a milestone nudge.
@@ -43,11 +43,13 @@ struct AuthSheetView: View {
     @State private var mode: AuthMode
     @State private var email: String = ""
     @State private var password: String = ""
+    @State private var showsPassword: Bool = false
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
     @State private var successMessage: String? = nil
     @State private var currentRawNonce: String = ""
     @State private var path: [HeroStage] = []
+    @State private var appleAuthorizationPerformer = AppleAuthorizationPerformer()
 
     enum AuthMode {
         case signIn
@@ -63,8 +65,8 @@ struct AuthSheetView: View {
     }
 
     init(
-        title: String = "Save your routine",
-        subtitle: String = "Keep your movement history and personalized daily menus synced safely across devices.",
+        title: String = "FeelGood",
+        subtitle: String = "Keep your movement history and daily menus synced across devices.",
         showsHeroIllustration: Bool = false,
         initialMode: AuthMode = .signIn,
         guestButtonTitle: String = "Continue as guest",
@@ -97,49 +99,37 @@ struct AuthSheetView: View {
                 FGColor.bg.ignoresSafeArea()
                 FGBrandWash(reach: 0.55).ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: FGSpace.l) {
-                        headerSection
+                GeometryReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 18) {
+                            headerSection
 
-                        if showsHeroIllustration {
                             heroEntryButtons
-                        } else {
-                            VStack(spacing: FGSpace.m) {
-                                appleButton(label: mode == .signIn ? .signIn : .signUp)
-                                googleSignInButton
 
-                                orDivider
-
-                                emailPasswordSection
+                            if let errorMessage {
+                                feedbackBanner(errorMessage, isError: true)
                             }
-                            .frame(maxWidth: 360)
-                        }
 
-                        if let errorMessage {
-                            Text(errorMessage)
-                                .font(FGFont.caption)
-                                .foregroundStyle(FGColor.clayDeep)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, FGSpace.m)
-                                .transition(.opacity)
-                        }
+                            if let successMessage {
+                                feedbackBanner(successMessage, isError: false)
+                            }
 
-                        if let successMessage {
-                            Text(successMessage)
-                                .font(FGFont.caption)
-                                .foregroundStyle(FGColor.sageDeep)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, FGSpace.m)
-                                .transition(.opacity)
-                        }
+                            guestFooter
 
-                        guestFooter
+                            Spacer(minLength: FGSpace.xl)
+
+                            privacyCard
+                        }
+                        .frame(
+                            minHeight: max(0, proxy.size.height - FGSpace.xxl),
+                            alignment: .top
+                        )
+                        .padding(.horizontal, FGSpace.page)
+                        .padding(.top, showsHeroIllustration ? 40 : FGSpace.l)
+                        .padding(.bottom, FGSpace.l)
                     }
-                    .padding(.horizontal, FGSpace.page)
-                    .padding(.top, FGSpace.m)
-                    .padding(.bottom, FGSpace.xl)
+                    .scrollBounceBehavior(.basedOnSize)
                 }
-                .scrollBounceBehavior(.basedOnSize)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -158,23 +148,22 @@ struct AuthSheetView: View {
         }
     }
 
-    // MARK: - Hero entry (onboarding welcome screen only)
+    // MARK: - Account entry
 
-    /// Three plain "Continue with…" pills and nothing else — no inline form,
-    /// no mode picker. Tapping Email or "Sign in" pushes a single-purpose
-    /// screen instead of expanding everything in place.
+    /// Keep every account prompt calm and consistent: provider choices first,
+    /// then a focused email screen only after the person chooses email.
     private var heroEntryButtons: some View {
-        VStack(spacing: FGSpace.m) {
-            appleButton(label: .continue)
+        VStack(spacing: 9) {
+            appleButton
             googleContinueButton
             emailContinueButton
 
-            Button("Already have an account? Sign in") {
-                openEmailStage(.emailSignIn)
+            Button {
+                openEmailStage(accountSwitchStage)
+            } label: {
+                accountSwitchLabel
             }
-            .font(.system(size: 19, weight: .medium))
-            .foregroundStyle(FGColor.goldDeep)
-            .padding(.top, FGSpace.xs)
+            .padding(.top, 10)
             .disabled(isLoading)
 
             if isLoading {
@@ -183,22 +172,46 @@ struct AuthSheetView: View {
                     .padding(.top, FGSpace.xs)
             }
         }
-        .frame(maxWidth: 360)
+        .frame(maxWidth: 420)
+        .padding(.top, 12)
+    }
+
+    private var primaryEmailStage: HeroStage {
+        if showsHeroIllustration { return .emailCreate }
+        return mode == .createAccount ? .emailCreate : .emailSignIn
+    }
+
+    private var accountSwitchStage: HeroStage {
+        primaryEmailStage == .emailCreate ? .emailSignIn : .emailCreate
+    }
+
+    private var accountSwitchLabel: some View {
+        HStack(spacing: 5) {
+            Text(primaryEmailStage == .emailCreate ? "Already have an account?" : "New to FeelGood?")
+                .foregroundStyle(FGColor.inkMuted)
+
+            Text(primaryEmailStage == .emailCreate ? "Sign in" : "Create an account")
+                .fontWeight(.semibold)
+                .foregroundStyle(FGColor.ink)
+                .underline()
+        }
+        .font(.system(size: 14, weight: .regular))
+        .multilineTextAlignment(.center)
     }
 
     private var emailContinueButton: some View {
         Button {
-            openEmailStage(.emailCreate)
+            openEmailStage(primaryEmailStage)
         } label: {
             HStack(spacing: FGSpace.s) {
-                Image(systemName: "envelope.fill")
+                Image(systemName: "envelope")
                     .font(.system(size: Self.providerIconSize, weight: .semibold))
-                Text("Continue with Email")
+                Text("Continue with email")
                     .font(Self.providerButtonFont)
             }
-            .foregroundStyle(FGColor.bg)
-            .frame(maxWidth: .infinity, minHeight: 56)
-            .background(FGColor.ink)
+            .foregroundStyle(FGColor.onAuthChoiceFill)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(FGColor.authChoiceFill)
             .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -214,76 +227,87 @@ struct AuthSheetView: View {
             FGColor.bg.ignoresSafeArea()
             FGBrandWash(reach: 0.4).ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: FGSpace.l) {
-                    VStack(spacing: FGSpace.s) {
-                        Text(stage == .emailCreate ? "Create your account" : "Welcome back")
-                            .font(FGFont.display)
-                            .tracking(-0.5)
-                            .foregroundStyle(FGColor.ink)
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack(spacing: FGSpace.l) {
+                        VStack(spacing: FGSpace.s) {
+                            WelcomeHeroIllustration(compact: false)
+                                .padding(.bottom, -4)
+
+                            Text(stage == .emailCreate ? "Create an account" : "Welcome back")
+                                .font(.system(size: 30, weight: .semibold, design: .rounded))
+                                .tracking(-0.15)
+                                .foregroundStyle(FGColor.ink)
+                                .multilineTextAlignment(.center)
+
+                            Text(
+                                stage == .emailCreate
+                                    ? "Save your menus and movement history across devices."
+                                    : "Sign in and we'll pick up right where your menu left off."
+                            )
+                            .font(FGFont.body)
+                            .foregroundStyle(FGColor.inkMuted)
                             .multilineTextAlignment(.center)
-
-                        Text(
-                            stage == .emailCreate
-                                ? "So today's menu is waiting for you next time, wherever you open FeelGood."
-                                : "Sign in and we'll pick up right where your menu left off."
-                        )
-                        .font(FGFont.body)
-                        .foregroundStyle(FGColor.inkMuted)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.top, FGSpace.l)
-
-                    VStack(spacing: FGSpace.s) {
-                        emailFieldsAndSubmit(mode: currentMode)
-
-                        if stage == .emailCreate {
-                            Button("Already have an account? Sign in") {
-                                withAnimation(FGMotion.gentle) {
-                                    errorMessage = nil
-                                    successMessage = nil
-                                    path = [.emailSignIn]
-                                }
-                            }
-                            .font(FGFont.caption.weight(.medium))
-                            .foregroundStyle(FGColor.goldDeep)
-                            .padding(.top, FGSpace.xs)
-                        } else {
-                            Button("Don't have an account? Create one") {
-                                withAnimation(FGMotion.gentle) {
-                                    errorMessage = nil
-                                    successMessage = nil
-                                    path = [.emailCreate]
-                                }
-                            }
-                            .font(FGFont.caption.weight(.medium))
-                            .foregroundStyle(FGColor.goldDeep)
-                            .padding(.top, FGSpace.xs)
+                            .fixedSize(horizontal: false, vertical: true)
                         }
-                    }
-                    .frame(maxWidth: 360)
+                        .padding(.top, FGSpace.m)
 
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .font(FGFont.caption)
-                            .foregroundStyle(FGColor.clayDeep)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, FGSpace.m)
-                    }
+                        VStack(spacing: FGSpace.s) {
+                            emailFieldsAndSubmit(mode: currentMode)
 
-                    if let successMessage {
-                        Text(successMessage)
-                            .font(FGFont.caption)
-                            .foregroundStyle(FGColor.sageDeep)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, FGSpace.m)
+                            if stage == .emailCreate {
+                                Button {
+                                    withAnimation(FGMotion.gentle) {
+                                        errorMessage = nil
+                                        successMessage = nil
+                                        path = [.emailSignIn]
+                                    }
+                                } label: {
+                                    accountDestinationSwitchLabel(
+                                        prompt: "Already have an account?",
+                                        action: "Sign in"
+                                    )
+                                }
+                                .padding(.top, FGSpace.xs)
+                            } else {
+                                Button {
+                                    withAnimation(FGMotion.gentle) {
+                                        errorMessage = nil
+                                        successMessage = nil
+                                        path = [.emailCreate]
+                                    }
+                                } label: {
+                                    accountDestinationSwitchLabel(
+                                        prompt: "Don't have an account?",
+                                        action: "Create one"
+                                    )
+                                }
+                                .padding(.top, FGSpace.xs)
+                            }
+                        }
+                        .frame(maxWidth: 360)
+
+                        if let errorMessage {
+                            feedbackBanner(errorMessage, isError: true)
+                        }
+
+                        if let successMessage {
+                            feedbackBanner(successMessage, isError: false)
+                        }
+
+                        Spacer(minLength: FGSpace.l)
+
+                        privacyCard
                     }
+                    .frame(
+                        minHeight: max(0, proxy.size.height - FGSpace.l),
+                        alignment: .top
+                    )
+                    .padding(.horizontal, FGSpace.page)
+                    .padding(.bottom, FGSpace.l)
                 }
-                .padding(.horizontal, FGSpace.page)
-                .padding(.bottom, FGSpace.xl)
+                .scrollBounceBehavior(.basedOnSize)
             }
-            .scrollBounceBehavior(.basedOnSize)
         }
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -300,52 +324,83 @@ struct AuthSheetView: View {
         path.append(stage)
     }
 
+    private func accountDestinationSwitchLabel(prompt: String, action: String) -> some View {
+        HStack(spacing: 4) {
+            Text(prompt)
+                .foregroundStyle(FGColor.inkMuted)
+
+            Text(action)
+                .fontWeight(.semibold)
+                .foregroundStyle(FGColor.goldDeep)
+                .underline()
+        }
+        .font(FGFont.caption)
+        .multilineTextAlignment(.center)
+    }
+
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: FGSpace.s) {
-            if showsHeroIllustration {
-                WelcomeHeroIllustration()
-                    .padding(.bottom, FGSpace.xs)
-            } else {
-                WelcomeHeroIllustration(compact: true)
-                    .padding(.bottom, 2)
-            }
+        VStack(spacing: 10) {
+            WelcomeHeroIllustration(compact: !showsHeroIllustration)
 
             Text(title)
-                .font(FGFont.display)
-                .tracking(-0.5)
+                .font(.system(
+                    size: title == "FeelGood" ? 34 : (showsHeroIllustration ? 30 : 24),
+                    weight: title == "FeelGood" ? .regular : .semibold,
+                    design: .rounded
+                ))
+                .tracking(-0.15)
                 .foregroundStyle(FGColor.ink)
                 .multilineTextAlignment(.center)
 
             Text(subtitle)
-                .font(FGFont.body)
+                .font(.system(size: 15, weight: .regular))
+                .lineSpacing(2)
                 .foregroundStyle(FGColor.inkMuted)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 430)
         }
-        .padding(.top, FGSpace.s)
+        .padding(.top, showsHeroIllustration ? FGSpace.m : FGSpace.s)
     }
 
     // MARK: - Apple Sign In Button
 
-    private func appleButton(label: SignInWithAppleButton.Label) -> some View {
-        SignInWithAppleButton(
-            label,
-            onRequest: { request in
-                errorMessage = nil
-                let nonce = AuthService.randomNonceString()
-                currentRawNonce = nonce
-                request.requestedScopes = [.fullName, .email]
-                request.nonce = AuthService.sha256(nonce)
-            },
-            onCompletion: { result in
-                handleAppleResult(result)
+    private var appleButton: some View {
+        Button {
+            beginAppleSignIn()
+        } label: {
+            HStack(spacing: FGSpace.s) {
+                Image(systemName: "apple.logo")
+                    .font(.system(size: Self.providerIconSize, weight: .semibold))
+
+                Text("Continue with Apple")
+                    .font(Self.providerButtonFont)
             }
-        )
-        .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
-        .frame(height: 56)
-        .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+            .foregroundStyle(colorScheme == .dark ? Color.black : Color.white)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(colorScheme == .dark ? Color.white : Color.black)
+            .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(isLoading)
+        .accessibilityLabel("Continue with Apple")
+        .accessibilityHint("Signs in using your Apple Account")
+    }
+
+    private func beginAppleSignIn() {
+        errorMessage = nil
+        let nonce = AuthService.randomNonceString()
+        currentRawNonce = nonce
+
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        request.requestedScopes = [.fullName, .email]
+        request.nonce = AuthService.sha256(nonce)
+
+        appleAuthorizationPerformer.perform(request: request) { result in
+            handleAppleResult(result)
+        }
     }
 
     private func handleAppleResult(_ result: Result<ASAuthorization, Error>) {
@@ -388,12 +443,12 @@ struct AuthSheetView: View {
                     .font(Self.providerButtonFont)
                     .foregroundStyle(Color.black)
             }
-            .frame(maxWidth: .infinity, minHeight: 56)
-            .background(Color.white)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(FGColor.authChoiceFill)
             .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
-                    .strokeBorder(FGColor.lineStrong, lineWidth: 1)
+                    .strokeBorder(FGColor.line.opacity(0.8), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -446,11 +501,15 @@ struct AuthSheetView: View {
                     .frame(width: Self.providerIconSize, height: Self.providerIconSize)
                 Text("Continue with Google")
                     .font(Self.providerButtonFont)
-                    .foregroundStyle(FGColor.bg)
+                    .foregroundStyle(Color.black)
             }
-            .frame(maxWidth: .infinity, minHeight: 56)
-            .background(FGColor.ink)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(FGColor.authChoiceFill)
             .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
+                    .strokeBorder(FGColor.line.opacity(0.8), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
         .disabled(isLoading)
@@ -538,7 +597,11 @@ struct AuthSheetView: View {
 
         return VStack(spacing: FGSpace.s) {
             // Email Field
-            TextField("Email address", text: $email)
+            TextField(
+                "",
+                text: $email,
+                prompt: Text("Email address").foregroundStyle(FGColor.inkMuted)
+            )
                 .font(FGFont.body)
                 .foregroundStyle(FGColor.ink)
                 .textContentType(mode == .signIn ? .username : .emailAddress)
@@ -551,22 +614,52 @@ struct AuthSheetView: View {
                 .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
-                        .strokeBorder(FGColor.line, lineWidth: 1)
+                        .strokeBorder(FGColor.lineStrong.opacity(0.72), lineWidth: 1)
                 )
 
             // Password Field
-            SecureField("Password", text: $password)
+            HStack(spacing: FGSpace.s) {
+                Group {
+                    if showsPassword {
+                        TextField(
+                            "",
+                            text: $password,
+                            prompt: Text("Password").foregroundStyle(FGColor.inkMuted)
+                        )
+                    } else {
+                        SecureField(
+                            "",
+                            text: $password,
+                            prompt: Text("Password").foregroundStyle(FGColor.inkMuted)
+                        )
+                    }
+                }
                 .font(FGFont.body)
                 .foregroundStyle(FGColor.ink)
                 .textContentType(mode == .signIn ? .password : .newPassword)
-                .padding(.horizontal, FGSpace.m)
-                .padding(.vertical, 14)
-                .background(FGColor.surface)
-                .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
-                        .strokeBorder(FGColor.line, lineWidth: 1)
-                )
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+
+                Button {
+                    showsPassword.toggle()
+                } label: {
+                    Image(systemName: showsPassword ? "eye.slash" : "eye")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(FGColor.inkMuted)
+                        .frame(width: 32, height: 32)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(showsPassword ? "Hide password" : "Show password")
+            }
+            .padding(.leading, FGSpace.m)
+            .padding(.trailing, FGSpace.s)
+            .padding(.vertical, 10)
+            .background(FGColor.surface)
+            .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                    .strokeBorder(FGColor.lineStrong.opacity(0.72), lineWidth: 1)
+            )
 
             // Action Button
             Button {
@@ -585,8 +678,15 @@ struct AuthSheetView: View {
                 }
                 .padding(.vertical, 14)
                 .foregroundStyle(canSubmit ? FGColor.onActionFill : FGColor.inkMuted)
-                .background(canSubmit ? FGColor.actionFill : FGColor.line)
+                .background(canSubmit ? FGColor.actionFill : FGColor.surface.opacity(0.72))
                 .clipShape(RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: FGRadius.button, style: .continuous)
+                        .strokeBorder(
+                            canSubmit ? Color.clear : FGColor.lineStrong.opacity(0.4),
+                            lineWidth: 1
+                        )
+                )
             }
             .buttonStyle(.feelGoodPress)
             .disabled(!canSubmit)
@@ -640,7 +740,7 @@ struct AuthSheetView: View {
             do {
                 try await authService.sendPasswordReset(email: cleanEmail)
                 isLoading = false
-                successMessage = "Password reset email sent. Please check your inbox."
+                successMessage = "Password reset email sent. Please check your inbox and spam folder."
             } catch {
                 isLoading = false
                 errorMessage = error.localizedDescription
@@ -650,70 +750,133 @@ struct AuthSheetView: View {
 
     // MARK: - Guest Footer
 
-    private var guestFooter: some View {
-        VStack(spacing: FGSpace.s) {
-            Button(guestButtonTitle) {
-                dismissWithoutAuth()
-            }
-            .font(.system(size: 19, weight: .medium))
-            .foregroundStyle(FGColor.inkMuted)
-            .padding(.top, FGSpace.s)
+    private func feedbackBanner(_ message: String, isError: Bool) -> some View {
+        HStack(alignment: .top, spacing: FGSpace.s) {
+            Image(systemName: isError ? "exclamationmark.circle" : "checkmark.circle")
+                .font(.system(size: 16, weight: .semibold))
 
-            Text("FeelGood stores your health reflections on-device. Accounts are used for backup and syncing across devices.")
+            Text(message)
                 .font(FGFont.caption)
-                .foregroundStyle(FGColor.inkMuted.opacity(0.8))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, FGSpace.l)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .foregroundStyle(isError ? FGColor.clayDeep : FGColor.sageDeep)
+        .padding(FGSpace.m)
+        .background(
+            colorScheme == .dark
+                ? FGColor.surface.opacity(0.42)
+                : (isError ? FGAura.blush.core : FGAura.sage.core).opacity(0.45)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                .strokeBorder(isError ? FGColor.clay : FGColor.sage, lineWidth: 1)
+        )
+        .frame(maxWidth: 420)
+        .transition(.opacity)
+    }
+
+    private var privacyCard: some View {
+        VStack(spacing: FGSpace.m) {
+            Rectangle()
+                .fill(FGColor.line)
+                .frame(height: 1)
+
+            Text(privacyCopy)
+                .font(.system(size: 14, weight: .regular))
+                .foregroundStyle(FGColor.inkMuted)
+                .tint(FGColor.inkMuted)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: 420)
+    }
+
+    private var privacyCopy: AttributedString {
+        let markdown = "We use sign-in only to keep your choices synced. We never sell your personal information. [Privacy policy](\(LegalLinks.privacyPolicy.absoluteString))"
+        guard var copy = try? AttributedString(markdown: markdown) else {
+            return AttributedString("We use sign-in only to keep your choices synced. We never sell your personal information. Privacy policy")
+        }
+        for run in copy.runs where run.link != nil {
+            copy[run.range].underlineStyle = .single
+        }
+        return copy
+    }
+
+    private var guestFooter: some View {
+        Button(guestButtonTitle) {
+            dismissWithoutAuth()
+        }
+        .font(.system(size: 16, weight: .medium))
+        .foregroundStyle(FGColor.ink)
+        .underline()
+        .padding(.top, FGSpace.xs)
     }
 }
 
-/// The app mark and a small cluster of the onboarding intent fruits, blooming
-/// out of a soft apricot wash. Reuses the app-icon-reading trick from
-/// `ProductIntroView.promiseHero` rather than a duplicated image asset, so this
-/// always shows the exact shipping icon.
-///
-/// `compact` scales the whole cluster down for the milestone-nudge sheets
-/// (save your routine, delete account, etc.) — every entry into auth gets the
-/// same fruit-cluster signature, not just onboarding's first impression.
+@MainActor
+private final class AppleAuthorizationPerformer: NSObject,
+    ASAuthorizationControllerDelegate,
+    ASAuthorizationControllerPresentationContextProviding
+{
+    private var controller: ASAuthorizationController?
+    private var completion: ((Result<ASAuthorization, Error>) -> Void)?
+
+    func perform(
+        request: ASAuthorizationAppleIDRequest,
+        completion: @escaping (Result<ASAuthorization, Error>) -> Void
+    ) {
+        self.completion = completion
+
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        self.controller = controller
+        controller.performRequests()
+    }
+
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithAuthorization authorization: ASAuthorization
+    ) {
+        finish(with: .success(authorization))
+    }
+
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithError error: Error
+    ) {
+        finish(with: .failure(error))
+    }
+
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        if let window = scenes
+            .first(where: { $0.activationState == .foregroundActive })?
+            .windows
+            .first(where: \.isKeyWindow)
+        {
+            return window
+        }
+        return scenes.first?.windows.first ?? ASPresentationAnchor()
+    }
+
+    private func finish(with result: Result<ASAuthorization, Error>) {
+        let completion = completion
+        self.completion = nil
+        controller = nil
+        completion?(result)
+    }
+}
+
+/// The shipping app icon presented in its normal rounded-square shape.
 private struct WelcomeHeroIllustration: View {
     var compact: Bool = false
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [FGAura.apricot.core, FGAura.apricot.mid, FGAura.apricot.edge.opacity(0)],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: compact ? 78 : 130
-                    )
-                )
-                .frame(width: compact ? 150 : 240, height: compact ? 120 : 200)
-                .offset(y: compact ? 10 : 18)
-
-            VStack(spacing: compact ? -11 : -18) {
-                FeelGoodAppIcon(size: compact ? 46 : 76)
-
-                HStack(spacing: compact ? -9 : -14) {
-                    fruit("IntentMobilityPear", size: compact ? 35 : 58, rotation: -10, offsetY: compact ? 6 : 10)
-                    fruit("IntentEnergyClementine", size: compact ? 42 : 70, rotation: 0, offsetY: compact ? -4 : -6)
-                    fruit("IntentCalmPeach", size: compact ? 36 : 60, rotation: 8, offsetY: compact ? 2 : 4)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: compact ? 116 : 190)
-        .accessibilityHidden(true)
-    }
-
-    private func fruit(_ name: String, size: CGFloat, rotation: Double, offsetY: CGFloat) -> some View {
-        Image(name)
-            .resizable()
-            .scaledToFit()
-            .frame(width: size, height: size)
-            .rotationEffect(.degrees(rotation))
-            .offset(y: offsetY)
+        FeelGoodAppIcon(size: compact ? 60 : 82)
+            .frame(maxWidth: .infinity, minHeight: compact ? 70 : 96)
+            .accessibilityHidden(true)
     }
 }
 

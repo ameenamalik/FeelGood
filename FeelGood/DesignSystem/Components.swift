@@ -350,10 +350,11 @@ struct FGAuraTile: View {
             .background(surface)
             .overlay(alignment: .topTrailing) {
                 if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(FGColor.ink)
-                        .background(Circle().fill(Color.white).padding(2))
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(Color.black)
+                        .frame(width: 24, height: 24)
+                        .background(Circle().fill(Color.white))
                         .padding(10)
                         .transition(.scale.combined(with: .opacity))
                 }

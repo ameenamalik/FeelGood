@@ -77,6 +77,12 @@ nonisolated enum FGColor {
     /// Label on `actionFill`.
     static let onActionFill = Color(light: 0xFBF3E8, dark: 0x2B1A1A, overrides: [.indigo: FGThemePair(light: 0xF5F1EA, dark: 0x1F2233)])
 
+    /// Warm paper used by the secondary authentication choices. It stays
+    /// light in both appearances so provider buttons retain a familiar,
+    /// trustworthy hierarchy on the dark account screen.
+    static let authChoiceFill = Color(light: 0xFFFFFF, dark: 0xF6EFE3)
+    static let onAuthChoiceFill = Color(light: 0x2A1E18, dark: 0x2A1E18)
+
     /// Interactive controls whose fill must carry a white system affordance
     /// (for example, the thumb of a Toggle). Unlike the pastel accents below,
     /// this stays dark enough for that affordance in both appearances while
