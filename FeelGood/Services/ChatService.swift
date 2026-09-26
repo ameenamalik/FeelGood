@@ -1042,7 +1042,7 @@ nonisolated enum LocalStatefulChatEngine {
                 }
             } else if lower.contains("power pose") || lower.contains("confidence") {
                 if let s = sessionById("app-power-pose-two") {
-                    message = "An expansive standing posture to restore quiet confidence."
+                    message = "Stand tall, open your chest, and take up some space."
                     recommendation = structuredRecommendation(for: s)
                 }
             } else if lower.contains("cold water") || lower.contains("splash") || lower.contains("panic") {
@@ -1062,7 +1062,7 @@ nonisolated enum LocalStatefulChatEngine {
                 }
             } else if lower.contains("jumping jack") {
                 if let s = sessionById("app-jumping-jacks-two") {
-                    message = "Quick cardio intervals to break through inertia and awaken motivation."
+                    message = "Two quick bursts of jumping jacks to get you moving."
                     recommendation = structuredRecommendation(for: s)
                 }
             } else if lower.contains("dance") {

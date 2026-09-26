@@ -279,7 +279,7 @@
     {
       "id": "app-jump-rope-ninety",
       "title": "Ninety seconds of jump rope",
-      "subtitle": "Short, bouncy, and good for your bones",
+      "subtitle": "Short, bouncy, and over before you know it",
       "activity": "jumpRope",
       "qualities": [
         "impact",
@@ -1032,7 +1032,7 @@
     {
       "id": "main-qigong-20",
       "title": "Twenty minutes of qigong",
-      "subtitle": "Standing, slow, and quietly restorative",
+      "subtitle": "Standing, slow, and quietly settling",
       "activity": "qigong",
       "qualities": [
         "balance",
@@ -2692,7 +2692,7 @@
     {
       "id": "dessert-tea-and-quiet-stretch",
       "title": "Tea and quiet floor stretch",
-      "subtitle": "Gentle restorative unwinding",
+      "subtitle": "Slow, gentle unwinding",
       "activity": "breathwork",
       "qualities": [
         "downRegulation",
@@ -3149,7 +3149,7 @@
           {
             "name": "Second round hover squats (10 reps)",
             "seconds": 60,
-            "cue": "Keep chest proud and knees tracking over toes. Feel blood flow returning to your legs.",
+            "cue": "Keep chest proud and knees tracking over toes. Notice your legs waking up.",
             "glossaryID": "bodyweight-squat"
           }
         ]
@@ -3158,7 +3158,7 @@
     {
       "id": "app-desk-hip-glute-reset",
       "title": "Hip flexor & glute reset",
-      "subtitle": "Decompress tight hip flexors and open the lower back after hours of sitting",
+      "subtitle": "Open up the front of your hips and your lower back after hours of sitting",
       "activity": "stretching",
       "qualities": [
         "mobility",
@@ -3218,7 +3218,7 @@
     {
       "id": "main-desk-worker-posture-flow",
       "title": "All-day desk worker reset",
-      "subtitle": "Complete 15-minute anti-sitting routine: deep squat holds, wall angels, thoracic openers, and lunge pulses",
+      "subtitle": "Fifteen minutes for after a long sit: deep squat holds, wall angels, thoracic openers, and lunge pulses",
       "activity": "stretching",
       "qualities": [
         "mobility",
@@ -3320,7 +3320,7 @@
     {
       "id": "side-desk-micro-squats",
       "title": "Coffee break counter squats",
-      "subtitle": "Turn waiting for the kettle or microwave into an effortless lower-body circulation boost",
+      "subtitle": "Turn waiting for the kettle or microwave into a few easy squats",
       "activity": "strength",
       "qualities": [
         "strength"
@@ -3504,7 +3504,7 @@
     {
       "id": "app-desk-escape-stretch",
       "title": "Desk escape stretch",
-      "subtitle": "Quick neck, shoulder, and wrist decompression routine",
+      "subtitle": "Quick neck, shoulder, and wrist stretches",
       "activity": "stretching",
       "qualities": [
         "mobility"
@@ -3570,7 +3570,7 @@
     {
       "id": "app-power-explosions",
       "title": "Power explosions",
-      "subtitle": "Fire up your nervous system with fast jumping jacks or bodyweight squats",
+      "subtitle": "Fast jumping jacks or bodyweight squats to wake yourself up",
       "activity": "strength",
       "qualities": [
         "impact",
@@ -3644,7 +3644,7 @@
     {
       "id": "side-active-posture-shift",
       "title": "Active posture shift",
-      "subtitle": "Trade your desk chair for a stability ball or under-desk walking pad during calls",
+      "subtitle": "Stand, pace, or sit on a ball for your next call",
       "activity": "walking",
       "qualities": [
         "balance",
@@ -3676,9 +3676,9 @@
         "type": "authored",
         "steps": [
           {
-            "name": "Swap your seat",
+            "name": "Change it up",
             "seconds": 60,
-            "cue": "Roll in your stability ball or power on your under-desk pad at low walking speed."
+            "cue": "Stand up, or use a stability ball or walking pad if you have one."
           },
           {
             "name": "Align your spine",
@@ -3686,14 +3686,14 @@
             "cue": "Stack your ribcage over your pelvis. Keep your chin level and shoulders relaxed."
           },
           {
-            "name": "Continuous micro-movement",
+            "name": "Keep moving",
             "seconds": 1020,
-            "cue": "Maintain a gentle pelvic rhythm on the ball or a steady easy stride during your casual meeting."
+            "cue": "Keep moving gently through the call: shift your weight, pace, or bounce lightly on the ball."
           },
           {
             "name": "Step off & calf stretch",
             "seconds": 60,
-            "cue": "Step off, place hands on desk, and press one heel back into the floor to release calf tension."
+            "cue": "Hands on the desk, press one heel back into the floor to stretch your calf. Then the other."
           }
         ]
       }
@@ -3911,7 +3911,7 @@
           {
             "name": "Child's pose",
             "seconds": 90,
-            "cue": "Let your heart rate glide back down to baseline.",
+            "cue": "Let your breathing slow back down.",
             "glossaryID": "childs-pose"
           },
           {
@@ -4060,7 +4060,7 @@
           {
             "name": "Lying flat integration",
             "seconds": 120,
-            "cue": "Move roller aside, lay completely flat on the mat, and let your muscles soak in the blood flow."
+            "cue": "Move the roller aside, lie completely flat on the mat, and let everything go heavy."
           }
         ]
       }
@@ -4068,7 +4068,7 @@
     {
       "id": "des-luxury-recovery-soak",
       "title": "Luxury recovery soak",
-      "subtitle": "A hot bath infused with Epsom salts immediately following movement",
+      "subtitle": "A hot bath after moving, lights down, nowhere to be",
       "activity": "stretching",
       "qualities": [
         "downRegulation"
@@ -4096,9 +4096,9 @@
         "type": "authored",
         "steps": [
           {
-            "name": "Draw the bath & Epsom salt prep",
+            "name": "Draw the bath",
             "seconds": 120,
-            "cue": "Run hot water, pour in 2 cups of Epsom salts, and dim the bathroom lights."
+            "cue": "Run the water hot, add bath salts if you like them, and dim the bathroom lights."
           },
           {
             "name": "Submerge & settle",
@@ -4106,9 +4106,9 @@
             "cue": "Step in slowly, ease shoulders beneath the waterline, and let the warm mineral water hold you."
           },
           {
-            "name": "Deep muscular relaxation soak",
+            "name": "Soak",
             "seconds": 900,
-            "cue": "Close your eyes. Feel magnesium soothing tired tissue with every long, unhurried exhale."
+            "cue": "Close your eyes. Let every exhale be long and unhurried."
           },
           {
             "name": "Gentle seated neck & shoulder stretches",
@@ -4179,7 +4179,7 @@
     {
       "id": "spec-spa-sauna-cycles",
       "title": "Spa & sauna thermal cycles",
-      "subtitle": "Infrared sauna sessions, cold plunges, or massage therapy for deep restoration",
+      "subtitle": "Sauna, a cool plunge or rinse, and a long lie-down",
       "activity": "stretching",
       "qualities": [
         "downRegulation"
@@ -4208,24 +4208,24 @@
         "type": "authored",
         "steps": [
           {
-            "name": "Warm shower & hydration prep",
+            "name": "Warm shower & water",
             "seconds": 300,
-            "cue": "Rinse off with a warm shower, drink a large glass of electrolyte water, and enter the quiet thermal space."
+            "cue": "Rinse off with a warm shower, drink a big glass of water, and head into the quiet space."
           },
           {
-            "name": "Thermal heat soak / sauna cycle 1",
+            "name": "Heat, round one",
             "seconds": 900,
-            "cue": "Sit or lie in the sauna or hot bath. Let heat penetrate joints and induce full-body sweating."
+            "cue": "Sit or lie in the sauna or a hot bath. Let yourself get properly warm."
           },
           {
-            "name": "Cold plunge or cool rinse reset",
+            "name": "Cool rinse",
             "seconds": 180,
-            "cue": "Step into the cold plunge or cool shower for 1 to 3 minutes. Focus on controlled, steady exhales."
+            "cue": "Step into a cold plunge or cool shower for as long as feels okay. Keep your exhales slow and steady."
           },
           {
-            "name": "Rest & hydration lounge",
+            "name": "Rest",
             "seconds": 420,
-            "cue": "Wrap in a warm robe and recline in the lounge. Feel the vascular flush and deep tranquility."
+            "cue": "Wrap up warm and lie back. Nothing to do for a while."
           },
           {
             "name": "Second sauna & cool cycle",
@@ -4242,8 +4242,8 @@
     },
     {
       "id": "spec-performance-coaching",
-      "title": "1-on-1 performance coaching",
-      "subtitle": "Personalized guided training or physical rehab session to break past plateaus",
+      "title": "1-on-1 coaching session",
+      "subtitle": "A session with a trainer, built around what you want to work on",
       "activity": "strength",
       "qualities": [
         "strength",
@@ -4276,29 +4276,29 @@
         "type": "authored",
         "steps": [
           {
-            "name": "Movement screen & check-in",
+            "name": "Check in",
             "seconds": 600,
-            "cue": "Assess range of motion, review recent training fatigue, and calibrate the day's focus with your coach."
+            "cue": "Talk through how you've been feeling and what you'd like to focus on today."
           },
           {
-            "name": "Targeted activation & joint prep",
+            "name": "Warm up",
             "seconds": 600,
-            "cue": "Band-resisted activation, scapular glides, and hip stabilization to prepare for complex loads."
+            "cue": "Band work and easy joint circles to get ready for the main part."
           },
           {
-            "name": "Primary lift / skill progression",
+            "name": "Main lift or skill",
             "seconds": 1800,
-            "cue": "Coached technique execution under appropriate load with real-time cues and biomechanical feedback."
+            "cue": "Work on technique with your coach, at a weight that suits today."
           },
           {
-            "name": "Accessory & stability circuits",
+            "name": "Extra work",
             "seconds": 420,
-            "cue": "High-yield unilateral stability, core bracing, or tempo exercises to fix movement asymmetries."
+            "cue": "Single-side, core, or slow-tempo exercises to round things out."
           },
           {
-            "name": "Post-session debrief & recovery plan",
+            "name": "Wrap up",
             "seconds": 180,
-            "cue": "Review wins, document form takeaways, and map out mobility homework for the week."
+            "cue": "Talk about what went well and anything to try before next time."
           }
         ]
       }
@@ -4306,7 +4306,7 @@
     {
       "id": "app-shake-out-five",
       "title": "Five-minute shake-out",
-      "subtitle": "Release physical tension and reset your nervous system",
+      "subtitle": "Shake out your arms, your legs, and everything else",
       "activity": "agility",
       "qualities": [
         "downRegulation",
@@ -4378,7 +4378,7 @@
           {
             "name": "Quiet integration",
             "seconds": 90,
-            "cue": "Stand tall, eyes soft or closed. Feel your nervous system settle into ease.",
+            "cue": "Stand tall, eyes soft or closed. Notice how you feel now.",
             "glossaryID": "deep-breath"
           }
         ]
@@ -4387,7 +4387,7 @@
     {
       "id": "app-power-pose-two",
       "title": "Two-minute power pose",
-      "subtitle": "Stand tall, open your chest, and restore quiet confidence",
+      "subtitle": "Stand tall, open your chest, and take up some space",
       "activity": "stretching",
       "qualities": [
         "downRegulation"
@@ -4442,7 +4442,7 @@
     {
       "id": "main-brisk-walk-ten",
       "title": "Ten-minute brisk walk",
-      "subtitle": "Clear brain fog, elevate heart rate, and trigger natural dopamine",
+      "subtitle": "A quick lap at a brisk pace",
       "activity": "walking",
       "qualities": [
         "endurance",
@@ -4481,7 +4481,7 @@
           {
             "name": "Brisk stride",
             "seconds": 360,
-            "cue": "Pick up the tempo to a purposeful cadence. Breathe rhythmically as blood flow wakes up your mind."
+            "cue": "Pick up the tempo to a purposeful pace. Breathe in rhythm with your steps."
           },
           {
             "name": "Steady coast",
@@ -4967,7 +4967,7 @@
     {
       "id": "app-cold-water-splash",
       "title": "Cold water splash reset",
-      "subtitle": "Activate the dive reflex to instantly calm a racing heart",
+      "subtitle": "Cold water on your face, then one long, slow breath out",
       "activity": "breathwork",
       "qualities": [
         "downRegulation"
@@ -5009,7 +5009,7 @@
           {
             "name": "Long slow exhale",
             "seconds": 15,
-            "cue": "Pat your face dry with a towel and take one long, slow exhale. Notice your pulse slowing.",
+            "cue": "Pat your face dry and take one long, slow exhale. Notice how you feel.",
             "visual": {
               "type": "breathing"
             },
@@ -5208,7 +5208,7 @@
           {
             "name": "Burst interval two",
             "seconds": 35,
-            "cue": "Final burst! Feel the oxygen and endorphins energizing your entire body.",
+            "cue": "Last burst! Then stop and notice the buzz.",
             "glossaryID": "jumping-jack"
           },
           {
@@ -5271,7 +5271,7 @@
     {
       "id": "main-rest-legs-up-the-wall",
       "title": "Legs up the wall & release",
-      "subtitle": "A restorative posture to reset body and mind",
+      "subtitle": "Lie back, legs up, and let everything go quiet",
       "activity": "stretching",
       "qualities": [
         "downRegulation",
