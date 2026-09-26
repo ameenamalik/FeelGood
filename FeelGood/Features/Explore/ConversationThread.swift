@@ -20,6 +20,9 @@ nonisolated struct ConversationMessage: Identifiable, Codable, Sendable, Equatab
     let timestamp: Date
     var recommendation: StructuredRecommendation?
     var isCommittedToToday: Bool
+    /// Written by the language model. Optional so history saved before this
+    /// existed still decodes; missing reads as "not AI".
+    var isFromAI: Bool?
 
     init(
         id: UUID = UUID(),
@@ -27,7 +30,8 @@ nonisolated struct ConversationMessage: Identifiable, Codable, Sendable, Equatab
         text: String,
         timestamp: Date = Date(),
         recommendation: StructuredRecommendation? = nil,
-        isCommittedToToday: Bool = false
+        isCommittedToToday: Bool = false,
+        isFromAI: Bool? = nil
     ) {
         self.id = id
         self.role = role
@@ -35,6 +39,7 @@ nonisolated struct ConversationMessage: Identifiable, Codable, Sendable, Equatab
         self.timestamp = timestamp
         self.recommendation = recommendation
         self.isCommittedToToday = isCommittedToToday
+        self.isFromAI = isFromAI
     }
 }
 

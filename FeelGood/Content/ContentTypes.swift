@@ -13,7 +13,7 @@ import Foundation
 
 /// What you do. Answers "what is this session".
 nonisolated enum Activity: String, Codable, CaseIterable, Sendable {
-    case pilates, yoga, qigong, strength, stretching, walking, biking, swimming
+    case pilates, yoga, qigong, strength, stretching, walking, running, biking, swimming
     case skating, dance, jumpRope, agility, carries, racquet, climbing, martialArts
     case breathwork
 

@@ -38,6 +38,7 @@ struct AddRoutineSheet: View {
         model: TodayModel,
         initialCourse: Course = .main,
         editingSession: Session? = nil,
+        draft: RoutineDraft? = nil,
         onSaved: ((Session) -> Void)? = nil
     ) {
         self.model = model
@@ -61,6 +62,16 @@ struct AddRoutineSheet: View {
         _addToToday = State(initialValue: editingSession.map { session in
             model.todayCustomOverrides.values.contains { $0.id == session.id }
         } ?? false)
+
+        // A draft from Chat: what they asked for, ready to tweak. They asked
+        // to do it, so it goes on today unless they untick it.
+        if editingSession == nil, let draft {
+            _title = State(initialValue: draft.title)
+            _parts = State(initialValue: draft.parts)
+            _activity = State(initialValue: draft.activity)
+            _intensity = State(initialValue: draft.intensity)
+            _addToToday = State(initialValue: true)
+        }
     }
 
     /// What's typed in the "Add a part" field but not yet added. Saving takes

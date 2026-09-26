@@ -114,8 +114,9 @@ To reach the main flows:
   auto-renewal terms, Terms of Use, Privacy Policy and Restore Purchases.
 - FeelGood Pro is an auto-renewing subscription (monthly and yearly). Please
   use a sandbox Apple ID to purchase. Nothing else is required.
-- Chat (Pro): the Chat tab lets subscribers describe their day in their own
-  words. It asks permission the first time. With permission, the message
+- Chat: the Chat tab lets people describe their day in their own words. Free
+  users get one AI reply, subscribers get unlimited; each AI reply is labelled
+  "AI reply". It asks permission the first time. With permission, the message
   (after emails, phone numbers and links are removed) is sent to our server and
   on to a third-party language model (Google Gemini), as our privacy policy
   says. Declining keeps Chat working on the device.

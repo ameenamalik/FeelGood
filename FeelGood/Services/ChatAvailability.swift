@@ -37,6 +37,13 @@ nonisolated struct ChatAvailability: Hashable, Sendable {
             activities.formUnion(item.impliedActivities)
             if item == .gym { places.insert(.gym) }
         }
+        // Saying you want to run is saying you're going outside to do it, so
+        // it opens running for today without adding it to the profile.
+        if Self.mentionsRunning(in: conversation) {
+            activities.insert(.running)
+            equipment.insert(.outdoor)
+            places.insert(.outdoors)
+        }
         self.init(equipment: equipment, places: places, activities: activities)
     }
 
@@ -57,6 +64,9 @@ nonisolated struct ChatAvailability: Hashable, Sendable {
     private static let weightsPhrases =
         #"\b(have|got|with|using)\s+(a set of\s+|some\s+|my\s+)?(dumbbells?|weights|kettlebells?|barbells?)\b"#
 
+    private static let runningPhrases =
+        #"\b(go|going|went|head|heading)\s+(for\s+)?(a\s+)?(run|jog)\b|\b(go|going|went)\s+(running|jogging)\b|\b(want|wanna|like|love|need|trying|plan|planning|hoping|about)\s+(to\s+)?(go\s+)?(run|jog)\b|\b(i|i'm|im|i am)\s+(a\s+)?(runner|running|jogging)\b|\b(a|my)\s+(run|jog)\b"#
+
     private static func matches(_ text: String, _ pattern: String) -> Bool {
         text.range(of: pattern, options: .regularExpression) != nil
     }
@@ -72,6 +82,15 @@ nonisolated struct ChatAvailability: Hashable, Sendable {
             if matches(text, weightsPhrases) { found.insert(.weights) }
         }
         return found
+    }
+
+    /// Same rules as equipment: a first-person statement, cancelled by any
+    /// negation in the same message. "I don't want to run" opens nothing.
+    static func mentionsRunning(in messages: [String]) -> Bool {
+        messages.contains { message in
+            let text = message.lowercased()
+            return !matches(text, negations) && matches(text, runningPhrases)
+        }
     }
 }
 
