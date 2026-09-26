@@ -421,7 +421,9 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw ChatTransportError.badResponse
+            // The status becomes the NSError code, so the fallback log says
+            // whether the Worker refused (403), throttled (429) or broke (500).
+            throw ChatTransportError.badResponse(status: (response as? HTTPURLResponse)?.statusCode ?? -1)
         }
 
         let decoded = try JSONDecoder().decode(WireChatResponse.self, from: data)
@@ -519,9 +521,18 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
         }
     }
 
-    private enum ChatTransportError: Error {
+    private enum ChatTransportError: CustomNSError {
         case notConfigured
-        case badResponse
+        case badResponse(status: Int)
+
+        static var errorDomain: String { "ChatTransport" }
+
+        var errorCode: Int {
+            switch self {
+            case .notConfigured: -1
+            case .badResponse(let status): status
+            }
+        }
     }
 }
 
@@ -567,7 +578,12 @@ actor ChatService: ChatProviding {
         // but only a verified Pro subscriber who has agreed to it may reach the
         // paid edge service. Without consent nothing leaves the device: the
         // fallback answers locally, so declining never breaks Chat.
-        guard await isProUnlocked(), hasChatConsent() else {
+        let isPro = await isProUnlocked()
+        let hasConsent = hasChatConsent()
+        guard isPro, hasConsent else {
+            // Says which gate kept Chat on the device, so "AI replies aren't
+            // showing" is one console line to diagnose rather than a guess.
+            Self.logger.notice("Chat answered on device: isPro=\(isPro, privacy: .public) hasConsent=\(hasConsent, privacy: .public)")
             return LocalStatefulChatEngine.orchestrate(prompt: sanitized, history: history, activeSessionID: activeSessionID, userContext: userContext, todaysMenu: todaysMenu)
         }
 
