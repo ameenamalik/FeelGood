@@ -4,8 +4,9 @@
 //
 //  Three quiet promises before onboarding: what FeelGood is, what it asks,
 //  and what it gives back — still no account gate on these three screens.
-//  `FirstRunFlow` below is what sequences intro → an upfront, skippable
-//  sign-up screen → the onboarding quiz; see PRD §7.0/§7.1.
+//  `FirstRunFlow` below sequences intro → the onboarding quiz → the person's
+//  first menu. The optional account prompt comes after that menu is visible,
+//  when "save this" has something concrete to refer to; see PRD §7.0/§7.1.
 //
 
 import SwiftUI
@@ -14,18 +15,13 @@ import UIKit
 struct FirstRunFlow: View {
     static let hasSeenIntroKey = "hasSeenProductIntro"
     static let hasSeenWelcomeSignUpKey = "hasSeenWelcomeSignUp"
-    static let hasSeenOnboardingPaywallKey = "hasSeenOnboardingPaywall"
 
     let onFinish: (OnboardingModel) -> Void
     @AppStorage(Self.hasSeenIntroKey) private var hasSeenIntro = false
-    @AppStorage(Self.hasSeenWelcomeSignUpKey) private var hasSeenWelcomeSignUp = false
-    @AppStorage(Self.hasSeenOnboardingPaywallKey) private var hasSeenOnboardingPaywall = false
-    @State private var pendingOnboardingModel: OnboardingModel?
     @State private var settingUpModel: OnboardingModel?
 
     /// A signed-out account becomes a fresh local guest. Replay the product
-    /// promises and account choice before asking for new preferences, but do
-    /// not replay the one-time onboarding paywall.
+    /// promises and account choice before asking for new preferences.
     static func resetForSignedOutUser(defaults: UserDefaults = .standard) {
         defaults.set(false, forKey: hasSeenIntroKey)
         defaults.set(false, forKey: hasSeenWelcomeSignUpKey)
@@ -38,41 +34,14 @@ struct FirstRunFlow: View {
                     Analytics.capture("product_intro_completed")
                     hasSeenIntro = true
                 }
-            } else if !hasSeenWelcomeSignUp {
-                AuthSheetView(
-                    title: "FeelGood",
-                    subtitle: "A menu, not a workout. Pick what fits today — no streaks, no scores.",
-                    showsHeroIllustration: true,
-                    initialMode: .createAccount,
-                    guestButtonTitle: "Not now — just show me today",
-                    onAuthenticated: {
-                        Analytics.capture("welcome_sign_up_completed")
-                        hasSeenWelcomeSignUp = true
-                    },
-                    onDismiss: {
-                        hasSeenWelcomeSignUp = true
-                    }
-                )
             } else if let settingUp = settingUpModel {
                 SettingUpMenuView {
                     settingUpModel = nil
                     onFinish(settingUp)
                 }
-            } else if let pending = pendingOnboardingModel {
-                let completeOnboardingPaywall: () -> Void = {
-                    hasSeenOnboardingPaywall = true
-                    let model = pending
-                    pendingOnboardingModel = nil
-                    settingUpModel = model
-                }
-                FeelGoodPaywallView(onFinished: completeOnboardingPaywall)
             } else {
                 OnboardingView { onboarding in
-                    if !hasSeenOnboardingPaywall {
-                        pendingOnboardingModel = onboarding
-                    } else {
-                        settingUpModel = onboarding
-                    }
+                    settingUpModel = onboarding
                 }
             }
         }

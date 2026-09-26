@@ -139,10 +139,9 @@ struct AuthServiceTests {
     func firstRunFlowKeys() {
         #expect(FirstRunFlow.hasSeenIntroKey == "hasSeenProductIntro")
         #expect(FirstRunFlow.hasSeenWelcomeSignUpKey == "hasSeenWelcomeSignUp")
-        #expect(FirstRunFlow.hasSeenOnboardingPaywallKey == "hasSeenOnboardingPaywall")
     }
 
-    @Test("Signing out replays welcome screens without replaying the paywall")
+    @Test("Signing out replays the welcome screens")
     func signOutResetsWelcomeFlow() throws {
         let suiteName = "FirstRunFlowTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
@@ -150,13 +149,11 @@ struct AuthServiceTests {
 
         defaults.set(true, forKey: FirstRunFlow.hasSeenIntroKey)
         defaults.set(true, forKey: FirstRunFlow.hasSeenWelcomeSignUpKey)
-        defaults.set(true, forKey: FirstRunFlow.hasSeenOnboardingPaywallKey)
 
         FirstRunFlow.resetForSignedOutUser(defaults: defaults)
 
         #expect(!defaults.bool(forKey: FirstRunFlow.hasSeenIntroKey))
         #expect(!defaults.bool(forKey: FirstRunFlow.hasSeenWelcomeSignUpKey))
-        #expect(defaults.bool(forKey: FirstRunFlow.hasSeenOnboardingPaywallKey))
     }
 
     @Test("mapFirebaseError maps code 17014 to requiresRecentLogin")

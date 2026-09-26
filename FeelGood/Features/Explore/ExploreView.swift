@@ -26,6 +26,7 @@ struct ExploreView: View {
     @FocusState private var isFieldFocused: Bool
     @Environment(AuthService.self) private var authService
     @Environment(PurchasesManager.self) private var purchasesManager
+    @Environment(\.fgTheme) private var theme
     @AppStorage("hasShownExploreAuthPrompt") private var hasShownExploreAuthPrompt = false
     /// A free user gets one complete user/assistant exchange. This is separate
     /// from chat history so clearing the thread cannot reset the trial.
@@ -118,6 +119,11 @@ struct ExploreView: View {
             }
             .navigationBarHidden(true)
         }
+        // TabView keeps inactive tabs alive. Rebuild Chat's cached UIKit-backed
+        // navigation hierarchy when the look changes so every dynamic color is
+        // resolved from one theme. State remains owned by ExploreView, so the
+        // conversation and composer are preserved across this refresh.
+        .id(theme)
         .sheet(item: $selectedSession) { session in
             SessionDetailView(session: session, model: model, reason: selectedSessionReason)
         }
@@ -143,7 +149,7 @@ struct ExploreView: View {
             )
         }
         .sheet(isPresented: $isShowingPaywall) {
-            FeelGoodPaywallView()
+            FeelGoodPaywallView(context: .chatLimit)
         }
         .sheet(isPresented: $isShowingChatConsent) {
             ChatConsentSheet { agreed in

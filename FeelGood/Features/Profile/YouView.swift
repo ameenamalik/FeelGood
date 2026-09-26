@@ -46,7 +46,7 @@ struct YouView: View {
             )
         }
         .sheet(isPresented: $isShowingPaywall) {
-            FeelGoodPaywallView()
+            FeelGoodPaywallView(context: .library)
         }
         .sheet(isPresented: $isEditingProfile) {
             ProfileEditView(

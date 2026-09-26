@@ -15,6 +15,11 @@ private struct PendingCheckInUpdate {
     let checkIn: PlanCheckIn
 }
 
+private enum TodayAuthPromptContext: Equatable {
+    case firstMenu
+    case firstCompletion
+}
+
 /// A quiet, check-in-colored glow behind today's rebuilt menu. Replacing the
 /// keyed view lets the old and new colors cross-fade instead of snapping.
 private struct MenuPersonalizationAura: View {
@@ -46,10 +51,13 @@ struct TodayView: View {
     var requestedSessionID: Binding<String?> = .constant(nil)
     @State private var isCheckingIn = false
     @State private var isShowingPaywall = false
+    @State private var paywallContext: PaywallContext = .general
     @State private var shouldOfferProAfterDismissal = false
     @AppStorage("hasShownFirstCompletionPaywall") private var hasShownFirstCompletionPaywall = false
     @AppStorage("hasShownFirstCompletionAuthPrompt") private var hasShownFirstCompletionAuthPrompt = false
+    @AppStorage(FirstRunFlow.hasSeenWelcomeSignUpKey) private var hasShownFirstMenuAuthPrompt = false
     @State private var isShowingAuthPrompt = false
+    @State private var authPromptContext: TodayAuthPromptContext = .firstMenu
     @Environment(AuthService.self) private var authService
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
@@ -67,6 +75,7 @@ struct TodayView: View {
     @State private var countedCalendarPlanID: String?
     @State private var calendarPlanAwaitingConfirmation: CalendarMovementPlan?
     @State private var calendarRefreshTask: Task<Void, Never>?
+    @State private var isViewVisible = false
     @AppStorage(CalendarMovementPreferences.personalizationEnabledKey)
     private var isCalendarPersonalizationEnabled = false
     @AppStorage(CalendarMovementPreferences.recognitionEnabledKey)
@@ -112,12 +121,14 @@ struct TodayView: View {
             }
         }
         .sheet(isPresented: $isShowingPaywall) {
-            FeelGoodPaywallView()
+            FeelGoodPaywallView(context: paywallContext)
         }
         .sheet(isPresented: $isShowingMyMenu, onDismiss: clearOneSignalDiscoveryTriggers) {
             MyMenuView(model: model)
         }
-        .sheet(isPresented: $isShowingDopamineMenuTour) {
+        .sheet(isPresented: $isShowingDopamineMenuTour, onDismiss: {
+            scheduleFirstMenuAuthPrompt(after: .milliseconds(300))
+        }) {
             DopamineMenuTourView {
                 hasSeenDopamineMenuTour = true
             }
@@ -146,8 +157,18 @@ struct TodayView: View {
         }
         .sheet(isPresented: $isShowingAuthPrompt) {
             AuthSheetView(
-                title: "Save your routine",
-                subtitle: "You finished today's session! Create an account to keep your progress and daily menus across devices."
+                title: authPromptContext == .firstMenu ? "Save your menu" : "Save your routine",
+                subtitle: authPromptContext == .firstMenu
+                    ? "Create an account to keep this menu, your preferences, and your movement history synced across devices."
+                    : "You finished today's session! Create an account to keep your progress and daily menus across devices.",
+                showsHeroIllustration: authPromptContext == .firstMenu,
+                initialMode: .createAccount,
+                guestButtonTitle: "Continue as guest",
+                onAuthenticated: {
+                    if authPromptContext == .firstMenu {
+                        Analytics.capture("welcome_sign_up_completed")
+                    }
+                }
             )
         }
         .confirmationDialog(
@@ -183,6 +204,7 @@ struct TodayView: View {
             openRequestedSession(id)
         }
         .onAppear {
+            isViewVisible = true
             // Calendar availability now shapes the menu quietly. Clear any
             // exact-time reminder saved by the previous scheduling UI.
             CalendarOpeningReminderService.shared.cancel()
@@ -202,6 +224,8 @@ struct TodayView: View {
                         isShowingDopamineMenuTour = true
                     }
                 }
+            } else {
+                scheduleFirstMenuAuthPrompt(after: .milliseconds(700))
             }
         }
         .task(id: calendarPersonalizationTaskID) {
@@ -217,7 +241,10 @@ struct TodayView: View {
             // has finished committing the edit.
             scheduleCalendarMovementRefresh(after: .milliseconds(350))
         }
-        .onDisappear { calendarRefreshTask?.cancel() }
+        .onDisappear {
+            isViewVisible = false
+            calendarRefreshTask?.cancel()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .oneSignalOpenMyMenu)) { _ in
             // Let OneSignal's overlay finish dismissing before presenting the
             // My Menu sheet; competing presentations can otherwise drop it.
@@ -296,6 +323,7 @@ struct TodayView: View {
                 return updated.id != item.id
             }
         } else {
+            paywallContext = .secondSwap
             isShowingPaywall = true
         }
         return false
@@ -304,7 +332,13 @@ struct TodayView: View {
     private func handleSwapButtonTap(_ item: MenuItem) {
         if model.isProUser {
             manualSwapTarget = item
+        } else if model.hasRemainingSwaps {
+            // Free gets the same single automatic swap whether they discover
+            // it by swiping or use the visible, accessible Swap button. The
+            // catalog picker remains Pro's more-controlled replacement flow.
+            _ = performSwipeSkip(item)
         } else {
+            paywallContext = .secondSwap
             isShowingPaywall = true
         }
     }
@@ -669,19 +703,45 @@ struct TodayView: View {
         // being considered or played.
         syncOneSignalDiscoveryTriggers()
 
-        if !authService.isAuthenticated && !hasShownFirstCompletionAuthPrompt {
+        if !authService.isAuthenticated,
+           !hasShownFirstMenuAuthPrompt,
+           !hasShownFirstCompletionAuthPrompt {
             hasShownFirstCompletionAuthPrompt = true
+            authPromptContext = .firstCompletion
             isShowingAuthPrompt = true
             return
         }
 
         guard !model.isProUser, !hasShownFirstCompletionPaywall else { return }
         hasShownFirstCompletionPaywall = true
+        paywallContext = .general
         isShowingPaywall = true
     }
 
     private func presentPendingLittleWinCelebration() {
         littleWinCelebration = model.takePendingLittleWinCelebration()
+    }
+
+    private func scheduleFirstMenuAuthPrompt(after delay: Duration) {
+        guard !authService.isAuthenticated, !hasShownFirstMenuAuthPrompt else { return }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled,
+                  isViewVisible,
+                  !authService.isAuthenticated,
+                  !hasShownFirstMenuAuthPrompt,
+                  !isShowingDopamineMenuTour,
+                  !isShowingAuthPrompt else { return }
+
+            // Mark it when presented rather than when dismissed so completing
+            // a session later cannot produce the same account request twice.
+            hasShownFirstMenuAuthPrompt = true
+            hasShownFirstCompletionAuthPrompt = true
+            authPromptContext = .firstMenu
+            isShowingAuthPrompt = true
+            Analytics.capture("first_menu_sign_up_presented")
+        }
     }
 
     private func syncOneSignalDiscoveryTriggers() {

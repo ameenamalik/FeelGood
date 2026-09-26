@@ -34,6 +34,7 @@ struct ProfileHeaderView: View {
     @State private var isShowingDeletionSuccess = false
     @State private var isShowingResetSuccess = false
     @State private var isShowingAcknowledgements = false
+    @State private var isShowingCalendarPaywall = false
     @State private var isDeletingAccount = false
     @State private var isShowingAppleReauth = false
     @State private var reauthAppleNonce = ""
@@ -57,6 +58,8 @@ struct ProfileHeaderView: View {
             if purchasesManager.isProUnlocked {
                 calendarPrivacySection
                 chatPrivacySection
+            } else {
+                calendarUpgradeSection
             }
             accountDeletionSection
             legalLinks
@@ -81,6 +84,9 @@ struct ProfileHeaderView: View {
         }
         .sheet(isPresented: $isShowingAcknowledgements) {
             NavigationStack { AcknowledgementsView() }
+        }
+        .sheet(isPresented: $isShowingCalendarPaywall) {
+            FeelGoodPaywallView(context: .calendar)
         }
         .sheet(isPresented: $isShowingAppleReauth) {
             NavigationStack {
@@ -547,6 +553,45 @@ struct ProfileHeaderView: View {
     }
 
     // MARK: Calendar privacy
+
+    private var calendarUpgradeSection: some View {
+        Button {
+            isShowingCalendarPaywall = true
+        } label: {
+            HStack(spacing: FGSpace.s) {
+                Image(systemName: "calendar")
+                    .font(.title3)
+                    .foregroundStyle(FGColor.goldDeep)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Calendar planning")
+                        .font(FGFont.body.weight(.semibold))
+                        .foregroundStyle(FGColor.ink)
+                    Text("Shape your menu around the time your day actually has.")
+                        .font(FGFont.caption)
+                        .foregroundStyle(FGColor.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                Text("PRO")
+                    .font(FGFont.caption.weight(.bold))
+                    .foregroundStyle(FGColor.ink)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+            }
+            .padding(FGSpace.m)
+            .background(
+                RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                    .fill(FGColor.surface)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Shows FeelGood Pro plans")
+    }
 
     private var calendarPrivacySection: some View {
         VStack(alignment: .leading, spacing: FGSpace.m) {
