@@ -6,6 +6,16 @@
 import RevenueCat
 import SwiftUI
 
+/// Why the paywall was opened. The first message should answer the action the
+/// person just took instead of dropping every intent into the same sales pitch.
+nonisolated enum PaywallContext: String, Sendable {
+    case general
+    case secondSwap = "second_swap"
+    case library
+    case chatLimit = "chat_limit"
+    case calendar
+}
+
 /// FeelGood's own paywall. Unlike the dashboard-configured screen it replaced,
 /// the hero shows the real menu — the same course/course-mascot pairing
 /// (`Course.menuMascotAsset`) already shipping on Today and My Menu — instead
@@ -15,6 +25,8 @@ import SwiftUI
 /// purchase itself; this view only decides what to show and calls
 /// `PurchasesManager`.
 struct FeelGoodPaywallView: View {
+    let context: PaywallContext
+
     private enum Plan: CaseIterable {
         case yearly
         case monthly
@@ -78,12 +90,34 @@ struct FeelGoodPaywallView: View {
         let dwell: Duration
     }
 
-    private static let heroSlides: [HeroSlide] = [
+    private static let defaultHeroSlides: [HeroSlide] = [
         HeroSlide(title: "Stop deciding. Start moving.", scene: .menu, dwell: .seconds(3.5)),
         HeroSlide(title: "Know what to do in 10 seconds", scene: .quickPick, dwell: .seconds(4.5)),
         HeroSlide(title: "Say how you're feeling", scene: .chat, dwell: .seconds(5)),
         HeroSlide(title: "Talk to it when you're stuck", scene: .chat, dwell: .seconds(7)),
     ]
+
+    /// Lead with the benefit the person just asked for. They can still swipe
+    /// through the broader Pro story after seeing that immediate answer.
+    private var heroSlides: [HeroSlide] {
+        guard let contextualSlide else { return Self.defaultHeroSlides }
+        return [contextualSlide] + Self.defaultHeroSlides
+    }
+
+    private var contextualSlide: HeroSlide? {
+        switch context {
+        case .general:
+            nil
+        case .secondSwap:
+            HeroSlide(title: "Keep shaping today’s menu", scene: .quickPick, dwell: .seconds(5))
+        case .library:
+            HeroSlide(title: "Choose exactly what fits today", scene: .menu, dwell: .seconds(5))
+        case .chatLimit:
+            HeroSlide(title: "Keep talking it through", scene: .chat, dwell: .seconds(6))
+        case .calendar:
+            HeroSlide(title: "Plan movement around your actual day", scene: .quickPick, dwell: .seconds(5))
+        }
+    }
 
     @Environment(\.dismiss) private var dismiss
     @Environment(PurchasesManager.self) private var purchasesManager
@@ -91,6 +125,14 @@ struct FeelGoodPaywallView: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var onFinished: (() -> Void)?
+
+    init(
+        context: PaywallContext = .general,
+        onFinished: (() -> Void)? = nil
+    ) {
+        self.context = context
+        self.onFinished = onFinished
+    }
 
     @State private var selectedPlan: Plan = .yearly
     @State private var isPurchasing = false
@@ -156,7 +198,10 @@ struct FeelGoodPaywallView: View {
                 selectedPlan = .monthly
             }
             await refreshTrialEligibility()
-            Analytics.capture("paywall_impression", properties: ["plan": selectedPlan.analyticsID])
+            Analytics.capture("paywall_impression", properties: [
+                "plan": selectedPlan.analyticsID,
+                "context": context.rawValue,
+            ])
             withAnimation(reduceMotion ? nil : FGMotion.settle) {
                 hasRevealedMenu = true
             }
@@ -693,7 +738,7 @@ struct FeelGoodPaywallView: View {
             }
 
             HStack(spacing: 6) {
-                ForEach(Self.heroSlides.indices, id: \.self) { index in
+                ForEach(heroSlides.indices, id: \.self) { index in
                     Capsule()
                         .fill(index == heroSlideIndex ? FGColor.ink : FGColor.line)
                         .frame(width: index == heroSlideIndex ? 16 : 6, height: 6)
@@ -719,13 +764,13 @@ struct FeelGoodPaywallView: View {
     }
 
     private func stepHeroSlide(by delta: Int) {
-        let count = Self.heroSlides.count
+        let count = heroSlides.count
         heroSlideIndex = (heroSlideIndex + delta + count) % count
         carouselResetToken += 1
     }
 
     private var currentSlide: HeroSlide {
-        Self.heroSlides[heroSlideIndex]
+        heroSlides[heroSlideIndex]
     }
 
     /// Cycles on its own — nothing here needs a tap, and the dots make clear
@@ -737,7 +782,7 @@ struct FeelGoodPaywallView: View {
         while !Task.isCancelled {
             try? await Task.sleep(for: currentSlide.dwell)
             guard !Task.isCancelled else { return }
-            heroSlideIndex = (heroSlideIndex + 1) % Self.heroSlides.count
+            heroSlideIndex = (heroSlideIndex + 1) % heroSlides.count
         }
     }
 

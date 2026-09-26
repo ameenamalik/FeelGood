@@ -2,9 +2,9 @@
 //  LibraryView.swift
 //  FeelGood
 //
-//  Everything there is, free forever. Deliberately not the home screen: the
-//  app's job is to remove options, and this is the one place that hands them
-//  all back for the times somebody wants to go looking. See PRD §8.
+//  The complete Pro catalog. Deliberately not the home screen: the app's job
+//  is to remove options, and this is the one place that hands them all back
+//  for the times somebody wants to go looking. See PRD §8.
 //
 
 import SwiftUI
