@@ -152,6 +152,10 @@ struct SessionDetailView: View {
                     shouldCloseAfterPlayer = true
                     isPlaying = false
                 },
+                onHide: session.isOwn ? nil : {
+                    Analytics.capture("session_hidden", properties: RoutineAnalytics.sessionHiddenProperties(sessionID: session.id))
+                    model.hide(session, swappingOutOfMenu: false)
+                },
                 onPause: { progress in
                     model.pause(session, at: progress)
                     OneSignalManager.shared.trackSessionPaused(

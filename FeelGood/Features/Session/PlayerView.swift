@@ -14,6 +14,9 @@ struct PlayerView: View {
 
     let session: Session
     let onFinish: (PlayerResult) -> Void
+    /// Offered on the end screen as one tap, applied when the screen closes.
+    /// `nil` hides the option — somebody's own routine is removed, not hidden.
+    let onHide: (() -> Void)?
     /// Persists the exact point where playback stopped and starts the paused
     /// session Journey even if the app is backgrounded before Leave is tapped.
     let onPause: (SessionProgress) -> Void
@@ -67,6 +70,7 @@ struct PlayerView: View {
     @State private var isDone = false
     @State private var haveFeelChoicesLanded = false
     @State private var selectedFeel: Feel?
+    @State private var isHidingSession = false
     @State private var breathingStartedAt = Date()
     @State private var breathingPausedAt: Date?
     @State private var breathingAnchorIndex: Int?
@@ -86,12 +90,14 @@ struct PlayerView: View {
         progress: SessionProgress? = nil,
         glossary: [ExerciseTerm] = [],
         onFinish: @escaping (PlayerResult) -> Void,
+        onHide: (() -> Void)? = nil,
         onPause: @escaping (SessionProgress) -> Void,
         onResume: @escaping (SessionProgress) -> Void,
         startedAt: Date
     ) {
         self.session = session
         self.onFinish = onFinish
+        self.onHide = onHide
         self.onPause = onPause
         self.onResume = onResume
         self.startedAt = startedAt
@@ -872,6 +878,11 @@ struct PlayerView: View {
                             )
                     }
 
+                    if onHide != nil {
+                        hideChoice
+                            .padding(.top, FGSpace.l)
+                    }
+
                     Spacer(minLength: FGSpace.xl)
 
                     HStack(spacing: FGSpace.m) {
@@ -883,11 +894,11 @@ struct PlayerView: View {
 
                         if let selectedFeel {
                             FGQuietButton("Done") {
-                                onFinish(.completed(selectedFeel))
+                                finish(feel: selectedFeel)
                             }
                         } else {
                             FGQuietButton("Skip feedback") {
-                                onFinish(.completed(nil))
+                                finish(feel: nil)
                             }
                         }
                     }
@@ -1006,6 +1017,35 @@ struct PlayerView: View {
                 }
         )
         .accessibilityElement(children: .combine)
+    }
+
+    /// One tap, no dialog, and an Undo in place of the button. Asking twice
+    /// would turn a quick "not for me" into a form.
+    @ViewBuilder
+    private var hideChoice: some View {
+        if isHidingSession {
+            HStack(spacing: FGSpace.s) {
+                Image(systemName: "eye.slash")
+                    .foregroundStyle(FGColor.inkMuted)
+                Text("We won’t suggest this again.")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                FGQuietButton("Undo") {
+                    withAnimation(FGMotion.gentle) { isHidingSession = false }
+                }
+            }
+            .transition(.opacity)
+        } else {
+            FGQuietButton("Don't suggest this again", systemImage: "eye.slash") {
+                withAnimation(FGMotion.gentle) { isHidingSession = true }
+            }
+            .transition(.opacity)
+        }
+    }
+
+    private func finish(feel: Feel?) {
+        onFinish(.completed(feel))
+        if isHidingSession { onHide?() }
     }
 
     private func feedbackConsequence(for feel: Feel) -> String {
