@@ -8611,6 +8611,231 @@
         ]
       },
       "contraindications": []
+    },
+    {
+      "id": "main-run-walk-twenty",
+      "title": "Run, walk, repeat",
+      "subtitle": "Short runs with walking in between",
+      "activity": "running",
+      "qualities": [
+        "endurance",
+        "impact"
+      ],
+      "durationMin": 20,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "outdoor"
+      ],
+      "places": [
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "energize"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor",
+        "knees"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Walk it in",
+            "seconds": 240,
+            "cue": "Four minutes of brisk walking. Let your arms swing."
+          },
+          {
+            "name": "Run, then walk",
+            "seconds": 720,
+            "cue": "One minute of easy running, then two minutes of walking. Four rounds. Slow enough that you could still talk."
+          },
+          {
+            "name": "One more round, or keep walking",
+            "seconds": 180,
+            "cue": "Another minute of running if you want it. Walking the whole thing counts too."
+          },
+          {
+            "name": "Walk it out",
+            "seconds": 60,
+            "cue": "Easy walking to finish."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-easy-run-twenty",
+      "title": "An easy twenty-minute run",
+      "subtitle": "Outside, at a pace you could chat at",
+      "activity": "running",
+      "qualities": [
+        "endurance",
+        "impact"
+      ],
+      "durationMin": 20,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "outdoor"
+      ],
+      "places": [
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "energize",
+        "calm"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor",
+        "knees"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Walk, then jog",
+            "seconds": 240,
+            "cue": "Two minutes walking, then drift into the slowest jog you can manage."
+          },
+          {
+            "name": "Easy running",
+            "seconds": 840,
+            "cue": "Keep it conversational. If you can't speak a sentence, slow down or walk for a bit."
+          },
+          {
+            "name": "Walk it out",
+            "seconds": 120,
+            "cue": "Slow to a walk for the last two minutes. Shake out your arms."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-steady-run-thirty",
+      "title": "A thirty-minute steady run",
+      "subtitle": "A longer run with room to settle in",
+      "activity": "running",
+      "qualities": [
+        "endurance",
+        "impact"
+      ],
+      "durationMin": 30,
+      "intensity": 4,
+      "energyFit": [
+        "strong"
+      ],
+      "equipment": [
+        "outdoor"
+      ],
+      "places": [
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "energize"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor",
+        "knees"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Easy start",
+            "seconds": 300,
+            "cue": "Five minutes easier than you think you need. The rest of the run is better for it."
+          },
+          {
+            "name": "Settle in",
+            "seconds": 1200,
+            "cue": "Find a rhythm you could hold for a while. Walk breaks are allowed, whenever you want them."
+          },
+          {
+            "name": "Ease off",
+            "seconds": 300,
+            "cue": "Bring it back down to a jog, then a walk. Finish near your door."
+          }
+        ]
+      }
+    },
+    {
+      "id": "side-ten-minute-jog",
+      "title": "A ten-minute jog",
+      "subtitle": "Around the block and back",
+      "activity": "running",
+      "qualities": [
+        "endurance",
+        "impact"
+      ],
+      "durationMin": 10,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "outdoor"
+      ],
+      "places": [
+        "outdoors"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "energize"
+      ],
+      "contraindications": [
+        "pregnancy",
+        "postpartum",
+        "pelvicFloor",
+        "knees"
+      ],
+      "course": "side",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Walk out the door",
+            "seconds": 120,
+            "cue": "Two minutes of brisk walking to get going."
+          },
+          {
+            "name": "Jog",
+            "seconds": 360,
+            "cue": "An easy jog. Pick a turnaround point and head back when you reach it."
+          },
+          {
+            "name": "Walk home",
+            "seconds": 120,
+            "cue": "Slow down for the last stretch. That's it."
+          }
+        ]
+      }
     }
   ],
   "glossary": [

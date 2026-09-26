@@ -151,7 +151,7 @@ nonisolated enum CalendarMovementCompanionSelector {
             [.full, .hips, .back]
         case .strength:
             [.full, .upperBody, .lowerBody, .core]
-        case .walking, .biking, .skating, .jumpRope, .agility:
+        case .walking, .running, .biking, .skating, .jumpRope, .agility:
             [.lowerBody, .hips]
         case .swimming, .racquet, .climbing, .carries:
             [.upperBody, .back, .full]
@@ -215,8 +215,9 @@ nonisolated enum CalendarMovementTitleClassifier {
         ) || hasPhrase("strength training", "gym session", "personal training", "weight training") {
             return .strength
         }
+        if hasWord("run", "running", "jog", "jogging") { return .running }
         if hasWord(
-            "run", "running", "jog", "jogging", "sprint", "sprinting",
+            "sprint", "sprinting",
             "cardio", "hiit", "bootcamp", "aerobics", "gymnastics",
             "ski", "skiing", "snowboard", "snowboarding", "surf", "surfing",
             "kayak", "kayaking", "paddleboard", "paddleboarding"

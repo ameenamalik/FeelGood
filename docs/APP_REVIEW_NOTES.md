@@ -12,8 +12,9 @@ routines to a new phone.
 To reach the main flows:
 - Check-in: open the app, tap the check-in banner on the Today tab, pick an
   energy level, a time budget and how you feel. The menu on Today updates.
-- Chat (Pro): the Chat tab lets subscribers describe their day in their own
-  words. Messages are scrubbed of emails, phone numbers and links, then sent to
+- Chat: the Chat tab lets people describe their day in their own words. Free
+  users get one AI reply, subscribers get unlimited; each AI reply is labelled
+  "AI reply", and the person agrees before any message is sent. Messages are scrubbed of emails, phone numbers and links, then sent to
   a third-party language model (disclosed in the privacy policy).
 - Paywall: FeelGood Pro is a subscription. Open the You tab → Your plan to see
   the paywall. TODO: confirm this is the shortest path a reviewer can take, and

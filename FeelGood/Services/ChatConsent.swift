@@ -33,3 +33,21 @@ nonisolated enum ChatConsent {
         UserDefaults.standard.set(status.rawValue, forKey: key)
     }
 }
+
+/// The one AI exchange a free user gets before the paywall. Stored with the
+/// same key Chat's composer reads, so the paywall and the service agree on
+/// whether it has been spent.
+nonisolated struct FreeChatAllowance: Sendable {
+    static let key = "hasUsedFreeChatExchange"
+
+    let isAvailable: @Sendable () -> Bool
+    let markUsed: @Sendable () -> Void
+
+    static let standard = FreeChatAllowance(
+        isAvailable: { !UserDefaults.standard.bool(forKey: key) },
+        markUsed: { UserDefaults.standard.set(true, forKey: key) }
+    )
+
+    /// For tests and previews: never grants a free exchange.
+    static let none = FreeChatAllowance(isAvailable: { false }, markUsed: {})
+}

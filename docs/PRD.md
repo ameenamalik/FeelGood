@@ -776,7 +776,7 @@ export default {
 
 **Four things the proxy buys us beyond key safety:**
 
-1. **Server-side entitlement check.** The Worker asks RevenueCat's REST API whether this install actually has `pro` before spending a token. Free users physically cannot reach the model — cost exposure is capped by paid users, not by downloads. (This is also the "validate everything server-side, never trust the client" rule applied properly.)
+1. **Server-side entitlement check.** The Worker asks RevenueCat's REST API whether this install actually has `pro` before spending a token. Free users get one capped exchange with the model (one per subscriber id, a few per IP per day, and a global daily ceiling — see `worker/src/freeChat.ts`), because a first reply that isn't smart is the one that makes people decide the app is dumb. Beyond that, cost exposure is capped by paid users, not by downloads. (This is also the "validate everything server-side, never trust the client" rule applied properly.)
 2. **Rate limiting** per anonymous install ID, so a single bad actor can't run up a bill.
 3. **Prompt/model changes without an app update.** The system prompt lives in the Worker. If the coaching voice is off, we fix it and redeploy in seconds — no App Review round trip. During a 6-week competition that is worth a lot.
 4. **Clean dev/prod separation.** Two Workers, two Anthropic keys, two RevenueCat environments. The dev key never touches a shipped build; if it leaks, we rotate one secret and nothing in production is affected.

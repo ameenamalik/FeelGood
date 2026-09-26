@@ -200,6 +200,7 @@ nonisolated extension Activity {
         case .strength: "dumbbell"
         case .stretching: "figure.flexibility"
         case .walking: "figure.walk"
+        case .running: "figure.run"
         case .biking: "bicycle"
         case .swimming: "figure.pool.swim"
         case .skating: "figure.skating"

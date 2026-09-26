@@ -35,6 +35,19 @@ struct ExploreView: View {
     @State private var isShowingPaywall = false
     @AppStorage(ChatConsent.key) private var chatConsentRaw = ChatConsent.Status.notAsked.rawValue
     @State private var isShowingChatConsent = false
+    @State private var routineDraft: RoutineDraft?
+
+    /// Whether the next message could be answered by the language model.
+    private var canReachAI: Bool {
+        purchasesManager.isProUnlocked || !hasUsedFreeChatExchange
+    }
+
+    /// Answers "am I chatting with an AI?" before anyone has to ask.
+    private var headerSubtitle: String {
+        canReachAI && chatConsentRaw == ChatConsent.Status.granted.rawValue
+            ? "Replies written by AI"
+            : "Replies from your phone"
+    }
 
     private let threadsPersistenceKey = "FeelGood.ChatThreads.v1"
     private let activeThreadKey = "FeelGood.ActiveThreadID.v1"
@@ -151,6 +164,20 @@ struct ExploreView: View {
         .sheet(isPresented: $isShowingPaywall) {
             FeelGoodPaywallView(context: .chatLimit)
         }
+        .sheet(item: $routineDraft) { draft in
+            AddRoutineSheet(model: model, initialCourse: draft.course, draft: draft) { session in
+                // Close the loop in the conversation: the saved routine comes
+                // back as a card, and Chat offers it next time it's asked.
+                let saved = ConversationMessage(
+                    role: .assistant,
+                    text: "Saved. It's on your menu, and I'll offer it next time you ask.",
+                    recommendation: LocalStatefulChatEngine.structuredRecommendation(for: session, reason: "One of your own routines.")
+                )
+                withAnimation(FGMotion.settle) { messages.append(saved) }
+                quickReplies.removeAll { $0.actionType == .buildRoutine }
+                savePersistedHistory()
+            }
+        }
         .sheet(isPresented: $isShowingChatConsent) {
             ChatConsentSheet { agreed in
                 chatConsentRaw = (agreed ? ChatConsent.Status.granted : .declined).rawValue
@@ -198,9 +225,15 @@ struct ExploreView: View {
     private var headerBar: some View {
         ZStack {
             // Centered Title
-            Text("Chat")
-                .font(.custom("SFProRounded-Semibold", size: 18))
-                .foregroundStyle(FGColor.ink)
+            VStack(spacing: 1) {
+                Text("Chat")
+                    .font(.custom("SFProRounded-Semibold", size: 18))
+                    .foregroundStyle(FGColor.ink)
+                Text(headerSubtitle)
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(FGColor.inkMuted)
+            }
+            .accessibilityElement(children: .combine)
 
             HStack(alignment: .center) {
                 // Previous Conversation History Button
@@ -264,7 +297,16 @@ struct ExploreView: View {
         case .assistant:
             VStack(alignment: .leading, spacing: 14) {
                 if !message.text.isEmpty {
-                    assistantTextBubble(text: message.text)
+                    VStack(alignment: .leading, spacing: 4) {
+                        assistantTextBubble(text: message.text)
+                        if message.isFromAI == true {
+                            Label("AI reply", systemImage: "sparkles")
+                                .font(.system(.caption2, design: .rounded))
+                                .foregroundStyle(FGColor.inkMuted)
+                                .padding(.leading, 6)
+                                .accessibilityLabel("Written by AI")
+                        }
+                    }
                 }
 
                 if let recommendation = message.recommendation {
@@ -524,9 +566,10 @@ struct ExploreView: View {
             return
         }
 
-        // Only a subscriber's message can reach the server, so only they are
-        // asked, and only once. The answer is remembered either way.
-        if purchasesManager.isProUnlocked, chatConsentRaw == ChatConsent.Status.notAsked.rawValue {
+        // Only a message that can reach the server — a subscriber's, or a free
+        // user's one AI exchange — needs asking about, and only once. The
+        // answer is remembered either way.
+        if canReachAI, chatConsentRaw == ChatConsent.Status.notAsked.rawValue {
             inputText = trimmed
             isFieldFocused = false
             isShowingChatConsent = true
@@ -645,13 +688,35 @@ struct ExploreView: View {
                     model.applyConversationalCheckIn(response)
                 }
 
+                var replyText = response.message
+                var card = response.recommendation
+                var chips = response.quickReplies
+                var isFromAI = response.isFromAI
+                if card == nil, let own = RoutineDraft.savedMatch(
+                    for: trimmed,
+                    in: model.ownSessions,
+                    isHidden: { model.isHidden($0) }
+                ) {
+                    // Their own routine beats "I don't have that". Matched on
+                    // the phone, so routine titles never leave it.
+                    replyText = "You've got your own for this: \(own.title)."
+                    card = LocalStatefulChatEngine.structuredRecommendation(for: own, reason: "One of your own routines.")
+                    isFromAI = false
+                } else if card == nil, RoutineDraft.from(prompt: trimmed) != nil {
+                    chips.insert(
+                        QuickReplyAction(id: "build_routine", label: "Make it a routine", symbol: "plus.circle", actionType: .buildRoutine, payload: trimmed),
+                        at: 0
+                    )
+                }
+
                 let assistantMsg = ConversationMessage(
                     role: .assistant,
-                    text: response.message,
-                    recommendation: response.recommendation
+                    text: replyText,
+                    recommendation: card,
+                    isFromAI: isFromAI
                 )
                 withAnimation(FGMotion.settle) { messages.append(assistantMsg) }
-                quickReplies = response.quickReplies
+                quickReplies = chips
                 if !purchasesManager.isProUnlocked {
                     hasUsedFreeChatExchange = true
                 }
@@ -704,6 +769,12 @@ struct ExploreView: View {
         case .customPrompt:
             inputText = chip.payload ?? chip.label
             submitText()
+
+        case .buildRoutine:
+            let request = chip.payload
+                ?? messages.last(where: { $0.role == .user })?.text
+                ?? ""
+            routineDraft = RoutineDraft.from(prompt: request)
         }
     }
 

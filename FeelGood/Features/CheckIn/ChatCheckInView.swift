@@ -196,7 +196,8 @@ struct ChatCheckInView: View {
         let trimmed = textToSend.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        if PurchasesManager.shared.isProUnlocked, chatConsentRaw == ChatConsent.Status.notAsked.rawValue {
+        let canReachAI = PurchasesManager.shared.isProUnlocked || FreeChatAllowance.standard.isAvailable()
+        if canReachAI, chatConsentRaw == ChatConsent.Status.notAsked.rawValue {
             text = trimmed
             isFieldFocused = false
             isShowingChatConsent = true

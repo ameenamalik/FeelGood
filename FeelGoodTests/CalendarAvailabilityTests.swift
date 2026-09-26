@@ -139,7 +139,7 @@ struct CalendarMovementTitleClassifierTests {
         ("Gym workout", Activity.strength),
         ("Gym", Activity.strength),
         ("Pickleball with Sam", Activity.racquet),
-        ("Morning run", Activity.agility),
+        ("Morning run", Activity.running),
         ("Football practice", Activity.racquet),
         ("Boxing class", Activity.martialArts),
         ("Evening bike ride", Activity.biking),
