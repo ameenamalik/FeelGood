@@ -261,5 +261,33 @@ struct OwnWorkoutTests {
         #expect(!decoded.name.contains("Stand still"))
         #expect(!decoded.cue.contains("pace that feels good"))
     }
-}
 
+    @Test("A step's own how-to survives saving and reopening")
+    func writtenCueRoundTrips() {
+        let session = Session.own(
+            id: "own-cue",
+            title: "Neck reset",
+            parts: [CustomRoutinePart(title: "Chin tucks", durationMin: 2, cue: "Draw your chin straight back, like making a double chin.")],
+            durationMin: 2,
+            intensity: 2
+        )
+        #expect(session.source.steps.first?.cue == "Draw your chin straight back, like making a double chin.")
+        #expect(session.customRoutineParts.first?.cue == "Draw your chin straight back, like making a double chin.")
+    }
+
+    @Test("The stand-in line is not shown back as if the person wrote it")
+    func fallbackCueReopensEmpty() {
+        let session = Session.own(
+            id: "own-fallback",
+            title: "Quick one",
+            parts: [
+                CustomRoutinePart(title: "Push ups", durationMin: 2),
+                CustomRoutinePart(title: "Rest", durationMin: 1)
+            ],
+            durationMin: 3,
+            intensity: 3
+        )
+        #expect(session.source.steps.allSatisfy { CustomRoutinePart.fallbackCues.contains($0.cue) })
+        #expect(session.customRoutineParts.allSatisfy { $0.cue == nil })
+    }
+}
