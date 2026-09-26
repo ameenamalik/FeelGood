@@ -5,8 +5,8 @@
 //  Three quiet promises before onboarding: what FeelGood is, what it asks,
 //  and what it gives back — still no account gate on these three screens.
 //  `FirstRunFlow` below sequences intro → the onboarding quiz → the person's
-//  first menu. The optional account prompt comes after that menu is visible,
-//  when "save this" has something concrete to refer to; see PRD §7.0/§7.1.
+//  first menu. The optional account prompt comes only after the first completed
+//  session, when there is real progress worth saving; see PRD §7.0/§7.1.
 //
 
 import SwiftUI

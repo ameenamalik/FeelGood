@@ -2,8 +2,8 @@
 //  OnboardingView.swift
 //  FeelGood
 //
-//  One question per screen. Ends on a real menu — the sign-up ask already
-//  happened, one screen earlier and skippably, in `FirstRunFlow`.
+//  One question per screen. Ends on a real menu; account creation remains out
+//  of the way until the person has completed their first session.
 //
 
 import SwiftUI

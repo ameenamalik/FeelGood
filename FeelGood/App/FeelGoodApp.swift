@@ -220,7 +220,11 @@ struct RootView: View {
         }
         #if DEBUG
         .onAppear {
-            if profiles.isEmpty {
+            // Keep a normal Debug launch faithful to a real first install so
+            // the product intro and onboarding remain testable. Screenshots
+            // that need a ready-made account can opt in explicitly.
+            if ProcessInfo.processInfo.arguments.contains("-FGSeedProfile"),
+               profiles.isEmpty {
                 let initialProfile = UserProfile(
                     answers: ProfileAnswers(
                         activities: [.yoga, .strength, .walking],
