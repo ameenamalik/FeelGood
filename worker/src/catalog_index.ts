@@ -118,7 +118,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "app-jump-rope-ninety",
     "title": "Ninety seconds of jump rope",
-    "subtitle": "Short, bouncy, and good for your bones",
+    "subtitle": "Short, bouncy, and over before you know it",
     "durationMin": 2,
     "intensity": "moderate",
     "course": "appetizer",
@@ -322,7 +322,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "main-qigong-20",
     "title": "Twenty minutes of qigong",
-    "subtitle": "Standing, slow, and quietly restorative",
+    "subtitle": "Standing, slow, and quietly settling",
     "durationMin": 20,
     "intensity": "moderate",
     "course": "main",
@@ -917,7 +917,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "dessert-tea-and-quiet-stretch",
     "title": "Tea and quiet floor stretch",
-    "subtitle": "Gentle restorative unwinding",
+    "subtitle": "Slow, gentle unwinding",
     "durationMin": 10,
     "intensity": "gentle",
     "course": "dessert",
@@ -1096,7 +1096,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "app-desk-hip-glute-reset",
     "title": "Hip flexor & glute reset",
-    "subtitle": "Decompress tight hip flexors and open the lower back after hours of sitting",
+    "subtitle": "Open up the front of your hips and your lower back after hours of sitting",
     "durationMin": 4,
     "intensity": "gentle",
     "course": "appetizer",
@@ -1121,7 +1121,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "main-desk-worker-posture-flow",
     "title": "All-day desk worker reset",
-    "subtitle": "Complete 15-minute anti-sitting routine: deep squat holds, wall angels, thoracic openers, and lunge pulses",
+    "subtitle": "Fifteen minutes for after a long sit: deep squat holds, wall angels, thoracic openers, and lunge pulses",
     "durationMin": 15,
     "intensity": "moderate",
     "course": "main",
@@ -1148,7 +1148,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "side-desk-micro-squats",
     "title": "Coffee break counter squats",
-    "subtitle": "Turn waiting for the kettle or microwave into an effortless lower-body circulation boost",
+    "subtitle": "Turn waiting for the kettle or microwave into a few easy squats",
     "durationMin": 2,
     "intensity": "moderate",
     "course": "side",
@@ -1217,7 +1217,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "app-desk-escape-stretch",
     "title": "Desk escape stretch",
-    "subtitle": "Quick neck, shoulder, and wrist decompression routine",
+    "subtitle": "Quick neck, shoulder, and wrist stretches",
     "durationMin": 5,
     "intensity": "gentle",
     "course": "appetizer",
@@ -1241,7 +1241,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "app-power-explosions",
     "title": "Power explosions",
-    "subtitle": "Fire up your nervous system with fast jumping jacks or bodyweight squats",
+    "subtitle": "Fast jumping jacks or bodyweight squats to wake yourself up",
     "durationMin": 3,
     "intensity": "moderate",
     "course": "appetizer",
@@ -1264,75 +1264,9 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     ]
   },
   {
-    "id": "side-audio-tracking",
-    "title": "Audio tracking",
-    "subtitle": "Pair a gripping narrative podcast exclusively with laundry or kitchen chores",
-    "durationMin": 15,
-    "intensity": "gentle",
-    "course": "side",
-    "activity": "walking",
-    "places": [
-      "home"
-    ],
-    "bodyFocus": [
-      "full"
-    ],
-    "intents": [
-      "play",
-      "calm"
-    ],
-    "equipment": [
-      "none"
-    ]
-  },
-  {
-    "id": "side-aromatherapy-reset",
-    "title": "Aromatherapy movement reset",
-    "subtitle": "Mist your space with citrus or eucalyptus spray before physical tasks",
-    "durationMin": 5,
-    "intensity": "gentle",
-    "course": "side",
-    "activity": "stretching",
-    "places": [
-      "home"
-    ],
-    "bodyFocus": [
-      "full"
-    ],
-    "intents": [
-      "energize",
-      "calm"
-    ],
-    "equipment": [
-      "none"
-    ]
-  },
-  {
-    "id": "side-sonic-focus",
-    "title": "Sonic focus",
-    "subtitle": "High-tempo lo-fi, synthwave, or game soundtracks to turn chores into a game",
-    "durationMin": 15,
-    "intensity": "moderate",
-    "course": "side",
-    "activity": "walking",
-    "places": [
-      "home"
-    ],
-    "bodyFocus": [
-      "full"
-    ],
-    "intents": [
-      "energize",
-      "play"
-    ],
-    "equipment": [
-      "none"
-    ]
-  },
-  {
     "id": "side-active-posture-shift",
     "title": "Active posture shift",
-    "subtitle": "Trade your desk chair for a stability ball or under-desk walking pad during calls",
+    "subtitle": "Stand, pace, or sit on a ball for your next call",
     "durationMin": 20,
     "intensity": "gentle",
     "course": "side",
@@ -1477,7 +1411,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "des-luxury-recovery-soak",
     "title": "Luxury recovery soak",
-    "subtitle": "A hot bath infused with Epsom salts immediately following movement",
+    "subtitle": "A hot bath after moving, lights down, nowhere to be",
     "durationMin": 20,
     "intensity": "gentle",
     "course": "dessert",
@@ -1522,7 +1456,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "spec-spa-sauna-cycles",
     "title": "Spa & sauna thermal cycles",
-    "subtitle": "Infrared sauna sessions, cold plunges, or massage therapy for deep restoration",
+    "subtitle": "Sauna, a cool plunge or rinse, and a long lie-down",
     "durationMin": 60,
     "intensity": "gentle",
     "course": "special",
@@ -1542,8 +1476,8 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   },
   {
     "id": "spec-performance-coaching",
-    "title": "1-on-1 performance coaching",
-    "subtitle": "Personalized guided training or physical rehab session to break past plateaus",
+    "title": "1-on-1 coaching session",
+    "subtitle": "A session with a trainer, built around what you want to work on",
     "durationMin": 60,
     "intensity": "moderate",
     "course": "special",
@@ -1566,7 +1500,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "app-shake-out-five",
     "title": "Five-minute shake-out",
-    "subtitle": "Release physical tension and reset your nervous system",
+    "subtitle": "Shake out your arms, your legs, and everything else",
     "durationMin": 5,
     "intensity": "gentle",
     "course": "appetizer",
@@ -1590,7 +1524,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "app-power-pose-two",
     "title": "Two-minute power pose",
-    "subtitle": "Stand tall, open your chest, and restore quiet confidence",
+    "subtitle": "Stand tall, open your chest, and take up some space",
     "durationMin": 2,
     "intensity": "gentle",
     "course": "appetizer",
@@ -1614,7 +1548,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "main-brisk-walk-ten",
     "title": "Ten-minute brisk walk",
-    "subtitle": "Clear brain fog, elevate heart rate, and trigger natural dopamine",
+    "subtitle": "A quick lap at a brisk pace",
     "durationMin": 10,
     "intensity": "moderate",
     "course": "main",
@@ -1774,7 +1708,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "app-cold-water-splash",
     "title": "Cold water splash reset",
-    "subtitle": "Activate the dive reflex to instantly calm a racing heart",
+    "subtitle": "Cold water on your face, then one long, slow breath out",
     "durationMin": 1,
     "intensity": "gentle",
     "course": "appetizer",
@@ -1890,7 +1824,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
     "id": "main-rest-legs-up-the-wall",
     "title": "Legs up the wall & release",
-    "subtitle": "A restorative posture to reset body and mind",
+    "subtitle": "Lie back, legs up, and let everything go quiet",
     "durationMin": 0,
     "intensity": "gentle",
     "course": "main",

@@ -29,7 +29,7 @@ nonisolated struct RoutineDraft: Identifiable, Hashable, Sendable {
         let text = prompt.lowercased()
         guard let kind = Self.activity(in: text) else { return nil }
         let minutes = Self.requestedMinutes(in: text) ?? 20
-        let name = Self.noun(for: kind)
+        let name = Self.noun(for: kind, typed: Self.matchedWord(in: text))
 
         let parts: [CustomRoutinePart]
         if minutes >= 15 {
@@ -103,16 +103,26 @@ nonisolated struct RoutineDraft: Identifiable, Hashable, Sendable {
         return min(value, 60)
     }
 
-    /// The thing you'd say you went for: "a run", "a swim".
-    private static func noun(for activity: Activity) -> String {
+    /// The word the person used for it: "boxing", "tennis", "zumba".
+    static func matchedWord(in text: String) -> String? {
+        for keyword in keywords {
+            if let range = text.range(of: keyword.pattern, options: .regularExpression) {
+                return String(text[range])
+            }
+        }
+        return nil
+    }
+
+    /// The thing you'd say you went for: "a run", "a swim". For everything
+    /// else, their own word — "My boxing", not "My martial arts".
+    private static func noun(for activity: Activity, typed: String?) -> String {
         switch activity {
         case .running: "run"
         case .walking: "walk"
         case .biking: "ride"
         case .swimming: "swim"
         case .climbing: "climb"
-        case .racquet: "game"
-        default: activity.label.lowercased()
+        default: typed ?? activity.label.lowercased()
         }
     }
 
