@@ -23,6 +23,15 @@ struct RoutineDraftTests {
         #expect(draft.course == .main)
     }
 
+    @Test("The draft is named with the word they used")
+    func draftUsesTheirWord() throws {
+        let boxing = try #require(RoutineDraft.from(prompt: "i want to do boxing for 10 min"))
+        #expect(boxing.title == "My boxing")
+        #expect(boxing.activity == .martialArts)
+        let tennis = try #require(RoutineDraft.from(prompt: "tennis later"))
+        #expect(tennis.title == "My tennis")
+    }
+
     @Test("A run with no time given defaults to twenty minutes")
     func runDefaults() throws {
         let draft = try #require(RoutineDraft.from(prompt: "I want to go for a run"))

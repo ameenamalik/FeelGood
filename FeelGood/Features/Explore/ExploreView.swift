@@ -692,7 +692,13 @@ struct ExploreView: View {
                 var card = response.recommendation
                 var chips = response.quickReplies
                 var isFromAI = response.isFromAI
-                if card == nil, let own = RoutineDraft.savedMatch(
+                // Boxing answered with a circuit is still "we don't have
+                // boxing": a card for a different kind of movement counts as
+                // no match, so their own routine or the builder is offered.
+                let requestedActivity = RoutineDraft.activity(in: trimmed.lowercased())
+                let cardActivity = card.flatMap { rec in model.everything.first { $0.id == rec.sessionID } }?.activity
+                let isMissingWhatTheyAskedFor = requestedActivity != nil && cardActivity != requestedActivity
+                if isMissingWhatTheyAskedFor, let own = RoutineDraft.savedMatch(
                     for: trimmed,
                     in: model.ownSessions,
                     isHidden: { model.isHidden($0) }
@@ -702,7 +708,7 @@ struct ExploreView: View {
                     replyText = "You've got your own for this: \(own.title)."
                     card = LocalStatefulChatEngine.structuredRecommendation(for: own, reason: "One of your own routines.")
                     isFromAI = false
-                } else if card == nil, RoutineDraft.from(prompt: trimmed) != nil {
+                } else if isMissingWhatTheyAskedFor {
                     chips.insert(
                         QuickReplyAction(id: "build_routine", label: "Make it a routine", symbol: "plus.circle", actionType: .buildRoutine, payload: trimmed),
                         at: 0
