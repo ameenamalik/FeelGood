@@ -19,6 +19,7 @@ struct AddRoutineSheet: View {
     @State private var sessionDescription: String = ""
     @State private var parts: [CustomRoutinePart] = []
     @State private var partTitle: String = ""
+    @State private var partCue: String = ""
     @State private var partDurationMin: Int = 1
     @State private var course: Course
     @State private var activity: Activity = .yoga
@@ -28,6 +29,9 @@ struct AddRoutineSheet: View {
     @FocusState private var isTitleFocused: Bool
     @FocusState private var isDescriptionFocused: Bool
     @FocusState private var isPartTitleFocused: Bool
+    @FocusState private var isPartCueFocused: Bool
+    @FocusState private var focusedCuePartID: String?
+    @State private var dropTargetPartID: String?
 
     private static let partDurations = [1, 2, 3, 5, 10, 15, 20]
     private static let efforts: [(label: String, intensity: Int)] = [
@@ -78,7 +82,7 @@ struct AddRoutineSheet: View {
     /// it as the last part, so one step never needs a trip to the plus button.
     private var pendingPart: CustomRoutinePart? {
         let trimmed = partTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : CustomRoutinePart(title: trimmed, durationMin: partDurationMin)
+        return trimmed.isEmpty ? nil : CustomRoutinePart(title: trimmed, durationMin: partDurationMin, cue: Self.cleanedCue(partCue))
     }
 
     private var allParts: [CustomRoutinePart] { parts + [pendingPart].compactMap { $0 } }
@@ -142,77 +146,120 @@ struct AddRoutineSheet: View {
 
                         question("Add the parts") {
                             VStack(alignment: .leading, spacing: FGSpace.s) {
-                                Text("Add one item at a time. You can stop whenever the routine feels complete.")
+                                Text("Add one item at a time, with a line on how to do it if you like — it’s what you’ll see mid-routine.")
                                     .font(FGFont.caption)
                                     .foregroundStyle(FGColor.inkMuted)
                                     .fixedSize(horizontal: false, vertical: true)
 
                                 ForEach($parts) { $part in
+                                    HStack(alignment: .top, spacing: 0) {
+                                        dragHandle(for: part)
+
+                                        VStack(alignment: .leading, spacing: 0) {
+                                            HStack(spacing: FGSpace.s) {
+                                                TextField("Part name", text: $part.title)
+                                                    .font(FGFont.body.weight(.medium))
+                                                    .foregroundStyle(FGColor.ink)
+                                                    .textFieldStyle(.plain)
+                                                    .postHogMask()
+                                                    .accessibilityActions {
+                                                        if canMove(part.id, by: -1) {
+                                                            Button("Move up") { move(part.id, by: -1) }
+                                                        }
+                                                        if canMove(part.id, by: 1) {
+                                                            Button("Move down") { move(part.id, by: 1) }
+                                                        }
+                                                    }
+
+                                                Picker("Duration", selection: $part.durationMin) {
+                                                    ForEach(Self.durationOptions(including: part.durationMin), id: \.self) { minutes in
+                                                        Text("\(minutes) min").tag(minutes)
+                                                    }
+                                                }
+                                                .pickerStyle(.menu)
+                                                .tint(FGColor.inkMuted)
+
+                                                Button {
+                                                    withAnimation(FGMotion.gentle) {
+                                                        parts.removeAll { $0.id == part.id }
+                                                    }
+                                                } label: {
+                                                    Image(systemName: "minus.circle.fill")
+                                                        .foregroundStyle(FGColor.inkMuted)
+                                                        .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
+                                                }
+                                                .buttonStyle(.plain)
+                                                .accessibilityLabel("Remove \(part.title)")
+                                            }
+
+                                            cueField(text: Self.text($part.cue))
+                                                .focused($focusedCuePartID, equals: part.id)
+                                                .accessibilityLabel("How to do \(part.title)")
+                                                .padding(.trailing, FGSpace.m)
+                                                .padding(.bottom, 12)
+                                        }
+                                    }
+                                    .background(FGColor.surface)
+                                    .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                                            .strokeBorder(focusedCuePartID == part.id || dropTargetPartID == part.id ? FGColor.clayDeep : .clear, lineWidth: 1.5)
+                                    )
+                                    .dropDestination(for: String.self) { droppedIDs, _ in
+                                        guard let droppedID = droppedIDs.first else { return false }
+                                        return movePart(droppedID, to: part.id)
+                                    } isTargeted: { isTargeted in
+                                        if isTargeted {
+                                            dropTargetPartID = part.id
+                                        } else if dropTargetPartID == part.id {
+                                            dropTargetPartID = nil
+                                        }
+                                    }
+                                }
+
+                                VStack(alignment: .leading, spacing: 0) {
                                     HStack(spacing: FGSpace.s) {
-                                        TextField("Part name", text: $part.title)
-                                            .font(FGFont.body)
+                                        TextField("Add a part", text: $partTitle)
+                                            .font(FGFont.body.weight(.medium))
                                             .foregroundStyle(FGColor.ink)
                                             .textFieldStyle(.plain)
+                                            .textInputAutocapitalization(.sentences)
+                                            .focused($isPartTitleFocused)
+                                            .submitLabel(.next)
+                                            .onSubmit { isPartCueFocused = canAddPart }
                                             .postHogMask()
 
-                                        Picker("Duration", selection: $part.durationMin) {
+                                        Picker("Duration", selection: $partDurationMin) {
                                             ForEach(Self.partDurations, id: \.self) { minutes in
                                                 Text("\(minutes) min").tag(minutes)
                                             }
                                         }
                                         .pickerStyle(.menu)
-                                        .tint(FGColor.inkMuted)
+                                        .tint(FGColor.ink)
 
-                                        Button {
-                                            parts.removeAll { $0.id == part.id }
-                                        } label: {
-                                            Image(systemName: "minus.circle.fill")
-                                                .foregroundStyle(FGColor.inkMuted)
+                                        Button(action: addPart) {
+                                            Image(systemName: "plus.circle.fill")
+                                                .font(.system(size: 24, weight: .semibold))
+                                                .foregroundStyle(canAddPart ? FGColor.clayDeep : FGColor.inkMuted.opacity(0.45))
                                                 .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
                                         }
                                         .buttonStyle(.plain)
-                                        .accessibilityLabel("Remove \(part.title)")
+                                        .disabled(!canAddPart)
+                                        .accessibilityLabel("Add part")
                                     }
-                                    .padding(.leading, FGSpace.m)
-                                    .background(FGColor.surface)
-                                    .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
-                                }
 
-                                HStack(spacing: FGSpace.s) {
-                                    TextField("Add a part", text: $partTitle)
-                                        .font(FGFont.body)
-                                        .foregroundStyle(FGColor.ink)
-                                        .textFieldStyle(.plain)
-                                        .textInputAutocapitalization(.sentences)
-                                        .focused($isPartTitleFocused)
-                                        .submitLabel(.done)
-                                        .onSubmit(addPart)
-                                        .postHogMask()
-
-                                    Picker("Duration", selection: $partDurationMin) {
-                                        ForEach(Self.partDurations, id: \.self) { minutes in
-                                            Text("\(minutes) min").tag(minutes)
-                                        }
-                                    }
-                                    .pickerStyle(.menu)
-                                    .tint(FGColor.ink)
-
-                                    Button(action: addPart) {
-                                        Image(systemName: "plus.circle.fill")
-                                            .font(.system(size: 24, weight: .semibold))
-                                            .foregroundStyle(canAddPart ? FGColor.clayDeep : FGColor.inkMuted.opacity(0.45))
-                                            .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .disabled(!canAddPart)
-                                    .accessibilityLabel("Add part")
+                                    cueField(text: $partCue)
+                                        .focused($isPartCueFocused)
+                                        .accessibilityLabel("How to do the new part")
+                                        .padding(.trailing, FGSpace.m)
+                                        .padding(.bottom, 12)
                                 }
                                 .padding(.leading, FGSpace.m)
                                 .background(FGColor.surface)
                                 .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
-                                        .strokeBorder(isPartTitleFocused ? FGColor.clayDeep : FGColor.line, lineWidth: isPartTitleFocused ? 1.5 : 1)
+                                        .strokeBorder(isPartTitleFocused || isPartCueFocused ? FGColor.clayDeep : FGColor.line, lineWidth: isPartTitleFocused || isPartCueFocused ? 1.5 : 1)
                                 )
 
                                 if !allParts.isEmpty {
@@ -320,7 +367,7 @@ struct AddRoutineSheet: View {
                     title = pickedSession.title
                     sessionDescription = pickedSession.subtitle
                     let pickedParts = pickedSession.source.steps.map {
-                        CustomRoutinePart(title: $0.name, durationMin: max(1, Int(ceil(Double($0.seconds) / 60))), cue: $0.cue)
+                        CustomRoutinePart(title: $0.name, durationMin: max(1, Int(ceil(Double($0.seconds) / 60))), cue: CustomRoutinePart.fallbackCues.contains($0.cue) ? nil : $0.cue)
                     }
                     parts = pickedParts.isEmpty
                         ? [CustomRoutinePart(title: pickedSession.title, durationMin: pickedSession.durationMin, cue: pickedSession.subtitle.isEmpty ? nil : pickedSession.subtitle)]
@@ -373,6 +420,86 @@ struct AddRoutineSheet: View {
         }
     }
 
+    /// The "how to do it" line under a part's name. Optional: left empty, the
+    /// player falls back to a general line, but the person's own words are
+    /// always better than ours.
+    private func cueField(text: Binding<String>) -> some View {
+        TextField("How to do it (optional) — e.g. Knees soft, reach long through the crown", text: text, axis: .vertical)
+            .font(FGFont.caption)
+            .foregroundStyle(FGColor.inkMuted)
+            .textFieldStyle(.plain)
+            .textInputAutocapitalization(.sentences)
+            .lineLimit(1...5)
+            .padding(.top, 2)
+            .postHogMask()
+    }
+
+    /// An optional cue as a plain text field: nil reads as empty, and typing
+    /// writes straight through.
+    private static func text(_ cue: Binding<String?>) -> Binding<String> {
+        Binding(
+            get: { cue.wrappedValue ?? "" },
+            set: { cue.wrappedValue = $0 }
+        )
+    }
+
+    /// Whitespace-only is no cue at all, so the player's fallback applies.
+    private static func cleanedCue(_ cue: String?) -> String? {
+        let trimmed = cue?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    /// A step picked from the catalog or drafted in Chat can be any length;
+    /// the picker still has to show it rather than silently blank out.
+    private static func durationOptions(including minutes: Int) -> [Int] {
+        partDurations.contains(minutes) ? partDurations : (partDurations + [minutes]).sorted()
+    }
+
+    /// Hold and drag to reorder. VoiceOver gets Move up / Move down as
+    /// actions on the row instead.
+    private func dragHandle(for part: CustomRoutinePart) -> some View {
+        Image(systemName: "line.3.horizontal")
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(FGColor.inkMuted)
+            .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
+            .contentShape(Rectangle())
+            .draggable(part.id) {
+                Text(part.title.isEmpty ? "Part" : part.title)
+                    .font(FGFont.body.weight(.medium))
+                    .foregroundStyle(FGColor.ink)
+                    .padding(.horizontal, FGSpace.m)
+                    .padding(.vertical, 12)
+                    .background(FGColor.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
+            }
+            .accessibilityHidden(true)
+    }
+
+    /// Drops the dragged step into the target's place, pushing the target
+    /// down when moving up the list and up when moving down it.
+    private func movePart(_ id: String, to targetID: String) -> Bool {
+        guard id != targetID,
+              let from = parts.firstIndex(where: { $0.id == id }),
+              let to = parts.firstIndex(where: { $0.id == targetID })
+        else { return false }
+        withAnimation(FGMotion.gentle) {
+            parts.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
+        }
+        return true
+    }
+
+    private func canMove(_ id: String, by offset: Int) -> Bool {
+        guard let index = parts.firstIndex(where: { $0.id == id }) else { return false }
+        return parts.indices.contains(index + offset)
+    }
+
+    private func move(_ id: String, by offset: Int) {
+        guard canMove(id, by: offset), let index = parts.firstIndex(where: { $0.id == id }) else { return }
+        withAnimation(FGMotion.gentle) {
+            parts.swapAt(index, index + offset)
+        }
+    }
+
     private var canAddPart: Bool {
         !partTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -381,9 +508,10 @@ struct AddRoutineSheet: View {
         let trimmed = partTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         withAnimation(FGMotion.gentle) {
-            parts.append(CustomRoutinePart(title: trimmed, durationMin: partDurationMin))
+            parts.append(CustomRoutinePart(title: trimmed, durationMin: partDurationMin, cue: Self.cleanedCue(partCue)))
         }
         partTitle = ""
+        partCue = ""
         partDurationMin = 1
         isPartTitleFocused = true
     }
@@ -396,7 +524,7 @@ struct AddRoutineSheet: View {
         let description = trimmedDescription.isEmpty ? nil : trimmedDescription
         let cleanedParts = allParts.compactMap { part -> CustomRoutinePart? in
             let partTitle = part.title.trimmingCharacters(in: .whitespacesAndNewlines)
-            return partTitle.isEmpty ? nil : CustomRoutinePart(id: part.id, title: partTitle, durationMin: part.durationMin)
+            return partTitle.isEmpty ? nil : CustomRoutinePart(id: part.id, title: partTitle, durationMin: part.durationMin, cue: Self.cleanedCue(part.cue))
         }
         guard !cleanedParts.isEmpty else { return }
         let durationMin = cleanedParts.reduce(0) { $0 + $1.durationMin }
