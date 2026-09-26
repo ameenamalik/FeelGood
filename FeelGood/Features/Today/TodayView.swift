@@ -15,11 +15,6 @@ private struct PendingCheckInUpdate {
     let checkIn: PlanCheckIn
 }
 
-private enum TodayAuthPromptContext: Equatable {
-    case firstMenu
-    case firstCompletion
-}
-
 /// A quiet, check-in-colored glow behind today's rebuilt menu. Replacing the
 /// keyed view lets the old and new colors cross-fade instead of snapping.
 private struct MenuPersonalizationAura: View {
@@ -55,9 +50,10 @@ struct TodayView: View {
     @State private var shouldOfferProAfterDismissal = false
     @AppStorage("hasShownFirstCompletionPaywall") private var hasShownFirstCompletionPaywall = false
     @AppStorage("hasShownFirstCompletionAuthPrompt") private var hasShownFirstCompletionAuthPrompt = false
+    // Retain the old first-menu flag so existing installs that already saw
+    // that prompt do not receive a duplicate account ask after completion.
     @AppStorage(FirstRunFlow.hasSeenWelcomeSignUpKey) private var hasShownFirstMenuAuthPrompt = false
     @State private var isShowingAuthPrompt = false
-    @State private var authPromptContext: TodayAuthPromptContext = .firstMenu
     @Environment(AuthService.self) private var authService
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
@@ -126,9 +122,7 @@ struct TodayView: View {
         .sheet(isPresented: $isShowingMyMenu, onDismiss: clearOneSignalDiscoveryTriggers) {
             MyMenuView(model: model)
         }
-        .sheet(isPresented: $isShowingDopamineMenuTour, onDismiss: {
-            scheduleFirstMenuAuthPrompt(after: .milliseconds(300))
-        }) {
+        .sheet(isPresented: $isShowingDopamineMenuTour) {
             DopamineMenuTourView {
                 hasSeenDopamineMenuTour = true
             }
@@ -157,18 +151,11 @@ struct TodayView: View {
         }
         .sheet(isPresented: $isShowingAuthPrompt) {
             AuthSheetView(
-                title: authPromptContext == .firstMenu ? "Save your menu" : "Save your routine",
-                subtitle: authPromptContext == .firstMenu
-                    ? "Create an account to keep this menu, your preferences, and your movement history synced across devices."
-                    : "You finished today's session! Create an account to keep your progress and daily menus across devices.",
-                showsHeroIllustration: authPromptContext == .firstMenu,
+                title: "Save your routine",
+                subtitle: "You finished today's session! Create an account to keep your progress and daily menus across devices.",
+                showsHeroIllustration: false,
                 initialMode: .createAccount,
-                guestButtonTitle: "Continue as guest",
-                onAuthenticated: {
-                    if authPromptContext == .firstMenu {
-                        Analytics.capture("welcome_sign_up_completed")
-                    }
-                }
+                guestButtonTitle: "Continue as guest"
             )
         }
         .confirmationDialog(
@@ -224,8 +211,6 @@ struct TodayView: View {
                         isShowingDopamineMenuTour = true
                     }
                 }
-            } else {
-                scheduleFirstMenuAuthPrompt(after: .milliseconds(700))
             }
         }
         .task(id: calendarPersonalizationTaskID) {
@@ -707,7 +692,6 @@ struct TodayView: View {
            !hasShownFirstMenuAuthPrompt,
            !hasShownFirstCompletionAuthPrompt {
             hasShownFirstCompletionAuthPrompt = true
-            authPromptContext = .firstCompletion
             isShowingAuthPrompt = true
             return
         }
@@ -720,28 +704,6 @@ struct TodayView: View {
 
     private func presentPendingLittleWinCelebration() {
         littleWinCelebration = model.takePendingLittleWinCelebration()
-    }
-
-    private func scheduleFirstMenuAuthPrompt(after delay: Duration) {
-        guard !authService.isAuthenticated, !hasShownFirstMenuAuthPrompt else { return }
-
-        Task { @MainActor in
-            try? await Task.sleep(for: delay)
-            guard !Task.isCancelled,
-                  isViewVisible,
-                  !authService.isAuthenticated,
-                  !hasShownFirstMenuAuthPrompt,
-                  !isShowingDopamineMenuTour,
-                  !isShowingAuthPrompt else { return }
-
-            // Mark it when presented rather than when dismissed so completing
-            // a session later cannot produce the same account request twice.
-            hasShownFirstMenuAuthPrompt = true
-            hasShownFirstCompletionAuthPrompt = true
-            authPromptContext = .firstMenu
-            isShowingAuthPrompt = true
-            Analytics.capture("first_menu_sign_up_presented")
-        }
     }
 
     private func syncOneSignalDiscoveryTriggers() {

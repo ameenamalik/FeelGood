@@ -451,8 +451,6 @@ struct FGAuraTile: View {
 /// things to rule out, and a grid of colour fields makes ruling something out
 /// feel weightier than it is.
 struct FGPill: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     let title: String
     var selectedAura: FGAura? = nil
     let isSelected: Bool
@@ -480,9 +478,6 @@ struct FGPill: View {
     }
 
     private var pillFill: AnyShapeStyle {
-        if isSelected, colorScheme == .dark {
-            return AnyShapeStyle(FGColor.surface)
-        }
         if isSelected, let selectedAura {
             return AnyShapeStyle(
                 LinearGradient(
@@ -497,13 +492,12 @@ struct FGPill: View {
 
     private var pillForeground: Color {
         guard isSelected else { return FGColor.ink }
-        if colorScheme == .dark { return FGColor.ink }
         return selectedAura == nil ? FGColor.bg : FGColor.inkOnAccent
     }
 
     private var pillBorder: Color {
         guard isSelected else { return FGColor.lineStrong }
-        return colorScheme == .dark ? FGColor.ink : FGColor.inkOnAccent.opacity(0.72)
+        return FGColor.inkOnAccent.opacity(0.72)
     }
 }
 

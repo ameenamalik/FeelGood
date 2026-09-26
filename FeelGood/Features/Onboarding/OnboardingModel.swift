@@ -5,8 +5,8 @@
 //  Three cards, ninety seconds, framed around what's available to you rather than
 //  around goals-as-metrics. Still no paywall here — Pro stays out of onboarding
 //  entirely, see PRD §10.1 — and these three cards themselves ask nothing about
-//  an account; that ask moved to `FirstRunFlow`'s welcome screen, one step
-//  earlier, and is skippable there. See PRD §7.1. Today's available time
+//  an account; that optional ask waits until the first completed session. See
+//  PRD §7.1. Today's available time
 //  belongs in the daily check-in, so onboarding does not ask for it again.
 //
 
