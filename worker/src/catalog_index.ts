@@ -2703,6 +2703,91 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "equipment": [
       "mat"
     ]
+  },
+  {
+    "id": "main-run-walk-twenty",
+    "title": "Run, walk, repeat",
+    "subtitle": "Short runs with walking in between",
+    "durationMin": 20,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "running",
+    "places": [
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize"
+    ],
+    "equipment": [
+      "outdoor"
+    ]
+  },
+  {
+    "id": "main-easy-run-twenty",
+    "title": "An easy twenty-minute run",
+    "subtitle": "Outside, at a pace you could chat at",
+    "durationMin": 20,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "running",
+    "places": [
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "outdoor"
+    ]
+  },
+  {
+    "id": "main-steady-run-thirty",
+    "title": "A thirty-minute steady run",
+    "subtitle": "A longer run with room to settle in",
+    "durationMin": 30,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "running",
+    "places": [
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize"
+    ],
+    "equipment": [
+      "outdoor"
+    ]
+  },
+  {
+    "id": "side-ten-minute-jog",
+    "title": "A ten-minute jog",
+    "subtitle": "Around the block and back",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "running",
+    "places": [
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize"
+    ],
+    "equipment": [
+      "outdoor"
+    ]
   }
 ];
 

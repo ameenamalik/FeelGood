@@ -10,7 +10,8 @@ import type { Env } from "./types";
 // is why the mismatch survived — and why the mismatch logs loudly below now.
 const PRO_ENTITLEMENT_ID = "pro";
 
-/// Free users physically cannot reach the model — cost exposure is capped by
+/// Beyond one capped free exchange (freeChat.ts), free users cannot reach the
+/// model — cost exposure is capped by
 /// paid users, not by downloads (PRD §11, "validate everything server-side").
 ///
 /// Any RevenueCat-side error (network hiccup, unexpected shape, timeout) is

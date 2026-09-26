@@ -388,7 +388,7 @@ nonisolated extension Activity {
         case .yoga, .stretching, .pilates: .sage // mobilize
         case .qigong, .breathwork: .blush // calm
         case .strength: .lilac // strengthen
-        case .walking, .biking, .swimming, .jumpRope: .apricot // energize
+        case .walking, .running, .biking, .swimming, .jumpRope: .apricot // energize
         case .dance: .butter // joy / play
         case .agility, .carries, .racquet, .climbing, .martialArts, .skating: nil
         }
