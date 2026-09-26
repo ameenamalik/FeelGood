@@ -416,6 +416,49 @@ extension ChatServiceTests {
         #expect(!sent.contains("a@b.com"))
     }
 
+    @Test("A free user's first message reaches the model, and only the first")
+    func freeExchangeReachesModelOnce() async {
+        let transport = FakeChatTransport(
+            response: ChatResponse(message: "x", mode: .banter, intent: .acknowledgment, phase: .greeting)
+        )
+        let spent = SpentFlag()
+        let allowance = FreeChatAllowance(isAvailable: { !spent.value }, markUsed: { spent.value = true })
+        let service = ChatService(transport: transport, isProUnlocked: { false }, hasChatConsent: { true }, freeAIExchange: allowance)
+
+        _ = await service.describeDay(prompt: "run and stretch")
+        #expect(await transport.lastPromptReceived == "run and stretch")
+        #expect(spent.value)
+
+        let second = FakeChatTransport(
+            response: ChatResponse(message: "x", mode: .banter, intent: .acknowledgment, phase: .greeting)
+        )
+        let later = ChatService(transport: second, isProUnlocked: { false }, hasChatConsent: { true }, freeAIExchange: allowance)
+        _ = await later.describeDay(prompt: "something else")
+        #expect(await second.lastPromptReceived == nil)
+    }
+
+    @Test("The free exchange still needs consent")
+    func freeExchangeNeedsConsent() async {
+        let transport = FakeChatTransport(
+            response: ChatResponse(message: "x", mode: .banter, intent: .acknowledgment, phase: .greeting)
+        )
+        let spent = SpentFlag()
+        let allowance = FreeChatAllowance(isAvailable: { !spent.value }, markUsed: { spent.value = true })
+        let service = ChatService(transport: transport, isProUnlocked: { false }, hasChatConsent: { false }, freeAIExchange: allowance)
+
+        _ = await service.describeDay(prompt: "run and stretch")
+
+        #expect(await transport.lastPromptReceived == nil)
+        #expect(!spent.value)
+    }
+
+    @Test("On-device replies are never labelled as AI")
+    func localRepliesAreNotAI() async {
+        let service = ChatService(transport: ThrowingChatTransport(), isProUnlocked: { true }, hasChatConsent: { true })
+        let fallback = await service.describeDay(prompt: "gentle stretch please")
+        #expect(fallback?.isFromAI == false)
+    }
+
     @Test("A failing edge call falls back to the on-device engine instead of returning nothing")
     func failingTransportFallsBackLocally() async {
         let service = ChatService(transport: ThrowingChatTransport(), isProUnlocked: { true }, hasChatConsent: { true })
@@ -462,4 +505,9 @@ private actor FakeChatTransport: ChatTransport {
         lastHistoryReceived = history
         return response
     }
+}
+
+/// Shared across `@Sendable` closures in one test; each test owns its own.
+private final class SpentFlag: @unchecked Sendable {
+    var value = false
 }

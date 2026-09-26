@@ -1,6 +1,7 @@
 import { handleChat, isValidChatPayload } from "./chat";
 import { acceptCopyLine } from "./copyLine";
 import { hasProEntitlement } from "./entitlement";
+import { consumeFreeChat } from "./freeChat";
 import { supportResponse, termsResponse } from "./legal";
 import { playerResponse } from "./player";
 import { isRateLimited } from "./rateLimit";
@@ -63,7 +64,12 @@ export default {
         return new Response("bad request", { status: 400 });
       }
 
-      if (!(await hasProEntitlement(body.subscriberID, env))) {
+      // Subscribers get chat; everyone else gets one free exchange, so the
+      // first reply a new person sees is a real one. See freeChat.ts.
+      if (
+        !(await hasProEntitlement(body.subscriberID, env)) &&
+        !(await consumeFreeChat(body.subscriberID, request.headers.get("CF-Connecting-IP"), env))
+      ) {
         return new Response("forbidden", { status: 403 });
       }
 

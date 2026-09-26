@@ -41,6 +41,7 @@ nonisolated extension Activity {
         case .strength: "Strength"
         case .stretching: "Stretching"
         case .walking: "Walking"
+        case .running: "Running"
         case .biking: "Biking"
         case .swimming: "Swimming"
         case .skating: "Skating"
@@ -63,7 +64,7 @@ nonisolated extension Activity {
             "IntentStrengthApple"
         case .stretching, .pilates, .yoga, .breathwork:
             "IntentMobilityPear"
-        case .walking, .biking, .swimming, .skating, .dance, .jumpRope, .agility, .racquet:
+        case .walking, .running, .biking, .swimming, .skating, .dance, .jumpRope, .agility, .racquet:
             "IntentEnergyClementine"
         case .qigong:
             "IntentCalmPeach"
@@ -357,6 +358,7 @@ nonisolated extension Activity {
         case .strength: "strength work"
         case .stretching: "stretching"
         case .walking: "walking"
+        case .running: "running"
         case .biking: "biking"
         case .swimming: "swimming"
         case .skating: "skating"

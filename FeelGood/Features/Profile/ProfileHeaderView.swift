@@ -246,10 +246,13 @@ struct ProfileHeaderView: View {
             notificationsSection
             if purchasesManager.isProUnlocked {
                 calendarPrivacySection
-                chatPrivacySection
             } else {
                 calendarUpgradeSection
             }
+            // Free users get one AI exchange and are asked about it, so the
+            // consent sheet's "change this later in My account" must hold for
+            // them too.
+            chatPrivacySection
         }
     }
 

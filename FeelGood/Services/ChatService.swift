@@ -68,6 +68,9 @@ nonisolated enum QuickReplyType: String, Codable, Sendable {
     case filterStayingIn = "filter_staying_in"
     case startSession = "start_session"
     case customPrompt = "custom_prompt"
+    /// Client-only: Chat had nothing for the request, so offer to build it
+    /// as the person's own routine. `payload` is what they asked for.
+    case buildRoutine = "build_routine"
 }
 
 /// Dynamic quick-reply action chip returned by the backend agent
@@ -228,6 +231,9 @@ nonisolated struct ChatResponse: Sendable {
     let recommendation: StructuredRecommendation?
     let quickReplies: [QuickReplyAction]
     let overrides: ConversationalOverrides
+    /// Written by the language model rather than the on-device engine. Chat
+    /// labels these, because people ask whether they're talking to an AI.
+    let isFromAI: Bool
 
     init(
         message: String,
@@ -236,9 +242,11 @@ nonisolated struct ChatResponse: Sendable {
         phase: ConversationPhase = .recommendationActive,
         recommendation: StructuredRecommendation? = nil,
         quickReplies: [QuickReplyAction] = [],
-        overrides: ConversationalOverrides = ConversationalOverrides()
+        overrides: ConversationalOverrides = ConversationalOverrides(),
+        isFromAI: Bool = false
     ) {
         self.message = message
+        self.isFromAI = isFromAI
         if let mode {
             self.mode = mode
         } else if phase == .needsDiscovery {
@@ -439,7 +447,8 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
             phase: phase,
             recommendation: decoded.recommendation,
             quickReplies: replies,
-            overrides: overrides
+            overrides: overrides,
+            isFromAI: true
         )
     }
 
@@ -545,6 +554,7 @@ actor ChatService: ChatProviding {
     private let isProUnlocked: @Sendable () async -> Bool
     private let subscriberID: @Sendable () async -> String
     private let hasChatConsent: @Sendable () -> Bool
+    private let freeAIExchange: FreeChatAllowance
 
     init(
         transport: any ChatTransport = URLSessionChatTransport(),
@@ -552,7 +562,8 @@ actor ChatService: ChatProviding {
         timeout: TimeInterval = 20.0,
         isProUnlocked: @escaping @Sendable () async -> Bool = { await MainActor.run { PurchasesManager.shared.isProUnlocked } },
         subscriberID: @escaping @Sendable () async -> String = { await MainActor.run { PurchasesManager.shared.appUserID } },
-        hasChatConsent: @escaping @Sendable () -> Bool = { ChatConsent.isGranted }
+        hasChatConsent: @escaping @Sendable () -> Bool = { ChatConsent.isGranted },
+        freeAIExchange: FreeChatAllowance = .standard
     ) {
         self.transport = transport
         self.redactor = redactor
@@ -560,6 +571,7 @@ actor ChatService: ChatProviding {
         self.isProUnlocked = isProUnlocked
         self.subscriberID = subscriberID
         self.hasChatConsent = hasChatConsent
+        self.freeAIExchange = freeAIExchange
     }
 
     func describeDay(
@@ -578,9 +590,13 @@ actor ChatService: ChatProviding {
         // but only a verified Pro subscriber who has agreed to it may reach the
         // paid edge service. Without consent nothing leaves the device: the
         // fallback answers locally, so declining never breaks Chat.
+        // A free user's first exchange goes to the model too: if the first
+        // reply isn't a good one, people decide the app is dumb. The Worker
+        // enforces the same one-exchange allowance on its side.
         let isPro = await isProUnlocked()
+        let usesFreeExchange = !isPro && freeAIExchange.isAvailable()
         let hasConsent = hasChatConsent()
-        guard isPro, hasConsent else {
+        guard isPro || usesFreeExchange, hasConsent else {
             // Says which gate kept Chat on the device, so "AI replies aren't
             // showing" is one console line to diagnose rather than a guess.
             Self.logger.notice("Chat answered on device: isPro=\(isPro, privacy: .public) hasConsent=\(hasConsent, privacy: .public)")
@@ -591,6 +607,10 @@ actor ChatService: ChatProviding {
         // scrub as the new message. Redacting only `prompt` let "I'm pregnant"
         // through on the very next turn, as history.
         let sanitizedHistory = history.map { ChatTurnPayload(role: $0.role, text: redactor.sanitize($0.text)) }
+
+        // Spent before the call, as the Worker does, so a failure and a retry
+        // can't turn one free exchange into several.
+        if usesFreeExchange { freeAIExchange.markUsed() }
 
         do {
             return try await transport.sendChat(
@@ -904,7 +924,9 @@ nonisolated enum LocalStatefulChatEngine {
         else if lower.contains("staying in") || lower.contains("stay in") { filter = .canNotLeave }
 
         var requestedActivity: Activity?
-        if lower.contains("yoga") { requestedActivity = .yoga }
+        // Running first: "run and stretch" is a request for a run.
+        if lower.range(of: #"\b(run|runs|running|jog|jogging)\b"#, options: .regularExpression) != nil { requestedActivity = .running }
+        else if lower.contains("yoga") { requestedActivity = .yoga }
         else if lower.contains("pilates") { requestedActivity = .pilates }
         else if lower.contains("strength") || lower.contains("weight") || lower.contains("lift") { requestedActivity = .strength }
         else if lower.contains("stretch") { requestedActivity = .stretching }

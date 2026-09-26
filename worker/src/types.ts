@@ -50,4 +50,6 @@ export interface Env {
   CLOUDFLARE_API_TOKEN?: string;
   AI_SEARCH_INSTANCE_NAME?: string;
   ENVIRONMENT?: string;
+  /** Free AI chat exchanges allowed per day across everyone. See freeChat.ts. */
+  FREE_CHAT_DAILY_LIMIT?: string;
 }
