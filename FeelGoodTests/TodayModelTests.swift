@@ -191,6 +191,20 @@ struct TodayModelTests {
         #expect(model.menu.items.map(\.id) == before)
     }
 
+    @Test("Hiding from the end screen keeps what you just finished on today")
+    func hidingAfterFinishingLeavesTodayAlone() throws {
+        let model = model()
+        let item = try #require(model.menu.items.first)
+        let before = model.menu.items.map(\.id)
+
+        model.complete(item.session, startedAt: Fixture.now, feel: nil, now: Fixture.now)
+        model.hide(item.session, swappingOutOfMenu: false, now: Fixture.now)
+
+        #expect(model.isHidden(item.session.id))
+        #expect(model.menu.items.map(\.id) == before)
+        #expect(model.isCompleted(item))
+    }
+
     @Test("Turning something down is recorded quietly")
     func swappingIsRecorded() throws {
         let log = InMemorySessionLog()

@@ -524,13 +524,17 @@ final class TodayModel {
     // MARK: Hidden exercises ("Don't suggest this again")
 
     /// Permanently hides a session so it is never recommended by the engine.
-    /// If it is currently on Today's menu, it is immediately swapped out.
-    func hide(_ session: Session, now: Date = Date()) {
+    /// If it is currently on Today's menu, it is immediately swapped out —
+    /// unless `swappingOutOfMenu` is false, as it is from the end-of-session
+    /// screen: the thing somebody just finished stays on today as done, and
+    /// is only kept off the menus after it.
+    func hide(_ session: Session, swappingOutOfMenu: Bool = true, now: Date = Date()) {
         progressStore.clearProgress(for: session.id)
         inProgressSessionIDs.remove(session.id)
         profile.hiddenSessionIDs.insert(session.id)
         log.hideSession(session.id, at: now)
 
+        guard swappingOutOfMenu else { return }
         if let item = menu.items.first(where: { $0.session.id == session.id }) {
             let currentInput = input(now: now)
             if let replacement = engine.alternative(
