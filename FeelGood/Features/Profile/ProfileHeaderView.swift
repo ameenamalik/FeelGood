@@ -51,19 +51,11 @@ struct ProfileHeaderView: View {
     @AppStorage(ChatConsent.key) private var chatConsentRaw = ChatConsent.Status.notAsked.rawValue
 
     var body: some View {
-        VStack(alignment: .leading, spacing: FGSpace.m) {
-            identitySection
-            subscriptionRow
-            notificationsSection
-            if purchasesManager.isProUnlocked {
-                calendarPrivacySection
-                chatPrivacySection
-            } else {
-                calendarUpgradeSection
-            }
+        VStack(alignment: .leading, spacing: FGSpace.l) {
+            accountSection
+            preferencesSection
             accountDeletionSection
-            legalLinks
-            medicalDisclaimer
+            footerSection
         }
         .padding(FGSpace.page)
         .padding(.bottom, FGSpace.s)
@@ -238,6 +230,42 @@ struct ProfileHeaderView: View {
         } message: {
             Text("Your local profile preferences on this device have been cleared.")
         }
+    }
+
+    private var accountSection: some View {
+        VStack(alignment: .leading, spacing: FGSpace.s) {
+            sectionHeader("Account")
+            identitySection
+            subscriptionRow
+        }
+    }
+
+    private var preferencesSection: some View {
+        VStack(alignment: .leading, spacing: FGSpace.s) {
+            sectionHeader("Preferences")
+            notificationsSection
+            if purchasesManager.isProUnlocked {
+                calendarPrivacySection
+                chatPrivacySection
+            } else {
+                calendarUpgradeSection
+            }
+        }
+    }
+
+    private var footerSection: some View {
+        VStack(alignment: .leading, spacing: FGSpace.m) {
+            legalLinks
+            medicalDisclaimer
+        }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(FGFont.caption.weight(.semibold))
+            .foregroundStyle(FGColor.inkMuted)
+            .textCase(.uppercase)
+            .padding(.horizontal, FGSpace.xs)
     }
 
     // MARK: Identity
@@ -513,10 +541,12 @@ struct ProfileHeaderView: View {
     // MARK: Notifications
 
     private var notificationsSection: some View {
-        Toggle(isOn: Binding(
-            get: { notificationsEnabled },
-            set: { setNotificationsEnabled($0) }
-        )) {
+        HStack(spacing: FGSpace.s) {
+            Image(systemName: "bell")
+                .font(.title3)
+                .foregroundStyle(FGColor.goldDeep)
+                .accessibilityHidden(true)
+
             VStack(alignment: .leading, spacing: 3) {
                 Text("Notifications")
                     .font(FGFont.body.weight(.medium))
@@ -526,9 +556,17 @@ struct ProfileHeaderView: View {
                     .foregroundStyle(FGColor.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            Spacer(minLength: FGSpace.s)
+
+            Toggle("Notifications", isOn: Binding(
+                get: { notificationsEnabled },
+                set: { setNotificationsEnabled($0) }
+            ))
+            .labelsHidden()
+            .tint(FGColor.controlAccent)
+            .disabled(isUpdatingNotifications)
         }
-        .tint(FGColor.controlAccent)
-        .disabled(isUpdatingNotifications)
         .padding(FGSpace.m)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
@@ -722,12 +760,8 @@ struct ProfileHeaderView: View {
     // MARK: Account Deletion & Data
 
     private var accountDeletionSection: some View {
-        VStack(alignment: .leading, spacing: FGSpace.xs) {
-            Text("Account & Data")
-                .font(FGFont.caption.weight(.semibold))
-                .foregroundStyle(FGColor.inkMuted)
-                .textCase(.uppercase)
-                .padding(.horizontal, FGSpace.xs)
+        VStack(alignment: .leading, spacing: FGSpace.s) {
+            sectionHeader("Account & data")
 
             Button(role: .destructive) {
                 if authService.currentUser != nil {
@@ -782,15 +816,15 @@ struct ProfileHeaderView: View {
     // MARK: Legal
 
     private var legalLinks: some View {
-        VStack(alignment: .leading, spacing: FGSpace.xs) {
-            HStack(spacing: FGSpace.m) {
-                Link("Terms of Use", destination: LegalLinks.termsOfUse)
-                Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
-            }
-            HStack(spacing: FGSpace.m) {
-                Link("Contact Support", destination: LegalLinks.contactSupport)
-                Button("Acknowledgements") { isShowingAcknowledgements = true }
-            }
+        HStack(spacing: FGSpace.s + FGSpace.xs) {
+            Link("Terms", destination: LegalLinks.termsOfUse)
+                .accessibilityLabel("Terms of Use")
+            Link("Privacy", destination: LegalLinks.privacyPolicy)
+                .accessibilityLabel("Privacy Policy")
+            Link("Support", destination: LegalLinks.contactSupport)
+                .accessibilityLabel("Contact Support")
+            Button("Credits") { isShowingAcknowledgements = true }
+                .accessibilityLabel("Acknowledgements")
         }
         .font(FGFont.caption)
         .foregroundStyle(FGColor.inkMuted)
