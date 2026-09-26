@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PostHog
+import UniformTypeIdentifiers
 
 struct AddRoutineSheet: View {
     let model: TodayModel
@@ -31,6 +32,7 @@ struct AddRoutineSheet: View {
     @FocusState private var isPartTitleFocused: Bool
     @FocusState private var isPartCueFocused: Bool
     @FocusState private var focusedCuePartID: String?
+    @State private var draggingPartID: String?
 
     private static let partDurations = [1, 2, 3, 5, 10, 15, 20]
     private static let efforts: [(label: String, intensity: Int)] = [
@@ -151,48 +153,64 @@ struct AddRoutineSheet: View {
                                     .fixedSize(horizontal: false, vertical: true)
 
                                 ForEach($parts) { $part in
-                                    VStack(alignment: .leading, spacing: 0) {
-                                        HStack(spacing: FGSpace.s) {
-                                            TextField("Part name", text: $part.title)
-                                                .font(FGFont.body.weight(.medium))
-                                                .foregroundStyle(FGColor.ink)
-                                                .textFieldStyle(.plain)
-                                                .postHogMask()
+                                    HStack(alignment: .top, spacing: 0) {
+                                        dragHandle(for: part)
 
-                                            Picker("Duration", selection: $part.durationMin) {
-                                                ForEach(Self.durationOptions(including: part.durationMin), id: \.self) { minutes in
-                                                    Text("\(minutes) min").tag(minutes)
-                                                }
-                                            }
-                                            .pickerStyle(.menu)
-                                            .tint(FGColor.inkMuted)
+                                        VStack(alignment: .leading, spacing: 0) {
+                                            HStack(spacing: FGSpace.s) {
+                                                TextField("Part name", text: $part.title)
+                                                    .font(FGFont.body.weight(.medium))
+                                                    .foregroundStyle(FGColor.ink)
+                                                    .textFieldStyle(.plain)
+                                                    .postHogMask()
+                                                    .accessibilityActions {
+                                                        if canMove(part.id, by: -1) {
+                                                            Button("Move up") { move(part.id, by: -1) }
+                                                        }
+                                                        if canMove(part.id, by: 1) {
+                                                            Button("Move down") { move(part.id, by: 1) }
+                                                        }
+                                                    }
 
-                                            Button {
-                                                withAnimation(FGMotion.gentle) {
-                                                    parts.removeAll { $0.id == part.id }
+                                                Picker("Duration", selection: $part.durationMin) {
+                                                    ForEach(Self.durationOptions(including: part.durationMin), id: \.self) { minutes in
+                                                        Text("\(minutes) min").tag(minutes)
+                                                    }
                                                 }
-                                            } label: {
-                                                Image(systemName: "minus.circle.fill")
-                                                    .foregroundStyle(FGColor.inkMuted)
-                                                    .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
+                                                .pickerStyle(.menu)
+                                                .tint(FGColor.inkMuted)
+
+                                                Button {
+                                                    withAnimation(FGMotion.gentle) {
+                                                        parts.removeAll { $0.id == part.id }
+                                                    }
+                                                } label: {
+                                                    Image(systemName: "minus.circle.fill")
+                                                        .foregroundStyle(FGColor.inkMuted)
+                                                        .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
+                                                }
+                                                .buttonStyle(.plain)
+                                                .accessibilityLabel("Remove \(part.title)")
                                             }
-                                            .buttonStyle(.plain)
-                                            .accessibilityLabel("Remove \(part.title)")
+
+                                            cueField(text: Self.text($part.cue))
+                                                .focused($focusedCuePartID, equals: part.id)
+                                                .accessibilityLabel("How to do \(part.title)")
+                                                .padding(.trailing, FGSpace.m)
+                                                .padding(.bottom, 12)
                                         }
-
-                                        cueField(text: Self.text($part.cue))
-                                            .focused($focusedCuePartID, equals: part.id)
-                                            .accessibilityLabel("How to do \(part.title)")
-                                            .padding(.trailing, FGSpace.m)
-                                            .padding(.bottom, 12)
                                     }
-                                    .padding(.leading, FGSpace.m)
                                     .background(FGColor.surface)
                                     .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
                                             .strokeBorder(focusedCuePartID == part.id ? FGColor.clayDeep : .clear, lineWidth: 1.5)
                                     )
+                                    .onDrop(of: [.text], delegate: PartDropDelegate(
+                                        targetID: part.id,
+                                        parts: $parts,
+                                        draggingPartID: $draggingPartID
+                                    ))
                                 }
 
                                 VStack(alignment: .leading, spacing: 0) {
@@ -433,6 +451,41 @@ struct AddRoutineSheet: View {
         partDurations.contains(minutes) ? partDurations : (partDurations + [minutes]).sorted()
     }
 
+    /// Hold and drag to reorder. VoiceOver gets Move up / Move down as
+    /// actions on the row instead.
+    private func dragHandle(for part: CustomRoutinePart) -> some View {
+        Image(systemName: "line.3.horizontal")
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(FGColor.inkMuted)
+            .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
+            .contentShape(Rectangle())
+            .onDrag {
+                draggingPartID = part.id
+                return NSItemProvider(object: part.id as NSString)
+            } preview: {
+                Text(part.title.isEmpty ? "Part" : part.title)
+                    .font(FGFont.body.weight(.medium))
+                    .foregroundStyle(FGColor.ink)
+                    .padding(.horizontal, FGSpace.m)
+                    .padding(.vertical, 12)
+                    .background(FGColor.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous))
+            }
+            .accessibilityHidden(true)
+    }
+
+    private func canMove(_ id: String, by offset: Int) -> Bool {
+        guard let index = parts.firstIndex(where: { $0.id == id }) else { return false }
+        return parts.indices.contains(index + offset)
+    }
+
+    private func move(_ id: String, by offset: Int) {
+        guard canMove(id, by: offset), let index = parts.firstIndex(where: { $0.id == id }) else { return }
+        withAnimation(FGMotion.gentle) {
+            parts.swapAt(index, index + offset)
+        }
+    }
+
     private var canAddPart: Bool {
         !partTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -497,5 +550,32 @@ struct AddRoutineSheet: View {
 
         onSaved?(session)
         dismiss()
+    }
+}
+
+/// Live reordering while a part is dragged over its neighbours: the list
+/// shuffles as the finger moves, so the drop itself has nothing left to do.
+private struct PartDropDelegate: DropDelegate {
+    let targetID: String
+    @Binding var parts: [CustomRoutinePart]
+    @Binding var draggingPartID: String?
+
+    func dropEntered(info: DropInfo) {
+        guard let draggingPartID, draggingPartID != targetID,
+              let from = parts.firstIndex(where: { $0.id == draggingPartID }),
+              let to = parts.firstIndex(where: { $0.id == targetID })
+        else { return }
+        withAnimation(FGMotion.gentle) {
+            parts.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggingPartID = nil
+        return true
     }
 }
