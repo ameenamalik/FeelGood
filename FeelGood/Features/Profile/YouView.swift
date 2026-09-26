@@ -142,6 +142,15 @@ struct YouView: View {
             } label: {
                 Label("My account", systemImage: "person.crop.circle")
             }
+            #if DEBUG
+            // The hero's long-press is unreliable: most of that row is buttons,
+            // which take the gesture first. This is the dependable way in.
+            Button {
+                isDebugging = true
+            } label: {
+                Label("Debug menu", systemImage: "ladybug")
+            }
+            #endif
         } label: {
             Image(systemName: "gearshape")
                 .font(.system(size: 17, weight: .semibold))
