@@ -36,6 +36,9 @@ struct ExploreView: View {
     @AppStorage(ChatConsent.key) private var chatConsentRaw = ChatConsent.Status.notAsked.rawValue
     @State private var isShowingChatConsent = false
     @State private var routineDraft: RoutineDraft?
+    /// The message whose routine card opened the builder, so saving can mark
+    /// that card as done.
+    @State private var routineDraftMessageID: UUID?
 
     /// Whether the next message could be answered by the language model.
     private var canReachAI: Bool {
@@ -173,8 +176,11 @@ struct ExploreView: View {
                     text: "Saved. It's on your menu, and I'll offer it next time you ask.",
                     recommendation: LocalStatefulChatEngine.structuredRecommendation(for: session, reason: "One of your own routines.")
                 )
+                if let id = routineDraftMessageID, let index = messages.firstIndex(where: { $0.id == id }) {
+                    messages[index].isRoutineOfferSaved = true
+                }
+                routineDraftMessageID = nil
                 withAnimation(FGMotion.settle) { messages.append(saved) }
-                quickReplies.removeAll { $0.actionType == .buildRoutine }
                 savePersistedHistory()
             }
         }
@@ -316,8 +322,61 @@ struct ExploreView: View {
                         isCommitted: message.isCommittedToToday
                     )
                 }
+
+                if let request = message.routineOfferPrompt, let draft = RoutineDraft.from(prompt: request) {
+                    routineOfferCard(draft: draft, messageID: message.id, isSaved: message.isRoutineOfferSaved == true)
+                }
             }
         }
+    }
+
+    /// "We don't have that" becomes "make it yours": a card in the thread,
+    /// right under the reply, that opens the builder already filled in.
+    private func routineOfferCard(draft: RoutineDraft, messageID: UUID, isSaved: Bool) -> some View {
+        Button {
+            guard !isSaved else { return }
+            routineDraftMessageID = messageID
+            routineDraft = draft
+        } label: {
+            HStack(spacing: 14) {
+                // Deep fill with its paired type, so the glyph holds its
+                // contrast in every look and in dark mode.
+                Image(systemName: isSaved ? "checkmark" : "plus")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(isSaved ? FGColor.sageDeep : FGColor.onDeepFill)
+                    .frame(width: 40, height: 40)
+                    .background(isSaved ? FGColor.sagePanel : FGColor.userBubble, in: Circle())
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(isSaved ? "Saved to your menu" : "Make it your own routine")
+                        .font(.system(.headline, design: .rounded))
+                        .foregroundStyle(FGColor.ink)
+                    Text(isSaved
+                         ? "\(draft.title) · I'll offer it next time you ask."
+                         : "\(draft.title) · \(draft.durationMin) min. I'll fill it in, you tweak and save.")
+                        .font(.subheadline)
+                        .foregroundStyle(FGColor.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if !isSaved {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(FGColor.inkMuted)
+                }
+            }
+            .padding(16)
+            .background(FGColor.surface, in: RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
+                    .strokeBorder(FGColor.line, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.feelGoodPress)
+        .disabled(isSaved)
+        .accessibilityLabel(isSaved ? "Saved: \(draft.title)" : "Make it your own routine: \(draft.title), \(draft.durationMin) minutes")
+        .accessibilityHint(isSaved ? "" : "Opens the routine builder, already filled in")
     }
 
     private func assistantTextBubble(text: String) -> some View {
@@ -690,8 +749,8 @@ struct ExploreView: View {
 
                 var replyText = response.message
                 var card = response.recommendation
-                var chips = response.quickReplies
                 var isFromAI = response.isFromAI
+                var routineOfferPrompt: String?
                 // Boxing answered with a circuit is still "we don't have
                 // boxing": a card for a different kind of movement counts as
                 // no match, so their own routine or the builder is offered.
@@ -709,20 +768,20 @@ struct ExploreView: View {
                     card = LocalStatefulChatEngine.structuredRecommendation(for: own, reason: "One of your own routines.")
                     isFromAI = false
                 } else if isMissingWhatTheyAskedFor {
-                    chips.insert(
-                        QuickReplyAction(id: "build_routine", label: "Make it a routine", symbol: "plus.circle", actionType: .buildRoutine, payload: trimmed),
-                        at: 0
-                    )
+                    // In the conversation, not the chip row: it's the answer
+                    // to what they asked, so it sits with the reply.
+                    routineOfferPrompt = trimmed
                 }
 
                 let assistantMsg = ConversationMessage(
                     role: .assistant,
                     text: replyText,
                     recommendation: card,
-                    isFromAI: isFromAI
+                    isFromAI: isFromAI,
+                    routineOfferPrompt: routineOfferPrompt
                 )
                 withAnimation(FGMotion.settle) { messages.append(assistantMsg) }
-                quickReplies = chips
+                quickReplies = response.quickReplies
                 if !purchasesManager.isProUnlocked {
                     hasUsedFreeChatExchange = true
                 }

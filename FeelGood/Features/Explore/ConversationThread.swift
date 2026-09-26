@@ -23,6 +23,13 @@ nonisolated struct ConversationMessage: Identifiable, Codable, Sendable, Equatab
     /// Written by the language model. Optional so history saved before this
     /// existed still decodes; missing reads as "not AI".
     var isFromAI: Bool?
+    /// What the person asked for when Chat had nothing that fits it. Present
+    /// means the reply carries a "make it your own routine" card; the text is
+    /// what the draft is built from.
+    var routineOfferPrompt: String?
+    /// Set once the offered routine was saved, so the card says so instead
+    /// of inviting a second copy.
+    var isRoutineOfferSaved: Bool?
 
     init(
         id: UUID = UUID(),
@@ -31,7 +38,8 @@ nonisolated struct ConversationMessage: Identifiable, Codable, Sendable, Equatab
         timestamp: Date = Date(),
         recommendation: StructuredRecommendation? = nil,
         isCommittedToToday: Bool = false,
-        isFromAI: Bool? = nil
+        isFromAI: Bool? = nil,
+        routineOfferPrompt: String? = nil
     ) {
         self.id = id
         self.role = role
@@ -40,6 +48,7 @@ nonisolated struct ConversationMessage: Identifiable, Codable, Sendable, Equatab
         self.recommendation = recommendation
         self.isCommittedToToday = isCommittedToToday
         self.isFromAI = isFromAI
+        self.routineOfferPrompt = routineOfferPrompt
     }
 }
 
