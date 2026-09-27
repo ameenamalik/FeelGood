@@ -424,6 +424,28 @@ struct PlanEngineTests {
         #expect(sprinkledMenu.items.count <= PlanEngine.maxMenuItems)
     }
 
+    @Test("Guidance preference changes how many optional choices appear")
+    func guidancePreferenceShapesChoiceCount() {
+        func menu(_ preference: GuidancePreference) -> Menu {
+            Fixture.engine.makeMenu(PlanInput(
+                profile: Fixture.profile(
+                    guidancePreference: preference,
+                    moments: .aCouple
+                ),
+                checkIn: PlanCheckIn(energy: .steady, time: .plenty),
+                context: Fixture.context()
+            ))
+        }
+
+        let guided = menu(.gettingStarted)
+        let balanced = menu(.knowsWhatTheyEnjoy)
+        let companion = menu(.hasOwnRoutine)
+
+        #expect(guided.sides.isEmpty)
+        #expect(balanced.sides.count >= 1)
+        #expect(companion.sides.count >= balanced.sides.count)
+    }
+
     // MARK: - Scoring behaviour
 
     @Test("A low-energy day gets something gentle")

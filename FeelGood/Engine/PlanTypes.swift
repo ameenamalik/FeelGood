@@ -11,6 +11,23 @@ import Foundation
 
 // MARK: - Profile
 
+/// How much the menu should decide by default. This is about the person's
+/// relationship with FeelGood, not a fitness score; today's check-in can still
+/// ask for something different on any given day.
+nonisolated enum GuidancePreference: String, Codable, CaseIterable, Sendable {
+    case gettingStarted
+    case knowsWhatTheyEnjoy
+    case hasOwnRoutine
+
+    var sideCount: Int {
+        switch self {
+        case .gettingStarted: 0
+        case .knowsWhatTheyEnjoy: 1
+        case .hasOwnRoutine: 2
+        }
+    }
+}
+
 /// How often you *want* to move. Used for gentle balancing, never for grading.
 nonisolated enum Cadence: String, Codable, CaseIterable, Sendable {
     case everyDay, mostDays, fewTimesAWeek, whenICan
@@ -72,7 +89,11 @@ nonisolated enum SportPreference: String, Codable, CaseIterable, Sendable {
 
 /// The engine's view of the profile — the answers from onboarding (PRD §7.1).
 nonisolated struct PlanProfile: Hashable, Sendable {
+    var guidancePreference: GuidancePreference
     var availableActivities: Set<Activity>
+    /// Activities explicitly chosen by the person, before access-derived
+    /// activities are added. Used to make familiar movement lead when asked.
+    var preferredActivities: Set<Activity>
     var equipment: Set<Equipment>
     /// Where you can realistically be. Always includes `home`: there is always
     /// the floor you're standing on.
@@ -95,6 +116,8 @@ nonisolated struct PlanProfile: Hashable, Sendable {
 
     init(
         availableActivities: Set<Activity>,
+        preferredActivities: Set<Activity>? = nil,
+        guidancePreference: GuidancePreference = .knowsWhatTheyEnjoy,
         equipment: Set<Equipment> = [.none],
         places: Set<Place> = [.home],
         cadence: Cadence = .mostDays,
@@ -106,7 +129,9 @@ nonisolated struct PlanProfile: Hashable, Sendable {
         intents: Set<Intent>? = nil,
         hiddenSessionIDs: Set<String> = []
     ) {
+        self.guidancePreference = guidancePreference
         self.availableActivities = availableActivities
+        self.preferredActivities = preferredActivities ?? availableActivities
         self.equipment = equipment.union([.none])
         self.places = places.union([.home])
         self.cadence = cadence
@@ -380,4 +405,3 @@ nonisolated struct PlanInput: Hashable, Sendable {
         self.banditState = banditState
     }
 }
-

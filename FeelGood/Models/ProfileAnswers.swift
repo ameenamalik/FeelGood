@@ -2,7 +2,7 @@
 //  ProfileAnswers.swift
 //  FeelGood
 //
-//  The six answers from onboarding, in one value. Stored as given — what was
+//  The answers from onboarding, in one value. Stored as given — what was
 //  actually ticked — with everything the answers imply derived on the way out,
 //  so unticking the gym later takes the weights with it. See PRD §7.1.
 //
@@ -10,6 +10,7 @@
 import Foundation
 
 nonisolated struct ProfileAnswers: Hashable, Sendable {
+    var guidancePreference: GuidancePreference = .knowsWhatTheyEnjoy
     var activities: Set<Activity> = []
     /// Optional detail when the broad Sports activity is selected.
     var sports: Set<SportPreference> = []
@@ -63,6 +64,8 @@ nonisolated struct ProfileAnswers: Hashable, Sendable {
     var planProfile: PlanProfile {
         PlanProfile(
             availableActivities: availableActivities,
+            preferredActivities: activities,
+            guidancePreference: guidancePreference,
             equipment: availableEquipment,
             places: availablePlaces,
             cadence: cadence,

@@ -49,6 +49,17 @@ struct PersistenceTests {
         #expect(profile.planProfile.intents == [.strengthen, .calm])
     }
 
+    @Test("A profile preserves how much menu guidance was requested")
+    func profileStoresGuidancePreference() throws {
+        let context = try context()
+        let answers = ProfileAnswers(guidancePreference: .hasOwnRoutine)
+        let profile = UserProfile(answers: answers, now: Fixture.now)
+        context.insert(profile)
+
+        #expect(profile.answers.guidancePreference == .hasOwnRoutine)
+        #expect(profile.planProfile.guidancePreference == .hasOwnRoutine)
+    }
+
     @Test("A profile preserves its mascot appearance and safely falls back from unknown values")
     func profileStoresAvatar() throws {
         let context = try context()

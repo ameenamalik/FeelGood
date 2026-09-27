@@ -2,9 +2,9 @@
 //  OnboardingModel.swift
 //  FeelGood
 //
-//  Three cards, ninety seconds, framed around what's available to you rather than
+//  Four short cards, framed around what kind of support feels useful and what's available rather than
 //  around goals-as-metrics. Still no paywall here — Pro stays out of onboarding
-//  entirely, see PRD §10.1 — and these three cards themselves ask nothing about
+//  entirely, see PRD §10.1 — and these cards themselves ask nothing about
 //  an account; that optional ask waits until the first completed session. See
 //  PRD §7.1. Today's available time
 //  belongs in the daily check-in, so onboarding does not ask for it again.
@@ -17,10 +17,11 @@ import Observation
 final class OnboardingModel {
 
     enum Card: Int, CaseIterable {
-        case access, intent, workArounds
+        case guidance, access, intent, workArounds
 
         var title: String {
             switch self {
+            case .guidance: "Which sounds most like you?"
             case .access: "What do you have access to?"
             case .intent: "What are you moving toward?"
             case .workArounds: "Anything to work around?"
@@ -29,6 +30,7 @@ final class OnboardingModel {
 
         var detail: String? {
             switch self {
+            case .guidance: "Tap what sounds right. You can change it later."
             case .access: nil
             case .intent: "Pick one or more."
             case .workArounds: nil
@@ -37,7 +39,16 @@ final class OnboardingModel {
 
     }
 
-    private(set) var card: Card = .access
+    private(set) var card: Card = .guidance
+
+    /// `nil` until tapped so the first question never looks pre-answered.
+    var selectedGuidancePreference: GuidancePreference? {
+        didSet {
+            if let selectedGuidancePreference {
+                answers.guidancePreference = selectedGuidancePreference
+            }
+        }
+    }
 
     /// The answers themselves live in one value so the same six questions can
     /// be asked again later from the profile screen. See `ProfileAnswers`.
@@ -76,7 +87,7 @@ final class OnboardingModel {
         set { answers.workArounds = newValue }
     }
 
-    var isFirstCard: Bool { card == .access }
+    var isFirstCard: Bool { card == .guidance }
     var isLastCard: Bool { card == .workArounds }
 
     /// Slide one has three distinct inputs. Each needs an explicit answer so
@@ -87,6 +98,8 @@ final class OnboardingModel {
 
     var canAdvance: Bool {
         switch card {
+        case .guidance:
+            selectedGuidancePreference != nil
         case .access:
             accessSectionsAreComplete
         case .intent:
@@ -116,6 +129,25 @@ final class OnboardingModel {
 }
 
 // MARK: - Answer labels
+
+nonisolated extension GuidancePreference {
+    var label: String {
+        switch self {
+        case .gettingStarted: "I’m getting started"
+        case .knowsWhatTheyEnjoy: "I know what I enjoy"
+        case .hasOwnRoutine: "I have my own routine"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .gettingStarted: "I’d like clear guidance."
+        case .knowsWhatTheyEnjoy: "Help me narrow it down."
+        case .hasOwnRoutine: "Help me move around it."
+        }
+    }
+
+}
 
 nonisolated extension Cadence {
     var label: String {
@@ -185,6 +217,7 @@ nonisolated extension WorkAround {
         case .postpartum: "Postpartum"
         case .pelvicFloor: "Pelvic floor"
         case .fatigue: "Low energy or fatigue"
+        case .other: "Other"
         }
     }
 }
@@ -294,6 +327,7 @@ nonisolated extension WorkAround {
         case .pregnancy: "figure.and.child.holdinghands"
         case .postpartum: "figure.2.and.child.holdinghands"
         case .pelvicFloor: "figure.core.training"
+        case .other: "ellipsis.circle"
         }
     }
 }

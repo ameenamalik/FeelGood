@@ -27,38 +27,32 @@ struct DopamineMenuInfoSheet: View {
                         VStack(spacing: FGSpace.m) {
                             courseCard(
                                 title: "Appetizers",
-                                subtitle: "3–5 min quick wins",
-                                description: "Gentle warm-ups and micro-movements to break inertia when starting feels heavy.",
+                                subtitle: "3–5 min to get started",
                                 aura: .apricot,
                                 icon: "sun.max.fill"
                             )
 
                             courseCard(
                                 title: "Mains",
-                                subtitle: "10–30 min core sessions",
-                                description: "Pilates, strength, dance, or steady movement to build strength and shift your energy.",
+                                subtitle: "10–30 min movement",
                                 aura: .lilac,
                                 icon: "figure.cross.training"
                             )
 
                             courseCard(
                                 title: "Sides",
-                                subtitle: "5–15 min resets",
-                                description: "Stretches, posture breaks, and mobility to ease tension throughout your day.",
+                                subtitle: "5–15 min reset",
                                 aura: .sage,
                                 icon: "figure.flexibility"
                             )
 
                             courseCard(
                                 title: "Desserts",
-                                subtitle: "Pure joy & relaxation",
-                                description: "Breathwork, meditation, and gentle wind-downs that feel like a soothing reward.",
+                                subtitle: "Rest, breath, or joy",
                                 aura: .butter,
                                 icon: "sparkles"
                             )
                         }
-
-                        philosophyCard
 
                         if let onOpenCustomRoutines {
                             Button {
@@ -67,7 +61,7 @@ struct DopamineMenuInfoSheet: View {
                             } label: {
                                 HStack {
                                     Image(systemName: "plus.circle.fill")
-                                    Text("Add your own custom routines")
+                                    Text("Add a routine")
                                 }
                                 .font(FGFont.itemTitle)
                                 .frame(maxWidth: .infinity)
@@ -107,7 +101,7 @@ struct DopamineMenuInfoSheet: View {
                 .font(FGFont.display)
                 .foregroundStyle(FGColor.ink)
 
-            Text("Borrowed from ADHD and executive function design, a dopamine menu offers easy options without the pressure of deciding. You never have to finish every item — picking just one is a complete win.")
+            Text("Pick one thing. Leave the rest.")
                 .font(FGFont.body)
                 .foregroundStyle(FGColor.inkMuted)
                 .lineSpacing(3)
@@ -117,11 +111,10 @@ struct DopamineMenuInfoSheet: View {
     private func courseCard(
         title: String,
         subtitle: String,
-        description: String,
         aura: FGAura,
         icon: String
     ) -> some View {
-        VStack(alignment: .leading, spacing: FGSpace.xs) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: FGSpace.s) {
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
@@ -142,12 +135,6 @@ struct DopamineMenuInfoSheet: View {
 
                 Spacer()
             }
-
-            Text(description)
-                .font(FGFont.reason)
-                .foregroundStyle(FGColor.inkMuted)
-                .lineSpacing(2)
-                .padding(.top, 2)
         }
         .padding(FGSpace.m)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -161,32 +148,4 @@ struct DopamineMenuInfoSheet: View {
         )
     }
 
-    private var philosophyCard: some View {
-        HStack(alignment: .top, spacing: FGSpace.m) {
-            Image(systemName: "heart.fill")
-                .font(.system(size: 20))
-                .foregroundStyle(FGAura.blush.mid)
-                .padding(.top, 2)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Zero guilt, zero streaks")
-                    .font(FGFont.itemTitle)
-                    .foregroundStyle(FGColor.ink)
-
-                Text("Whether you do 3 minutes of stretching or a full 25-minute flow, you showed up for yourself. FeelGood gently notices your patterns, never your pauses.")
-                    .font(FGFont.reason)
-                    .foregroundStyle(FGColor.inkMuted)
-                    .lineSpacing(2)
-            }
-        }
-        .padding(FGSpace.m)
-        .background(
-            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
-                .fill(FGAura.blush.core.opacity(0.15))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
-                .strokeBorder(FGAura.blush.edge.opacity(0.3), lineWidth: 1)
-        )
-    }
 }

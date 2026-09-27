@@ -2,9 +2,7 @@
 //  DopamineMenuTourView.swift
 //  FeelGood
 //
-//  An interactive first-run tour introducing the Dopamine Menu concept,
-//  the 4 courses, swipe-to-swap, and zero-guilt philosophy when a user
-//  lands on the screen for the first time.
+//  A short first-run tour introducing the menu, swapping, and custom routines.
 //
 
 import SwiftUI
@@ -15,7 +13,7 @@ struct DopamineMenuTourView: View {
     @State private var currentStep = 0
     @Environment(\.dismiss) private var dismiss
 
-    private let totalSteps = 4
+    private let totalSteps = 3
 
     var body: some View {
         ZStack {
@@ -34,9 +32,6 @@ struct DopamineMenuTourView: View {
 
                     stepThree
                         .tag(2)
-
-                    stepFour
-                        .tag(3)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
 
@@ -80,12 +75,12 @@ struct DopamineMenuTourView: View {
                 .frame(height: 200)
 
             VStack(spacing: FGSpace.m) {
-                Text("Meet your Dopamine Menu")
+                Text("Your menu for today")
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
 
-                Text("Movement picked for your energy and time. Choose one thing — that counts.")
+                Text("Pick one. That counts.")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.inkMuted)
                     .multilineTextAlignment(.center)
@@ -105,48 +100,6 @@ struct DopamineMenuTourView: View {
         TourAddRoutineDemo(isActive: currentStep == 2)
     }
 
-    private var stepFour: some View {
-        VStack(spacing: FGSpace.l) {
-            Spacer()
-
-            ZStack {
-                Circle()
-                    .fill(FGAura.butter.core)
-                    .frame(width: 150, height: 150)
-                    .overlay {
-                        Circle()
-                            .strokeBorder(FGAura.butter.mid.opacity(0.7), lineWidth: 1)
-                    }
-
-                Image("IntentShowingUpBanana")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 130, height: 130)
-            }
-
-            VStack(spacing: FGSpace.s) {
-                Text("Zero guilt, zero streaks")
-                    .font(FGFont.display)
-                    .foregroundStyle(FGColor.ink)
-                    .multilineTextAlignment(.center)
-
-                Text("No guilt and no broken-streak alerts. FeelGood notices what helps — not how long you’ve been away.")
-                    .font(FGFont.body)
-                    .foregroundStyle(FGColor.inkMuted)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(3)
-                    .padding(.horizontal, FGSpace.s)
-
-                Text("Your body. Your pace. Always.")
-                    .font(FGFont.itemTitle)
-                    .foregroundStyle(FGColor.ink)
-                    .padding(.top, 4)
-            }
-
-            Spacer()
-        }
-    }
-
     // MARK: - Footer & Helpers
 
     private var footer: some View {
@@ -159,7 +112,7 @@ struct DopamineMenuTourView: View {
                 finish()
             }
         } label: {
-            Text(currentStep == totalSteps - 1 ? "Let's move!" : "Next")
+            Text(currentStep == totalSteps - 1 ? "Start" : "Next")
                 .font(FGFont.itemTitle)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
@@ -169,50 +122,6 @@ struct DopamineMenuTourView: View {
         }
         .buttonStyle(.feelGoodPress)
         .padding(.bottom, FGSpace.s)
-    }
-
-    private func courseRow(
-        title: String,
-        time: String,
-        subtitle: String,
-        icon: String,
-        aura: FGAura
-    ) -> some View {
-        HStack(spacing: FGSpace.m) {
-            Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(aura.mid)
-                .frame(width: 34, height: 34)
-                .background(aura.core.opacity(0.4))
-                .clipShape(Circle())
-
-            VStack(alignment: .leading, spacing: 2) {
-                HStack {
-                    Text(title)
-                        .font(FGFont.itemTitle)
-                        .foregroundStyle(FGColor.ink)
-
-                    Spacer()
-
-                    Text(time)
-                        .font(FGFont.label)
-                        .foregroundStyle(FGColor.inkMuted)
-                }
-
-                Text(subtitle)
-                    .font(FGFont.reason)
-                    .foregroundStyle(FGColor.inkMuted)
-            }
-        }
-        .padding(FGSpace.m)
-        .background(
-            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
-                .fill(FGColor.surface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
-                .strokeBorder(FGColor.line, lineWidth: 1)
-        )
     }
 
     private func finish() {
@@ -379,7 +288,7 @@ private struct TourCoursesSwapDemo: View {
             .accessibilityHidden(true)
 
             VStack(spacing: FGSpace.s) {
-                Text(phase == .courses ? "The 4 Courses" : "Swipe to swap anytime")
+                Text(phase == .courses ? "Four kinds of movement" : "Swap anything")
                     .font(FGFont.display)
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
@@ -387,8 +296,8 @@ private struct TourCoursesSwapDemo: View {
                     .transition(.opacity)
 
                 Text(phase == .courses
-                     ? "Pick one or two. Leave the rest."
-                     : "Not feeling a suggestion? Swipe left or tap Swap.")
+                     ? "Short starts, full sessions, resets, and rest."
+                     : "Swipe left or tap Swap.")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.inkMuted)
                     .multilineTextAlignment(.center)
@@ -498,12 +407,12 @@ private struct TourAddRoutineDemo: View {
                 .accessibilityHidden(true)
 
             VStack(spacing: FGSpace.s) {
-                Text("Tap + Routine to add your own")
+                Text("Add your own")
                     .font(FGFont.display)
                     .foregroundStyle(FGColor.ink)
                     .multilineTextAlignment(.center)
 
-                Text("Type any movement that isn’t on your menu, and it’s there whenever you want it.")
+                Text("Tap + Routine.")
                     .font(FGFont.body)
                     .foregroundStyle(FGColor.inkMuted)
                     .multilineTextAlignment(.center)
