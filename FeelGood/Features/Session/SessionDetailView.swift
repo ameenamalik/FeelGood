@@ -68,6 +68,10 @@ struct SessionDetailView: View {
 
                     benefitsSection
 
+                    if !previewSteps.isEmpty {
+                        SessionMovementPreview(steps: previewSteps)
+                    }
+
                     if !session.source.steps.isEmpty {
                         VStack(alignment: .leading, spacing: FGSpace.m) {
                             Divider()
@@ -222,6 +226,19 @@ struct SessionDetailView: View {
     }
 
     private var course: Course { session.course }
+
+    private var previewSteps: [Step] {
+        var includedGlossaryIDs = Set<String>()
+
+        return session.source.steps.filter { step in
+            guard let glossaryID = step.glossaryID,
+                  ExerciseDemo.hasDemo(for: glossaryID),
+                  includedGlossaryIDs.insert(glossaryID).inserted else {
+                return false
+            }
+            return true
+        }
+    }
 
     private func startOrResumeSession() {
         Analytics.capture("workout_started", properties: workoutProperties)
