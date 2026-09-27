@@ -156,6 +156,52 @@ struct AuthServiceTests {
         #expect(!defaults.bool(forKey: FirstRunFlow.hasSeenWelcomeSignUpKey))
     }
 
+    @Test("A fresh installation always requires onboarding")
+    func freshInstallationRequiresOnboarding() throws {
+        let suiteName = "InstallationFirstRunTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        #expect(InstallationFirstRun.prepare(defaults: defaults))
+        #expect(!defaults.bool(forKey: FirstRunFlow.hasSeenIntroKey))
+        #expect(!defaults.bool(forKey: FirstRunFlow.hasSeenWelcomeSignUpKey))
+    }
+
+    @Test("Finishing only the intro cannot bypass fresh-install onboarding")
+    func partialFreshInstallStillRequiresOnboarding() throws {
+        let suiteName = "InstallationFirstRunTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        #expect(InstallationFirstRun.prepare(defaults: defaults))
+        defaults.set(true, forKey: FirstRunFlow.hasSeenIntroKey)
+
+        #expect(InstallationFirstRun.prepare(defaults: defaults))
+        #expect(!defaults.bool(forKey: InstallationFirstRun.completedKey))
+    }
+
+    @Test("Completing onboarding keeps later launches out of first run")
+    func completedInstallationDoesNotRepeatOnboarding() throws {
+        let suiteName = "InstallationFirstRunTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        InstallationFirstRun.markCompleted(defaults: defaults)
+
+        #expect(!InstallationFirstRun.prepare(defaults: defaults))
+    }
+
+    @Test("Existing installs migrate without replaying onboarding")
+    func existingInstallMigratesFirstRunMarker() throws {
+        let suiteName = "InstallationFirstRunTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set(true, forKey: FirstRunFlow.hasSeenIntroKey)
+
+        #expect(!InstallationFirstRun.prepare(defaults: defaults))
+        #expect(defaults.bool(forKey: InstallationFirstRun.completedKey))
+    }
+
     @Test("mapFirebaseError maps code 17014 to requiresRecentLogin")
     func mapFirebaseErrorRequiresRecentLogin() {
         let nsError = NSError(domain: "FIRAuthErrorDomain", code: 17014, userInfo: [NSLocalizedDescriptionKey: "Recent login required"])

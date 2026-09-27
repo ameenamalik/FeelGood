@@ -24,6 +24,13 @@ nonisolated struct PlanWeights: Hashable, Sendable {
     /// asked for rather than a months-old onboarding answer.
     var todayIntentMatch: Double = 3.5
     var affinity: Double = 2.5
+    /// New movers get a calm first menu without being locked out of anything.
+    var gettingStartedGentleMatch: Double = 2.0
+    var gettingStartedIntensityPenalty: Double = -0.8
+    /// People who know their preferences should see those choices lead.
+    var preferredActivityMatch: Double = 1.5
+    /// A person's own routine leads when FeelGood is acting as a companion.
+    var ownRoutineMatch: Double = 4.0
     /// Per prior day in the variety window on which this activity was done.
     var repeatedActivity: Double = -2.5
     /// Per intensity point above `restfulIntensity` when recovery is owed.
@@ -138,7 +145,14 @@ nonisolated struct PlanEngine: Sendable {
 
         // How many small things belong on the menu is a shape question, not a
         // workload one: the same time, arranged to fit the day being described.
-        let sideCount = input.profile.moments.sideCount
+        let sideCount: Int = switch input.profile.guidancePreference {
+        case .gettingStarted:
+            0
+        case .knowsWhatTheyEnjoy:
+            input.profile.moments.sideCount
+        case .hasOwnRoutine:
+            max(2, input.profile.moments.sideCount)
+        }
         var sides: [MenuItem] = []
         if sideCount > 0 {
             for candidate in scored where candidate.session.course == .side {
@@ -493,6 +507,29 @@ nonisolated struct PlanEngine: Sendable {
             let over = max(0, session.intensity - weights.restfulIntensity)
             score += Double(over) * weights.highIntensityOnLowEnergy
             if restful { reasons.append(.lowEnergy) }
+        }
+
+        // The first onboarding answer changes how assertively the menu
+        // curates. It never changes eligibility or safety—only ranking and
+        // how many optional choices are assembled above.
+        switch input.profile.guidancePreference {
+        case .gettingStarted:
+            if restful {
+                score += weights.gettingStartedGentleMatch
+            } else {
+                let over = max(0, session.intensity - weights.restfulIntensity)
+                score += Double(over) * weights.gettingStartedIntensityPenalty
+            }
+        case .knowsWhatTheyEnjoy:
+            if input.profile.preferredActivities.contains(session.activity) {
+                score += weights.preferredActivityMatch
+            }
+        case .hasOwnRoutine:
+            if session.isOwn {
+                score += weights.ownRoutineMatch
+            } else if input.profile.preferredActivities.contains(session.activity) {
+                score += weights.preferredActivityMatch
+            }
         }
 
         // Time fit — use the time available without overrunning it.

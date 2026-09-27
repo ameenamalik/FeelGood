@@ -2,8 +2,7 @@
 //  ProductIntroView.swift
 //  FeelGood
 //
-//  Three quiet promises before onboarding: what FeelGood is, what it asks,
-//  and what it gives back — still no account gate on these three screens.
+//  Two quiet promises before onboarding: what FeelGood is and what it asks.
 //  `FirstRunFlow` below sequences intro → the onboarding quiz → the person's
 //  first menu. The optional account prompt comes only after the first completed
 //  session, when there is real progress worth saving; see PRD §7.0/§7.1.
@@ -11,6 +10,58 @@
 
 import SwiftUI
 import UIKit
+
+/// The local installation boundary for the welcome flow.
+///
+/// Firebase keeps authentication in the Keychain, which can survive deleting
+/// and reinstalling the app. A restored session must not be mistaken for proof
+/// that onboarding happened in this installation. This flag lives in the app
+/// container instead: deleting the app removes it, so the welcome flow wins
+/// before account restoration or a recovered profile can route to Today.
+@MainActor
+enum InstallationFirstRun {
+    static let completedKey = "FeelGood.InstallationOnboardingCompleted.v1"
+    private static let startedKey = "FeelGood.InstallationOnboardingStarted.v1"
+
+    /// Called once when `RootView` is created.
+    ///
+    /// `hasSeenProductIntro` migrates people who completed onboarding before
+    /// this installation marker existed. A real reinstall has neither local
+    /// key, even when Firebase restores its Keychain session.
+    static func prepare(defaults: UserDefaults = .standard) -> Bool {
+        if defaults.object(forKey: completedKey) != nil {
+            return !defaults.bool(forKey: completedKey)
+        }
+
+        // SwiftUI can recreate RootView after the product intro but before the
+        // quiz is finished. Once this installation has started onboarding,
+        // `hasSeenProductIntro` belongs to this run and is not legacy evidence.
+        if defaults.bool(forKey: startedKey) {
+            return true
+        }
+
+        if defaults.bool(forKey: FirstRunFlow.hasSeenIntroKey) {
+            defaults.set(true, forKey: completedKey)
+            return false
+        }
+
+        defaults.set(true, forKey: startedKey)
+        resetWelcomeState(defaults: defaults)
+        return true
+    }
+
+    static func markCompleted(defaults: UserDefaults = .standard) {
+        defaults.set(true, forKey: completedKey)
+        defaults.removeObject(forKey: startedKey)
+    }
+
+    private static func resetWelcomeState(defaults: UserDefaults) {
+        FirstRunFlow.resetForSignedOutUser(defaults: defaults)
+        defaults.set(false, forKey: "hasShownFirstCompletionAuthPrompt")
+        defaults.set(false, forKey: "hasShownFirstCompletionPaywall")
+        defaults.set(false, forKey: "hasSeenDopamineMenuTour")
+    }
+}
 
 struct FirstRunFlow: View {
     static let hasSeenIntroKey = "hasSeenProductIntro"
@@ -52,13 +103,11 @@ struct ProductIntroView: View {
     private enum Page: Int, CaseIterable {
         case promise
         case checkIn
-        case menu
 
         var buttonTitle: String {
             switch self {
             case .promise: "Next"
-            case .checkIn: "Continue"
-            case .menu: "Make it mine"
+            case .checkIn: "Start"
             }
         }
     }
@@ -128,7 +177,7 @@ struct ProductIntroView: View {
 
             Spacer()
 
-            if page == .menu {
+            if page == .checkIn {
                 Color.clear
                     .frame(width: 52, height: FGSize.minTouchTarget)
             } else {
@@ -161,8 +210,6 @@ struct ProductIntroView: View {
             promisePage
         case .checkIn:
             checkInPage
-        case .menu:
-            menuPage
         }
     }
 
@@ -192,18 +239,6 @@ struct ProductIntroView: View {
                 signalChip("10 min", aura: .apricot)
                 signalChip("Home", aura: .sage)
             }
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var menuPage: some View {
-        VStack(spacing: FGSpace.l) {
-            menuHero
-
-            introCopy(
-                title: "We’ll make the menu.",
-                detail: "One Main, a few Sides, and always something small enough to start."
-            )
         }
         .frame(maxWidth: .infinity)
     }
@@ -283,43 +318,6 @@ struct ProductIntroView: View {
         .accessibilityHidden(true)
     }
 
-    private var menuHero: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 82, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [FGAura.butter.core, FGAura.blush.core, FGAura.apricot.mid],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 282, height: 220)
-                .rotationEffect(.degrees(-4))
-
-            VStack(spacing: 7) {
-                miniMenuRow("Appetizer", color: FGColor.gold)
-                miniMenuRow("Main", color: FGColor.clay, isMain: true)
-                miniMenuRow("Side", color: FGColor.sage)
-                miniMenuRow("Dessert", color: FGColor.rose)
-            }
-            .padding(12)
-            .frame(width: 214)
-            .background(
-                RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .fill(FGColor.surface)
-                    .shadow(color: FGColor.ink.opacity(0.1), radius: 18, y: 9)
-            )
-
-            Image("IntentEnergyClementine")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 72, height: 72)
-                .offset(x: 118, y: 77)
-        }
-        .frame(maxWidth: .infinity, minHeight: heroHeight)
-        .accessibilityHidden(true)
-    }
-
     private var heroHeight: CGFloat {
         typeSize.isAccessibilitySize ? 228 : 250
     }
@@ -378,34 +376,6 @@ struct ProductIntroView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-        )
-    }
-
-    private func miniMenuRow(
-        _ title: String,
-        color: Color,
-        isMain: Bool = false
-    ) -> some View {
-        HStack(spacing: 8) {
-            Circle()
-                .fill(color)
-                .frame(width: isMain ? 12 : 9, height: isMain ? 12 : 9)
-
-            Text(title)
-                .font(.system(size: isMain ? 13 : 11, weight: isMain ? .semibold : .medium, design: .rounded))
-                .foregroundStyle(isMain ? FGColor.inkOnAccent : FGColor.ink)
-
-            Spacer(minLength: 0)
-
-            Capsule()
-                .fill(FGColor.line)
-                .frame(width: isMain ? 48 : 32, height: 5)
-        }
-        .padding(.horizontal, 10)
-        .frame(height: isMain ? 40 : 31)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(isMain ? FGAura.apricot.core : FGColor.bg.opacity(0.78))
         )
     }
 

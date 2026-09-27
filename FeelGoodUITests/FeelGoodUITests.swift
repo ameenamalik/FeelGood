@@ -41,17 +41,20 @@ final class FeelGoodUITests: XCTestCase {
         // quiz when a previous UI-test launch already finished the intro.
         if introNext.waitForExistence(timeout: 2), app.buttons["Skip"].exists {
             introNext.tap()
-            let continueButton = app.buttons["Continue"]
-            XCTAssertTrue(continueButton.waitForExistence(timeout: 5))
-            continueButton.tap()
-            let makeItMine = app.buttons["Make it mine"]
-            XCTAssertTrue(makeItMine.waitForExistence(timeout: 5))
-            makeItMine.tap()
+            let startButton = app.buttons["Start"]
+            XCTAssertTrue(startButton.waitForExistence(timeout: 5))
+            startButton.tap()
         }
 
         let continueAsGuest = app.buttons["Not now — just show me today"]
         if continueAsGuest.waitForExistence(timeout: 3) {
             continueAsGuest.tap()
+        }
+
+        let guidance = app.buttons["I’m getting started, I’d like clear guidance."]
+        if guidance.waitForExistence(timeout: 5) {
+            guidance.tap()
+            app.buttons["Next"].tap()
         }
 
         let pilates = app.buttons["Pilates"]
@@ -61,6 +64,7 @@ final class FeelGoodUITests: XCTestCase {
         app.buttons["At home"].tap()
         app.buttons["Next"].tap()
 
+        app.buttons["Energy"].tap()
         app.buttons["Next"].tap()
         app.buttons["Show me today"].tap()
 

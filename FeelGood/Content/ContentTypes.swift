@@ -117,7 +117,7 @@ nonisolated enum WorkAround: String, Codable, CaseIterable, Sendable {
     // both the onboarding and profile-edit chip UIs). Universal categories
     // lead; the reproductive-health ones are last rather than first, so the
     // single most sensitive screen in the app doesn't open on them.
-    case lowBack, knees, wrists, fatigue, pregnancy, postpartum, pelvicFloor
+    case lowBack, knees, wrists, fatigue, pregnancy, postpartum, pelvicFloor, other
 }
 
 /// The emotional or physiological feeling/shift the user wants out of the movement.

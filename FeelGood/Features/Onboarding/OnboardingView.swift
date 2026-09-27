@@ -110,6 +110,20 @@ struct OnboardingView: View {
     @ViewBuilder
     private var answers: some View {
         switch model.card {
+        case .guidance:
+            VStack(spacing: FGSpace.m) {
+                ForEach(GuidancePreference.allCases, id: \.self) { preference in
+                    GuidancePreferenceCard(
+                        preference: preference,
+                        isSelected: model.selectedGuidancePreference == preference
+                    ) {
+                        // An immediate state change avoids a dark-mode flash
+                        // while one card loses its fill and another gains it.
+                        model.selectedGuidancePreference = preference
+                    }
+                }
+            }
+
         case .access:
             AccessChoices(
                 activities: $model.activities,
@@ -161,6 +175,12 @@ struct OnboardingView: View {
                     .font(FGFont.caption)
                     .foregroundStyle(FGColor.inkMuted)
                     .padding(.top, FGSpace.s)
+
+                if model.workArounds.contains(.other) {
+                    Text("We can’t tailor an unspecified need. Skip anything that doesn’t feel right.")
+                        .font(FGFont.caption)
+                        .foregroundStyle(FGColor.inkMuted)
+                }
             }
         }
     }
@@ -235,27 +255,35 @@ struct OnboardingView: View {
 
     private var footer: some View {
         VStack(spacing: FGSpace.s) {
-            if !model.canAdvance {
-                Text(model.card == .intent ? "Pick at least one." : "Pick at least one in each section.")
-                    .font(FGFont.caption)
-                    .foregroundStyle(FGColor.inkMuted)
-            }
-
-            if !model.isFirstCard {
-                FGQuietButton("Back", systemImage: "chevron.left") {
-                    model.goBack()
+            HStack(spacing: FGSpace.s) {
+                if !model.isFirstCard {
+                    Button {
+                        model.goBack()
+                    } label: {
+                        Label("Back", systemImage: "chevron.left")
+                            .font(FGFont.body.weight(.medium))
+                            .foregroundStyle(FGColor.ink)
+                            .frame(minWidth: 92, minHeight: 56)
+                            .padding(.horizontal, FGSpace.s)
+                            .background(FGColor.surface, in: Capsule())
+                            .overlay {
+                                Capsule()
+                                    .strokeBorder(FGColor.lineStrong, lineWidth: 1.5)
+                            }
+                    }
+                    .buttonStyle(.feelGoodPress)
                 }
-            }
 
-            FGPrimaryButton(
-                title: model.isLastCard ? "Show me today" : "Next",
-                isEnabled: model.canAdvance
-            ) {
-                if model.isLastCard {
-                    Analytics.capture("onboarding_completed")
-                    onFinish(model)
-                } else {
-                    model.advance()
+                FGPrimaryButton(
+                    title: model.isLastCard ? "Show me today" : "Next",
+                    isEnabled: model.canAdvance
+                ) {
+                    if model.isLastCard {
+                        Analytics.capture("onboarding_completed")
+                        onFinish(model)
+                    } else {
+                        model.advance()
+                    }
                 }
             }
 
@@ -266,4 +294,96 @@ struct OnboardingView: View {
 
 #Preview {
     OnboardingView { _ in }
+}
+
+private struct GuidancePreferenceCard: View {
+    let preference: GuidancePreference
+    let isSelected: Bool
+    let action: () -> Void
+
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var aura: FGAura {
+        switch preference {
+        case .gettingStarted: .blush
+        case .knowsWhatTheyEnjoy: .sage
+        case .hasOwnRoutine: .apricot
+        }
+    }
+
+    private var artworkName: String {
+        switch preference {
+        case .gettingStarted: "IntentShowingUpBanana"
+        case .knowsWhatTheyEnjoy: "IntentMobilityPear"
+        case .hasOwnRoutine: "IntentStrengthPlum"
+        }
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: FGSpace.m) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(preference.label)
+                        .font(.system(.title3, design: .rounded).weight(.bold))
+                        .foregroundStyle(FGColor.inkOnAccent)
+                        .multilineTextAlignment(.leading)
+
+                    Text(preference.detail)
+                        .font(FGFont.reason)
+                        .foregroundStyle(FGColor.inkOnAccent)
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if !typeSize.isAccessibilitySize {
+                    Image(artworkName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 94, height: 94)
+                        .accessibilityHidden(true)
+                }
+            }
+            .padding(.leading, FGSpace.l)
+            .padding(.trailing, FGSpace.m)
+            .padding(.vertical, FGSpace.s)
+            .frame(
+                maxWidth: .infinity,
+                minHeight: typeSize.isAccessibilitySize ? nil : 120,
+                alignment: .leading
+            )
+            .background(
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: cardColors,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .strokeBorder(
+                        isSelected ? selectedBorder : FGColor.inkOnAccent.opacity(0.24),
+                        lineWidth: isSelected ? 5 : 1.5
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(preference.label), \(preference.detail)")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    private var selectedBorder: Color {
+        colorScheme == .dark ? FGColor.ink : FGColor.inkOnAccent
+    }
+
+    private var cardColors: [Color] {
+        if isSelected {
+            [aura.mid, aura.edge.opacity(0.9)]
+        } else {
+            [FGColor.neutralChoiceFill, FGColor.neutralChoiceFill]
+        }
+    }
 }

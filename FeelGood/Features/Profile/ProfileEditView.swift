@@ -2,7 +2,7 @@
 //  ProfileEditView.swift
 //  FeelGood
 //
-//  The same six answers, asked again. Lives here rather than in a settings
+//  The same onboarding answers, editable later. Lives here rather than in a settings
 //  screen full of switches: nothing on it is a setting, it is all just what is
 //  true for you now. See PRD §7.1.
 //
@@ -43,6 +43,14 @@ struct ProfileEditView: View {
                         Text("Change anything. Today's menu follows.")
                             .font(FGFont.reason)
                             .foregroundStyle(FGColor.inkMuted)
+                    }
+
+                    section("Which sounds most like you?") {
+                        choices(
+                            GuidancePreference.allCases,
+                            label: \.label,
+                            selection: $answers.guidancePreference
+                        )
                     }
 
                     section("What do you have access to?") {
@@ -121,6 +129,12 @@ struct ProfileEditView: View {
                                 ) {
                                     withAnimation(FGMotion.gentle) { answers.workArounds = [] }
                                 }
+                            }
+
+                            if answers.workArounds.contains(.other) {
+                                Text("We can’t tailor an unspecified need. Skip anything that doesn’t feel right.")
+                                    .font(FGFont.caption)
+                                    .foregroundStyle(FGColor.inkMuted)
                             }
                         }
                         // `pregnancy`, `postpartum` and `pelvicFloor` are on this

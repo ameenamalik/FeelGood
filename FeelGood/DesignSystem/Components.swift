@@ -510,12 +510,12 @@ struct FGPill: View {
 private struct ChoiceGridPreview: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    @State private var selected = "Steady"
+    @State private var selected = "Medium"
 
     private let options = [
-        ("Depleted", "cloud"),
-        ("Steady", "cloud.sun"),
-        ("Energized", "sun.max")
+        ("Low", "cloud"),
+        ("Medium", "cloud.sun"),
+        ("High", "sun.max")
     ]
 
     var body: some View {

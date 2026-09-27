@@ -120,6 +120,22 @@ struct RootView: View {
     @State private var accountReloadID = UUID()
     @State private var accountSyncError: String?
     @State private var isSyncingAccount = false
+    /// Account credentials may survive an uninstall in the Keychain. Keep the
+    /// installation's welcome flow in front of both that restored session and
+    /// any profile state until the person finishes onboarding on this install.
+    @State private var requiresInstallationOnboarding: Bool
+
+    init(content: ContentStore?) {
+        self.content = content
+        #if DEBUG
+        let isExplicitlySeeded = ProcessInfo.processInfo.arguments.contains("-FGSeedProfile")
+        _requiresInstallationOnboarding = State(
+            initialValue: isExplicitlySeeded ? false : InstallationFirstRun.prepare()
+        )
+        #else
+        _requiresInstallationOnboarding = State(initialValue: InstallationFirstRun.prepare())
+        #endif
+    }
 
     var body: some View {
         Group {
@@ -143,6 +159,8 @@ struct RootView: View {
                 return
             }
 
+            guard !requiresInstallationOnboarding else { return }
+
             // Keep OneSignal's user identity aligned with Firebase so a person's
             // notification history and targeting follow their account, not a device.
             OneSignalManager.shared.login(externalId: userID)
@@ -157,7 +175,8 @@ struct RootView: View {
             }
         }
         .onChange(of: profiles.count) { _, count in
-            guard count > 0,
+            guard !requiresInstallationOnboarding,
+                  count > 0,
                   let userID = authService.currentUser?.uid,
                   let content else { return }
             runAccountSync {
@@ -243,7 +262,9 @@ struct RootView: View {
     @ViewBuilder
     private var routedContent: some View {
         if let content {
-            if let profile = profiles.first {
+            if requiresInstallationOnboarding {
+                FirstRunFlow(onFinish: finishInstallationOnboarding)
+            } else if let profile = profiles.first {
                 TodayScreen(
                     content: content,
                     profile: profile,
@@ -264,6 +285,29 @@ struct RootView: View {
                 systemImage: "leaf",
                 description: Text("Reinstalling the app should fix it.")
             )
+        }
+    }
+
+    @MainActor
+    private func finishInstallationOnboarding(_ onboarding: OnboardingModel) {
+        let now = Date()
+        if let restoredProfile = profiles.first {
+            // A profile may have survived through an account restore or device
+            // backup. Keep its identity and history, but the answers just given
+            // in this installation are authoritative for today's menu.
+            restoredProfile.apply(onboarding.answers, now: now)
+        } else {
+            context.insert(onboarding.makeRecord(now: now))
+        }
+        try? context.save()
+
+        InstallationFirstRun.markCompleted()
+        requiresInstallationOnboarding = false
+
+        guard let user = authService.currentUser, let content else { return }
+        OneSignalManager.shared.login(externalId: user.uid)
+        Task {
+            await handleAccountArrival(user: user, userID: user.uid, content: content)
         }
     }
 
@@ -386,7 +430,12 @@ private struct TodayScreen: View {
             // Keep one page surface alive while destinations switch. The tab
             // views are created lazily, so without this layer their first
             // rendered frame can briefly expose the system background.
-            FGColor.bg.ignoresSafeArea()
+            FGColor.bg
+                .ignoresSafeArea()
+                // This surface outlives every tab. Recreate only the surface
+                // when the look changes so it cannot keep Moss behind an
+                // already-refreshed Indigo screen (or vice versa).
+                .id(effectiveTheme)
 
             tabView
         }

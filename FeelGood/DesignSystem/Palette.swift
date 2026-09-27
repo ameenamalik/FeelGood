@@ -83,6 +83,11 @@ nonisolated enum FGColor {
     static let authChoiceFill = Color(light: 0xFFFFFF, dark: 0xF6EFE3)
     static let onAuthChoiceFill = Color(light: 0x2A1E18, dark: 0x2A1E18)
 
+    /// A neutral, intentionally light answer card in either appearance. Its
+    /// type uses `inkOnAccent`, so an unselected choice can recede beside a
+    /// colored selection without turning into low-contrast dark-on-dark UI.
+    static let neutralChoiceFill = Color(light: 0xF8F3EA, dark: 0xF3EDE0)
+
     /// Interactive controls whose fill must carry a white system affordance
     /// (for example, the thumb of a Toggle). Unlike the pastel accents below,
     /// this stays dark enough for that affordance in both appearances while

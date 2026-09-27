@@ -16,6 +16,7 @@ import WidgetKit
 
 @Model
 final class UserProfile {
+    var guidancePreferenceRaw: String = GuidancePreference.knowsWhatTheyEnjoy.rawValue
     var activitiesRaw: [String]
     var sportsRaw: [String] = []
     var equipmentRaw: [String]
@@ -66,6 +67,7 @@ final class UserProfile {
 
     init(answers: ProfileAnswers, reminderHour: Int? = nil, now: Date) {
         let intentValues = answers.intents.map(\.rawValue).sorted()
+        guidancePreferenceRaw = answers.guidancePreference.rawValue
         activitiesRaw = answers.activities.map(\.rawValue).sorted()
         sportsRaw = answers.sports.map(\.rawValue).sorted()
         equipmentRaw = answers.equipment.map(\.rawValue).sorted()
@@ -89,6 +91,7 @@ final class UserProfile {
     /// plans a day.
     var answers: ProfileAnswers {
         ProfileAnswers(
+            guidancePreference: GuidancePreference(rawValue: guidancePreferenceRaw) ?? .knowsWhatTheyEnjoy,
             activities: Set(activitiesRaw.compactMap(Activity.init(rawValue:))),
             sports: Set(sportsRaw.compactMap(SportPreference.init(rawValue:))),
             equipment: Set(equipmentRaw.compactMap(Equipment.init(rawValue:))).union([.none]),
@@ -112,6 +115,7 @@ final class UserProfile {
     /// Changing your mind is a normal thing to do, and the menu should follow
     /// the same day. `updatedAt` is what the root view re-keys on.
     func apply(_ answers: ProfileAnswers, now: Date) {
+        guidancePreferenceRaw = answers.guidancePreference.rawValue
         activitiesRaw = answers.activities.map(\.rawValue).sorted()
         sportsRaw = answers.sports.map(\.rawValue).sorted()
         equipmentRaw = answers.equipment.map(\.rawValue).sorted()

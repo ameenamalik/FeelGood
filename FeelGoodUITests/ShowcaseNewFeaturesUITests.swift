@@ -3,7 +3,7 @@
 //  FeelGoodUITests
 //
 //  Automated UI test capturing screenshots and verifying all 6 UX friction improvements:
-//  1. Dopamine Menu Tour (first-run preview slides 1-4)
+//  1. Dopamine Menu Tour (first-run preview slides 1-3)
 //  2. Today Tab with new subtitle & swap affordances
 //  3. Session Detail with "Why this feels good" benefits
 //  4. Check-In Sheet with clarified time & expectation prompts
@@ -52,15 +52,9 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
                 saveScreenshot(app, name: "tour_slide_3_swap")
             }
 
-            if nextButton.waitForExistence(timeout: 2) {
-                nextButton.tap()
-                sleep(1)
-                saveScreenshot(app, name: "tour_slide_4_zeroguilt")
-            }
-
-            let letsMove = app.buttons["Let's move!"]
-            if letsMove.waitForExistence(timeout: 3) {
-                letsMove.tap()
+            let start = app.buttons["Start"]
+            if start.waitForExistence(timeout: 3) {
+                start.tap()
                 sleep(1)
             }
         }
@@ -69,14 +63,16 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
         let introNext = app.buttons["Next"]
         if introNext.waitForExistence(timeout: 2), app.buttons["Skip"].exists {
             introNext.tap()
-            let continueButton = app.buttons["Continue"]
-            if continueButton.waitForExistence(timeout: 3) {
-                continueButton.tap()
+            let startButton = app.buttons["Start"]
+            if startButton.waitForExistence(timeout: 3) {
+                startButton.tap()
             }
-            let makeItMine = app.buttons["Make it mine"]
-            if makeItMine.waitForExistence(timeout: 3) {
-                makeItMine.tap()
-            }
+        }
+
+        let gettingStarted = app.buttons["I’m getting started, I’d like clear guidance."]
+        if gettingStarted.waitForExistence(timeout: 3) {
+            gettingStarted.tap()
+            app.buttons["Next"].tap()
         }
 
         // Onboarding Goal Selection (Cube contrast verification)
@@ -144,9 +140,9 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
         app.launch()
 
         // 1. Dismiss any intro sheets if needed
-        let letsMove = app.buttons["Let's move!"]
-        if letsMove.waitForExistence(timeout: 2) {
-            letsMove.tap()
+        let start = app.buttons["Start"]
+        if start.waitForExistence(timeout: 2) {
+            start.tap()
             sleep(1)
         }
 
@@ -216,14 +212,11 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
                 sleep(1)
                 saveScreenshot(app, name: "tour_slide_3_swap_updated")
 
-                nextBtn.tap()
-                sleep(1)
-                saveScreenshot(app, name: "tour_slide_4_zeroguilt_updated")
             }
 
-            let letsMove = app.buttons["Let's move!"]
-            if letsMove.waitForExistence(timeout: 3) {
-                letsMove.tap()
+            let start = app.buttons["Start"]
+            if start.waitForExistence(timeout: 3) {
+                start.tap()
             }
         }
     }

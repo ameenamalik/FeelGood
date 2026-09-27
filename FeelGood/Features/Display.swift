@@ -223,9 +223,9 @@ nonisolated extension Session {
 nonisolated extension Energy {
     var checkInLabel: String {
         switch self {
-        case .low: "Depleted"
-        case .steady: "Steady"
-        case .strong: "Energized"
+        case .low: "Low"
+        case .steady: "Medium"
+        case .strong: "High"
         }
     }
 

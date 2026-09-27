@@ -237,6 +237,7 @@ enum AccountDataSyncService {
 
     static func preferenceData(from profile: UserProfile) -> [String: Any] {
         var data: [String: Any] = [
+            "guidancePreference": profile.guidancePreferenceRaw,
             "activities": profile.activitiesRaw,
             "sports": profile.sportsRaw,
             "equipment": profile.equipmentRaw,
@@ -261,6 +262,8 @@ enum AccountDataSyncService {
     static func apply(_ data: [String: Any], to profile: UserProfile) {
         let current = profile.answers
         let answers = ProfileAnswers(
+            guidancePreference: (data["guidancePreference"] as? String)
+                .flatMap(GuidancePreference.init(rawValue:)) ?? current.guidancePreference,
             activities: decodedSet(data["activities"], fallback: current.activities),
             sports: decodedSet(data["sports"], fallback: current.sports),
             equipment: decodedSet(data["equipment"], fallback: current.equipment),

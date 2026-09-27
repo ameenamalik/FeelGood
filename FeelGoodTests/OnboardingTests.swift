@@ -73,6 +73,12 @@ struct OnboardingTests {
         let model = OnboardingModel()
         #expect(!model.canAdvance)
 
+        model.selectedGuidancePreference = .knowsWhatTheyEnjoy
+        #expect(model.canAdvance)
+        model.advance()
+        #expect(model.card == .access)
+        #expect(!model.canAdvance)
+
         model.activities = [.walking]
         #expect(!model.canAdvance)
 
@@ -86,6 +92,8 @@ struct OnboardingTests {
     @Test("Onboarding skips cadence and uses gentle defaults")
     func cadenceUsesDefaults() {
         let model = OnboardingModel()
+        model.selectedGuidancePreference = .knowsWhatTheyEnjoy
+        model.advance()
         model.activities = [.walking]
         model.equipment = [.none]
         model.places = [.home]
@@ -97,6 +105,19 @@ struct OnboardingTests {
         #expect(model.canAdvance)
         #expect(model.makeProfile().cadence == .mostDays)
         #expect(model.makeProfile().moments == .aCouple)
+    }
+
+    @Test("The first answer is required and reaches the planning profile")
+    func guidancePreferenceIsExplicit() {
+        let model = OnboardingModel()
+
+        #expect(model.card == .guidance)
+        #expect(!model.canAdvance)
+
+        model.selectedGuidancePreference = .hasOwnRoutine
+
+        #expect(model.canAdvance)
+        #expect(model.makeProfile().guidancePreference == .hasOwnRoutine)
     }
 
     @Test("Energy is not preselected on onboarding")

@@ -49,6 +49,8 @@ enum Fixture {
     /// realistic profile never names them.
     static func profile(
         activities: Set<Activity> = [.pilates, .walking, .strength, .stretching, .dance],
+        preferredActivities: Set<Activity>? = nil,
+        guidancePreference: GuidancePreference = .knowsWhatTheyEnjoy,
         equipment: Set<Equipment> = [.none, .mat, .weights, .outdoor],
         places: Set<Place> = [.home, .outdoors, .gym],
         cadence: Cadence = .mostDays,
@@ -62,6 +64,8 @@ enum Fixture {
     ) -> PlanProfile {
         PlanProfile(
             availableActivities: activities,
+            preferredActivities: preferredActivities,
+            guidancePreference: guidancePreference,
             equipment: equipment,
             places: places,
             cadence: cadence,
