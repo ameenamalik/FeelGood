@@ -20,8 +20,11 @@ way, and CC BY-SA applies to distribution, not to what is on screen.
 
 ### Covered files
 
-All 308 frame sets (924 files). Sets marked with a glossary entry can appear
-in the player today; the rest are on disk for sessions not yet written.
+All 306 frame sets (918 files) sourced from Workout Guide / Everkinetic. Sets
+marked with a glossary entry can appear in the player today; the rest are on
+disk for sessions not yet written. This excludes `wall-angels` and
+`qigong-lifting-the-sky` — see "Original AI-generated art" below; those two
+are not from this license and do not carry it.
 
 - `ab-wheel-1.png`, `ab-wheel-2.png`, `ab-wheel-3.png`
 - `active-hang-1.png`, `active-hang-2.png`, `active-hang-3.png`
@@ -232,7 +235,6 @@ in the player today; the rest are on disk for sessions not yet written.
 - `push-press-1.png`, `push-press-2.png`, `push-press-3.png`
 - `push-up-1.png`, `push-up-2.png`, `push-up-3.png`
 - `push-up-shoulder-tap-1.png`, `push-up-shoulder-tap-2.png`, `push-up-shoulder-tap-3.png`
-- `qigong-lifting-the-sky-1.png`, `qigong-lifting-the-sky-2.png`, `qigong-lifting-the-sky-3.png`
 - `rack-pull-1.png`, `rack-pull-2.png`, `rack-pull-3.png`
 - `rear-delt-fly-1.png`, `rear-delt-fly-2.png`, `rear-delt-fly-3.png`
 - `reverse-crunch-1.png`, `reverse-crunch-2.png`, `reverse-crunch-3.png`
@@ -314,7 +316,6 @@ in the player today; the rest are on disk for sessions not yet written.
 - `v-up-1.png`, `v-up-2.png`, `v-up-3.png`
 - `walking-1.png`, `walking-2.png`, `walking-3.png`
 - `walking-lunge-1.png`, `walking-lunge-2.png`, `walking-lunge-3.png`
-- `wall-angels-1.png`, `wall-angels-2.png`, `wall-angels-3.png`
 - `wall-calf-stretch-1.png`, `wall-calf-stretch-2.png`, `wall-calf-stretch-3.png`
 - `wall-handstand-push-up-1.png`, `wall-handstand-push-up-2.png`, `wall-handstand-push-up-3.png`
 - `wall-push-up-1.png`, `wall-push-up-2.png`, `wall-push-up-3.png`
@@ -331,6 +332,20 @@ in the player today; the rest are on disk for sessions not yet written.
 - `worlds-greatest-stretch-1.png`, `worlds-greatest-stretch-2.png`, `worlds-greatest-stretch-3.png`
 - `wrist-curl-1.png`, `wrist-curl-2.png`, `wrist-curl-3.png`
 - `wrist-extension-1.png`, `wrist-extension-2.png`, `wrist-extension-3.png`
+
+## Original AI-generated art
+
+`wall-angels-1.png`/`-2.png`/`-3.png` and
+`qigong-lifting-the-sky-1.png`/`-2.png`/`-3.png` are **not** from Workout
+Guide or Everkinetic — neither move exists in the upstream repo or in
+`workout-guide-metadata.json`. They were generated with an image model in
+the same house line-art style (white strokes, transparent field, one
+figure, no props), per the Phase 3 pipeline in
+`docs/PLAYER_ANIMATION_PLAN.md`, to cover moves the licensed set doesn't
+have. They are original art: no CC BY-SA obligation, no third-party
+attribution owed. They were previously — incorrectly — listed under
+"Covered files" above as if unmodified licensed frames; that was wrong and
+has been corrected.
 
 ## Glossary coverage
 

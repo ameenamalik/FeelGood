@@ -13,9 +13,11 @@
 //
 //  Lottie is preferred where both exist. See ExerciseDemoView.
 //
-//  PNG artwork: Bryl Lim (https://bryllim.com), building on Everkinetic
-//  (https://github.com/everkinetic/data). CC BY-SA 4.0 — unmodified here.
-//  See FeelGood/Content/ExerciseDemos/ATTRIBUTION.md.
+//  PNG artwork: mostly Bryl Lim (https://bryllim.com), building on
+//  Everkinetic (https://github.com/everkinetic/data), CC BY-SA 4.0,
+//  unmodified. A few sets (e.g. wall-angels, qigong-lifting-the-sky) are
+//  original art generated in-house in the same style and carry no
+//  third-party license. See FeelGood/Content/ExerciseDemos/ATTRIBUTION.md.
 //
 
 import Foundation

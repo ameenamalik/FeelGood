@@ -16,7 +16,7 @@ struct AcknowledgementsView: View {
     var body: some View {
         Form {
             Section {
-                Text("The exercise illustrations in FeelGood's glossary are line-art frames adapted from Workout Guide by Bryl Lim, itself building on Everkinetic. Used unmodified, and licensed under Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0).")
+                Text("Most exercise illustrations in FeelGood's glossary are line-art frames adapted from Workout Guide by Bryl Lim, itself building on Everkinetic. Used unmodified, and licensed under Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0). A small number (Wall angels, Qigong: lifting the sky) are original art made in-house in the same style, and carry no third-party license.")
                 Link("bryllim.com", destination: URL(string: "https://bryllim.com")!)
                 Link("Workout Guide on GitHub", destination: URL(string: "https://github.com/bryllim/workout-guide")!)
                 Link("Everkinetic on GitHub", destination: URL(string: "https://github.com/everkinetic/data")!)
