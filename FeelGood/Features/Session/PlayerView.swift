@@ -25,6 +25,7 @@ struct PlayerView: View {
     let onResume: (SessionProgress) -> Void
     /// When Start was tapped, so the record reflects real elapsed time.
     let startedAt: Date
+    private let narrationService: any BreathingNarrationPlaying
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
@@ -101,7 +102,8 @@ struct PlayerView: View {
         onHide: (() -> Void)? = nil,
         onPause: @escaping (SessionProgress) -> Void,
         onResume: @escaping (SessionProgress) -> Void,
-        startedAt: Date
+        startedAt: Date,
+        narrationService: any BreathingNarrationPlaying = AVAudioPlayerNarrationService.shared
     ) {
         self.session = session
         self.onFinish = onFinish
@@ -109,6 +111,7 @@ struct PlayerView: View {
         self.onPause = onPause
         self.onResume = onResume
         self.startedAt = startedAt
+        self.narrationService = narrationService
 
         let steps = session.isOwn
             ? session.source.steps.map { $0.inferringVisual(from: glossary) }
@@ -1225,6 +1228,9 @@ struct PlayerView: View {
         breathingStartedAt = Date()
         breathingPausedAt = nil
         breathingAnchorIndex = index
+        if let narrationID = step?.narrationID {
+            narrationService.play(narrationID: narrationID)
+        }
     }
 
     /// Move the cycle's origin forward by the paused duration. Resuming then
@@ -1238,6 +1244,7 @@ struct PlayerView: View {
         if isRunning {
             breathingPausedAt = Date()
             isRunning = false
+            narrationService.pause()
         } else {
             let resumedAt = Date()
             if let breathingPausedAt {
@@ -1247,10 +1254,12 @@ struct PlayerView: View {
             }
             self.breathingPausedAt = nil
             isRunning = true
+            narrationService.resume()
         }
     }
 
     private func advance() {
+        narrationService.stop()
         setRestRemaining = 0
         setRestFillFraction = 0
         if index + 1 < steps.count {
@@ -1266,6 +1275,7 @@ struct PlayerView: View {
     }
 
     private func leave() {
+        narrationService.stop()
         let saved = currentProgress
         if !hasReportedPause {
             hasReportedPause = true
@@ -1298,6 +1308,7 @@ struct PlayerView: View {
 
     private func goBack() {
         guard !steps.isEmpty else { return }
+        narrationService.stop()
         setRestRemaining = 0
         setRestFillFraction = 0
         withAnimation(reduceMotion ? .none : FGMotion.gentle) {

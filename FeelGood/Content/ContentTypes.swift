@@ -252,6 +252,10 @@ nonisolated struct Step: Codable, Hashable, Sendable {
     /// Number of seconds from the start of the exercise when the person should switch sides.
     /// Defaults to halfway (`seconds / 2`) if absent.
     let switchAfterSeconds: Int?
+    /// Bundled narration audio id, resolved via `ExerciseNarration.audioURL(for:)`.
+    /// `nil` means the step plays silent, which is every step authored before
+    /// this existed.
+    let narrationID: String?
 
     init(
         name: String,
@@ -262,7 +266,8 @@ nonisolated struct Step: Codable, Hashable, Sendable {
         reps: Int? = nil,
         sets: Int? = nil,
         switchSides: Bool? = nil,
-        switchAfterSeconds: Int? = nil
+        switchAfterSeconds: Int? = nil,
+        narrationID: String? = nil
     ) {
         let cleanName = Self.sanitizeName(name)
         let cleanCue = Self.sanitizeCue(cue, name: cleanName)
@@ -275,10 +280,11 @@ nonisolated struct Step: Codable, Hashable, Sendable {
         self.sets = sets
         self.switchSides = switchSides
         self.switchAfterSeconds = switchAfterSeconds
+        self.narrationID = narrationID
     }
 
     private enum CodingKeys: String, CodingKey {
-        case name, seconds, cue, glossaryID, visual, reps, sets, switchSides, switchAfterSeconds
+        case name, seconds, cue, glossaryID, visual, reps, sets, switchSides, switchAfterSeconds, narrationID
     }
 
     init(from decoder: Decoder) throws {
@@ -292,6 +298,7 @@ nonisolated struct Step: Codable, Hashable, Sendable {
         let sets = try container.decodeIfPresent(Int.self, forKey: .sets)
         let switchSides = try container.decodeIfPresent(Bool.self, forKey: .switchSides)
         let switchAfterSeconds = try container.decodeIfPresent(Int.self, forKey: .switchAfterSeconds)
+        let narrationID = try container.decodeIfPresent(String.self, forKey: .narrationID)
 
         let cleanName = Self.sanitizeName(rawName)
         let cleanCue = Self.sanitizeCue(rawCue, name: cleanName)
@@ -305,6 +312,7 @@ nonisolated struct Step: Codable, Hashable, Sendable {
         self.sets = sets
         self.switchSides = switchSides
         self.switchAfterSeconds = switchAfterSeconds
+        self.narrationID = narrationID
     }
 
     func encode(to encoder: Encoder) throws {
@@ -318,6 +326,7 @@ nonisolated struct Step: Codable, Hashable, Sendable {
         try container.encodeIfPresent(sets, forKey: .sets)
         try container.encodeIfPresent(switchSides, forKey: .switchSides)
         try container.encodeIfPresent(switchAfterSeconds, forKey: .switchAfterSeconds)
+        try container.encodeIfPresent(narrationID, forKey: .narrationID)
     }
 
     private static func sanitizeName(_ raw: String) -> String {

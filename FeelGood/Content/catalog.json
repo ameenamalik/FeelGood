@@ -44,6 +44,7 @@
             "name": "Round one",
             "seconds": 32,
             "cue": "In for four, hold for four, out for four, hold for four.",
+            "narrationID": "box-breathing-round-one",
             "visual": {
               "type": "breathing",
               "inhale": 4,
@@ -56,6 +57,7 @@
             "name": "Round two",
             "seconds": 32,
             "cue": "Same count. Let the out-breath be the easy part.",
+            "narrationID": "box-breathing-round-two",
             "visual": {
               "type": "breathing",
               "inhale": 4,
@@ -68,6 +70,7 @@
             "name": "Round three",
             "seconds": 32,
             "cue": "If the hold feels long, shorten it. The rhythm matters more than the number.",
+            "narrationID": "box-breathing-round-three",
             "visual": {
               "type": "breathing",
               "inhale": 4,
@@ -80,6 +83,7 @@
             "name": "Round four",
             "seconds": 32,
             "cue": "Last one. Notice whether anything has softened.",
+            "narrationID": "box-breathing-round-four",
             "visual": {
               "type": "breathing",
               "inhale": 4,
