@@ -257,8 +257,11 @@ at 600 ms. Options, cheapest first:
   style (white strokes, transparent field, one figure, no props) with an
   image model, using the existing Everkinetic frames as the style
   reference. Generate the start and end pose first, approve those, then
-  ask for the in-betweens so the figure stays consistent. Own art, no
-  attribution burden, same pipeline. The prompt format in
+  ask for the in-betweens so the figure stays consistent. Same pipeline,
+  but not free of attribution: frames generated with Everkinetic / Workout
+  Guide art as the reference are treated as CC BY-SA adaptations. List each
+  new set under "Adapted frames" in `ExerciseDemos/ATTRIBUTION.md`. Only art
+  made without that reference would be unencumbered. The prompt format in
   `docs/design/character-candidates-2026-08-31/README.md` is the template.
 
 **Lottie, for the few that matter most.** `ExerciseDemoView` already plays

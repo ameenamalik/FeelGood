@@ -14,9 +14,11 @@ the current ink colour at draw time) — the bundled PNG assets themselves are
 untouched. Per CC BY-SA §3(a), any file listed here carries this same license
 forward.
 
-Every PNG frame set in this directory is listed below, whether or not a
-glossary entry references it yet: the files ship in the app bundle either
-way, and CC BY-SA applies to distribution, not to what is on screen.
+Every Everkinetic / Bryl Lim frame set in this directory is listed below,
+whether or not a glossary entry references it yet: the files ship in the app
+bundle either way, and CC BY-SA applies to distribution, not to what is on
+screen. The adapted frames further down are listed separately because they
+are modified, but they are under this same license.
 
 ### Covered files
 
@@ -331,6 +333,25 @@ in the player today; the rest are on disk for sessions not yet written.
 - `worlds-greatest-stretch-1.png`, `worlds-greatest-stretch-2.png`, `worlds-greatest-stretch-3.png`
 - `wrist-curl-1.png`, `wrist-curl-2.png`, `wrist-curl-3.png`
 - `wrist-extension-1.png`, `wrist-extension-2.png`, `wrist-extension-3.png`
+
+## Adapted frames (AI-assisted, CC BY-SA 4.0)
+
+These frames were generated for FeelGood with an AI image tool, using frames
+from [Workout Guide](https://github.com/bryllim/workout-guide) by **Bryl Lim**,
+building on **Everkinetic**, as the reference. We treat them as adaptations of
+that work:
+
+- **Attribution:** Everkinetic and Bryl Lim, as credited above.
+- **Modified:** unlike the frames above, these are not used unmodified. They
+  are new AI-generated drawings based on the originals.
+- **License:** CC BY-SA 4.0, as ShareAlike §3(b) requires of adaptations.
+
+Same format as the frames above: white strokes on a transparent field,
+rendered as template images.
+
+- `pelvic-tilt-1.png`
+- `single-leg-stretch-1.png`, `single-leg-stretch-2.png`, `single-leg-stretch-3.png`
+- `the-hundred-1.png`, `the-hundred-2.png`, `the-hundred-3.png`
 
 ## Glossary coverage
 
