@@ -11,6 +11,7 @@ import UIKit
 
 struct PlayerView: View {
     private static let readingSeconds = 10
+    private static let setRestSeconds = 45
 
     let session: Session
     let onFinish: (PlayerResult) -> Void
@@ -44,6 +45,13 @@ struct PlayerView: View {
     /// Sets already finished in this step. `setsDone + 1` is the set someone
     /// is standing in the middle of.
     @State private var setsDone = 0
+    /// A small between-set guide, not workout history. It exists only while
+    /// this player is open and clears as soon as the next set starts.
+    @State private var setRestRemaining = 0
+    /// How far the newly completed set has filled the waterline during rest.
+    /// Advancing this one beat at a time makes the rise last for the whole
+    /// countdown, including extra rest someone adds along the way.
+    @State private var setRestFillFraction = 0.0
     /// True once a timed hold has entered its last stretch (see
     /// `finalStretchThreshold`). Drives a slow warmth over the whole screen —
     /// never a shrinking shape, never a percentage.
@@ -208,7 +216,8 @@ struct PlayerView: View {
                     SessionLiquidProgress(
                         progress: completionProgress(for: step),
                         aura: FGAura.allCases[index % FGAura.allCases.count],
-                        isActive: readingRemaining == 0 && (step.isCounted || (isRunning && !isSwitchingSides))
+                        isActive: readingRemaining == 0 && (step.isCounted || (isRunning && !isSwitchingSides)),
+                        animatesProgressChanges: !step.isCounted || setRestRemaining > 0
                     )
                 }
                 running(step)
@@ -236,6 +245,8 @@ struct PlayerView: View {
                 timerIndex = index
                 repsDone = 0
                 setsDone = 0
+                setRestRemaining = 0
+                setRestFillFraction = 0
                 isInFinalStretch = false
                 hasFiredFinalStretchFlash = false
                 flashOpacity = 0
@@ -284,6 +295,34 @@ struct PlayerView: View {
                 }
             }
             if remaining <= 0 { advance() }
+        }
+        .task(id: setRestRemaining > 0) {
+            guard setRestRemaining > 0 else { return }
+
+            while setRestRemaining > 0 && !isDone {
+                let secondsLeft = max(setRestRemaining, 1)
+                let unfilled = max(1 - setRestFillFraction, 0)
+                setRestFillFraction = min(
+                    setRestFillFraction + (unfilled / Double(secondsLeft)),
+                    1
+                )
+
+                do {
+                    try await Task.sleep(for: .seconds(1))
+                } catch {
+                    return
+                }
+                guard !Task.isCancelled, setRestRemaining > 0 else { return }
+                let restIsEnding = setRestRemaining == 1
+                setRestRemaining -= 1
+                if restIsEnding {
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    withAnimation(.none) {
+                        setRestFillFraction = 0
+                    }
+                    return
+                }
+            }
         }
         // Every intentional exit goes through Leave so the current timer can
         // be saved before this full-screen player disappears.
@@ -549,6 +588,8 @@ struct PlayerView: View {
                 switchSidesTransitionCard
             } else if readingRemaining > 0 {
                 readingCountdown
+            } else if step.isCounted, setRestRemaining > 0 {
+                setRestIndicator(step)
             } else if step.isCounted, let perSet = step.reps {
                 counterInfo(step, perSet: perSet)
             } else if isUntimed {
@@ -630,12 +671,22 @@ struct PlayerView: View {
                 // vertical space this screen wants for the exercise's own
                 // animation. One tap closes the whole set instead.
                 VStack(spacing: FGSpace.s) {
-                    FGPrimaryButton(
-                        title: setsDone + 1 < step.setCount
-                            ? "Done with this set"
-                            : (index == steps.count - 1 ? "Finish session" : "Done with this step")
-                    ) {
-                        completeSet(step)
+                    if setRestRemaining > 0 {
+                        FGPrimaryButton(title: "Start set \(setsDone + 1) now") {
+                            finishSetRest()
+                        }
+                        FGQuietButton("Add 15 sec", systemImage: "plus") {
+                            setRestRemaining += 15
+                            UISelectionFeedbackGenerator().selectionChanged()
+                        }
+                    } else {
+                        FGPrimaryButton(
+                            title: setsDone + 1 < step.setCount
+                                ? "Done with this set"
+                                : (index == steps.count - 1 ? "Finish session" : "Done with this step")
+                        ) {
+                            completeSet(step)
+                        }
                     }
                     if setsDone > 0 {
                         // A thumb catches the card twice and a set is worse
@@ -1083,6 +1134,29 @@ struct PlayerView: View {
             : "\(step.name), \(perSet) reps")
     }
 
+    private func setRestIndicator(_ step: Step) -> some View {
+        VStack(spacing: FGSpace.xs) {
+            Text("Set \(setsDone + 1) of \(step.setCount)")
+                .font(FGFont.label)
+                .foregroundStyle(FGColor.inkMuted)
+            Text("Rest \(setRestTimeString)")
+                .font(.system(size: timerFontSize, weight: .bold, design: .rounded).monospacedDigit())
+                .foregroundStyle(FGColor.sageDeep)
+                .contentTransition(.numericText())
+                .animation(.linear(duration: 0.2), value: setRestRemaining)
+                .minimumScaleFactor(0.7)
+            if let reps = step.reps {
+                Text("Next · \(reps) reps")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Rest \(setRestRemaining) seconds. Set \(setsDone + 1) of \(step.setCount) is next."
+        )
+    }
+
     /// Closes out the set someone just did. One tap, whatever they actually
     /// felt like inside it — the app was never the one counting.
     private func completeSet(_ step: Step) {
@@ -1090,8 +1164,12 @@ struct PlayerView: View {
             if setsDone + 1 < step.setCount {
                 setsDone += 1
                 repsDone = 0
+                setRestRemaining = Self.setRestSeconds
+                setRestFillFraction = 0
             } else {
                 repsDone = step.reps ?? 0
+                setRestRemaining = 0
+                setRestFillFraction = 0
                 advance()
             }
         }
@@ -1104,20 +1182,32 @@ struct PlayerView: View {
             guard setsDone > 0 else { return }
             setsDone -= 1
             repsDone = 0
+            setRestRemaining = 0
+            setRestFillFraction = 0
         }
+    }
+
+    private func finishSetRest() {
+        withAnimation(.none) {
+            setRestFillFraction = 0
+            setRestRemaining = 0
+        }
+        UISelectionFeedbackGenerator().selectionChanged()
     }
 
     private var timeString: String {
         String(format: "%d:%02d", remaining / 60, remaining % 60)
     }
 
+    private var setRestTimeString: String {
+        String(format: "%d:%02d", setRestRemaining / 60, setRestRemaining % 60)
+    }
+
     private func completionProgress(for step: Step) -> Double {
         guard readingRemaining == 0, timerIndex == index else { return 0 }
 
-        if step.isCounted, let reps = step.reps {
-            let total = max(reps * step.setCount, 1)
-            let completed = min((setsDone * reps) + repsDone, total)
-            return Double(completed) / Double(total)
+        if step.isCounted {
+            return setRestRemaining > 0 ? setRestFillFraction : 0
         }
 
         let duration = max(step.seconds, 1)
@@ -1161,6 +1251,8 @@ struct PlayerView: View {
     }
 
     private func advance() {
+        setRestRemaining = 0
+        setRestFillFraction = 0
         if index + 1 < steps.count {
             withAnimation(reduceMotion ? .none : FGMotion.gentle) { index += 1 }
         } else {
@@ -1206,6 +1298,8 @@ struct PlayerView: View {
 
     private func goBack() {
         guard !steps.isEmpty else { return }
+        setRestRemaining = 0
+        setRestFillFraction = 0
         withAnimation(reduceMotion ? .none : FGMotion.gentle) {
             if isDone {
                 let previousIndex = steps.index(before: steps.endIndex)
@@ -1215,6 +1309,8 @@ struct PlayerView: View {
                 readingRemaining = Self.readingSeconds
                 repsDone = 0
                 setsDone = 0
+                setRestRemaining = 0
+                setRestFillFraction = 0
                 // Instant, not eased with the rest of this transaction —
                 // leaving warmth behind should never look like a fade.
                 withAnimation(.none) {
@@ -1284,12 +1380,16 @@ private struct SessionLiquidProgress: View {
     let progress: Double
     let aura: FGAura
     let isActive: Bool
+    let animatesProgressChanges: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         GeometryReader { geometry in
             let clampedProgress = min(max(progress, 0), 1)
+            let progressAnimation: Animation = animatesProgressChanges
+                ? .linear(duration: 1)
+                : .linear(duration: 0.01)
             TimelineView(
                 .animation(
                     minimumInterval: 1.0 / 60.0,
@@ -1372,7 +1472,7 @@ private struct SessionLiquidProgress: View {
                     )
                 }
                 .frame(width: geometry.size.width, height: geometry.size.height)
-                .fgAnimation(.linear(duration: 1), value: clampedProgress)
+                .fgAnimation(progressAnimation, value: clampedProgress)
                 .compositingGroup()
             }
         }
