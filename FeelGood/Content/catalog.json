@@ -267,6 +267,7 @@
             "name": "Breathe",
             "seconds": 120,
             "cue": "Long, unhurried out-breaths. Nothing to do here.",
+            "narrationID": "legs-up-the-wall-breathe",
             "visual": {
               "type": "breathing"
             },
@@ -2621,6 +2622,7 @@
             "name": "Box breathing",
             "seconds": 180,
             "cue": "Inhale for 4, hold for 4, exhale for 4, hold for 4.",
+            "narrationID": "barefoot-breathing-box",
             "visual": {
               "type": "breathing",
               "inhale": 4,
@@ -5260,6 +5262,7 @@
             "name": "Settle & breathe",
             "seconds": 60,
             "cue": "Rest is part of the practice. Take a gentle breath in, exhale softly, and give yourself permission to do nothing.",
+            "narrationID": "rest-box-breathing-settle",
             "visual": {
               "type": "breathing",
               "inhale": 4,
@@ -7532,6 +7535,7 @@
             "name": "Slow breaths",
             "seconds": 60,
             "cue": "In through your nose for four, out for six.",
+            "narrationID": "slow-breaths-four-six",
             "visual": {
               "type": "breathing",
               "inhale": 4,
@@ -7544,6 +7548,7 @@
             "name": "Longer out-breath",
             "seconds": 40,
             "cue": "Same count. Let the exhale be easy.",
+            "narrationID": "longer-out-breath-four-six",
             "visual": {
               "type": "breathing",
               "inhale": 4,
@@ -7604,6 +7609,7 @@
             "name": "Slow breaths",
             "seconds": 60,
             "cue": "In through your nose for four, out for six.",
+            "narrationID": "slow-breaths-four-six",
             "glossaryID": "deep-breath",
             "visual": {
               "type": "breathing",

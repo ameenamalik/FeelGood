@@ -2,12 +2,16 @@
 """Generate bundled breathing-cue narration with ElevenLabs.
 
 Usage:
-    ELEVENLABS_API_KEY=... python3 scripts/generate_narration.py [--dry-run]
+    ELEVENLABS_API_KEY=... python3 scripts/generate_narration.py [--dry-run] [--force]
 
 Reads scripts/narration_scripts.json (narration id -> spoken text, authored
 separately from catalog.json so wording can be tuned without touching session
 data), calls ElevenLabs' TTS API once per id, and writes
 FeelGood/Content/ExerciseNarration/{id}.mp3.
+
+Skips ids whose mp3 already exists, so re-running after adding new entries
+only spends credits on what's new — pass --force to regenerate everything
+(e.g. after a voice change).
 
 This is a content-authoring tool run manually when cues change. It is not
 part of the shipped app, does not run on a device, and the API key never
@@ -64,6 +68,7 @@ def synthesize(api_key, voice_id, text):
 
 def main():
     dry_run = "--dry-run" in sys.argv
+    force = "--force" in sys.argv
     api_key = os.environ.get("ELEVENLABS_API_KEY")
     if not api_key and not dry_run:
         sys.exit("set ELEVENLABS_API_KEY (or pass --dry-run to just validate scripts)")
@@ -79,6 +84,9 @@ def main():
             sys.exit(f"narration id '{narration_id}': text must be a non-empty string")
 
         destination = OUTPUT_DIR / f"{narration_id}.mp3"
+        if destination.exists() and not force:
+            print(f"skipping {narration_id} (already exists — pass --force to regenerate)")
+            continue
         if dry_run:
             print(f"[dry-run] would write {destination}")
             continue
