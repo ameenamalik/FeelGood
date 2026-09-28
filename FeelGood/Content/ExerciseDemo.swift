@@ -14,8 +14,9 @@
 //  Lottie is preferred where both exist. See ExerciseDemoView.
 //
 //  PNG artwork: Bryl Lim (https://bryllim.com), building on Everkinetic
-//  (https://github.com/everkinetic/data). CC BY-SA 4.0 — unmodified here.
-//  See FeelGood/Content/ExerciseDemos/ATTRIBUTION.md.
+//  (https://github.com/everkinetic/data). CC BY-SA 4.0 — mostly unmodified;
+//  a few sets are AI-assisted adaptations, under the same license.
+//  See FeelGood/Content/ExerciseDemos/ATTRIBUTION.md for which is which.
 //
 
 import Foundation
