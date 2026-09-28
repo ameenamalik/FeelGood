@@ -29,6 +29,21 @@ struct ExerciseNarrationTests {
         #expect(FileManager.default.fileExists(atPath: url.path))
     }
 
+    @Test("Every narrationID referenced in the bundled catalog has a matching audio clip")
+    func everyCatalogNarrationIDResolves() throws {
+        let store = try ContentStore.bundled()
+        var checked = Set<String>()
+        for session in store.sessions {
+            for step in session.source.steps {
+                guard let narrationID = step.narrationID, !checked.contains(narrationID) else { continue }
+                checked.insert(narrationID)
+                let url = ExerciseNarration.audioURL(for: narrationID)
+                #expect(url != nil, "\(session.id) references narrationID '\(narrationID)' with no bundled clip — run scripts/generate_narration.py")
+            }
+        }
+        #expect(!checked.isEmpty, "No session in the bundled catalog references a narrationID — has the field been renamed?")
+    }
+
     @Test("A step without narrationID decodes as silent")
     func stepWithoutNarrationIDDecodes() throws {
         let json = Data("""
