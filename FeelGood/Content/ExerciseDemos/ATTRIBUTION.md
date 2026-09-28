@@ -9,10 +9,10 @@ by **Bryl Lim** ([bryllim.com](https://bryllim.com)), which itself builds on
 Licensed under **Creative Commons Attribution-ShareAlike 4.0 International**
 (CC BY-SA 4.0): https://creativecommons.org/licenses/by-sa/4.0/legalcode
 
-Used unmodified. The app renders them as SwiftUI template images (tinted to
-the current ink colour at draw time) — the bundled PNG assets themselves are
-untouched. Per CC BY-SA §3(a), any file listed here carries this same license
-forward.
+Used unmodified, except where an entry below says otherwise. The app renders
+them as SwiftUI template images (tinted to the current ink colour at draw
+time); tinting happens at runtime and does not change the bundled PNG files.
+Per CC BY-SA §3(a), any file listed here carries this same license forward.
 
 Every Everkinetic / Bryl Lim frame set in this directory is listed below,
 whether or not a glossary entry references it yet: the files ship in the app
@@ -255,8 +255,10 @@ in the player today; the rest are on disk for sessions not yet written.
 - `seated-cable-row-1.png`, `seated-cable-row-2.png`, `seated-cable-row-3.png`
 - `seated-calf-raise-1.png`, `seated-calf-raise-2.png`, `seated-calf-raise-3.png`
 - `seated-dumbbell-press-1.png`, `seated-dumbbell-press-2.png`, `seated-dumbbell-press-3.png`
-- `seated-forward-fold-stretch-1.png`, `seated-forward-fold-stretch-2.png` (the original set's
-  middle frame is removed; `-2` is the original's third frame, renamed, otherwise unmodified)
+- `seated-forward-fold-stretch-1.png`, `seated-forward-fold-stretch-2.png` (modified: the
+  original set's middle frame is removed; `-1` is scaled to 79.6% and moved so the body is
+  the same size as in `-2`, whose feet and floor line it now shares; `-2` is the original's
+  third frame, renamed, otherwise unmodified)
 - `seated-knee-tuck-1.png`, `seated-knee-tuck-2.png`, `seated-knee-tuck-3.png`
 - `seated-leg-curl-1.png`, `seated-leg-curl-2.png`, `seated-leg-curl-3.png`
 - `seated-row-1.png`, `seated-row-2.png`, `seated-row-3.png`
