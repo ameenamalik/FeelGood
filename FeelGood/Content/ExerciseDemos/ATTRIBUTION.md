@@ -22,7 +22,7 @@ are modified, but they are under this same license.
 
 ### Covered files
 
-All 308 frame sets (924 files). Sets marked with a glossary entry can appear
+All 308 frame sets (923 files). Sets marked with a glossary entry can appear
 in the player today; the rest are on disk for sessions not yet written.
 
 - `ab-wheel-1.png`, `ab-wheel-2.png`, `ab-wheel-3.png`
@@ -255,7 +255,8 @@ in the player today; the rest are on disk for sessions not yet written.
 - `seated-cable-row-1.png`, `seated-cable-row-2.png`, `seated-cable-row-3.png`
 - `seated-calf-raise-1.png`, `seated-calf-raise-2.png`, `seated-calf-raise-3.png`
 - `seated-dumbbell-press-1.png`, `seated-dumbbell-press-2.png`, `seated-dumbbell-press-3.png`
-- `seated-forward-fold-stretch-1.png`, `seated-forward-fold-stretch-2.png`, `seated-forward-fold-stretch-3.png`
+- `seated-forward-fold-stretch-1.png`, `seated-forward-fold-stretch-2.png` (the original set's
+  middle frame is removed; `-2` is the original's third frame, renamed, otherwise unmodified)
 - `seated-knee-tuck-1.png`, `seated-knee-tuck-2.png`, `seated-knee-tuck-3.png`
 - `seated-leg-curl-1.png`, `seated-leg-curl-2.png`, `seated-leg-curl-3.png`
 - `seated-row-1.png`, `seated-row-2.png`, `seated-row-3.png`
@@ -350,7 +351,6 @@ Same format as the frames above: white strokes on a transparent field,
 rendered as template images.
 
 - `chest-press-1.png`, `chest-press-2.png`, `chest-press-3.png`
-- `chin-tuck-1.png`, `chin-tuck-2.png`, `chin-tuck-3.png`
 - `dead-bug-1.png`, `dead-bug-2.png`, `dead-bug-3.png`
 - `pelvic-tilt-1.png`
 - `single-leg-stretch-1.png`, `single-leg-stretch-2.png`, `single-leg-stretch-3.png`
