@@ -20,6 +20,15 @@ struct ExerciseNarrationTests {
         #expect(ExerciseNarration.audioURL(for: "not-a-real-narration-id") == nil)
     }
 
+    @Test("A bundled box-breathing clip resolves to a real file")
+    func bundledClipResolves() {
+        guard let url = ExerciseNarration.audioURL(for: "box-breathing-round-one") else {
+            Issue.record("box-breathing-round-one.mp3 is not bundled — run scripts/generate_narration.py")
+            return
+        }
+        #expect(FileManager.default.fileExists(atPath: url.path))
+    }
+
     @Test("A step without narrationID decodes as silent")
     func stepWithoutNarrationIDDecodes() throws {
         let json = Data("""
