@@ -15,7 +15,7 @@
 //
 //  PNG artwork: Bryl Lim (https://bryllim.com), building on Everkinetic
 //  (https://github.com/everkinetic/data). CC BY-SA 4.0 — mostly unmodified;
-//  a few sets are AI-assisted adaptations, under the same license.
+//  a few sets are adaptations, under the same license.
 //  See FeelGood/Content/ExerciseDemos/ATTRIBUTION.md for which is which.
 //
 
