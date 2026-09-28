@@ -25,9 +25,10 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts" / "narration_scripts.json"
 OUTPUT_DIR = ROOT / "FeelGood" / "Content" / "ExerciseNarration"
 
-# A calm, unhurried voice fits cue narration better than ElevenLabs' default.
-# Override by setting ELEVENLABS_VOICE_ID.
-DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"
+# Picked from the ElevenLabs voice library for the breathing cues. Override
+# by setting ELEVENLABS_VOICE_ID to any voice ID from your own ElevenLabs
+# "Voices" library.
+DEFAULT_VOICE_ID = "3FP8zog6uhdEdir09I9N"
 API_URL = "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
 
@@ -42,7 +43,7 @@ def synthesize(api_key, voice_id, text):
     body = json.dumps({
         "text": text,
         "model_id": "eleven_multilingual_v2",
-        "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
+        "voice_settings": {"stability": 0.75, "similarity_boost": 0.75},
     }).encode("utf-8")
     request = urllib.request.Request(
         url,
