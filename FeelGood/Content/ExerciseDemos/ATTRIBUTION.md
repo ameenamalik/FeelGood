@@ -334,21 +334,24 @@ in the player today; the rest are on disk for sessions not yet written.
 - `wrist-curl-1.png`, `wrist-curl-2.png`, `wrist-curl-3.png`
 - `wrist-extension-1.png`, `wrist-extension-2.png`, `wrist-extension-3.png`
 
-## Adapted frames (AI-assisted, CC BY-SA 4.0)
+## Adapted frames (CC BY-SA 4.0)
 
-These frames were generated for FeelGood with an AI image tool, using frames
-from [Workout Guide](https://github.com/bryllim/workout-guide) by **Bryl Lim**,
-building on **Everkinetic**, as the reference. We treat them as adaptations of
-that work:
+These frames were made for FeelGood using frames from
+[Workout Guide](https://github.com/bryllim/workout-guide) by **Bryl Lim**,
+building on **Everkinetic**, as the reference. Some were generated with an AI
+image tool. We treat them all as adaptations of that work:
 
 - **Attribution:** Everkinetic and Bryl Lim, as credited above.
 - **Modified:** unlike the frames above, these are not used unmodified. They
-  are new AI-generated drawings based on the originals.
+  are new drawings based on the originals.
 - **License:** CC BY-SA 4.0, as ShareAlike §3(b) requires of adaptations.
 
 Same format as the frames above: white strokes on a transparent field,
 rendered as template images.
 
+- `chest-press-1.png`, `chest-press-2.png`, `chest-press-3.png`
+- `chin-tuck-1.png`, `chin-tuck-2.png`, `chin-tuck-3.png`
+- `dead-bug-1.png`, `dead-bug-2.png`, `dead-bug-3.png`
 - `pelvic-tilt-1.png`
 - `single-leg-stretch-1.png`, `single-leg-stretch-2.png`, `single-leg-stretch-3.png`
 - `the-hundred-1.png`, `the-hundred-2.png`, `the-hundred-3.png`
