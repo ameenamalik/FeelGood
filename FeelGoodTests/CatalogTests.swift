@@ -143,6 +143,172 @@ struct CatalogTests {
         }
     }
 
+    @Test("Demo-backed library additions have playable assets and honest timings")
+    func demoBackedLibrarySessions() throws {
+        let content = try store()
+        let ids = [
+            "main-band-upper-twelve",
+            "main-band-hips-twelve",
+            "main-dumbbell-arms-twelve",
+            "main-dumbbell-hips-twelve",
+            "main-machine-push-twelve",
+            "main-machine-pull-twelve",
+            "main-machine-legs-twelve",
+            "main-cable-arms-twelve",
+            "main-kettlebell-steady-twelve",
+            "main-assisted-pull-twelve",
+            "main-single-leg-strength-twelve",
+            "main-floor-strength-twelve",
+            "main-cable-hips-core-twelve",
+            "main-dumbbell-shoulders-twelve",
+        ]
+        for id in ids {
+            let session = try #require(content.session(id: id))
+            #expect(session.source.steps.reduce(0) { $0 + $1.seconds } == session.durationMin * 60,
+                    "\(id) does not fit its advertised duration")
+            let movements = session.source.steps.filter { $0.glossaryID != nil }
+            #expect(!movements.isEmpty)
+            for step in movements {
+                let term = try #require(content.term(id: step.glossaryID))
+                #expect(ExerciseDemo.frameURLs(for: term.id).count >= 3,
+                        "\(id) / \(term.id) has no complete bundled demo")
+                if step.requiresSideSwitch {
+                    #expect(step.sideSwitchThresholdSeconds > 0)
+                    #expect(step.sideSwitchThresholdSeconds < step.seconds)
+                }
+            }
+            #expect(session.source.steps.contains { $0.glossaryID == nil && $0.seconds >= 30 },
+                    "\(id) needs recovery time")
+        }
+    }
+
+    @Test("Varied demo sessions have accurate durations and bundled movement frames")
+    func groupedDemoLibrarySessions() throws {
+        let content = try store()
+        let ids = [
+            "main-upper-push-twenty",
+            "main-upper-pull-fifteen",
+            "side-pull-up-practice-ten",
+            "main-barbell-lower-twenty",
+            "side-band-bench-legs-eight",
+            "main-core-four-moves-ten",
+            "side-back-line-five",
+            "side-bodyweight-energy-eight",
+            "main-swing-jump-ten",
+            "side-rowing-eight",
+            "side-elliptical-ten",
+            "main-stairs-twelve",
+            "main-cycle-steady-fifteen",
+            "main-pool-easy-twenty",
+            "side-incline-walk-ten",
+            "main-walk-steady-fifteen",
+            "main-jog-reset-twenty",
+        ]
+        var durations = Set<Int>()
+        for id in ids {
+            let session = try #require(content.session(id: id))
+            durations.insert(session.durationMin)
+            #expect(session.source.steps.reduce(0) { $0 + $1.seconds } == session.durationMin * 60)
+            for step in session.source.steps where step.glossaryID != nil {
+                let term = try #require(content.term(id: step.glossaryID))
+                #expect(ExerciseDemo.frameURLs(for: term.id).count >= 3, "Missing demo: \(term.id)")
+                if step.requiresSideSwitch {
+                    #expect(step.sideSwitchThresholdSeconds > 0 && step.sideSwitchThresholdSeconds < step.seconds)
+                }
+            }
+        }
+        #expect(durations.count >= 5)
+    }
+
+    @Test("Expanded demo library sessions resolve their instructions and playback policy")
+    func remainingDemoLibrarySessions() throws {
+        let content = try store()
+        let ids = [
+            "main-push-up-shapes",
+            "side-side-to-side-push",
+            "main-loaded-calisthenics",
+            "side-dip-variations",
+            "side-incline-press-pair",
+            "side-decline-press-pair",
+            "side-close-grip-press",
+            "main-fly-and-press",
+            "main-dumbbell-shoulder-rotation",
+            "main-guided-shoulder-lifts",
+            "main-landmine-press-and-drive",
+            "side-pike-press-practice",
+            "main-handstand-press-practice",
+            "main-rear-shoulder-weights",
+            "side-shoulder-blade-floor",
+            "main-curl-bar-variations",
+            "main-curl-and-grip",
+            "main-lying-triceps",
+            "main-cable-and-overhead-triceps",
+            "main-hanging-control",
+            "side-pull-up-grip-practice",
+            "main-l-sit-practice",
+            "main-supported-rows",
+            "main-dumbbell-and-cable-rows",
+            "main-barbell-row-practice",
+            "main-pulldown-angles",
+            "main-supported-single-leg",
+            "main-single-leg-squat-practice",
+            "side-wide-and-supported-squats",
+            "main-squat-stations",
+            "main-dumbbell-lunge-directions",
+            "side-small-platform-leg-work",
+            "side-landmine-lower-body",
+            "main-smith-squat-lunge",
+            "main-deadlift-stance-practice",
+            "side-hinge-at-the-rack",
+            "main-loaded-bridges",
+            "main-hip-extension-stations",
+            "side-hamstring-machine-pair",
+            "main-hamstring-control",
+            "main-band-floor-hips",
+            "main-band-hip-directions",
+            "main-cable-hip-directions",
+            "side-side-body-floor",
+            "side-calf-stations",
+            "main-band-core-control",
+            "main-cable-core-control",
+            "side-core-roll-and-curl",
+            "side-supported-knee-lifts",
+            "main-floor-core-shapes",
+            "side-dragon-flag-practice",
+            "side-hands-and-carry",
+            "side-floor-movement-break",
+            "side-quick-footwork",
+            "side-floor-power-practice",
+            "side-rope-and-erg",
+            "main-familiar-trail-twenty",
+        ]
+        for id in ids {
+            let session = try #require(content.session(id: id))
+            #expect(session.source.steps.reduce(0) { $0 + $1.seconds } == session.durationMin * 60)
+            for step in session.source.steps where step.glossaryID != nil {
+                let term = try #require(content.term(id: step.glossaryID))
+                #expect(term.instructions.count >= 3)
+                let frames = ExerciseDemo.frameURLs(for: term.id)
+                if ExerciseDemo.unavailableFrameIDs.contains(term.id) {
+                    #expect(frames.isEmpty, "A mismatched demo must not play: \(term.id)")
+                } else {
+                    #expect(frames.count >= 3, "Missing demo: \(term.id)")
+                }
+            }
+        }
+    }
+
+    @Test("Unknown exercise IDs and reviewed mismatches never load PNG demos")
+    func unavailableDemoFramesStayHidden() {
+        #expect(ExerciseDemo.frameURLs(for: nil).isEmpty)
+        #expect(ExerciseDemo.frameURLs(for: "not-a-catalog-exercise").isEmpty)
+        for id in ExerciseDemo.unavailableFrameIDs {
+            #expect(Bundle.main.url(forResource: "\(id)-1", withExtension: "png") != nil,
+                    "This checks an existing quarantined asset, not just a missing file")
+            #expect(ExerciseDemo.frameURLs(for: id).isEmpty)
+        }
+    }
+
     @Test("The bundled catalog decodes")
     func catalogDecodes() throws {
         let store = try store()
@@ -483,4 +649,3 @@ struct CatalogTests {
         }
     }
 }
-
