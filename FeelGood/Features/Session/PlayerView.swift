@@ -489,31 +489,28 @@ struct PlayerView: View {
     /// than to an error frame. Watching on YouTube is a supported path, not a
     /// failure state, so it reads as an offer rather than an apology.
     private func watchElsewhere(videoID: String) -> some View {
-        ZStack {
-            YouTubeThumbnail(videoID: videoID)
-
-            // The poster is somebody's living room at whatever exposure they
-            // filmed it — the scrim is what makes one label legible over all
-            // of them, in either colour scheme.
-            LinearGradient(
-                colors: [.black.opacity(0.15), .black.opacity(0.65)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            watchElsewhereLabel
-        }
-        // White-on-scrim rather than the ink tokens: this sits on a photograph,
-        // so it is the one place in the app where the palette can't do the
-        // work. Deliberately not YouTube's red play button — FGColor has no
-        // red and this shouldn't introduce one.
-        .contentShape(Rectangle())
-        .onTapGesture {
+        Button {
             if let watchURL = URL(string: "https://www.youtube.com/watch?v=\(videoID)") {
                 openURL(watchURL)
             }
+        } label: {
+            ZStack {
+                YouTubeThumbnail(videoID: videoID)
+
+                // The poster is somebody's living room at whatever exposure they
+                // filmed it — the scrim is what makes one label legible over all
+                // of them, in either colour scheme.
+                LinearGradient(
+                    colors: [.black.opacity(0.15), .black.opacity(0.65)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+
+                watchElsewhereLabel
+            }
+            .contentShape(Rectangle())
         }
-        .accessibilityElement()
+        .buttonStyle(.plain)
         .accessibilityLabel("Watch \(session.title) on YouTube")
         .accessibilityAddTraits(.isLink)
     }
