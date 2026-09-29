@@ -2,9 +2,10 @@
 //  CheckInSheet.swift
 //  FeelGood
 //
-//  How do you want to feel, what kind of that, how long. Three taps, and each
-//  one moves on by itself — there is no Next button to find, and no answer
-//  beyond the first is required to get a menu.
+//  How do you want to feel, what kind of that, how long. Each tap moves on by
+//  itself, and no answer beyond the first is required to get a menu. Once a
+//  length is picked, "Show my menu" finishes, after the optional place and
+//  what-to-go-easy-on lines have had their chance.
 //
 //  The goals picked in onboarding lead the first screen, so the check-in
 //  follows what someone already said they were moving toward instead of
@@ -79,9 +80,11 @@ struct CheckInSheet: View {
                                 )
                         }
 
-                        FGQuietButton("Just show me my menu") { skip() }
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, FGSpace.xs)
+                        if !flow.isComplete {
+                            FGQuietButton("Just show me my menu") { skip() }
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, FGSpace.xs)
+                        }
                     }
                     .padding(FGSpace.page)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -277,6 +280,14 @@ struct CheckInSheet: View {
                 .buttonStyle(.feelGoodPress)
             }
             .frame(maxWidth: .infinity)
+
+            // Picking a length no longer ends the check-in, so the optional
+            // questions above stay reachable. This is the way out.
+            if flow.isComplete {
+                FGPrimaryButton(title: "Show my menu") { finish() }
+                    .id("done-button")
+                    .transition(.opacity)
+            }
         }
         .postHogMask()
     }
@@ -303,9 +314,10 @@ struct CheckInSheet: View {
 
     // MARK: Behaviour
 
+    /// Only records the length. Where you are and what to go easy on are
+    /// optional but must stay reachable, so "Show my menu" ends the check-in.
     private func choose(time: TimeBudget) {
         flow.choose(time: time)
-        if flow.isComplete { finish() }
     }
 
     /// Lets the fruit finish filling before the sheet goes, so the last tap
