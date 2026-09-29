@@ -376,6 +376,7 @@ struct TodayView: View {
                             isInProgress: model.isInProgress(currentItem),
                             canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
                             isReset: model.isCycleReset(currentItem),
+                            isFirstCard: index == 0,
                             onOpen: { openSession(currentItem) },
                             onSelectManual: { handleSwapButtonTap(currentItem) },
                             onSkip: { performSwipeSkip(currentItem) }
@@ -388,6 +389,7 @@ struct TodayView: View {
                             isInProgress: model.isInProgress(currentItem),
                             canSwap: !model.isCompleted(currentItem) && !model.isInProgress(currentItem),
                             isReset: model.isCycleReset(currentItem),
+                            isFirstCard: index == 0,
                             onOpen: { openSession(currentItem) },
                             onSelectManual: { handleSwapButtonTap(currentItem) },
                             onSkip: { performSwipeSkip(currentItem) }
@@ -1004,6 +1006,10 @@ private struct MenuItemCard: View {
     let isInProgress: Bool
     let canSwap: Bool
     let isReset: Bool
+    /// Whether this is the first card on today's menu — the one that plays
+    /// the one-time swipe hint, so the demo never runs more than once per
+    /// screen and never on a card someone hasn't scrolled to yet.
+    let isFirstCard: Bool
     let onOpen: () -> Void
     let onSelectManual: () -> Void
     let onSkip: () -> Bool
@@ -1066,6 +1072,33 @@ private struct MenuItemCard: View {
         .accessibilityAction(named: "Quick skip \(item.course.label)") {
             if canSwap { _ = onSkip() }
         }
+        .task { await playSwipeHintIfNeeded() }
+    }
+
+    /// The tap-to-swap button is self-explanatory; the swipe gesture isn't —
+    /// nothing about a resting card signals it can be dragged away. Rather
+    /// than a permanent layout change, this plays the real gesture once, on
+    /// the first card someone sees, the first time they ever land on Today.
+    private func playSwipeHintIfNeeded() async {
+        guard isFirstCard, canSwap, !SwipeHint.hasPlayed else { return }
+        SwipeHint.hasPlayed = true
+        guard !reduceMotion else { return }
+        try? await Task.sleep(for: .seconds(1))
+        withAnimation(.easeInOut(duration: 0.45)) { dragOffset = -64 }
+        try? await Task.sleep(for: .seconds(1))
+        withAnimation(FGMotion.gentle) { dragOffset = 0 }
+    }
+}
+
+/// One-time, across both card shapes that support swiping (`MenuItemCard`,
+/// `MenuItemRow`) — whichever kind of session lands in the first course slot
+/// is the one that demos it, never both.
+private enum SwipeHint {
+    private static let key = "FeelGood.HasPlayedSwipeHint"
+
+    static var hasPlayed: Bool {
+        get { UserDefaults.standard.bool(forKey: key) }
+        set { UserDefaults.standard.set(newValue, forKey: key) }
     }
 }
 
@@ -1114,6 +1147,7 @@ private struct MenuItemRow: View {
     let isInProgress: Bool
     let canSwap: Bool
     let isReset: Bool
+    let isFirstCard: Bool
     let onOpen: () -> Void
     let onSelectManual: () -> Void
     let onSkip: () -> Bool
@@ -1175,6 +1209,19 @@ private struct MenuItemRow: View {
         .accessibilityAction(named: "Quick skip \(item.course.label)") {
             if canSwap { _ = onSkip() }
         }
+        .task { await playSwipeHintIfNeeded() }
+    }
+
+    /// See `MenuItemCard.playSwipeHintIfNeeded` — same one-time gesture demo,
+    /// shared `SwipeHint` flag so only one of the two card shapes ever plays it.
+    private func playSwipeHintIfNeeded() async {
+        guard isFirstCard, canSwap, !SwipeHint.hasPlayed else { return }
+        SwipeHint.hasPlayed = true
+        guard !reduceMotion else { return }
+        try? await Task.sleep(for: .seconds(1))
+        withAnimation(.easeInOut(duration: 0.45)) { dragOffset = -64 }
+        try? await Task.sleep(for: .seconds(1))
+        withAnimation(FGMotion.gentle) { dragOffset = 0 }
     }
 }
 

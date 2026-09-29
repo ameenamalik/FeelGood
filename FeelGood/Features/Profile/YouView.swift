@@ -20,10 +20,6 @@ struct YouView: View {
     @State private var isShowingAccount = false
     @State private var isShowingHiddenExercises = false
     @State private var isChoosingAvatar = false
-    @State private var isShowingLibrary = false
-    @State private var isShowingPaywall = false
-    @State private var libraryInitialSession: Session?
-    @State private var libraryInitialActivity: Activity?
     @Environment(\.modelContext) private var modelContext
     @Environment(AuthService.self) private var authService
     #if DEBUG
@@ -37,16 +33,6 @@ struct YouView: View {
                 // applied outside it does not reach this content.
                 .fgTabBarInset()
                 .toolbar(.hidden, for: .navigationBar)
-        }
-        .sheet(isPresented: $isShowingLibrary) {
-            LibraryView(
-                model: model,
-                initialSession: libraryInitialSession,
-                initialActivity: libraryInitialActivity
-            )
-        }
-        .sheet(isPresented: $isShowingPaywall) {
-            FeelGoodPaywallView(context: .library)
         }
         .sheet(isPresented: $isEditingProfile) {
             ProfileEditView(
@@ -199,25 +185,6 @@ struct YouView: View {
                 .font(FGFont.sectionTitle)
                 .foregroundStyle(FGColor.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
-
-            Button {
-                if model.isProUser {
-                    libraryInitialSession = nil
-                    libraryInitialActivity = nil
-                    isShowingLibrary = true
-                } else {
-                    isShowingPaywall = true
-                }
-            } label: {
-                Image(systemName: "books.vertical")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(FGColor.ink)
-                    .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
-                    .background(FGColor.surface.opacity(0.78), in: Circle())
-                    .overlay { Circle().strokeBorder(FGColor.lineStrong, lineWidth: 1) }
-            }
-            .accessibilityLabel("Library")
-            .accessibilityHint("Browse all sessions")
 
             settingsMenu
         }

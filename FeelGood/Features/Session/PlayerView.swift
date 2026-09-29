@@ -83,6 +83,12 @@ struct PlayerView: View {
     @State private var breathingStartedAt = Date()
     @State private var breathingPausedAt: Date?
     @State private var breathingAnchorIndex: Int?
+    /// The step index narration has already been triggered for, so re-entering
+    /// this `.task(id: index)` block (e.g. after the reading buffer finishes
+    /// on its own tick, right after "Start now" already fired it) never plays
+    /// the same clip twice for one step.
+    @State private var narratedIndex: Int?
+    @State private var isNarrationMuted: Bool
     /// Prevents Pause followed by Leave from reporting the same interruption
     /// twice (and potentially entering the Journey twice when re-entry is on).
     @State private var hasReportedPause = false
@@ -112,6 +118,7 @@ struct PlayerView: View {
         self.onResume = onResume
         self.startedAt = startedAt
         self.narrationService = narrationService
+        _isNarrationMuted = State(initialValue: narrationService.isMuted)
 
         let steps = session.isOwn
             ? session.source.steps.map { $0.inferringVisual(from: glossary) }
@@ -271,6 +278,7 @@ struct PlayerView: View {
             if isBreathingStep(step), breathingAnchorIndex != index {
                 restartBreathingCycle()
             }
+            playStepNarrationIfNeeded(for: step)
 
             // Counted or untimed rest exercises advance through user action ("Done"), not a hidden countdown timer.
             guard !step.isCounted, !isUntimed else { return }
@@ -534,6 +542,14 @@ struct PlayerView: View {
             HStack {
                 FGQuietButton("Leave", systemImage: "xmark") { leave() }
                 Spacer()
+                if sessionHasNarration {
+                    FGQuietButton(
+                        isNarrationMuted ? "Unmute" : "Mute",
+                        systemImage: isNarrationMuted ? "speaker.slash.fill" : "speaker.wave.2.fill"
+                    ) {
+                        toggleNarrationMute()
+                    }
+                }
                 Text("\(index + 1) of \(steps.count)")
                     .font(FGFont.label)
                     .foregroundStyle(FGColor.inkMuted)
@@ -567,6 +583,12 @@ struct PlayerView: View {
                         startedAt: breathingStartedAt,
                         pausedAt: breathingPausedAt
                     )
+                    BreathingHapticPulse(
+                        cadence: cadence,
+                        isActive: isRunning && !isSwitchingSides,
+                        startedAt: breathingStartedAt,
+                        pausedAt: breathingPausedAt
+                    )
                 }
             }
             .id(index)
@@ -594,6 +616,11 @@ struct PlayerView: View {
                 counterInfo(step, perSet: perSet)
             } else if isUntimed {
                 untimedRestIndicator
+            } else if isBreathingStep(step) {
+                // No ticking countdown here on purpose — a number counting
+                // down works against what paced breathing is for. The orb
+                // and "Breathe in" / "Hold" below carry the pacing instead.
+                EmptyView()
             } else {
                 VStack(spacing: FGSpace.xs) {
                     if step.requiresSideSwitch {
@@ -664,6 +691,7 @@ struct PlayerView: View {
                     readingRemaining = 0
                     isReadingPaused = false
                     if isBreathingStep(step) { restartBreathingCycle() }
+                    playStepNarrationIfNeeded(for: step)
                 }
             } else if step.isCounted {
                 // No tap-per-rep: a body in the middle of a set has no hand
@@ -1221,38 +1249,59 @@ struct PlayerView: View {
         step.visual?.breathingCadence != nil
     }
 
+    /// Whether the mute control is worth showing at all — a session with no
+    /// narrated steps has nothing to mute.
+    private var sessionHasNarration: Bool {
+        steps.contains { $0.narrationID != nil }
+    }
+
     private func restartBreathingCycle() {
         breathingStartedAt = Date()
         breathingPausedAt = nil
         breathingAnchorIndex = index
-        if let narrationID = step?.narrationID {
-            narrationService.play(narrationID: narrationID)
-        }
+    }
+
+    /// Plays a step's narration once, the moment its reading buffer ends —
+    /// whether that's a breathing step's paced cue or a plain setup/close
+    /// step read aloud. `narratedIndex` keeps this to exactly once per step
+    /// regardless of which of the two call sites gets there first.
+    private func playStepNarrationIfNeeded(for step: Step) {
+        guard narratedIndex != index, let narrationID = step.narrationID else { return }
+        narratedIndex = index
+        narrationService.play(narrationID: narrationID)
     }
 
     /// Move the cycle's origin forward by the paused duration. Resuming then
     /// continues the same breath instead of visibly jumping to another phase.
     private func toggleRunning(for step: Step) {
-        guard isBreathingStep(step) else {
-            isRunning.toggle()
-            return
-        }
-
-        if isRunning {
-            breathingPausedAt = Date()
-            isRunning = false
-            narrationService.pause()
-        } else {
-            let resumedAt = Date()
-            if let breathingPausedAt {
-                breathingStartedAt = breathingStartedAt.addingTimeInterval(
-                    resumedAt.timeIntervalSince(breathingPausedAt)
-                )
+        if isBreathingStep(step) {
+            if isRunning {
+                breathingPausedAt = Date()
+            } else {
+                let resumedAt = Date()
+                if let breathingPausedAt {
+                    breathingStartedAt = breathingStartedAt.addingTimeInterval(
+                        resumedAt.timeIntervalSince(breathingPausedAt)
+                    )
+                }
+                breathingPausedAt = nil
             }
-            self.breathingPausedAt = nil
-            isRunning = true
-            narrationService.resume()
         }
+        isRunning.toggle()
+
+        // Narration follows the same pause as the timer for every step, not
+        // just breathing ones — a spoken setup cue shouldn't keep talking
+        // over someone who just hit pause.
+        if isRunning {
+            narrationService.resume()
+        } else {
+            narrationService.pause()
+        }
+    }
+
+    private func toggleNarrationMute() {
+        narrationService.isMuted.toggle()
+        isNarrationMuted = narrationService.isMuted
     }
 
     private func advance() {

@@ -38,6 +38,7 @@
             "name": "Settle",
             "seconds": 20,
             "cue": "Sit or stand. Let your shoulders drop away from your ears.",
+            "narrationID": "box-breathing-settle",
             "glossaryID": "deep-breath"
           },
           {
@@ -255,12 +256,14 @@
             "name": "Get set up",
             "seconds": 45,
             "cue": "Hips close to the wall, legs resting up it. A cushion under your hips if you like.",
+            "narrationID": "legs-up-the-wall-get-set-up",
             "glossaryID": "legs-up-the-wall"
           },
           {
             "name": "Settle",
             "seconds": 60,
             "cue": "Arms wide. Let the floor take your weight.",
+            "narrationID": "legs-up-the-wall-settle",
             "glossaryID": "deep-breath"
           },
           {
@@ -276,7 +279,8 @@
           {
             "name": "Come out slowly",
             "seconds": 75,
-            "cue": "Bend your knees, roll to one side, take your time sitting up."
+            "cue": "Bend your knees, roll to one side, take your time sitting up.",
+            "narrationID": "legs-up-the-wall-come-out-slowly"
           }
         ]
       }
@@ -2618,7 +2622,8 @@
           {
             "name": "Step out",
             "seconds": 60,
-            "cue": "Barefoot on the porch, balcony, or by an open window."
+            "cue": "Barefoot on the porch, balcony, or by an open window.",
+            "narrationID": "barefoot-breathing-step-out"
           },
           {
             "name": "Box breathing",
@@ -2637,7 +2642,8 @@
           {
             "name": "Look at the horizon",
             "seconds": 60,
-            "cue": "Soft gaze into the distance."
+            "cue": "Soft gaze into the distance.",
+            "narrationID": "barefoot-breathing-look-at-horizon"
           }
         ]
       }
@@ -7535,6 +7541,7 @@
             "name": "Settle",
             "seconds": 20,
             "cue": "Sit or stand. Let your shoulders drop.",
+            "narrationID": "two-minute-breath-pause-settle",
             "glossaryID": "deep-breath"
           },
           {
@@ -7604,12 +7611,14 @@
           {
             "name": "Stand and stretch",
             "seconds": 30,
-            "cue": "Stand up and reach both arms overhead."
+            "cue": "Stand up and reach both arms overhead.",
+            "narrationID": "craving-free-pause-stand-and-stretch"
           },
           {
             "name": "Shoulder rolls",
             "seconds": 30,
-            "cue": "Roll your shoulders back, slowly."
+            "cue": "Roll your shoulders back, slowly.",
+            "narrationID": "craving-free-pause-shoulder-rolls"
           },
           {
             "name": "Slow breaths",
