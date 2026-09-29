@@ -252,6 +252,7 @@ nonisolated extension Activity {
         case .climbing: "figure.climbing"
         case .martialArts: "figure.martial.arts"
         case .breathwork: "wind"
+        case .generalWellness: "leaf"
         case .other: "sparkles"
         }
     }

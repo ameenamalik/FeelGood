@@ -14,6 +14,8 @@ struct MyMenuView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var activeAddingCourse: Course?
+    @State private var newlySavedSession: Session?
+    @State private var savedSessionToShow: Session?
     @State private var selectedDetailCourse: Course?
 
     private let quadrants: [Course] = [
@@ -60,8 +62,16 @@ struct MyMenuView: View {
                     }
                 }
             }
-            .sheet(item: $activeAddingCourse) { course in
-                AddRoutineSheet(model: model, initialCourse: course)
+            .sheet(item: $activeAddingCourse, onDismiss: {
+                savedSessionToShow = newlySavedSession
+                newlySavedSession = nil
+            }) { course in
+                AddRoutineSheet(model: model, initialCourse: course) { saved in
+                    newlySavedSession = saved
+                }
+            }
+            .sheet(item: $savedSessionToShow) { session in
+                SessionDetailView(session: session, model: model)
             }
             .navigationDestination(item: $selectedDetailCourse) { course in
                 CourseQuadrantDetailView(model: model, course: course)

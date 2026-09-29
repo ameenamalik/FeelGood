@@ -63,7 +63,7 @@ nonisolated struct SessionBenefit: Equatable, Sendable {
 
     private static func fallbackIntent(for activity: Activity) -> Intent {
         switch activity {
-        case .breathwork, .qigong: .calm
+        case .breathwork, .qigong, .generalWellness: .calm
         case .yoga, .stretching: .mobilize
         case .pilates, .strength, .carries, .climbing: .strengthen
         case .dance, .skating, .racquet, .jumpRope: .play
@@ -107,6 +107,7 @@ nonisolated private extension Activity {
         case .racquet: "Chasing a ball and the small thrill of sending it back."
         case .climbing: "Working out a route with your hands, feet, and head."
         case .martialArts: "Sharp, deliberate movement that asks for your full attention."
+        case .generalWellness: "A little time for yourself, at your own pace."
         case .breathwork: "Nothing to do but follow your breath, in and out."
         case .other: "Taking time out to move and reset on your terms."
         }

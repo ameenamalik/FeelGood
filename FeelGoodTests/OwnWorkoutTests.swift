@@ -13,6 +13,25 @@ import Foundation
 @Suite("Somebody's own workout")
 struct OwnWorkoutTests {
 
+    @Test("General wellness survives saving without yoga equipment or movement cues")
+    func generalWellnessRoundTrip() throws {
+        let session = Session.own(
+            id: "own-journal", title: "Evening journal",
+            parts: [CustomRoutinePart(title: "Write", durationMin: 5),
+                    CustomRoutinePart(title: "Read", durationMin: 10, cue: "Read a chapter")],
+            activity: .generalWellness, durationMin: 15, intensity: 2
+        )
+        let restored = try JSONDecoder().decode(Session.self, from: JSONEncoder().encode(session))
+        #expect(restored.activity == .generalWellness)
+        #expect(restored.equipment.isEmpty)
+        #expect(restored.places.isEmpty)
+        #expect(restored.energyFit.contains(.low))
+        #expect(!restored.qualities.contains(.mobility))
+        #expect(restored.source.steps.first?.cue == "Take this time for yourself, at your own pace.")
+        #expect(restored.customRoutineParts.first?.cue == nil)
+        #expect(restored.customRoutineParts.last?.cue == "Read a chapter")
+    }
+
     private func own(
         _ activity: Activity,
         minutes: Int = 30,

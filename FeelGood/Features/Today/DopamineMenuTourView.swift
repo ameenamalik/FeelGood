@@ -24,13 +24,13 @@ struct DopamineMenuTourView: View {
                 topBar
 
                 TabView(selection: $currentStep) {
-                    stepOne
+                    tourPage { stepOne }
                         .tag(0)
 
-                    stepTwo
+                    tourPage { stepTwo }
                         .tag(1)
 
-                    stepThree
+                    tourPage { stepThree }
                         .tag(2)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
@@ -39,6 +39,21 @@ struct DopamineMenuTourView: View {
             }
             .padding(.horizontal, FGSpace.page)
             .padding(.vertical, FGSpace.m)
+        }
+    }
+
+    /// Each page owns its vertical overflow; the pager must never crop a
+    /// taller card stack or larger accessibility text to its viewport.
+    private func tourPage<Content: View>(@ViewBuilder content: @escaping () -> Content) -> some View {
+        GeometryReader { geometry in
+            ScrollView {
+                content()
+                    .frame(width: max(0, geometry.size.width - 16))
+                    .frame(minHeight: max(0, geometry.size.height - 32))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 16)
+            }
+            .scrollBounceBehavior(.basedOnSize)
         }
     }
 
@@ -72,7 +87,6 @@ struct DopamineMenuTourView: View {
             Spacer()
 
             TourIntroDemo(isActive: currentStep == 0)
-                .frame(height: 200)
 
             VStack(spacing: FGSpace.m) {
                 Text("Your menu for today")
@@ -161,7 +175,7 @@ private struct DemoCard: View {
                     if isChosen {
                         Image(systemName: "checkmark")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(FGColor.ink)
+                            .foregroundStyle(FGColor.inkOnAccent)
                             .transition(.scale.combined(with: .opacity))
                     }
                 }
@@ -169,17 +183,17 @@ private struct DemoCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
                     .font(FGFont.itemTitle)
-                    .foregroundStyle(FGColor.ink)
+                    .foregroundStyle(isChosen ? FGColor.inkOnAccent : FGColor.ink)
                 Text(item.time)
                     .font(FGFont.label)
-                    .foregroundStyle(FGColor.inkMuted)
+                    .foregroundStyle(isChosen ? FGColor.inkOnAccent : FGColor.inkMuted)
             }
             Spacer()
         }
         .padding(FGSpace.m)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
-                .fill(isChosen ? item.aura.core.opacity(0.45) : FGColor.surface)
+                .fill(isChosen ? item.aura.core : FGColor.surface)
         )
         .overlay(
             RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
@@ -208,7 +222,6 @@ private struct TourIntroDemo: View {
                 DemoCard(item: items[i], isChosen: chosenIndex == i)
                     .opacity(i < visibleCount ? (chosenIndex == nil || chosenIndex == i ? 1 : 0.45) : 0)
                     .offset(y: i < visibleCount ? 0 : 24)
-                    .scaleEffect(chosenIndex == i ? 1.03 : 1)
             }
         }
         .accessibilityHidden(true)
@@ -267,24 +280,22 @@ private struct TourCoursesSwapDemo: View {
             Spacer()
 
             ZStack {
-                if phase == .courses {
-                    VStack(spacing: FGSpace.s) {
-                        ForEach(courses.indices, id: \.self) { i in
-                            courseRow(courses[i])
-                                .opacity(i < visibleCourses ? 1 : 0)
-                                .offset(y: i < visibleCourses ? 0 : 18)
-                        }
+                VStack(spacing: FGSpace.s) {
+                    ForEach(courses.indices, id: \.self) { i in
+                        courseRow(courses[i])
+                            .opacity(i < visibleCourses ? 1 : 0)
+                            .offset(y: i < visibleCourses ? 0 : 18)
                     }
-                    .transition(.opacity)
-                } else {
+                }
+                .opacity(phase == .courses ? 1 : 0)
+                if phase == .swap {
                     DemoCard(item: DemoItem.samples[itemIndex % DemoItem.samples.count])
                         .offset(x: cardOffset)
                         .rotationEffect(.degrees(Double(cardOffset) / 50))
                         .transition(.opacity)
                 }
             }
-            .frame(height: 260)
-            .clipped()
+            .padding(.vertical, 20)
             .accessibilityHidden(true)
 
             VStack(spacing: FGSpace.s) {
@@ -403,7 +414,7 @@ private struct TourAddRoutineDemo: View {
             Spacer()
 
             stage
-                .frame(height: 190)
+                .frame(minHeight: 190)
                 .accessibilityHidden(true)
 
             VStack(spacing: FGSpace.s) {

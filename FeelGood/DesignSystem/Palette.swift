@@ -409,7 +409,7 @@ nonisolated extension Activity {
     var completionAura: FGAura? {
         switch self {
         case .yoga, .stretching, .pilates: .sage // mobilize
-        case .qigong, .breathwork: .blush // calm
+        case .qigong, .breathwork, .generalWellness: .blush // calm
         case .strength: .lilac // strengthen
         case .walking, .running, .biking, .swimming, .jumpRope: .apricot // energize
         case .dance: .butter // joy / play
