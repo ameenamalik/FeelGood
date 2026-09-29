@@ -229,6 +229,11 @@ final class PurchasesManager {
                 Analytics.capture("subscription_purchased", properties: [
                     "package_id": package.identifier
                 ])
+            } else {
+                // The App Store took the payment but the entitlement isn't
+                // visible yet. Say so, rather than leaving the paywall sitting
+                // there as if nothing happened.
+                lastError = .purchaseNotYetActive
             }
             return unlocked
         } catch ErrorCode.paymentPendingError {
@@ -268,10 +273,19 @@ enum PurchasesManagerError: LocalizedError, Identifiable {
     case offeringsFetchFailed(Error)
     case purchaseFailed(Error)
     case purchasePending
+    case purchaseNotYetActive
     case restoreFailed(Error)
     case other(Error)
 
     var id: String { errorDescription ?? UUID().uuidString }
+
+    /// Nothing failed — the purchase just isn't finished yet.
+    var alertTitle: String {
+        switch self {
+        case .purchasePending, .purchaseNotYetActive: "Almost there"
+        default: "Something went wrong"
+        }
+    }
 
     var errorDescription: String? {
         switch self {
@@ -281,6 +295,8 @@ enum PurchasesManagerError: LocalizedError, Identifiable {
             "Purchase failed. \(error.localizedDescription)"
         case .purchasePending:
             "Waiting for approval — ask the account holder to approve this purchase, then check back."
+        case .purchaseNotYetActive:
+            "Your purchase went through, but FeelGood Pro isn't active yet. Tap Restore in a moment to finish."
         case .restoreFailed(let error):
             "Restore failed. \(error.localizedDescription)"
         case .other(let error):
