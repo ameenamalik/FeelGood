@@ -65,9 +65,9 @@ struct FeelGoodPaywallView: View {
         /// Long enough for each demo to play through (swaps shows three).
         var dwellSeconds: Double {
             switch self {
-            case .swaps: 14
-            case .chat: 10
-            case .calendar: 6
+            case .swaps: 13
+            case .chat: 10.5
+            case .calendar: 7.5
             }
         }
 
@@ -126,12 +126,14 @@ struct FeelGoodPaywallView: View {
     @State private var carouselResetToken = 0
     @State private var swapDemoIndex = 0
     @State private var swapCardOffset: CGFloat = 0
+    @State private var swapCardOpacity: Double = 1
     @State private var swapFinger: SwapFinger = .none
     @State private var isShowingSwapPicker = false
     @State private var isSwapPillPressed = false
     @State private var swapPickerHighlight: Int?
     @State private var swapCaption = ""
     @State private var chatStep = 0
+    @State private var isCalendarBusy = false
 
     init(
         context: PaywallContext = .general,
@@ -454,7 +456,6 @@ struct FeelGoodPaywallView: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .strokeBorder(isHighlighted ? FGColor.ink.opacity(0.25) : .clear, lineWidth: 1)
         )
-        .scaleEffect(isHighlighted ? 1.02 : 1)
     }
 
     private var swapsHeroContent: some View {
@@ -469,26 +470,27 @@ struct FeelGoodPaywallView: View {
                 .id(swapCaption)
                 .transition(.opacity)
 
+            // Both layers stay in the tree and cross-fade, so nothing is
+            // inserted or removed mid-spring. No clipping: slides are short
+            // fades, so card edges never get cut.
             ZStack {
-                if isShowingSwapPicker {
-                    VStack(spacing: 4) {
-                        ForEach(0..<3, id: \.self) { row in
-                            demoPickerRow(
-                                Self.demoSessions[(swapDemoIndex + 1 + row) % count],
-                                isHighlighted: swapPickerHighlight == row
-                            )
-                        }
+                VStack(spacing: 4) {
+                    ForEach(0..<3, id: \.self) { row in
+                        demoPickerRow(
+                            Self.demoSessions[(swapDemoIndex + 1 + row) % count],
+                            isHighlighted: swapPickerHighlight == row
+                        )
                     }
-                    .transition(.scale(scale: 0.94).combined(with: .opacity))
-                } else {
-                    demoCard(current, isPillPressed: isSwapPillPressed)
-                        .offset(x: swapCardOffset)
-                        .opacity(swapCardOffset == 0 ? 1 : 0.4)
-                        .transition(.opacity)
                 }
+                .opacity(isShowingSwapPicker ? 1 : 0)
+                .scaleEffect(isShowingSwapPicker ? 1 : 0.96)
+
+                demoCard(current, isPillPressed: isSwapPillPressed)
+                    .offset(x: swapCardOffset)
+                    .opacity(isShowingSwapPicker ? 0 : swapCardOpacity)
+                    .scaleEffect(isShowingSwapPicker ? 0.96 : 1)
             }
             .frame(height: 104)
-            .clipped()
         }
         .task { await runSwapDemo() }
     }
@@ -498,12 +500,14 @@ struct FeelGoodPaywallView: View {
         return !Task.isCancelled
     }
 
-    /// Plays the real gestures: a swipe, then a tap on Swap that opens the
+    /// Plays once and holds the last frame; the carousel moves on right after,
+    /// so the demo never restarts under the viewer. Plays the real gestures: a swipe, then a tap on Swap that opens the
     /// library and picks from it, then another swipe. Reduced motion shows
     /// a single resting card.
     private func runSwapDemo() async {
         swapDemoIndex = 0
         swapCardOffset = 0
+        swapCardOpacity = 1
         swapFinger = .none
         isShowingSwapPicker = false
         isSwapPillPressed = false
@@ -517,16 +521,22 @@ struct FeelGoodPaywallView: View {
             swapFinger = .swipe
             withAnimation(.easeInOut(duration: 0.28)) { swapCardOffset = -56 }
             guard await pause(0.4) else { return false }
-            withAnimation(.easeIn(duration: 0.18)) { swapCardOffset = -420 }
-            guard await pause(0.2) else { return false }
+            withAnimation(.easeIn(duration: 0.18)) {
+                swapCardOffset = -90
+                swapCardOpacity = 0
+            }
+            guard await pause(0.22) else { return false }
             swapFinger = .none
             swapDemoIndex += 1
-            swapCardOffset = 420
-            withAnimation(FGMotion.swap) { swapCardOffset = 0 }
+            swapCardOffset = 90
+            withAnimation(FGMotion.swap) {
+                swapCardOffset = 0
+                swapCardOpacity = 1
+            }
             return await pause(1.7)
         }
 
-        while !Task.isCancelled {
+        if !Task.isCancelled {
             guard await swipe(caption: "Swipe a card to swap it.") else { return }
 
             // Tap Swap -> browse the library -> choose.
@@ -599,7 +609,7 @@ struct FeelGoodPaywallView: View {
     private func runChatDemo() async {
         chatStep = reduceMotion ? 3 : 0
         guard !reduceMotion else { return }
-        while !Task.isCancelled {
+        if !Task.isCancelled {
             for (step, hold) in [(0, 1.2), (1, 3.0), (2, 1.6), (3, 3.6)] {
                 withAnimation(FGMotion.swap) { chatStep = step }
                 try? await Task.sleep(for: .seconds(hold))
@@ -664,56 +674,71 @@ struct FeelGoodPaywallView: View {
     // MARK: - Hero Content 3: Calendar Sync
 
     private var calendarHeroContent: some View {
-        VStack(spacing: 10) {
-            VStack(spacing: 6) {
-                HStack {
-                    Text("1:00 PM – 2:00 PM")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(FGColor.inkMuted)
-                    Spacer()
-                    Text("Team Sync")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(FGColor.inkMuted)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(FGColor.panel.opacity(0.5))
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        VStack(spacing: 8) {
+            // The real headline strings from the Today menu: a tight calendar
+            // shrinks the time budget, and the headline follows.
+            Text(isCalendarBusy ? "You've got a little time. This fits it." : "Here's today.")
+                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .foregroundStyle(FGColor.ink)
+                .frame(height: 18)
+                .id(isCalendarBusy)
+                .transition(.opacity)
 
-                HStack(spacing: 8) {
-                    Image(Course.special.menuMascotAsset)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 26, height: 26)
-
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("15-min free gap detected")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(FGColor.sageDeep)
-                        Text("10-min Posture Reset")
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundStyle(FGColor.ink)
-                    }
-
-                    Spacer()
-
-                    Text("Auto-fit")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(FGColor.sageDeep)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(FGColor.surface))
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(FGColor.sagePanel)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            HStack {
+                Text(isCalendarBusy ? "1:00 PM – 2:00 PM" : "Open afternoon")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(FGColor.inkMuted)
+                Spacer()
+                Text(isCalendarBusy ? "Team Sync" : "Nothing scheduled")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(FGColor.inkMuted)
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(FGColor.panel.opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-            Text("Finds open windows between meetings automatically.")
+            HStack(spacing: 8) {
+                Image(Course.special.menuMascotAsset)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 26, height: 26)
+
+                Text(isCalendarBusy ? "10-min Posture Reset" : "20-min Full-Body Flow")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(FGColor.ink)
+                    .id(isCalendarBusy)
+                    .transition(.opacity)
+
+                Spacer()
+
+                Text("Auto-fit")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(FGColor.sageDeep)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(FGColor.surface))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(FGColor.sagePanel)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+            Text("Your day shapes the menu. No need to spell it out.")
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(FGColor.inkMuted)
+                .multilineTextAlignment(.center)
         }
+        .task { await runCalendarDemo() }
+    }
+
+    /// An open day, then a meeting lands and the menu and headline adapt.
+    private func runCalendarDemo() async {
+        isCalendarBusy = reduceMotion
+        guard !reduceMotion else { return }
+        try? await Task.sleep(for: .seconds(1.8))
+        guard !Task.isCancelled else { return }
+        withAnimation(FGMotion.swap) { isCalendarBusy = true }
     }
 
     private func runSuperpowerAutoCycle() async {
