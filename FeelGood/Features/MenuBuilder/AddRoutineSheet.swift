@@ -22,8 +22,8 @@ struct AddRoutineSheet: View {
     @State private var partCue: String = ""
     @State private var partDurationMin: Int = 1
     @State private var course: Course
-    @State private var activity: Activity = .yoga
-    @State private var intensity: Int = 3
+    @State private var activity: Activity = .generalWellness
+    @State private var intensity: Int = 2
     @State private var addToToday: Bool = false
     @State private var isShowingCatalogPicker: Bool = false
     @FocusState private var isTitleFocused: Bool
@@ -34,9 +34,6 @@ struct AddRoutineSheet: View {
     @State private var dropTargetPartID: String?
 
     private static let partDurations = [1, 2, 3, 5, 10, 15, 20]
-    private static let efforts: [(label: String, intensity: Int)] = [
-        ("Easy", 2), ("Steady", 3), ("Hard", 4)
-    ]
 
     init(
         model: TodayModel,
@@ -61,8 +58,8 @@ struct AddRoutineSheet: View {
             _parts = State(initialValue: [])
         }
         _course = State(initialValue: startingCourse)
-        _activity = State(initialValue: editingSession?.activity ?? .yoga)
-        _intensity = State(initialValue: editingSession?.intensity ?? 3)
+        _activity = State(initialValue: editingSession?.activity ?? .generalWellness)
+        _intensity = State(initialValue: editingSession?.intensity ?? 2)
         _addToToday = State(initialValue: editingSession.map { session in
             model.todayCustomOverrides.values.contains { $0.id == session.id }
         } ?? false)
@@ -101,10 +98,19 @@ struct AddRoutineSheet: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: FGSpace.xl) {
-                        Text(editingSession == nil ? "Create a routine" : "Edit routine")
-                            .font(FGFont.title)
-                            .foregroundStyle(FGColor.ink)
-                            .accessibilityAddTraits(.isHeader)
+                        HStack(alignment: .firstTextBaseline, spacing: FGSpace.m) {
+                            Text(editingSession == nil ? "Create a routine" : "Edit routine")
+                                .font(FGFont.title)
+                                .foregroundStyle(FGColor.ink)
+                                .accessibilityAddTraits(.isHeader)
+                            Spacer(minLength: 0)
+                            Button("Cancel") { dismiss() }
+                                .fixedSize()
+                                .font(FGFont.body)
+                                .foregroundStyle(FGColor.ink)
+                                .frame(minHeight: FGSize.minTouchTarget)
+                                .buttonStyle(.plain)
+                        }
 
                         question("What should we call it?") {
                             TextField("e.g. Morning Sunlight Walk, 5-min Neck Release", text: $title)
@@ -305,20 +311,6 @@ struct AddRoutineSheet: View {
                             }
                         }
 
-                        question("How should it feel?") {
-                            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
-                                ForEach(Self.efforts, id: \.intensity) { effort in
-                                    FGPill(
-                                        title: effort.label,
-                                        selectedAura: effortAura(for: effort.intensity),
-                                        isSelected: intensity == effort.intensity
-                                    ) {
-                                        withAnimation(FGMotion.gentle) { intensity = effort.intensity }
-                                    }
-                                }
-                            }
-                        }
-
                         Toggle(isOn: $addToToday) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Add to today’s menu")
@@ -354,14 +346,7 @@ struct AddRoutineSheet: View {
                 .scrollBounceBehavior(.basedOnSize)
                 .scrollDismissesKeyboard(.interactively)
             }
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .foregroundStyle(FGColor.ink)
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $isShowingCatalogPicker) {
                 CatalogPickerSheet(model: model, preferredCourse: course) { pickedSession in
                     title = pickedSession.title
@@ -409,14 +394,6 @@ struct AddRoutineSheet: View {
         case .side: .sage
         case .dessert: .blush
         case .special: .lilac
-        }
-    }
-
-    private func effortAura(for intensity: Int) -> FGAura {
-        switch intensity {
-        case ...2: .sage
-        case 3: .apricot
-        default: .blush
         }
     }
 
