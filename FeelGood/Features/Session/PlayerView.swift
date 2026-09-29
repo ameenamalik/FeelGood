@@ -276,7 +276,7 @@ struct PlayerView: View {
             }
 
             if isBreathingStep(step), breathingAnchorIndex != index {
-                restartBreathingCycle()
+                restartBreathingCycle(for: step)
             }
             playStepNarrationIfNeeded(for: step)
 
@@ -690,7 +690,7 @@ struct PlayerView: View {
                     }
                     readingRemaining = 0
                     isReadingPaused = false
-                    if isBreathingStep(step) { restartBreathingCycle() }
+                    if isBreathingStep(step) { restartBreathingCycle(for: step) }
                     playStepNarrationIfNeeded(for: step)
                 }
             } else if step.isCounted {
@@ -1255,10 +1255,24 @@ struct PlayerView: View {
         steps.contains { $0.narrationID != nil }
     }
 
-    private func restartBreathingCycle() {
-        breathingStartedAt = Date()
+    /// Anchors the orb's clock. When this step has narration, the anchor is
+    /// pushed back by the clip's real, measured length rather than started
+    /// immediately — otherwise the orb (a fixed cadence) and the spoken
+    /// words (natural speech, never exactly on the second) drift apart
+    /// within a single utterance: "Breathe in" on screen while the voice is
+    /// already saying "Hold". `BreathingCycleState` clamps elapsed time to
+    /// zero for a `startedAt` still in the future, so the orb simply holds
+    /// at rest — inhale phase, empty scale — for however long the clip
+    /// actually runs, then starts pacing for real the moment it ends.
+    private func restartBreathingCycle(for step: Step) {
+        breathingStartedAt = Date().addingTimeInterval(narrationDelay(for: step))
         breathingPausedAt = nil
         breathingAnchorIndex = index
+    }
+
+    private func narrationDelay(for step: Step) -> TimeInterval {
+        guard !narrationService.isMuted, let narrationID = step.narrationID else { return 0 }
+        return narrationService.duration(for: narrationID) ?? 0
     }
 
     /// Plays a step's narration once, the moment its reading buffer ends —
@@ -1302,6 +1316,16 @@ struct PlayerView: View {
     private func toggleNarrationMute() {
         narrationService.isMuted.toggle()
         isNarrationMuted = narrationService.isMuted
+
+        // Muting stops playback outright rather than pausing it (there's
+        // nothing to resume — see AVAudioPlayerNarrationService.stop()), so
+        // unmuting has to explicitly start the current step's clip again.
+        // Without this, nothing plays until the *next* step change, since
+        // `playStepNarrationIfNeeded` only ever fires once per step index.
+        guard !isNarrationMuted, isRunning, readingRemaining == 0,
+              let narrationID = step?.narrationID
+        else { return }
+        narrationService.play(narrationID: narrationID)
     }
 
     private func advance() {
