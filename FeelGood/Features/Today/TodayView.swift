@@ -111,7 +111,11 @@ struct TodayView: View {
             .scrollBounceBehavior(.basedOnSize)
         }
         .sheet(isPresented: $isCheckingIn, onDismiss: handleCheckInDismissal) {
-            CheckInSheet(current: model.checkIn) { checkIn in
+            CheckInSheet(
+                current: model.checkIn,
+                standingIntents: model.profile.intents,
+                places: model.profile.places
+            ) { checkIn in
                 pendingCheckInUpdate = PendingCheckInUpdate(checkIn: checkIn)
                 isCheckingIn = false
             }

@@ -23,6 +23,10 @@ nonisolated struct PlanWeights: Hashable, Sendable {
     /// standing profile intent, so the plan visibly follows what was just
     /// asked for rather than a months-old onboarding answer.
     var todayIntentMatch: Double = 3.5
+    /// The body area asked for in today's check-in.
+    var focusMatch: Double = 2.0
+    /// One of the activities today's check-in answer leans toward.
+    var favouredActivityMatch: Double = 1.5
     var affinity: Double = 2.5
     /// New movers get a calm first menu without being locked out of anything.
     var gettingStartedGentleMatch: Double = 2.0
@@ -567,6 +571,15 @@ nonisolated struct PlanEngine: Sendable {
         } else if input.profile.intents.contains(where: { sessionMatches($0, session: session) }) {
             score += weights.intentMatch
             reasons.append(.matchesIntent)
+        }
+
+        // Today's answer, beyond the goal itself. Both are nudges: a session
+        // that misses them is still eligible, it just stops leading.
+        if let focus = checkIn.focus, session.bodyFocus.contains(focus) {
+            score += weights.focusMatch
+        }
+        if checkIn.favoured.contains(session.activity) {
+            score += weights.favouredActivityMatch
         }
 
         // Affinity — quietly, over time.
