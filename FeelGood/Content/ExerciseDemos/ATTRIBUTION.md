@@ -354,9 +354,33 @@ rendered as template images.
 
 - `chest-press-1.png`, `chest-press-2.png`, `chest-press-3.png`
 - `dead-bug-1.png`, `dead-bug-2.png`, `dead-bug-3.png`
+- `double-leg-stretch-1.png`, `double-leg-stretch-2.png`, `double-leg-stretch-3.png`
+- `downward-dog-1.png`, `downward-dog-2.png`, `downward-dog-3.png`
+- `figure-four-stretch-1.png`, `figure-four-stretch-2.png`, `figure-four-stretch-3.png`
+- `forearm-stretch-1.png`, `forearm-stretch-2.png`, `forearm-stretch-3.png`
+- `legs-up-the-wall-1.png`, `legs-up-the-wall-2.png`, `legs-up-the-wall-3.png`
+- `low-lunge-1.png`, `low-lunge-2.png`, `low-lunge-3.png`
+- `neck-side-stretch-1.png`, `neck-side-stretch-2.png`, `neck-side-stretch-3.png`
 - `pelvic-tilt-1.png`
+- `pilates-swimming-1.png`, `pilates-swimming-2.png`, `pilates-swimming-3.png`
+- `qigong-cloud-hands-1.png`, `qigong-cloud-hands-2.png`, `qigong-cloud-hands-3.png`
+- `qigong-drawing-the-bow-1.png`, `qigong-drawing-the-bow-2.png`, `qigong-drawing-the-bow-3.png`
+- `qigong-holding-the-ball-1.png`, `qigong-holding-the-ball-2.png`, `qigong-holding-the-ball-3.png`
+- `qigong-turning-the-waist-1.png`, `qigong-turning-the-waist-2.png`, `qigong-turning-the-waist-3.png`
+- `roll-down-1.png`, `roll-down-2.png`, `roll-down-3.png`
+- `roll-up-1.png`, `roll-up-2.png`, `roll-up-3.png`
+- `rolling-like-a-ball-1.png`, `rolling-like-a-ball-2.png`, `rolling-like-a-ball-3.png`
+- `side-kick-1.png`, `side-kick-2.png`, `side-kick-3.png`
+- `single-leg-circle-1.png`, `single-leg-circle-2.png`, `single-leg-circle-3.png`
+- `single-leg-stand-1.png`, `single-leg-stand-2.png`, `single-leg-stand-3.png`
 - `single-leg-stretch-1.png`, `single-leg-stretch-2.png`, `single-leg-stretch-3.png`
+- `spine-stretch-forward-1.png`, `spine-stretch-forward-2.png`, `spine-stretch-forward-3.png`
+- `standing-leg-lift-1.png`, `standing-leg-lift-2.png`, `standing-leg-lift-3.png`
+- `supine-hamstring-stretch-1.png`, `supine-hamstring-stretch-2.png`, `supine-hamstring-stretch-3.png`
+- `swan-prep-1.png`, `swan-prep-2.png`, `swan-prep-3.png`
 - `the-hundred-1.png`, `the-hundred-2.png`, `the-hundred-3.png`
+- `thoracic-rotation-1.png`, `thoracic-rotation-2.png`, `thoracic-rotation-3.png`
+- `tree-pose-1.png`, `tree-pose-2.png`, `tree-pose-3.png`
 
 ## Glossary coverage
 
