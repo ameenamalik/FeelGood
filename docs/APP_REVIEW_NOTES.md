@@ -10,8 +10,9 @@ launch; signing in (Apple, Google or email) is optional and only syncs saved
 routines to a new phone.
 
 To reach the main flows:
-- Check-in: open the app, tap the check-in banner on the Today tab, pick an
-  energy level, a time budget and how you feel. The menu on Today updates.
+- Check-in: open the app, tap the check-in banner on the Today tab, pick a
+  goal (e.g. Energised, Strong, Calm), choose how you want to feel, and select how
+  much time you have (or "Resting today"). The menu on Today updates.
 - Chat: the Chat tab lets people describe their day in their own words. Free
   users get one AI reply, subscribers get unlimited; each AI reply is labelled
   "AI reply", and the person agrees before any message is sent. Messages are scrubbed of emails, phone numbers and links, then sent to

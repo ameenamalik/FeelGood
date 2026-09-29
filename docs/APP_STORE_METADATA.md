@@ -23,7 +23,7 @@ FeelGood answers one question: what should I do today?
 Open it and you get today's menu. Not a library, not a feed, not a dashboard. A short list of small things that fit the day you are actually having, each with a plain-language reason it's there.
 
 HOW IT WORKS
-- Answer a ten-second check-in: your energy, how much time you really have, and how you feel. Skip it whenever you like.
+- Answer a quick check-in: how you want to feel, what kind of that, and how long you have (or "Resting today"). Skip it whenever you like.
 - Get a menu of three to five items on one screen: a two-minute appetizer, one main thing, a few sides that pair with what you're already doing, and a dessert that is just for joy.
 - Every item says why it's on your menu, so nothing feels random.
 - Don't like something? Swap it, or hide it so it never comes back.
