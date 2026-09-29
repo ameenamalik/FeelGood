@@ -28,17 +28,15 @@ struct MyMenuView: View {
             ZStack {
                 FGColor.bg.ignoresSafeArea()
 
-                GeometryReader { proxy in
-                    let fixedHeight = CGFloat(122)
-                    let cardHeight = max(104, (proxy.size.height - fixedHeight) / 4)
-
+                ScrollView {
                     VStack(alignment: .leading, spacing: FGSpace.l) {
                         header
-                        dashboardGrid(cardHeight: cardHeight)
+                        dashboardGrid
                     }
                     .padding(.horizontal, FGSpace.page)
                     .padding(.vertical, FGSpace.m)
                 }
+                .scrollBounceBehavior(.basedOnSize)
             }
             .navigationTitle("My Menu")
             .navigationBarTitleDisplayMode(.inline)
@@ -93,18 +91,18 @@ struct MyMenuView: View {
 
     // MARK: - Stacked Menu
 
-    private func dashboardGrid(cardHeight: CGFloat) -> some View {
+    private var dashboardGrid: some View {
         VStack(spacing: FGSpace.s) {
             ForEach(quadrants, id: \.self) { course in
-                quadrantCard(for: course, height: cardHeight)
+                quadrantCard(for: course)
             }
         }
         .frame(maxWidth: .infinity)
     }
 
-    private func quadrantCard(for course: Course, height: CGFloat) -> some View {
+    private func quadrantCard(for course: Course) -> some View {
         let routines = model.customRoutines(for: course)
-        let previewItems = Array(routines.prefix(1))
+        let previewItems = Array(routines.prefix(3))
 
         return Button {
             selectedDetailCourse = course
@@ -131,12 +129,16 @@ struct MyMenuView: View {
                                     Text(session.title)
                                         .font(FGFont.caption)
                                         .foregroundStyle(FGColor.inkMuted)
-                                        .lineLimit(1)
+                                        .multilineTextAlignment(.leading)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                if routines.count > previewItems.count {
+                                    Text("+\(routines.count - previewItems.count) more")
+                                        .font(FGFont.caption.weight(.semibold))
+                                        .foregroundStyle(course.accentText)
                                 }
                             }
                         }
-
-                        Spacer(minLength: 0)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -153,7 +155,7 @@ struct MyMenuView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
             }
-            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
             .background(course.accentGradient)
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay(
@@ -164,6 +166,8 @@ struct MyMenuView: View {
         .buttonStyle(.feelGoodPress)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(course.label), \(routines.count) routines")
+        .accessibilityValue(previewItems.map(\.title).joined(separator: ", "))
+        .accessibilityHint("Opens all saved routines in this course")
         .accessibilityAddTraits(.isButton)
     }
 
