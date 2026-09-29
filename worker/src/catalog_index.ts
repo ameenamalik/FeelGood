@@ -2722,6 +2722,1909 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "equipment": [
       "outdoor"
     ]
+  },
+  {
+    "id": "main-band-upper-twelve",
+    "title": "A band for your upper body",
+    "subtitle": "A long band and a secure anchor at chest height",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody",
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "band"
+    ]
+  },
+  {
+    "id": "main-band-hips-twelve",
+    "title": "Twelve minutes with a loop band",
+    "subtitle": "Four floor and standing moves, repeated twice",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "hips",
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "band"
+    ]
+  },
+  {
+    "id": "main-dumbbell-arms-twelve",
+    "title": "A little time for your arms",
+    "subtitle": "A pair of dumbbells and a sturdy seat",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "weights"
+    ]
+  },
+  {
+    "id": "main-dumbbell-hips-twelve",
+    "title": "Hips and legs with dumbbells",
+    "subtitle": "Two rounds with a bench and room to move",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-machine-push-twelve",
+    "title": "A short machine push session",
+    "subtitle": "Light loads and time to adjust each station",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-machine-pull-twelve",
+    "title": "A short machine pull session",
+    "subtitle": "Back and arms across two easy-to-follow rounds",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "back",
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-machine-legs-twelve",
+    "title": "Four machines for your legs",
+    "subtitle": "Set each machine to fit before starting",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-cable-arms-twelve",
+    "title": "Arms at the cable station",
+    "subtitle": "A low pulley, a high pulley, and light loads",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-kettlebell-steady-twelve",
+    "title": "A steady kettlebell session",
+    "subtitle": "A kettlebell, a pair of weights, and room to carry",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "weights"
+    ]
+  },
+  {
+    "id": "main-assisted-pull-twelve",
+    "title": "Pull with a little assistance",
+    "subtitle": "An assisted pull-up machine and cable station",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody",
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-single-leg-strength-twelve",
+    "title": "One leg at a time",
+    "subtitle": "A light dumbbell and a support within reach",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "weights"
+    ]
+  },
+  {
+    "id": "main-floor-strength-twelve",
+    "title": "A small floor strength circuit",
+    "subtitle": "Slow repetitions with space to recover",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full",
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-cable-hips-core-twelve",
+    "title": "Hips and core at the cables",
+    "subtitle": "A rope attachment and a single handle",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "hips",
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-dumbbell-shoulders-twelve",
+    "title": "Shoulders and upper back",
+    "subtitle": "Light dumbbells, with a pause between moves",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "neckShoulders",
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "weights"
+    ]
+  },
+  {
+    "id": "main-upper-push-twenty",
+    "title": "Twenty minutes of pushing",
+    "subtitle": "A bench, cables, and an assisted-dip machine",
+    "durationMin": 20,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-upper-pull-fifteen",
+    "title": "Pull, row, and reset",
+    "subtitle": "A barbell, dumbbell bench, fixed bar, and pull-up station",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "back",
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-pull-up-practice-ten",
+    "title": "Ten minutes at the pull-up bar",
+    "subtitle": "For familiar pull-ups, with generous recovery",
+    "durationMin": 10,
+    "intensity": "dynamic",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody",
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-barbell-lower-twenty",
+    "title": "A steady lower-body barbell session",
+    "subtitle": "Light loads, rack safeties, a bench, and time to reset",
+    "durationMin": 20,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-band-bench-legs-eight",
+    "title": "Eight minutes for your legs",
+    "subtitle": "A loop band, low bench, and clear walking space",
+    "durationMin": 8,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-core-four-moves-ten",
+    "title": "Four ways to work your core",
+    "subtitle": "A secure hanging bar, light dumbbell, and floor space",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-back-line-five",
+    "title": "Five minutes for your back",
+    "subtitle": "A back-extension bench and a comfortable floor space",
+    "durationMin": 5,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-bodyweight-energy-eight",
+    "title": "An eight-minute energy break",
+    "subtitle": "Short bursts with time to catch your breath",
+    "durationMin": 8,
+    "intensity": "dynamic",
+    "course": "side",
+    "activity": "agility",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-swing-jump-ten",
+    "title": "Swings, jumps, and room to recover",
+    "subtitle": "A familiar kettlebell swing and small, controlled jumps",
+    "durationMin": 10,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "agility",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full",
+      "lowerBody"
+    ],
+    "intents": [
+      "energize"
+    ],
+    "equipment": [
+      "weights"
+    ]
+  },
+  {
+    "id": "side-rowing-eight",
+    "title": "Eight minutes on the rowing machine",
+    "subtitle": "Legs, then body, then arms; an unhurried rhythm",
+    "durationMin": 8,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-elliptical-ten",
+    "title": "An easy elliptical break",
+    "subtitle": "A smooth pace with light resistance",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-stairs-twelve",
+    "title": "Twelve minutes on the stairs",
+    "subtitle": "Slow steps, with the rails within reach",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-cycle-steady-fifteen",
+    "title": "A steady fifteen-minute bike ride",
+    "subtitle": "On a stationary bike at home or the gym",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "biking",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "bike"
+    ]
+  },
+  {
+    "id": "main-pool-easy-twenty",
+    "title": "Twenty easy minutes in the pool",
+    "subtitle": "A familiar stroke, with breaks at the wall",
+    "durationMin": 20,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "swimming",
+    "places": [
+      "pool"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "pool"
+    ]
+  },
+  {
+    "id": "side-incline-walk-ten",
+    "title": "Ten minutes of gentle incline",
+    "subtitle": "A small incline and a comfortable speed",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "walking",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-walk-steady-fifteen",
+    "title": "A fifteen-minute walking reset",
+    "subtitle": "Around the block, indoors, or along a familiar route",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "walking",
+    "places": [
+      "home",
+      "outdoors",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-jog-reset-twenty",
+    "title": "An easy jog with walking breaks",
+    "subtitle": "Four short jogs with a walk between each",
+    "durationMin": 20,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "running",
+    "places": [
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "outdoor"
+    ]
+  },
+  {
+    "id": "main-push-up-shapes",
+    "title": "Three push-up shapes",
+    "subtitle": "Floor space; keep every repetition controlled",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-side-to-side-push",
+    "title": "Side-to-side pushing practice",
+    "subtitle": "For familiar archer, typewriter, and sweeping push-ups",
+    "durationMin": 10,
+    "intensity": "dynamic",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-loaded-calisthenics",
+    "title": "Familiar lifts with a little extra load",
+    "subtitle": "Secure loading, parallel bars, and pull-up bars; bodyweight versions should already feel steady",
+    "durationMin": 12,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-dip-variations",
+    "title": "A short dip session",
+    "subtitle": "A stable bench and parallel bars; keep the shoulder range comfortable",
+    "durationMin": 8,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-incline-press-pair",
+    "title": "Two incline presses",
+    "subtitle": "A rack with safeties, an incline bench, and dumbbells",
+    "durationMin": 9,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-decline-press-pair",
+    "title": "Two decline presses",
+    "subtitle": "A secured decline bench, barbell, dumbbells, and a spotter",
+    "durationMin": 9,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-close-grip-press",
+    "title": "Close-grip bench and triceps",
+    "subtitle": "Bench, rack safeties or spotter, and light bars",
+    "durationMin": 9,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-fly-and-press",
+    "title": "Chest arcs and a guided press",
+    "subtitle": "Flat and incline benches, dumbbells, cable stacks, and a Smith machine",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-dumbbell-shoulder-rotation",
+    "title": "Press and lift with dumbbells",
+    "subtitle": "Light dumbbells, a supportive seat, and a weight plate",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-guided-shoulder-lifts",
+    "title": "Shoulder lifts at the gym",
+    "subtitle": "Cable station, lateral-raise machine, and a light bar",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-landmine-press-and-drive",
+    "title": "Presses with a little leg drive",
+    "subtitle": "A landmine station and a light barbell; use a push press you know",
+    "durationMin": 16,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-pike-press-practice",
+    "title": "Pike pressing practice",
+    "subtitle": "A stable low box and clear wall space; practise familiar positions",
+    "durationMin": 10,
+    "intensity": "dynamic",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-handstand-press-practice",
+    "title": "Handstand pressing practice",
+    "subtitle": "For established handstands with a controlled exit; a clear wall and padded space",
+    "durationMin": 12,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-rear-shoulder-weights",
+    "title": "A little work for the rear shoulders",
+    "subtitle": "Light dumbbells and a reverse pec-deck machine",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-shoulder-blade-floor",
+    "title": "Slow shoulder-blade movements",
+    "subtitle": "A stable bench and floor space",
+    "durationMin": 8,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "back",
+      "neckShoulders"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-curl-bar-variations",
+    "title": "A few ways to curl a bar",
+    "subtitle": "Light straight and EZ bars, a preacher pad, and an incline bench",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-curl-and-grip",
+    "title": "Curls and a little grip work",
+    "subtitle": "Incline bench, dumbbells, a cable rope, and a light bar",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-lying-triceps",
+    "title": "Triceps with dumbbells",
+    "subtitle": "A stable flat bench and light dumbbells",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-cable-and-overhead-triceps",
+    "title": "Cable and overhead triceps",
+    "subtitle": "A cable rope and a light dumbbell",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-hanging-control",
+    "title": "Controlled hanging practice",
+    "subtitle": "A secure bar, assisted-chin machine, and a step for entering and leaving",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "back",
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-pull-up-grip-practice",
+    "title": "Pull-up grip practice",
+    "subtitle": "Secure bars and an intact load-rated towel; use familiar grips",
+    "durationMin": 10,
+    "intensity": "dynamic",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "back",
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-l-sit-practice",
+    "title": "L-sit practice",
+    "subtitle": "Stable parallel bars and a pull-up bar; start with holds you already control",
+    "durationMin": 12,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "core",
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-supported-rows",
+    "title": "Rows with support",
+    "subtitle": "A load-rated doorway bar, a strong towel, and a chest-supported row station",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-dumbbell-and-cable-rows",
+    "title": "Dumbbell and cable rows",
+    "subtitle": "Dumbbells and seated and single-handle cable stations",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-barbell-row-practice",
+    "title": "Barbell row practice",
+    "subtitle": "Barbell, landmine, and T-bar row stations; start light",
+    "durationMin": 15,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-pulldown-angles",
+    "title": "Three pulldown angles",
+    "subtitle": "High cable station and a long band on a secure high anchor",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-supported-single-leg",
+    "title": "Single-leg control with support",
+    "subtitle": "Stable handles, a low box, and a padded landing for the free knee",
+    "durationMin": 18,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-single-leg-squat-practice",
+    "title": "Single-leg squat practice",
+    "subtitle": "Familiar pistol and skater squats; keep a support nearby",
+    "durationMin": 16,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-wide-and-supported-squats",
+    "title": "Wide and supported squat practice",
+    "subtitle": "A sissy-squat station, squat wedge, and light dumbbell",
+    "durationMin": 10,
+    "intensity": "dynamic",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-squat-stations",
+    "title": "Three squat stations",
+    "subtitle": "Front-rack safeties, belt-squat machine, and hack-squat machine",
+    "durationMin": 12,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-dumbbell-lunge-directions",
+    "title": "Dumbbell lunges in different directions",
+    "subtitle": "Light dumbbells and clear space in front and beside you",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "weights"
+    ]
+  },
+  {
+    "id": "side-small-platform-leg-work",
+    "title": "Leg work with a small platform",
+    "subtitle": "A stable low step or box and light dumbbells",
+    "durationMin": 8,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-landmine-lower-body",
+    "title": "Lower body at the landmine",
+    "subtitle": "A secure landmine attachment and a manageable load",
+    "durationMin": 9,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-smith-squat-lunge",
+    "title": "Squats and lunges on the Smith machine",
+    "subtitle": "Smith machine safeties and a stable low bench",
+    "durationMin": 21,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-deadlift-stance-practice",
+    "title": "Deadlift stance practice",
+    "subtitle": "Barbell, trap bar, and dumbbells; use light loads for each stance",
+    "durationMin": 12,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-hinge-at-the-rack",
+    "title": "Hinges at the rack",
+    "subtitle": "A Smith machine and rack with adjustable safeties",
+    "durationMin": 9,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-loaded-bridges",
+    "title": "Loaded bridges and hip thrusts",
+    "subtitle": "Padded bar, dumbbell, stable bench, and Smith machine",
+    "durationMin": 12,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "hips",
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-hip-extension-stations",
+    "title": "Hip extension at the gym",
+    "subtitle": "Back-extension bench, reverse-hyper machine, and kickback machine",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "hips",
+      "back"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-hamstring-machine-pair",
+    "title": "A pair of hamstring machines",
+    "subtitle": "Seated and lying leg-curl machines, adjusted to fit",
+    "durationMin": 6,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-hamstring-control",
+    "title": "Hamstring control practice",
+    "subtitle": "A Nordic station, stability ball, sliders, and clear floor; use familiar short ranges",
+    "durationMin": 12,
+    "intensity": "dynamic",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody",
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-band-floor-hips",
+    "title": "Floor work with a loop band",
+    "subtitle": "A loop band, stable bench, and comfortable floor space",
+    "durationMin": 21,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-band-hip-directions",
+    "title": "Three directions with a band",
+    "subtitle": "Loop and long bands, a stable seat, and a secure low anchor",
+    "durationMin": 18,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "band"
+    ]
+  },
+  {
+    "id": "main-cable-hip-directions",
+    "title": "Three directions at the low pulley",
+    "subtitle": "An ankle cuff, low cable station, and a support for balance",
+    "durationMin": 21,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "hips"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-side-body-floor",
+    "title": "A short side-body session",
+    "subtitle": "A stable bench and floor space",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "hips",
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-calf-stations",
+    "title": "Calves at three stations",
+    "subtitle": "Donkey-calf, seated-calf, and leg-press machines",
+    "durationMin": 8,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "lowerBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-band-core-control",
+    "title": "Core control with a band",
+    "subtitle": "A long band and secure low and chest-height anchors",
+    "durationMin": 18,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "band"
+    ]
+  },
+  {
+    "id": "main-cable-core-control",
+    "title": "Core control at the cables",
+    "subtitle": "A cable station with a rope and single handle",
+    "durationMin": 24,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-core-roll-and-curl",
+    "title": "Roll and curl practice",
+    "subtitle": "An ab wheel, decline bench, and light plate; use ranges you control",
+    "durationMin": 10,
+    "intensity": "dynamic",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-supported-knee-lifts",
+    "title": "Supported knee and leg lifts",
+    "subtitle": "A captain's chair, secure hanging bar, and stable bench",
+    "durationMin": 8,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-floor-core-shapes",
+    "title": "A few floor core shapes",
+    "subtitle": "Floor space and a light plate or dumbbell",
+    "durationMin": 15,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "weights"
+    ]
+  },
+  {
+    "id": "side-dragon-flag-practice",
+    "title": "Short dragon-flag practice",
+    "subtitle": "A firmly anchored bench; for a progression you already control",
+    "durationMin": 8,
+    "intensity": "dynamic",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "core"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-hands-and-carry",
+    "title": "Hands, wrists, and a short carry",
+    "subtitle": "Light dumbbells, a light bar, a seat, and clear walking space",
+    "durationMin": 8,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-floor-movement-break",
+    "title": "A floor movement break",
+    "subtitle": "Clear floor space; move slowly enough to keep your balance",
+    "durationMin": 8,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-quick-footwork",
+    "title": "A short footwork session",
+    "subtitle": "An agility ladder or flat floor markers and space to move",
+    "durationMin": 10,
+    "intensity": "dynamic",
+    "course": "side",
+    "activity": "agility",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "side-floor-power-practice",
+    "title": "Short floor power practice",
+    "subtitle": "For familiar explosive push-ups; clear nonslip floor",
+    "durationMin": 10,
+    "intensity": "dynamic",
+    "course": "side",
+    "activity": "agility",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "side-rope-and-erg",
+    "title": "Ropes and an easy erg rhythm",
+    "subtitle": "Battle ropes, air bike, and ski ergometer",
+    "durationMin": 10,
+    "intensity": "moderate",
+    "course": "side",
+    "activity": "strength",
+    "places": [
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize"
+    ],
+    "equipment": [
+      "gym"
+    ]
+  },
+  {
+    "id": "main-familiar-trail-twenty",
+    "title": "Twenty minutes on a familiar trail",
+    "subtitle": "An easy out-and-back with secure footing",
+    "durationMin": 20,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "walking",
+    "places": [
+      "outdoors"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "energize",
+      "calm"
+    ],
+    "equipment": [
+      "outdoor"
+    ]
   }
 ];
 
@@ -4006,10 +5909,10 @@ export const CATALOG_GLOSSARY: CatalogGlossaryItem[] = [
     "name": "Back extension",
     "aka": [],
     "instructions": [
-      "Lie face down with your hands lightly beside your head or under your chin.",
-      "Lift your chest a little way off the floor, using your back rather than pushing with your arms.",
-      "Keep your feet on the floor and your neck relaxed.",
-      "Lower slowly and repeat."
+      "Set the back-extension bench so the pad supports your upper thighs and your hips can bend freely. Secure your feet.",
+      "Cross your arms over your chest and hinge forward slowly at your hips, keeping your back long.",
+      "Lift your torso until it lines up with your legs, without arching past that line.",
+      "Lower with control through a comfortable range."
     ],
     "muscles": [
       "lower back",
@@ -5439,6 +7342,2474 @@ export const CATALOG_GLOSSARY: CatalogGlossaryItem[] = [
     "muscles": [
       "hips",
       "glutes"
+    ]
+  },
+  {
+    "id": "concentration-curl",
+    "name": "Concentration curl",
+    "aka": [],
+    "instructions": [
+      "Sit on a sturdy bench with your feet apart and a dumbbell in one hand.",
+      "Rest the back of your upper arm against your inner thigh.",
+      "Curl the weight toward your shoulder without moving your upper arm.",
+      "Lower slowly, then repeat on the other side."
+    ],
+    "muscles": [
+      "front of the upper arms"
+    ]
+  },
+  {
+    "id": "dumbbell-shrug",
+    "name": "Dumbbell shrug",
+    "aka": [],
+    "instructions": [
+      "Stand tall with a dumbbell at each side and your arms relaxed.",
+      "Lift your shoulders straight toward your ears without rolling them.",
+      "Pause briefly, keeping your head level.",
+      "Lower your shoulders slowly."
+    ],
+    "muscles": [
+      "upper back",
+      "neck and shoulders"
+    ]
+  },
+  {
+    "id": "cable-curl",
+    "name": "Cable curl",
+    "aka": [],
+    "instructions": [
+      "Attach a straight bar to a low cable pulley and choose a light load.",
+      "Stand facing the machine with your palms up and elbows beside your ribs.",
+      "Curl the bar toward your shoulders without leaning back.",
+      "Lower slowly until your arms are comfortably straight."
+    ],
+    "muscles": [
+      "front of the upper arms"
+    ]
+  },
+  {
+    "id": "cable-pull-through",
+    "name": "Cable pull-through",
+    "aka": [],
+    "instructions": [
+      "Attach a rope to a low cable pulley and stand facing away from it.",
+      "Hold the rope between your legs and step forward until the cable is taut.",
+      "With soft knees, send your hips back while keeping your back long.",
+      "Stand tall by bringing your hips forward; finish without leaning back."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "cable-front-raise",
+    "name": "Cable front raise",
+    "aka": [],
+    "instructions": [
+      "Attach a short bar to a low pulley and stand facing away with the cable between your legs.",
+      "Hold the bar with both hands, keeping your elbows softly bent and ribs over your hips.",
+      "Raise the bar forward to shoulder height without swinging your torso.",
+      "Lower slowly with control."
+    ],
+    "muscles": [
+      "front of the shoulders"
+    ]
+  },
+  {
+    "id": "cable-rear-delt-fly",
+    "name": "Cable rear delt fly",
+    "aka": [],
+    "instructions": [
+      "Set two pulleys just above shoulder height and stand between them.",
+      "Take the left cable in your right hand and the right cable in your left hand.",
+      "With softly bent elbows, open your arms out to the sides without shrugging.",
+      "Return slowly, keeping your torso still."
+    ],
+    "muscles": [
+      "back of the shoulders",
+      "upper back"
+    ]
+  },
+  {
+    "id": "archer-push-up",
+    "name": "Archer push up",
+    "aka": [],
+    "instructions": [
+      "Start in a plank with your hands wider than your shoulders.",
+      "Bend one elbow and shift your chest toward that hand, keeping the other arm long.",
+      "Press back to the middle and alternate sides, keeping your hips level."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "diamond-push-up",
+    "name": "Diamond push up",
+    "aka": [],
+    "instructions": [
+      "Set your hands close together beneath your chest, making a small diamond with your thumbs and fingers.",
+      "Lower your chest while keeping your elbows near your ribs.",
+      "Press up without letting your hips sag; use a smaller range if needed."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "wide-push-up",
+    "name": "Wide push up",
+    "aka": [],
+    "instructions": [
+      "Start in a plank with hands a little wider than your shoulders.",
+      "Bend your elbows and lower your chest with your body in a line.",
+      "Press evenly through both hands to return."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "decline-push-up",
+    "name": "Decline push up",
+    "aka": [],
+    "instructions": [
+      "Place your feet on a stable low bench and your hands on the floor.",
+      "Lower your chest with your ribs and hips moving together.",
+      "Press back up without dropping your lower back."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "explosive-push-up",
+    "name": "Explosive push up",
+    "aka": [],
+    "instructions": [
+      "Start in a strong plank on a clear, nonslip floor; use this only if forceful push-ups are familiar.",
+      "Lower with control, then push hard enough for your hands to leave the floor briefly.",
+      "Land with soft elbows, reset your plank, and stop before your landings lose control."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "weighted-push-up",
+    "name": "Weighted push up",
+    "aka": [],
+    "instructions": [
+      "Use a secure weighted vest or have a partner stabilize a light plate on your upper back, away from your neck.",
+      "Lower your chest while keeping the load stable and your trunk straight.",
+      "Press back up; stop immediately if the load shifts."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "typewriter-push-up",
+    "name": "Typewriter push up",
+    "aka": [],
+    "instructions": [
+      "Take a wide-hand plank on a nonslip floor; use a range you already control.",
+      "Lower toward one hand, then shift your chest toward the other hand while staying low.",
+      "Press up and reset; alternate the side you start from."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "hindu-push-up",
+    "name": "Hindu push up",
+    "aka": [],
+    "instructions": [
+      "Start with your hands and feet on the floor and your hips lifted.",
+      "Bend your elbows and sweep your chest forward close to the floor, then lift your chest without forcing your back.",
+      "Return your hips up to the starting shape in a controlled motion."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "bench-dip",
+    "name": "Bench dip",
+    "aka": [],
+    "instructions": [
+      "Sit at the edge of a stable bench with your hands beside your hips, then move your hips just off the edge.",
+      "Bend your elbows to lower a small amount, keeping your shoulders away from your ears.",
+      "Press up without forcing a deep shoulder stretch; bend your knees to reduce the load."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "dip",
+    "name": "Dip",
+    "aka": [],
+    "instructions": [
+      "Support yourself on secure parallel bars with your arms straight and shoulders steady.",
+      "Bend your elbows and lower through a range your shoulders can control.",
+      "Press back up without swinging your legs."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "chest-dip",
+    "name": "Chest dip",
+    "aka": [],
+    "instructions": [
+      "Support yourself on parallel bars, leaning your torso forward slightly.",
+      "Bend your elbows and lower only as far as feels comfortable at your shoulders.",
+      "Press back to the starting position without bouncing."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "weighted-dip",
+    "name": "Weighted dip",
+    "aka": [],
+    "instructions": [
+      "Attach a small load securely to a dip belt only if unweighted dips are already comfortable.",
+      "Lower on parallel bars with control, keeping the hanging load still.",
+      "Press back up and step down before fatigue changes your form."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "close-grip-bench-press",
+    "name": "Close grip bench press",
+    "aka": [],
+    "instructions": [
+      "Lie on a flat bench with feet planted; use rack safeties or a spotter and a grip about shoulder width.",
+      "Lower the bar toward your lower chest with your elbows near your sides.",
+      "Press up smoothly while keeping your wrists stacked over your forearms."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "incline-bench-press",
+    "name": "Incline bench press",
+    "aka": [],
+    "instructions": [
+      "Set a bench to a modest incline inside a rack, with safeties or a spotter.",
+      "Lower the bar toward your upper chest while keeping your feet planted.",
+      "Press up without lifting your hips or flaring your ribs."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "decline-bench-press",
+    "name": "Decline bench press",
+    "aka": [],
+    "instructions": [
+      "Secure your legs on a decline bench and use a spotter or correctly set rack safeties.",
+      "Lower the bar toward your lower chest, keeping your wrists over your elbows.",
+      "Press up and rerack with control before getting out of the bench."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "smith-machine-bench-press",
+    "name": "Smith machine bench press",
+    "aka": [],
+    "instructions": [
+      "Set a flat bench under the Smith bar and position the safety stops above your chest.",
+      "Unlock the bar and lower it with your forearms roughly vertical.",
+      "Press up, then rotate the hooks to secure the bar before leaving the bench."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "dumbbell-fly",
+    "name": "Dumbbell fly",
+    "aka": [],
+    "instructions": [
+      "Lie on a flat bench with a light dumbbell in each hand above your chest.",
+      "With a soft elbow bend, open your arms until your upper arms are near torso level.",
+      "Bring the weights back together in an arc without changing your elbow bend."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "incline-cable-fly",
+    "name": "Incline cable fly",
+    "aka": [],
+    "instructions": [
+      "Place an incline bench between two low pulleys and hold their handles above your chest.",
+      "Open your arms slowly through a comfortable range, elbows softly bent.",
+      "Bring the handles together over your upper chest without shrugging."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "incline-dumbbell-press",
+    "name": "Incline dumbbell press",
+    "aka": [],
+    "instructions": [
+      "Sit on an incline bench with dumbbells at shoulder level and feet planted.",
+      "Press both weights upward with your wrists over your elbows.",
+      "Lower slowly beside your upper chest without flaring your ribs."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "decline-dumbbell-press",
+    "name": "Decline dumbbell press",
+    "aka": [],
+    "instructions": [
+      "Secure yourself on a decline bench and bring two manageable dumbbells beside your chest.",
+      "Press the weights up with your forearms vertical.",
+      "Lower with control and get help handling the weights when entering or leaving the bench."
+    ],
+    "muscles": [
+      "chest",
+      "back of the upper arms",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "arnold-press",
+    "name": "Arnold press",
+    "aka": [],
+    "instructions": [
+      "Stand tall with light dumbbells in front of your shoulders, palms toward you.",
+      "Press overhead while gradually turning your palms forward.",
+      "Lower while reversing the turn, keeping your ribs down."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "seated-dumbbell-press",
+    "name": "Seated dumbbell press",
+    "aka": [],
+    "instructions": [
+      "Sit against a supportive bench with feet planted and dumbbells beside your shoulders.",
+      "Press overhead without leaning farther back.",
+      "Lower slowly until the weights return to shoulder level."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "landmine-press",
+    "name": "Landmine press",
+    "aka": [],
+    "instructions": [
+      "Secure a bar in a landmine attachment and hold the free end at one shoulder in a staggered stance.",
+      "Press the bar upward and forward without twisting your ribs.",
+      "Lower to your shoulder, then repeat on the other side."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "push-press",
+    "name": "Push press",
+    "aka": [],
+    "instructions": [
+      "Hold a light bar at your shoulders with feet about hip width.",
+      "Make a shallow knee dip, drive through your legs, and press the bar overhead.",
+      "Lower to your shoulders with soft knees and reset before the next repetition."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "pike-push-up",
+    "name": "Pike push up",
+    "aka": [],
+    "instructions": [
+      "Start with hands and feet on the floor, hips high, and head between your arms.",
+      "Bend your elbows and lower your head toward a point slightly in front of your hands.",
+      "Push the floor away to lift back up; keep the range controlled."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "feet-elevated-pike-push-up",
+    "name": "Feet elevated pike push up",
+    "aka": [],
+    "instructions": [
+      "Place your feet on a secure low box and your hands on the floor, hips high.",
+      "Bend your elbows to lower your head between and slightly ahead of your hands.",
+      "Press back up, keeping weight through your palms rather than your head."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "handstand-push-up",
+    "name": "Handstand push up",
+    "aka": [],
+    "instructions": [
+      "Use only a handstand you can already enter, balance, and exit safely, with a clear padded practice area.",
+      "Bend your elbows through a small controlled range while maintaining your balance.",
+      "Press tall again without resting weight on your head; come down before control fades."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "wall-handstand-push-up",
+    "name": "Wall handstand push up",
+    "aka": [],
+    "instructions": [
+      "Use a familiar wall-supported handstand with hands on a nonslip surface and heels lightly touching the wall.",
+      "Lower through a range you control, keeping your head clear of the floor.",
+      "Press up without arching your back, then exit the handstand in control."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "wall-walk",
+    "name": "Wall walk",
+    "aka": [],
+    "instructions": [
+      "Begin in a plank with your feet at a clear wall, using a setup and exit you already know.",
+      "Walk your feet a little way up the wall as your hands move toward it.",
+      "Reverse the steps slowly; stop at an angle where you can still keep your trunk steady."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "plate-front-raise",
+    "name": "Plate front raise",
+    "aka": [],
+    "instructions": [
+      "Stand tall holding a light plate at its sides in front of your thighs.",
+      "Raise it forward to shoulder height with a soft bend in your elbows.",
+      "Lower slowly without leaning back or swinging."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "cable-lateral-raise",
+    "name": "Cable lateral raise",
+    "aka": [],
+    "instructions": [
+      "Stand between low pulleys and hold the handles with arms by your sides.",
+      "Lift your arms outward to about shoulder height, elbows softly bent.",
+      "Lower slowly without shrugging or swaying."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "machine-lateral-raise",
+    "name": "Machine lateral raise",
+    "aka": [],
+    "instructions": [
+      "Adjust the seat so the machine pads sit comfortably against your upper arms.",
+      "Raise your arms sideways toward shoulder height.",
+      "Lower the pads slowly, keeping your shoulders relaxed."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "upright-row",
+    "name": "Upright row",
+    "aka": [],
+    "instructions": [
+      "Hold a light bar in front of your thighs with a comfortable, moderately wide grip.",
+      "Draw the bar upward close to your body, stopping before your elbows rise above shoulder height.",
+      "Lower smoothly; use a smaller range if your shoulders feel crowded."
+    ],
+    "muscles": [
+      "shoulders",
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "bent-over-rear-delt-raise",
+    "name": "Bent-over rear delt raise",
+    "aka": [],
+    "instructions": [
+      "Hold light dumbbells and hinge forward with soft knees and a long back.",
+      "Open your arms out to the sides with softly bent elbows.",
+      "Lower slowly without lifting your torso."
+    ],
+    "muscles": [
+      "upper back",
+      "back of the shoulders"
+    ]
+  },
+  {
+    "id": "rear-delt-fly",
+    "name": "Standing rear delt fly",
+    "aka": [],
+    "instructions": [
+      "Stand holding light dumbbells and hinge at your hips until your chest faces the floor.",
+      "Raise the weights out to the sides, keeping your neck in line with your back.",
+      "Return slowly without swinging the weights."
+    ],
+    "muscles": [
+      "upper back",
+      "back of the shoulders"
+    ]
+  },
+  {
+    "id": "reverse-pec-deck",
+    "name": "Reverse pec deck",
+    "aka": [],
+    "instructions": [
+      "Sit facing the chest pad and adjust the handles to shoulder height.",
+      "Open your arms out and back while keeping your chest against the pad.",
+      "Return slowly without shrugging."
+    ],
+    "muscles": [
+      "upper back",
+      "back of the shoulders"
+    ]
+  },
+  {
+    "id": "prone-t-raise",
+    "name": "Prone t raise",
+    "aka": [],
+    "instructions": [
+      "Lie face down on a stable bench with arms hanging and very light weights if desired.",
+      "Raise your arms out to the sides into a T shape while keeping your head neutral.",
+      "Lower slowly without arching your back."
+    ],
+    "muscles": [
+      "upper back",
+      "back of the shoulders"
+    ]
+  },
+  {
+    "id": "prone-y-raise",
+    "name": "Prone y raise",
+    "aka": [],
+    "instructions": [
+      "Lie face down on the floor with your arms reaching diagonally overhead.",
+      "Lift your arms slightly into a Y shape without lifting your chin.",
+      "Lower slowly and keep your ribs supported on the floor."
+    ],
+    "muscles": [
+      "upper back",
+      "back of the shoulders"
+    ]
+  },
+  {
+    "id": "reverse-snow-angel",
+    "name": "Reverse snow angel",
+    "aka": [],
+    "instructions": [
+      "Lie face down with arms by your sides and forehead hovering just above the floor.",
+      "Lift your hands slightly and sweep your arms out and overhead through a comfortable arc.",
+      "Reverse the sweep without raising your chest or shrugging."
+    ],
+    "muscles": [
+      "upper back",
+      "back of the shoulders"
+    ]
+  },
+  {
+    "id": "scapular-push-up",
+    "name": "Scapular push up",
+    "aka": [],
+    "instructions": [
+      "Hold a plank with your elbows straight and hands under your shoulders.",
+      "Let your chest lower slightly between your shoulder blades, then push the floor away to spread them.",
+      "Keep your elbows straight and your hips still throughout."
+    ],
+    "muscles": [
+      "upper back",
+      "back of the shoulders"
+    ]
+  },
+  {
+    "id": "shrug",
+    "name": "Barbell shrug",
+    "aka": [],
+    "instructions": [
+      "Stand holding a bar in front of your thighs with arms straight.",
+      "Lift your shoulders straight upward without rolling them or bending your elbows.",
+      "Lower slowly and keep your head level."
+    ],
+    "muscles": [
+      "upper back",
+      "back of the shoulders"
+    ]
+  },
+  {
+    "id": "drag-curl",
+    "name": "Drag curl",
+    "aka": [],
+    "instructions": [
+      "Stand with an underhand grip on a light bar, arms long at your sides.",
+      "Slide the bar close to your torso as your elbows move a little behind you.",
+      "Lower along the same path without leaning back."
+    ],
+    "muscles": [
+      "front of the upper arms",
+      "forearms"
+    ]
+  },
+  {
+    "id": "ez-bar-curl",
+    "name": "EZ-bar curl",
+    "aka": [],
+    "instructions": [
+      "Stand holding the angled grips of an EZ bar with your palms facing mostly up.",
+      "Curl toward your shoulders while keeping your elbows near your sides.",
+      "Lower slowly without swinging your torso."
+    ],
+    "muscles": [
+      "front of the upper arms",
+      "forearms"
+    ]
+  },
+  {
+    "id": "incline-dumbbell-curl",
+    "name": "Incline dumbbell curl",
+    "aka": [],
+    "instructions": [
+      "Sit against an incline bench with a dumbbell in each hand and arms hanging.",
+      "Curl the weights without moving your upper arms forward.",
+      "Lower slowly through a comfortable elbow range."
+    ],
+    "muscles": [
+      "front of the upper arms",
+      "forearms"
+    ]
+  },
+  {
+    "id": "preacher-curl",
+    "name": "Preacher curl",
+    "aka": [],
+    "instructions": [
+      "Adjust the preacher bench so your upper arms rest fully on its pad.",
+      "Curl a light bar toward your shoulders without lifting your arms off the pad.",
+      "Lower gently, stopping short of forcing your elbows straight."
+    ],
+    "muscles": [
+      "front of the upper arms",
+      "forearms"
+    ]
+  },
+  {
+    "id": "spider-curl",
+    "name": "Spider curl",
+    "aka": [],
+    "instructions": [
+      "Lie chest down on an incline bench with your arms hanging and a light bar in your hands.",
+      "Curl the bar without moving your upper arms.",
+      "Lower slowly while your chest stays supported."
+    ],
+    "muscles": [
+      "front of the upper arms",
+      "forearms"
+    ]
+  },
+  {
+    "id": "reverse-curl",
+    "name": "Reverse curl",
+    "aka": [],
+    "instructions": [
+      "Stand holding a light bar with palms facing down and elbows by your sides.",
+      "Curl upward without bending your wrists back.",
+      "Lower slowly and keep your grip comfortable."
+    ],
+    "muscles": [
+      "front of the upper arms",
+      "forearms"
+    ]
+  },
+  {
+    "id": "rope-hammer-curl",
+    "name": "Rope hammer curl",
+    "aka": [],
+    "instructions": [
+      "Attach a rope to a low pulley and hold its ends with palms facing each other.",
+      "Curl the rope toward your shoulders with your upper arms still.",
+      "Lower slowly until your elbows are comfortably straight."
+    ],
+    "muscles": [
+      "front of the upper arms",
+      "forearms"
+    ]
+  },
+  {
+    "id": "skull-crusher",
+    "name": "Skull crusher",
+    "aka": [],
+    "instructions": [
+      "Lie on a flat bench with a light bar above your chest and use a spotter when handling it.",
+      "Bend at your elbows to bring the bar toward the space just behind your head.",
+      "Straighten your elbows without swinging your upper arms."
+    ],
+    "muscles": [
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "dumbbell-skull-crusher",
+    "name": "Dumbbell skull crusher",
+    "aka": [],
+    "instructions": [
+      "Lie on a flat bench with a dumbbell in each hand above your shoulders, palms facing each other.",
+      "Bend your elbows to lower the weights beside your head.",
+      "Straighten your elbows slowly without flaring them widely."
+    ],
+    "muscles": [
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "single-dumbbell-skullcrusher",
+    "name": "Single-dumbbell skull crusher",
+    "aka": [],
+    "instructions": [
+      "Lie on a flat bench holding one dumbbell securely with both hands above your chest.",
+      "Bend your elbows and lower the weight toward the space behind your head.",
+      "Extend your elbows without letting your upper arms swing."
+    ],
+    "muscles": [
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "overhead-tricep-extension",
+    "name": "Cable overhead tricep extension",
+    "aka": [],
+    "instructions": [
+      "Face away from a cable station with a rope handle held behind your head.",
+      "Keep your upper arms near your ears and straighten your elbows against the cable.",
+      "Bend your elbows slowly to return without arching your back."
+    ],
+    "muscles": [
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "single-arm-dumbbell-tricep-extension",
+    "name": "Single arm dumbbell tricep extension",
+    "aka": [],
+    "instructions": [
+      "Stand tall holding a light dumbbell overhead in one hand.",
+      "Bend your elbow to lower the weight behind your head while keeping your upper arm steady.",
+      "Straighten the elbow, then repeat on the other side."
+    ],
+    "muscles": [
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "rope-tricep-pushdown",
+    "name": "Rope tricep pushdown",
+    "aka": [],
+    "instructions": [
+      "Face a high pulley and hold the rope ends with elbows beside your ribs.",
+      "Straighten your elbows to press the rope down, separating its ends slightly.",
+      "Let the rope rise slowly without letting your elbows drift forward."
+    ],
+    "muscles": [
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "tricep-kickback",
+    "name": "Tricep kickback",
+    "aka": [],
+    "instructions": [
+      "Support one hand and knee on a bench, holding a light dumbbell with your other elbow bent beside your ribs.",
+      "Straighten the working elbow so the weight moves behind you.",
+      "Bend the elbow slowly, keeping the upper arm still; repeat on the other side."
+    ],
+    "muscles": [
+      "back of the upper arms"
+    ]
+  },
+  {
+    "id": "active-hang",
+    "name": "Active hang",
+    "aka": [],
+    "instructions": [
+      "Grip a secure pull-up bar and use a step to enter the hang.",
+      "With elbows straight, draw your shoulders gently down away from your ears.",
+      "Hold briefly while breathing, then return to the step before your grip tires."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "scapular-pull-up",
+    "name": "Scapular pull up",
+    "aka": [],
+    "instructions": [
+      "Hang from a secure bar with straight elbows and a step within reach.",
+      "Draw your shoulder blades down to lift your body slightly without bending your elbows.",
+      "Return slowly to the longer hang and step down when needed."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "assisted-chin-up",
+    "name": "Assisted chin up",
+    "aka": [],
+    "instructions": [
+      "Set an assisted pull-up machine to a comfortable counterweight and grip with palms toward you.",
+      "Pull your chest upward without swinging your legs or shrugging.",
+      "Lower slowly and dismount using the machine steps."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "negative-pull-up",
+    "name": "Negative pull up",
+    "aka": [],
+    "instructions": [
+      "Use a sturdy step to reach the top of a pull-up with your chin above a secure bar.",
+      "Lift your feet from the step and lower slowly until your elbows are straight.",
+      "Return to the step to reset instead of jumping into the next repetition."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "neutral-grip-pull-up",
+    "name": "Neutral grip pull up",
+    "aka": [],
+    "instructions": [
+      "Grip parallel pull-up handles with palms facing each other.",
+      "Pull up smoothly while keeping your legs still.",
+      "Lower with control and step down before your grip fails."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "commando-pull-up",
+    "name": "Commando pull up",
+    "aka": [],
+    "instructions": [
+      "Stand beneath a secure bar and grip it with one hand just in front of the other.",
+      "Pull up so your head passes to one side of the bar without twisting your neck.",
+      "Lower, then use the other side of the bar; reverse your hand order between sets."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "l-sit-pull-up",
+    "name": "L-sit pull-up",
+    "aka": [],
+    "instructions": [
+      "Hang from a secure bar and raise your straight legs in front, using this only if both positions are familiar.",
+      "Hold the legs steady while pulling your upper body toward the bar.",
+      "Lower slowly and step down before your trunk or grip loses control."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "weighted-pull-up",
+    "name": "Weighted pull up",
+    "aka": [],
+    "instructions": [
+      "Attach a small load securely to a dip belt only when bodyweight pull-ups are well controlled.",
+      "With palms away, pull without kicking or swinging the load.",
+      "Lower smoothly and use a step to dismount."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "weighted-chin-up",
+    "name": "Weighted chin up",
+    "aka": [],
+    "instructions": [
+      "Secure a small load to a dip belt and grip the bar with palms toward you.",
+      "Pull upward with a steady trunk and no swinging.",
+      "Lower with control, then return to a step before releasing the bar."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "towel-pull-up",
+    "name": "Towel pull up",
+    "aka": [],
+    "instructions": [
+      "Drape a strong intact towel over a load-rated pull-up bar and grip both hanging ends.",
+      "Pull up while keeping the towel and your legs steady.",
+      "Lower slowly and step down before your grip slips."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "doorway-row",
+    "name": "Doorway row",
+    "aka": [],
+    "instructions": [
+      "Use a securely installed, load-rated doorway bar at chest height; do not rely on decorative trim.",
+      "Lean back with feet planted and pull your chest toward the bar.",
+      "Straighten your arms slowly while keeping your body in a line."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "towel-row",
+    "name": "Towel row",
+    "aka": [],
+    "instructions": [
+      "Sit with legs extended and loop a strong towel around the soles of both feet, holding an end in each hand.",
+      "Gently pull your elbows back as your feet resist, keeping your spine tall.",
+      "Ease the pull without jerking; keep the towel secure around your feet."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "chest-supported-row",
+    "name": "Chest supported row",
+    "aka": [],
+    "instructions": [
+      "Lie against the chest pad of a rowing bench or machine with feet supported.",
+      "Pull the handles toward your lower ribs without lifting your chest off the pad.",
+      "Lower slowly and allow your arms to lengthen."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "dumbbell-bent-over-row",
+    "name": "Dumbbell bent over row",
+    "aka": [],
+    "instructions": [
+      "Stand holding two dumbbells and hinge at your hips with soft knees.",
+      "Pull both weights toward your hips while keeping your back long.",
+      "Lower slowly without standing up between pulls."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "single-arm-cable-row",
+    "name": "Single arm cable row",
+    "aka": [],
+    "instructions": [
+      "Face a pulley near waist height and hold its handle in one hand with a staggered stance.",
+      "Pull the handle toward your ribs without rotating your torso.",
+      "Let your arm lengthen slowly, then change hands."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "seated-row",
+    "name": "Seated row with a cable",
+    "aka": [],
+    "instructions": [
+      "Sit facing a low cable pulley with feet supported and knees soft.",
+      "Pull the handle toward your lower ribs while keeping your torso upright.",
+      "Reach forward from your shoulders without rounding your lower back."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "pendlay-row",
+    "name": "Pendlay row",
+    "aka": [],
+    "instructions": [
+      "Stand over a bar on the floor and hinge until your torso is near horizontal with a long back.",
+      "Pull the bar toward your lower ribs without snapping your torso upward.",
+      "Return the bar to the floor and reset between repetitions."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "meadows-row",
+    "name": "Meadows row",
+    "aka": [],
+    "instructions": [
+      "Secure a bar in a landmine and stand side-on to the loaded end, bracing your free hand on your thigh.",
+      "Hinge forward and row the sleeve toward your outer ribs with one hand.",
+      "Lower slowly without twisting, then repeat on the other side."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "t-bar-row",
+    "name": "T bar row",
+    "aka": [],
+    "instructions": [
+      "Straddle the T-bar row machine, hinge at your hips, and take the handles with knees soft.",
+      "Pull the handles toward your ribs while holding your torso steady.",
+      "Lower with control rather than letting the plates drop."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "close-grip-lat-pulldown",
+    "name": "Close grip lat pulldown",
+    "aka": [],
+    "instructions": [
+      "Sit at a pulldown station with thighs secured and take the close parallel handle.",
+      "Pull toward your upper chest without leaning far back.",
+      "Let your arms lengthen slowly while keeping your shoulders comfortable."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "straight-arm-pulldown",
+    "name": "Straight arm pulldown",
+    "aka": [],
+    "instructions": [
+      "Face a high pulley holding a bar or rope with arms long and knees soft.",
+      "Pull the handle in an arc toward your thighs without bending your elbows much.",
+      "Return slowly without arching your lower back."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "banded-lat-pulldown",
+    "name": "Banded lat pulldown",
+    "aka": [],
+    "instructions": [
+      "Secure a long resistance band to a load-rated high anchor and kneel or sit beneath it.",
+      "Draw your elbows down toward your sides without leaning back.",
+      "Let your arms rise slowly while keeping tension controlled."
+    ],
+    "muscles": [
+      "upper back",
+      "front of the upper arms",
+      "grip"
+    ]
+  },
+  {
+    "id": "assisted-pistol-squat",
+    "name": "Assisted pistol squat",
+    "aka": [],
+    "instructions": [
+      "Hold a secure support and stand on one leg with the other reaching forward.",
+      "Sit down on the standing leg through a range you can control, using your hands for assistance.",
+      "Press up through your whole foot, then repeat on the other side."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "pistol-squat",
+    "name": "Pistol squat",
+    "aka": [],
+    "instructions": [
+      "Stand on one leg with the other reaching forward, using only a depth you already control.",
+      "Bend the standing knee and lower your hips without dropping into the bottom.",
+      "Stand back up with your heel grounded; change sides after your set."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "single-leg-box-squat",
+    "name": "Single leg box squat",
+    "aka": [],
+    "instructions": [
+      "Stand in front of a stable box on one foot, other leg reaching forward.",
+      "Sit back slowly until your hips touch the box without collapsing onto it.",
+      "Push through the standing foot to rise, then switch legs."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "shrimp-squat",
+    "name": "Shrimp squat",
+    "aka": [],
+    "instructions": [
+      "Hold a secure support with one hand and bend one knee behind you.",
+      "Lower on the standing leg until the rear knee approaches a pad, keeping your balance.",
+      "Press back up through the front foot, then repeat on the other side."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "skater-squat",
+    "name": "Skater squat",
+    "aka": [],
+    "instructions": [
+      "Stand on one leg with the other knee bent behind you and a pad within reach of that knee.",
+      "Sit back and bend the standing leg, letting the rear knee approach the pad.",
+      "Stand up without pushing off the back foot, then switch legs."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "sissy-squat",
+    "name": "Sissy squat",
+    "aka": [],
+    "instructions": [
+      "Use a purpose-built sissy-squat station with shins supported and feet secured, starting without added weight.",
+      "Lean back as you bend your knees through a small familiar range, keeping hips extended.",
+      "Return with control; do not force extra depth or bounce at the bottom."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "cossack-squat",
+    "name": "Cossack squat",
+    "aka": [],
+    "instructions": [
+      "Take a wide stance with feet planted and hands in front of your chest.",
+      "Shift your hips toward one foot as that knee bends and the other leg lengthens.",
+      "Push back to the middle and alternate sides, keeping the working heel down."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "front-squat",
+    "name": "Front squat",
+    "aka": [],
+    "instructions": [
+      "Set a bar in a front-rack position with elbows lifted and rack safeties in place.",
+      "Bend your knees and hips together, keeping your torso upright and heels grounded.",
+      "Stand up without dropping your elbows or collapsing your chest."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "heel-elevated-goblet-squat",
+    "name": "Heel elevated goblet squat",
+    "aka": [],
+    "instructions": [
+      "Place both heels on a secure squat wedge and hold a dumbbell at your chest.",
+      "Lower into a squat with knees tracking in the direction of your toes.",
+      "Push through your feet to stand, keeping the wedge still."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "belt-squat",
+    "name": "Belt squat",
+    "aka": [],
+    "instructions": [
+      "Fit the belt-squat machine belt around your hips and stand securely on its platform.",
+      "Release the machine as instructed and squat through a comfortable range.",
+      "Stand tall, then secure the load before taking the belt off."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "hack-squat",
+    "name": "Hack squat",
+    "aka": [],
+    "instructions": [
+      "Set your back and shoulders against the machine pads with feet planted on its platform.",
+      "Release the locks and lower by bending your knees, keeping your hips against the pad.",
+      "Push back up without snapping your knees straight, then engage the locks before stepping out."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "dumbbell-sumo-squat",
+    "name": "Dumbbell sumo squat",
+    "aka": [],
+    "instructions": [
+      "Stand wide with toes slightly turned out, holding one dumbbell between your legs.",
+      "Bend your knees and hips together, keeping your chest lifted.",
+      "Stand by pressing through both feet without letting your knees collapse inward."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "dumbbell-curtsy-lunge",
+    "name": "Dumbbell curtsy lunge",
+    "aka": [],
+    "instructions": [
+      "Hold light dumbbells at your sides and stand with feet hip width.",
+      "Step one foot diagonally behind you and lower into a shallow controlled lunge.",
+      "Push through the front foot to stand and alternate legs."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "dumbbell-lateral-lunge",
+    "name": "Dumbbell lateral lunge",
+    "aka": [],
+    "instructions": [
+      "Hold dumbbells at your sides and stand tall.",
+      "Step sideways, sit into that hip, and keep the trailing leg long.",
+      "Push off the working foot to return to the middle and alternate sides."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "deficit-reverse-lunge",
+    "name": "Deficit reverse lunge",
+    "aka": [],
+    "instructions": [
+      "Stand on a secure low platform with a light dumbbell in each hand.",
+      "Step one foot back onto the floor and bend both knees through a comfortable range.",
+      "Drive through the front foot to return to the platform; alternate legs."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "front-foot-elevated-split-squat",
+    "name": "Front foot elevated split squat",
+    "aka": [],
+    "instructions": [
+      "Place the front foot on a secure low platform with the other foot behind you; hold light dumbbells if comfortable.",
+      "Bend both knees, lowering straight down without losing balance.",
+      "Push through the front foot to rise, then repeat on the other side."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "step-down",
+    "name": "Step down",
+    "aka": [],
+    "instructions": [
+      "Stand on a low stable step with one foot near its edge and a support within reach.",
+      "Bend the standing knee until the free heel lightly touches the floor.",
+      "Push through the foot on the step to rise, then change sides."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "landmine-squat",
+    "name": "Landmine squat",
+    "aka": [],
+    "instructions": [
+      "Secure a bar in a landmine and hold its free end with both hands at your chest.",
+      "Sit down into a squat while keeping your heels grounded.",
+      "Stand smoothly and keep the bar close to your chest."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "smith-machine-squat",
+    "name": "Smith machine squat",
+    "aka": [],
+    "instructions": [
+      "Position the Smith bar across your upper back and set safety stops for your chosen depth.",
+      "Unlock the bar and squat with heels planted and knees following your toes.",
+      "Stand up and lock the hooks before stepping away."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "smith-machine-split-squat",
+    "name": "Smith machine split squat",
+    "aka": [],
+    "instructions": [
+      "Place the Smith bar across your upper back with safety stops set and feet in a split stance.",
+      "Bend both knees to lower, keeping your front foot planted.",
+      "Rise smoothly, secure the bar, and reset your stance for the other leg."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "smith-machine-bulgarian-split-squat",
+    "name": "Smith machine bulgarian split squat",
+    "aka": [],
+    "instructions": [
+      "Set the Smith bar and safety stops, then rest your rear foot on a stable low bench.",
+      "Bend the front leg through a range you control without twisting under the bar.",
+      "Stand up, secure the hooks, and change sides."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "smith-machine-reverse-lunge",
+    "name": "Smith machine reverse lunge",
+    "aka": [],
+    "instructions": [
+      "Stand under the Smith bar with safety stops set and your feet hip width.",
+      "Step one leg back and bend both knees while keeping the front foot planted.",
+      "Push through the front foot to stand and alternate legs; rerack before leaving."
+    ],
+    "muscles": [
+      "front of the thighs",
+      "glutes"
+    ]
+  },
+  {
+    "id": "sumo-deadlift",
+    "name": "Sumo deadlift",
+    "aka": [],
+    "instructions": [
+      "Stand over a bar with a wide stance, toes out slightly, and hands gripping inside your knees.",
+      "Brace your trunk and push through the floor to stand with the bar close.",
+      "Lower with control and reset on the floor without rounding your back."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "trap-bar-deadlift",
+    "name": "Trap bar deadlift",
+    "aka": [],
+    "instructions": [
+      "Stand inside the trap bar and take its handles with knees bent and back long.",
+      "Push through your feet to stand tall without leaning backward.",
+      "Lower the bar by bending your hips and knees, then reset."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "dumbbell-sumo-deadlift",
+    "name": "Dumbbell sumo deadlift",
+    "aka": [],
+    "instructions": [
+      "Stand wide holding a dumbbell in each hand between your legs.",
+      "Hinge and bend your knees to lower the weights, keeping your back long.",
+      "Push through your feet to stand without leaning back."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "landmine-romanian-deadlift",
+    "name": "Landmine romanian deadlift",
+    "aka": [],
+    "instructions": [
+      "Secure a bar in a landmine and hold the free end with both hands in front of you.",
+      "Soften your knees and send your hips back as the bar lowers close to your legs.",
+      "Bring your hips forward to stand without rounding or overextending your back."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "smith-machine-romanian-deadlift",
+    "name": "Smith machine romanian deadlift",
+    "aka": [],
+    "instructions": [
+      "Hold the Smith bar in front of your thighs and set safety stops below your intended range.",
+      "With knees soft, send your hips back as the bar lowers along your legs.",
+      "Stand tall using your hips and secure the bar before releasing it."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "rack-pull",
+    "name": "Rack pull",
+    "aka": [],
+    "instructions": [
+      "Set a bar on rack safeties just below knee height and stand close to it.",
+      "Brace your trunk and stand up with the bar, keeping it near your legs.",
+      "Return the bar to the safeties gently and reset without bouncing."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "barbell-glute-bridge",
+    "name": "Barbell glute bridge",
+    "aka": [],
+    "instructions": [
+      "Lie on your back with knees bent, feet flat, and a padded bar across your hips.",
+      "Lift your hips until your thighs and torso line up without arching your back.",
+      "Lower slowly and keep the bar steady with your hands."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "dumbbell-glute-bridge",
+    "name": "Dumbbell glute bridge",
+    "aka": [],
+    "instructions": [
+      "Lie on your back with feet planted and a dumbbell resting securely across your hips.",
+      "Lift your hips while keeping your ribs down.",
+      "Lower slowly and hold the weight in place throughout."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "smith-machine-hip-thrust",
+    "name": "Smith machine hip thrust",
+    "aka": [],
+    "instructions": [
+      "Place a stable bench behind you, pad the Smith bar over your hips, and set the stops.",
+      "With upper back supported and feet planted, raise your hips until your torso and thighs line up.",
+      "Lower with control, then lock the bar before moving out."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "glute-focused-back-extension",
+    "name": "Glute focused back extension",
+    "aka": [],
+    "instructions": [
+      "Set a back-extension bench below your hip crease and secure your feet.",
+      "Hinge forward, then lift your torso by extending your hips with a gentle glute squeeze.",
+      "Stop when your body is in line and lower slowly without arching past that point."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "reverse-hyperextension",
+    "name": "Reverse hyperextension",
+    "aka": [],
+    "instructions": [
+      "Lie face down on a reverse-hyperextension machine with your hips at the pad edge and hands gripping its handles.",
+      "Raise your legs behind you through a small controlled arc without swinging.",
+      "Lower slowly and keep your torso supported throughout."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "lying-leg-curl",
+    "name": "Lying leg curl",
+    "aka": [],
+    "instructions": [
+      "Lie face down on the leg-curl machine with knees aligned to its pivot and the roller above your heels.",
+      "Bend your knees to bring the roller toward your hips without lifting your pelvis.",
+      "Straighten your knees slowly without letting the stack slam."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "seated-leg-curl",
+    "name": "Seated leg curl",
+    "aka": [],
+    "instructions": [
+      "Adjust the seated leg-curl machine so knees align with its pivot and thighs are secured by the pad.",
+      "Bend your knees to draw your heels down and back.",
+      "Return slowly while keeping your hips against the seat."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "nordic-hamstring-curl",
+    "name": "Nordic hamstring curl",
+    "aka": [],
+    "instructions": [
+      "Kneel on padding with your ankles secured in a purpose-built station and hands ready in front.",
+      "Keeping hips extended, lean forward only as far as you can control.",
+      "Catch yourself gently with your hands and use them to help return; start with a very short range."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "stability-ball-hamstring-curl",
+    "name": "Stability ball hamstring curl",
+    "aka": [],
+    "instructions": [
+      "Lie on your back with heels on a stability ball and arms resting on the floor.",
+      "Lift your hips and draw the ball toward you by bending your knees.",
+      "Roll the ball away slowly without dropping or arching your hips, then lower to rest."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "towel-hamstring-curl",
+    "name": "Towel hamstring curl",
+    "aka": [],
+    "instructions": [
+      "Lie on your back with heels on sliders or a folded towel on a smooth, clear floor.",
+      "Lift your hips and slide your heels toward you by bending your knees.",
+      "Slide out a short distance with control, then lower your hips to rest."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "lying-hamstring-walkout",
+    "name": "Lying hamstring walkout",
+    "aka": [],
+    "instructions": [
+      "Lie on your back with knees bent and feet flat, then lift into a low bridge.",
+      "Take tiny alternating heel steps away from your hips while keeping the pelvis level.",
+      "Walk the heels back in and lower to rest before your back starts to arch."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "machine-glute-kickback",
+    "name": "Machine glute kickback",
+    "aka": [],
+    "instructions": [
+      "Adjust the machine pad and brace your torso, placing one foot against its working platform.",
+      "Press that leg back from the hip without twisting or arching your back.",
+      "Return slowly and repeat on the other side."
+    ],
+    "muscles": [
+      "glutes",
+      "back of the thighs"
+    ]
+  },
+  {
+    "id": "banded-donkey-kick",
+    "name": "Banded donkey kick",
+    "aka": [],
+    "instructions": [
+      "Loop a band above your knees and start on hands and knees with your back level.",
+      "Keep one knee bent and lift that thigh behind you without arching your back.",
+      "Lower slowly and repeat on the other side."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "banded-fire-hydrant",
+    "name": "Banded fire hydrant",
+    "aka": [],
+    "instructions": [
+      "Start on hands and knees with a loop band above both knees.",
+      "Lift one bent knee out to the side without tipping your pelvis.",
+      "Lower with control and repeat on the other side."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "banded-frog-pump",
+    "name": "Banded frog pump",
+    "aka": [],
+    "instructions": [
+      "Lie on your back with a loop band above your knees, soles together and knees opened comfortably.",
+      "Lift your hips a small distance while pressing gently outward into the band.",
+      "Lower slowly and keep your ribs down."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "banded-hip-thrust",
+    "name": "Banded hip thrust",
+    "aka": [],
+    "instructions": [
+      "Place a loop band above your knees and support your upper back on a stable bench.",
+      "With feet flat, lift your hips and keep gentle outward pressure against the band.",
+      "Lower without letting your knees collapse inward or your back arch."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "banded-kickback",
+    "name": "Banded kickback",
+    "aka": [],
+    "instructions": [
+      "Attach a long band securely near floor height and loop it around one ankle; hold a support.",
+      "Move the working leg backward from your hip without leaning or rotating.",
+      "Bring the foot back slowly and switch legs."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "banded-seated-hip-abduction",
+    "name": "Banded seated hip abduction",
+    "aka": [],
+    "instructions": [
+      "Sit tall on a stable seat with a loop band above your knees and feet planted.",
+      "Open your knees against the band without rolling onto the edges of your feet.",
+      "Bring the knees back slowly while keeping tension controlled."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "banded-standing-hip-abduction",
+    "name": "Banded standing hip abduction",
+    "aka": [],
+    "instructions": [
+      "Stand with a loop band around your ankles and a support within reach.",
+      "Move one leg sideways without leaning your torso or turning your toes upward.",
+      "Return slowly and repeat on the other side."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "cable-kickback",
+    "name": "Cable kickback",
+    "aka": [],
+    "instructions": [
+      "Attach an ankle cuff to a low pulley and hold the machine for balance.",
+      "Move that leg behind you from the hip while keeping your back and pelvis still.",
+      "Return slowly and switch legs."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "cable-standing-hip-abduction",
+    "name": "Cable standing hip abduction",
+    "aka": [],
+    "instructions": [
+      "Stand side-on to a low pulley with an ankle cuff on the leg farther from the machine.",
+      "Move the cuffed leg sideways away from the stack without leaning.",
+      "Return with control, then change sides."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "side-lying-hip-abduction",
+    "name": "Side-lying hip abduction",
+    "aka": [],
+    "instructions": [
+      "Lie on your side with hips stacked and the top leg long.",
+      "Lift the top leg a short distance while keeping its toes facing forward.",
+      "Lower slowly without rolling backward; repeat on the other side."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "hip-airplane",
+    "name": "Hip airplane",
+    "aka": [],
+    "instructions": [
+      "Hold a stable support, stand on one leg, and hinge slightly forward with the other leg behind you.",
+      "Rotate your pelvis gently open and closed while keeping the standing knee softly bent.",
+      "Return upright and repeat on the other side without forcing the rotation."
+    ],
+    "muscles": [
+      "glutes",
+      "outer hips"
+    ]
+  },
+  {
+    "id": "cable-standing-hip-adduction",
+    "name": "Cable standing hip adduction",
+    "aka": [],
+    "instructions": [
+      "Stand side-on to a low pulley with a cuff on the ankle nearest the machine and hold a support.",
+      "Draw the cuffed leg across in front of the standing leg without turning your hips.",
+      "Return slowly and repeat on the other side."
+    ],
+    "muscles": [
+      "inner thighs",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "copenhagen-plank",
+    "name": "Copenhagen plank",
+    "aka": [],
+    "instructions": [
+      "Lie on your side with your forearm on the floor and top leg supported on a sturdy bench; start with the knee supported if needed.",
+      "Lift your hips into a side plank while keeping your shoulder above your elbow.",
+      "Hold briefly, lower with control, and repeat on the other side."
+    ],
+    "muscles": [
+      "inner thighs",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "donkey-calf-raise",
+    "name": "Donkey calf raise",
+    "aka": [],
+    "instructions": [
+      "Use a donkey-calf machine with its pad over your hips and forefeet on the platform.",
+      "Keeping knees soft, raise your heels as high as you comfortably can.",
+      "Lower your heels slowly without bouncing or shifting the pad."
+    ],
+    "muscles": [
+      "calves"
+    ]
+  },
+  {
+    "id": "leg-press-calf-raise",
+    "name": "Leg press calf raise",
+    "aka": [],
+    "instructions": [
+      "Sit in a leg-press machine with safety stops set and the balls of your feet securely on the lower part of the platform.",
+      "Keep your knees softly extended and press through your forefeet to lift your heels.",
+      "Lower through a small controlled ankle range without letting your feet slip."
+    ],
+    "muscles": [
+      "calves"
+    ]
+  },
+  {
+    "id": "seated-calf-raise",
+    "name": "Seated calf raise",
+    "aka": [],
+    "instructions": [
+      "Sit in a calf-raise machine with thighs under the pad and forefeet on its platform.",
+      "Release the stop and lift your heels by pressing through your forefeet.",
+      "Lower slowly, then secure the machine before getting up."
+    ],
+    "muscles": [
+      "calves"
+    ]
+  },
+  {
+    "id": "banded-dead-bug",
+    "name": "Banded dead bug",
+    "aka": [],
+    "instructions": [
+      "Lie on your back with arms reaching upward and knees above your hips, holding a resistance band taut between your hands.",
+      "Keep your ribs down as you extend one leg away, then bring it back.",
+      "Alternate legs without letting your lower back lift from the floor."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "banded-pallof-press",
+    "name": "Band Pallof press",
+    "aka": [],
+    "instructions": [
+      "Stand side-on to a band securely anchored at chest height, holding its ends at your chest.",
+      "Press your hands forward while keeping your torso facing ahead.",
+      "Bring your hands back slowly and repeat facing the other way."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "banded-woodchop",
+    "name": "Banded woodchop",
+    "aka": [],
+    "instructions": [
+      "Secure a band to a low anchor and stand side-on with both hands holding it near that hip.",
+      "Guide your hands diagonally across and upward while your hips and feet turn together.",
+      "Return along the same path with control and repeat on the other side."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "cable-pallof-hold",
+    "name": "Cable Pallof hold",
+    "aka": [],
+    "instructions": [
+      "Stand side-on to a cable at chest height and hold the handle in both hands.",
+      "Press your arms forward and hold briefly without allowing the cable to rotate your torso.",
+      "Bring your hands in to rest, then repeat on the other side."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "cable-woodchop",
+    "name": "Cable woodchop",
+    "aka": [],
+    "instructions": [
+      "Set a cable pulley above shoulder height and stand side-on holding its handle in both hands.",
+      "Draw the handle diagonally toward the opposite hip while allowing your feet and hips to turn together.",
+      "Return slowly and repeat from the other side."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "half-kneeling-pallof-press",
+    "name": "Half-kneeling Pallof press",
+    "aka": [],
+    "instructions": [
+      "Kneel on one knee beside a chest-height cable, holding its handle at your chest.",
+      "Press both hands straight forward while keeping your pelvis and ribs facing ahead.",
+      "Return slowly, then change your kneeling stance and direction."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "ab-wheel",
+    "name": "Ab wheel",
+    "aka": [],
+    "instructions": [
+      "Kneel on padding with both hands on an ab wheel directly beneath your shoulders.",
+      "Roll forward a short distance while keeping your ribs tucked and hips from sagging.",
+      "Pull the wheel back toward your knees; stop before your lower back arches."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "cable-crunch",
+    "name": "Cable crunch",
+    "aka": [],
+    "instructions": [
+      "Kneel facing a high pulley and hold a rope beside your temples.",
+      "Curl your ribs toward your pelvis while keeping your hips relatively still.",
+      "Uncurl slowly without pulling the rope with your arms."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "captains-chair-knee-raise",
+    "name": "Captains chair knee raise",
+    "aka": [],
+    "instructions": [
+      "Support your forearms on the captain's-chair pads with your back against its support.",
+      "Lift your knees toward your chest without swinging your body.",
+      "Lower your legs slowly and step down to rest when needed."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "hanging-leg-raise",
+    "name": "Hanging leg raise",
+    "aka": [],
+    "instructions": [
+      "Hang from a secure bar using a step to get into position.",
+      "Raise your legs in front without swinging, bending your knees if needed to keep control.",
+      "Lower slowly and step down before your grip tires."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "decline-sit-up",
+    "name": "Decline sit up",
+    "aka": [],
+    "instructions": [
+      "Secure your legs on a shallow decline bench and cross your arms over your chest.",
+      "Curl your torso upward without pulling on your neck.",
+      "Lower slowly and use a shorter range if your back starts to arch."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "dragon-flag",
+    "name": "Dragon flag",
+    "aka": [],
+    "instructions": [
+      "Lie on a stable bench and grip firmly behind your head; practice only a progression you already control.",
+      "Lift your trunk and legs as one unit, bearing weight through your upper back rather than your neck.",
+      "Lower a short distance with control, then return; bend your knees to shorten the lever."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "hollow-rock",
+    "name": "Hollow rock",
+    "aka": [],
+    "instructions": [
+      "Lie on your back with ribs tucked, shoulders raised, and legs reaching away at a height you can hold.",
+      "Rock gently along your rounded back while keeping the body shape steady.",
+      "Rest when your lower back loses contact; bend your knees to make the shape shorter."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "l-sit-hold",
+    "name": "L-sit hold",
+    "aka": [],
+    "instructions": [
+      "Support yourself on stable parallel bars with straight arms and shoulders pressed down.",
+      "Lift your legs in front into an L shape, or bend your knees for a shorter hold.",
+      "Lower your feet in control and rest between brief holds."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "seated-knee-tuck",
+    "name": "Seated knee tuck",
+    "aka": [],
+    "instructions": [
+      "Sit on a stable bench edge with hands beside your hips and knees bent.",
+      "Lean back slightly as you extend your legs, then draw your knees toward your chest.",
+      "Move slowly without rounding your shoulders or letting your back collapse."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "v-up",
+    "name": "V up",
+    "aka": [],
+    "instructions": [
+      "Lie on your back with arms overhead and legs extended.",
+      "Lift your chest and legs toward each other, reaching toward your shins without pulling your neck.",
+      "Lower with control, keeping a slight knee bend if that helps your back stay comfortable."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "weighted-crunch",
+    "name": "Weighted crunch",
+    "aka": [],
+    "instructions": [
+      "Lie on your back with knees bent and hold a light plate against your chest.",
+      "Curl your shoulders a short distance off the floor as your ribs move toward your pelvis.",
+      "Lower slowly without pulling your head forward."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "weighted-russian-twist",
+    "name": "Weighted russian twist",
+    "aka": [],
+    "instructions": [
+      "Sit with knees bent holding a light weight close to your chest; keep your feet down if needed.",
+      "Turn your ribs gently from side to side, moving the weight with your torso.",
+      "Keep the range small and controlled without rounding your lower back."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "push-up-shoulder-tap",
+    "name": "Push up shoulder tap",
+    "aka": [],
+    "instructions": [
+      "Start in a plank with feet wider than hip width and hands under your shoulders.",
+      "Perform a controlled push-up, then tap the opposite shoulder with one hand at a time.",
+      "Keep your hips level, return both hands to the floor, and repeat slowly."
+    ],
+    "muscles": [
+      "deep core",
+      "sides of the waist"
+    ]
+  },
+  {
+    "id": "wrist-curl",
+    "name": "Wrist curl",
+    "aka": [],
+    "instructions": [
+      "Stand holding a light bar with palms facing forward and arms relaxed by your sides.",
+      "Keeping your arms still, curl your wrists through a small comfortable range.",
+      "Lower slowly without letting the bar roll out of your fingers."
+    ],
+    "muscles": [
+      "forearms",
+      "grip"
+    ]
+  },
+  {
+    "id": "wrist-extension",
+    "name": "Wrist extension",
+    "aka": [],
+    "instructions": [
+      "Sit with your forearms supported on your thighs, palms down and light dumbbells held just beyond your knees.",
+      "Lift the backs of your hands by extending your wrists without moving your forearms.",
+      "Lower slowly through a comfortable range."
+    ],
+    "muscles": [
+      "forearms",
+      "grip"
+    ]
+  },
+  {
+    "id": "farmer-carry",
+    "name": "Farmer carry with two weights",
+    "aka": [],
+    "instructions": [
+      "Stand holding a manageable weight in each hand with clear space to walk.",
+      "Walk slowly with your shoulders relaxed and your torso upright.",
+      "Turn with small steps and set the weights down before your grip tires."
+    ],
+    "muscles": [
+      "forearms",
+      "grip"
+    ]
+  },
+  {
+    "id": "crab-walk",
+    "name": "Crab walk",
+    "aka": [],
+    "instructions": [
+      "Sit with knees bent, feet flat, and hands behind you in a comfortable wrist position.",
+      "Lift your hips slightly and take small steps with opposite hands and feet.",
+      "Keep your shoulders comfortable and lower to the floor to rest."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "plank-jack",
+    "name": "Plank jack",
+    "aka": [],
+    "instructions": [
+      "Start in a plank with shoulders over your hands and a clear nonslip floor.",
+      "Hop your feet apart and together while keeping your hips level.",
+      "Land softly and stop the set before your trunk starts to sag."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "seal-jack",
+    "name": "Seal jack",
+    "aka": [],
+    "instructions": [
+      "Stand with feet together and arms reaching forward at chest height.",
+      "Jump your feet apart as you open your arms sideways, then jump in as the arms meet in front.",
+      "Land softly with knees bent and use a rhythm you can control."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "half-burpee",
+    "name": "Half burpee",
+    "aka": [],
+    "instructions": [
+      "Start standing on a clear nonslip floor, then bend down and place your hands beneath your shoulders.",
+      "Step or hop your feet back to a plank, then bring them forward again.",
+      "Stand up without adding a push-up or jump and repeat with control."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "squat-thrust",
+    "name": "Squat thrust",
+    "aka": [],
+    "instructions": [
+      "Crouch with hands planted beneath your shoulders and feet close to your hands.",
+      "Step or hop both feet back to a plank, then bring them forward under your body.",
+      "Stay low as you reset, keeping your back from sagging."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "sprawl",
+    "name": "Sprawl",
+    "aka": [],
+    "instructions": [
+      "Start standing with feet comfortably apart on a clear nonslip floor.",
+      "Place your hands down, send your feet back to a wide plank, then bring them forward.",
+      "Rise to stand without dropping your chest onto the floor; slow down as needed."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "fast-feet",
+    "name": "Fast feet",
+    "aka": [],
+    "instructions": [
+      "Stand beside a flat agility ladder or a clear line on the floor with knees softly bent.",
+      "Take quick small alternating steps through the spaces while staying light on your feet.",
+      "Slow down before turning and keep your gaze ahead rather than at your toes."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "battle-ropes",
+    "name": "Battle ropes",
+    "aka": [],
+    "instructions": [
+      "Anchor battle ropes securely and hold an end in each hand with knees softly bent.",
+      "Make alternating waves with your arms while keeping your torso steady.",
+      "Use short bouts and let the ropes settle before setting them down."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "assault-bike",
+    "name": "Air bike",
+    "aka": [],
+    "instructions": [
+      "Adjust the air-bike seat so your knees stay slightly bent at the bottom of each pedal stroke.",
+      "Pedal while pushing and pulling the handles in a smooth rhythm.",
+      "Reduce effort gradually before stopping and wait for the pedals to settle before stepping off."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "skierg",
+    "name": "Ski ergometer",
+    "aka": [],
+    "instructions": [
+      "Stand facing a ski ergometer with feet hip width and handles held above shoulder height.",
+      "Pull down as you hinge slightly and bend your knees, finishing with hands beside your thighs.",
+      "Rise smoothly while returning the handles upward without locking your knees."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "hiking",
+    "name": "Hiking",
+    "aka": [],
+    "instructions": [
+      "Choose a familiar trail, wear secure footwear, and start at an easy walking pace.",
+      "Take short steady steps on slopes and watch your footing on uneven ground.",
+      "Slow on descents, pause as needed, and choose a route you can comfortably return from."
+    ],
+    "muscles": [
+      "full body",
+      "legs",
+      "shoulders"
+    ]
+  },
+  {
+    "id": "cat-cow-stretch",
+    "name": "Cat-cow stretch",
+    "aka": [],
+    "instructions": [
+      "Start on hands and knees with wrists under shoulders and knees under hips.",
+      "Gently round your spine, then let your chest move forward into a small comfortable arch.",
+      "Move slowly with your breath rather than forcing either end of the range."
+    ],
+    "muscles": [
+      "back",
+      "hips"
     ]
   }
 ];
