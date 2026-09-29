@@ -53,7 +53,7 @@ struct SubscriptionSettingsView: View {
         }
         .presentCustomerCenter(isPresented: $isCustomerCenterPresented)
         .alert(
-            purchasesManager.lastError.map { if case .purchasePending = $0 { "Almost there" } else { "Something went wrong" } } ?? "Something went wrong",
+            purchasesManager.lastError?.alertTitle ?? "Something went wrong",
             isPresented: Binding(
                 get: { purchasesManager.lastError != nil },
                 set: { if !$0 { purchasesManager.lastError = nil } }

@@ -1,5 +1,10 @@
 # App Store Connect text (draft 2026-09-23)
 
+> **Stale as of 2026-09-29.** The listing is now "FeelGood: Movement Menu" and
+> App Store Connect holds the live copy. The App Review notes below describe an
+> older build (onboarding paywall, "AI reply" labels); use
+> [APP_REVIEW_NOTES.md](APP_REVIEW_NOTES.md) instead.
+
 Paste each block into the matching field. Character limits are in brackets.
 Everything here describes what the submitted build does; nothing claims a
 medical benefit, a price, or that a real person taught or endorsed a session.

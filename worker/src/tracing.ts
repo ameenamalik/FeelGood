@@ -6,7 +6,11 @@ export interface TraceAgentContext {
   conversationId: string;
 }
 
-export const STORE_PAYLOADS = true;
+// Off in every environment. When true, span attributes carry the chat
+// message, the model's reply and the AI Search query into Cloudflare's trace
+// store, and the privacy policy promises our server keeps neither. Turn it on
+// only in a local `wrangler dev` session, never in a deployed Worker.
+export const STORE_PAYLOADS = false;
 
 /**
  * Traces a high-level agent turn (`invoke_agent`).
