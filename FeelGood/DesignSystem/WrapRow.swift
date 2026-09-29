@@ -15,6 +15,7 @@ import SwiftUI
 nonisolated struct WrapRow: Layout {
     var spacing: CGFloat = 8
     var lineSpacing: CGFloat = 8
+    var isCentered = false
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = resolvedWidth(proposal.width)
@@ -29,7 +30,9 @@ nonisolated struct WrapRow: Layout {
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         var y = bounds.minY
         for row in arrange(subviews: subviews, width: bounds.width) {
-            var x = bounds.minX
+            let rowWidth = row.items.reduce(0) { $0 + $1.size.width }
+                + spacing * CGFloat(max(0, row.items.count - 1))
+            var x = bounds.minX + (isCentered ? max(0, (bounds.width - rowWidth) / 2) : 0)
             for item in row.items {
                 subviews[item.index].place(
                     at: CGPoint(x: x, y: y + (row.height - item.size.height) / 2),
