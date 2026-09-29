@@ -57,30 +57,41 @@ struct CheckInSheet: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: FGSpace.l) {
-                        switch flow.step {
-                        case .goal:
-                            goalScreen
-                        case .answer, .time:
-                            answerAndTimeScreen(proxy: proxy)
+                        goalSection(proxy: proxy)
+
+                        if let goal = flow.goal {
+                            answerSection(goal: goal, proxy: proxy)
+                                .id("answer-section")
+                                .transition(
+                                    reduceMotion
+                                        ? .opacity
+                                        : .opacity.combined(with: .move(edge: .bottom))
+                                )
                         }
+
+                        if let goal = flow.goal, flow.answer != nil, goal.asksForTime {
+                            timeSection(goal: goal)
+                                .id("time-section")
+                                .transition(
+                                    reduceMotion
+                                        ? .opacity
+                                        : .opacity.combined(with: .move(edge: .bottom))
+                                )
+                        }
+
+                        FGQuietButton("Just show me my menu") { skip() }
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, FGSpace.xs)
                     }
                     .padding(FGSpace.page)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .id(flow.step == .goal ? "goal-step" : "detail-step")
-                    .transition(
-                        reduceMotion
-                            ? .opacity
-                            : .asymmetric(
-                                insertion: .opacity.combined(with: .offset(x: 24)),
-                                removal: .opacity
-                            )
-                    )
                 }
                 .scrollBounceBehavior(.basedOnSize)
             }
         }
-        .fgAnimation(FGMotion.settle, value: flow.step)
+        .fgAnimation(FGMotion.gentle, value: flow.goal)
         .fgAnimation(FGMotion.gentle, value: flow.answer)
+        .fgAnimation(FGMotion.gentle, value: flow.time)
         .sensoryFeedback(.selection, trigger: flow)
         .sheet(isPresented: $isShowingBodySheet) {
             GoEasySheet(bodies: $flow.bodies)
@@ -89,10 +100,10 @@ struct CheckInSheet: View {
         .presentationDragIndicator(.visible)
     }
 
-    // MARK: Screen 1 — the goal
+    // MARK: Section 1 — the goal
 
     @ViewBuilder
-    private var goalScreen: some View {
+    private func goalSection(proxy: ScrollViewProxy) -> some View {
         let goals = CheckInFlow.orderedGoals(standing: standingIntents)
 
         VStack(alignment: .leading, spacing: FGSpace.xs) {
@@ -110,8 +121,16 @@ struct CheckInSheet: View {
             VStack(alignment: .leading, spacing: FGSpace.xs) {
                 sectionLabel("Your picks")
                 ForEach(goals.picks, id: \.self) { goal in
-                    GoalPickCard(goal: goal) {
-                        flow.choose(goal: goal)
+                    GoalPickCard(goal: goal, isSelected: flow.goal == goal) {
+                        withAnimation(FGMotion.gentle) {
+                            flow.choose(goal: goal)
+                        }
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(60))
+                            withAnimation(FGMotion.gentle) {
+                                proxy.scrollTo("answer-section", anchor: .top)
+                            }
+                        }
                     }
                 }
             }
@@ -127,31 +146,45 @@ struct CheckInSheet: View {
 
                 LazyVGrid(columns: gridColumns, spacing: FGSpace.choiceGutter) {
                     ForEach(goals.others, id: \.self) { goal in
-                        GoalOtherPill(goal: goal) {
-                            flow.choose(goal: goal)
+                        GoalOtherPill(goal: goal, isSelected: flow.goal == goal) {
+                            withAnimation(FGMotion.gentle) {
+                                flow.choose(goal: goal)
+                            }
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(60))
+                                withAnimation(FGMotion.gentle) {
+                                    proxy.scrollTo("answer-section", anchor: .top)
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-
-        FGQuietButton("Just show me my menu") { skip() }
-            .frame(maxWidth: .infinity)
-            .padding(.top, FGSpace.xs)
     }
 
-    // MARK: Screen 2 & 3 — answer and time
+    // MARK: Section 2 — answer
 
     @ViewBuilder
-    private func answerAndTimeScreen(proxy: ScrollViewProxy) -> some View {
-        if let goal = flow.goal {
-            header(goal)
+    private func answerSection(goal: Intent, proxy: ScrollViewProxy) -> some View {
+        VStack(alignment: .leading, spacing: FGSpace.m) {
+            Divider()
+                .padding(.vertical, FGSpace.xs)
 
-            Text(goal.checkInQuestion)
-                .font(FGFont.title)
-                .foregroundStyle(FGColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.isHeader)
+            HStack(alignment: .center, spacing: FGSpace.s) {
+                Text(goal.checkInQuestion)
+                    .font(.system(.title2, design: .rounded).weight(.bold))
+                    .foregroundStyle(FGColor.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
+
+                Spacer(minLength: 0)
+
+                Image(goal.artworkName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 36, height: 36)
+            }
 
             LazyVGrid(columns: gridColumns, spacing: FGSpace.choiceGutter) {
                 ForEach(goal.checkInAnswers) { answer in
@@ -166,31 +199,32 @@ struct CheckInSheet: View {
                         if flow.isComplete {
                             finish()
                         } else if goal.asksForTime {
-                            withAnimation(FGMotion.gentle) {
-                                proxy.scrollTo("time-section", anchor: .bottom)
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(60))
+                                withAnimation(FGMotion.gentle) {
+                                    proxy.scrollTo("time-section", anchor: .bottom)
+                                }
                             }
                         }
                     }
                 }
             }
             .postHogMask()
-
-            if goal.asksForTime && (flow.step == .time || flow.answer != nil) {
-                timeSection(goal: goal)
-                    .id("time-section")
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-            }
         }
     }
+
+    // MARK: Section 3 — time
 
     @ViewBuilder
     private func timeSection(goal: Intent) -> some View {
         VStack(alignment: .leading, spacing: FGSpace.m) {
+            Divider()
+                .padding(.vertical, FGSpace.xs)
+
             Text("How long have you got?")
                 .font(.system(.title2, design: .rounded).weight(.bold))
                 .foregroundStyle(FGColor.ink)
                 .accessibilityAddTraits(.isHeader)
-                .padding(.top, FGSpace.s)
 
             WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
                 ForEach(TimeBudget.checkInChoices, id: \.self) { option in
@@ -245,43 +279,6 @@ struct CheckInSheet: View {
             .frame(maxWidth: .infinity)
         }
         .postHogMask()
-    }
-
-    // MARK: Pieces
-
-    /// The goal's fruit, filling as the questions are answered, beside the way
-    /// back to the screen before.
-    private func header(_ goal: Intent) -> some View {
-        HStack(alignment: .center, spacing: FGSpace.m) {
-            Button {
-                withAnimation(FGMotion.gentle) {
-                    flow.goBack()
-                }
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(FGColor.ink)
-                    .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
-                    .background(Circle().fill(FGColor.surface))
-                    .overlay(Circle().strokeBorder(FGColor.line))
-            }
-            .buttonStyle(.feelGoodPress)
-            .accessibilityLabel("Back")
-
-            Spacer(minLength: 0)
-
-            FruitFillWell(
-                artworkName: goal.artworkName,
-                aura: goal.aura,
-                fraction: flow.fillFraction,
-                size: typeSize.isAccessibilitySize ? 72 : 96
-            )
-
-            Spacer(minLength: 0)
-
-            // Balances the back button so the fruit sits in the middle.
-            Color.clear.frame(width: FGSize.minTouchTarget, height: 1)
-        }
     }
 
     private func sectionLabel(_ text: String) -> some View {
@@ -425,6 +422,7 @@ nonisolated struct FillWave: Shape {
 
 private struct GoalPickCard: View {
     let goal: Intent
+    let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
@@ -447,7 +445,7 @@ private struct GoalPickCard: View {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: [goal.aura.core, goal.aura.mid.opacity(0.75)],
+                            colors: [goal.aura.core, goal.aura.mid.opacity(isSelected ? 0.95 : 0.75)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -456,7 +454,10 @@ private struct GoalPickCard: View {
             .clipShape(.rect(cornerRadius: 18))
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(FGColor.line, lineWidth: 1)
+                    .strokeBorder(
+                        isSelected ? FGColor.ink : FGColor.line,
+                        lineWidth: isSelected ? 2 : 1
+                    )
             )
         }
         .buttonStyle(.feelGoodPress)
@@ -468,6 +469,7 @@ private struct GoalPickCard: View {
 
 private struct GoalOtherPill: View {
     let goal: Intent
+    let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
@@ -495,11 +497,14 @@ private struct GoalOtherPill: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
-            .background(FGColor.surface)
+            .background(isSelected ? goal.aura.core : FGColor.surface)
             .clipShape(.rect(cornerRadius: 20))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(FGColor.line, lineWidth: 1)
+                    .strokeBorder(
+                        isSelected ? FGColor.ink : FGColor.line,
+                        lineWidth: isSelected ? 2 : 1
+                    )
             )
         }
         .buttonStyle(.feelGoodPress)
