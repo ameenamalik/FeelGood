@@ -105,13 +105,14 @@ struct BreathingPhaseLabel: View {
     }
 }
 
-/// A light tap on every phase change — inhale starting, a hold beginning,
-/// the exhale starting, the second hold. Narration only speaks the pattern
-/// once near the start of a step and then goes quiet for however much of the
-/// step is left; this keeps a felt cue running for the whole thing, voice or
-/// no voice, so pacing doesn't go silent-in-every-sense the moment the clip
-/// ends. Invisible — it exists only to call `impactOccurred()` on a phase
-/// change, never drawn.
+/// A tap on every counted second — matching the "two... three... four" the
+/// narration speaks, not just the four-second phase boundaries — with a
+/// firmer tap right on a phase change (inhale starting, a hold beginning,
+/// the exhale starting) so transitions still stand out from the plain count.
+/// Narration only speaks the pattern once near the start of a step and then
+/// goes quiet for however much of the step is left; this keeps a felt cue
+/// running for the whole thing, voice or no voice. Invisible — it exists
+/// only to call `impactOccurred()`, never drawn.
 struct BreathingHapticPulse: View {
     let cadence: BreathingCadence
     let isActive: Bool
@@ -119,11 +120,14 @@ struct BreathingHapticPulse: View {
     let pausedAt: Date?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var lastPulsedPhase: BreathingCycleState.Phase?
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 12.0, paused: reduceMotion || !isActive)) { timeline in
+            let sampleDate = isActive ? timeline.date : (pausedAt ?? timeline.date)
+            let wholeSecond = Int(max(sampleDate.timeIntervalSince(startedAt), 0))
             let phase = BreathingCycleState(
-                at: timeline.date,
+                at: sampleDate,
                 cadence: cadence,
                 isActive: isActive,
                 reduceMotion: reduceMotion,
@@ -133,8 +137,10 @@ struct BreathingHapticPulse: View {
 
             Color.clear
                 .frame(width: 0, height: 0)
-                .onChange(of: phase) { _, _ in
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                .onChange(of: wholeSecond) { _, _ in
+                    let isPhaseChange = phase != lastPulsedPhase
+                    lastPulsedPhase = phase
+                    UIImpactFeedbackGenerator(style: isPhaseChange ? .medium : .light).impactOccurred()
                 }
         }
         .accessibilityHidden(true)
