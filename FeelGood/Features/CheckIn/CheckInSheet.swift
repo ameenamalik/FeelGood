@@ -430,8 +430,9 @@ private struct GoalPickCard: View {
             HStack(alignment: .center, spacing: FGSpace.m) {
                 Text(goal.checkInFeeling)
                     .font(.system(.title3, design: .rounded).weight(.bold))
-                    .foregroundStyle(FGColor.ink)
+                    .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
+
 
                 Image(goal.artworkName)
                     .resizable()
@@ -443,24 +444,19 @@ private struct GoalPickCard: View {
             .frame(maxWidth: .infinity, minHeight: 58)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [goal.aura.core, goal.aura.mid.opacity(isSelected ? 0.95 : 0.75)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(isSelected ? goal.aura.mid : FGColor.surface)
             )
             .clipShape(.rect(cornerRadius: 18))
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(
-                        isSelected ? FGColor.ink : FGColor.line,
-                        lineWidth: isSelected ? 2 : 1
+                        isSelected ? FGColor.inkOnAccent : FGColor.line,
+                        lineWidth: isSelected ? 3 : 1
                     )
             )
         }
         .buttonStyle(.feelGoodPress)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
         .accessibilityElement(children: .combine)
         .accessibilityLabel(goal.checkInFeeling)
         .accessibilityHint("Asks one more question about \(goal.checkInFeeling.lowercased())")
@@ -488,7 +484,7 @@ private struct GoalOtherPill: View {
 
                 Text(goal.checkInFeeling)
                     .font(.system(.body, design: .rounded).weight(.semibold))
-                    .foregroundStyle(FGColor.ink)
+                    .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
 
@@ -497,17 +493,18 @@ private struct GoalOtherPill: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
-            .background(isSelected ? goal.aura.core : FGColor.surface)
+            .background(isSelected ? goal.aura.mid : FGColor.surface)
             .clipShape(.rect(cornerRadius: 20))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .strokeBorder(
-                        isSelected ? FGColor.ink : FGColor.line,
-                        lineWidth: isSelected ? 2 : 1
+                        isSelected ? FGColor.inkOnAccent : FGColor.line,
+                        lineWidth: isSelected ? 3 : 1
                     )
             )
         }
         .buttonStyle(.feelGoodPress)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
         .accessibilityElement(children: .combine)
         .accessibilityLabel(goal.checkInFeeling)
         .accessibilityHint("Asks one more question about \(goal.checkInFeeling.lowercased())")
@@ -523,23 +520,26 @@ private struct FeelingAnswerCard: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 6) {
-                if let systemImage = answer.systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: 20, weight: .regular))
-                        .foregroundStyle(FGColor.ink)
-                        .frame(height: 22)
-                } else {
-                    Color.clear.frame(height: 22)
+                HStack {
+                    if let systemImage = answer.systemImage {
+                        Image(systemName: systemImage)
+                            .font(.system(size: 20, weight: .regular))
+                            .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
+                            .frame(height: 22)
+                    } else {
+                        Color.clear.frame(height: 22)
+                    }
+                    Spacer(minLength: 0)
                 }
 
                 Text(answer.title)
                     .font(.system(.headline, design: .rounded).weight(.bold))
-                    .foregroundStyle(FGColor.ink)
+                    .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(answer.detail)
                     .font(FGFont.caption)
-                    .foregroundStyle(FGColor.inkMuted)
+                    .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.inkMuted)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Spacer(minLength: 0)
@@ -548,15 +548,16 @@ private struct FeelingAnswerCard: View {
             .frame(maxWidth: .infinity, minHeight: 124, alignment: .topLeading)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(isSelected ? aura.core : FGColor.surface)
+                    .fill(isSelected ? aura.mid : FGColor.surface)
             )
             .clipShape(.rect(cornerRadius: 24))
             .overlay(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(isSelected ? FGColor.ink : FGColor.line, lineWidth: isSelected ? 2 : 1)
+                    .strokeBorder(isSelected ? FGColor.inkOnAccent : FGColor.line, lineWidth: isSelected ? 3 : 1)
             )
         }
         .buttonStyle(.feelGoodPress)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(answer.title), \(answer.detail)")
     }
@@ -571,29 +572,30 @@ private struct RestingTodayCard: View {
             VStack(spacing: 4) {
                 Text("Resting today")
                     .font(.system(.body, design: .rounded).weight(.bold))
-                    .foregroundStyle(FGColor.ink)
+                    .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
 
                 Text("Something soft, nothing to prove")
                     .font(FGFont.caption)
-                    .foregroundStyle(FGColor.inkMuted)
+                    .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.inkMuted)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .padding(.horizontal, FGSpace.m)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(isSelected ? FGAura.lilac.core : FGColor.surface.opacity(0.5))
+                    .fill(isSelected ? FGAura.lilac.mid : FGColor.surface.opacity(0.5))
             )
             .clipShape(.rect(cornerRadius: 22))
             .overlay(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .strokeBorder(
-                        isSelected ? FGColor.ink : FGColor.lineStrong,
-                        style: StrokeStyle(lineWidth: isSelected ? 2 : 1.5, dash: [5, 4])
+                        isSelected ? FGColor.inkOnAccent : FGColor.lineStrong,
+                        style: StrokeStyle(lineWidth: isSelected ? 3 : 1.5, dash: isSelected ? [] : [5, 4])
                     )
             )
         }
         .buttonStyle(.feelGoodPress)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Resting today. Something soft, nothing to prove")
     }

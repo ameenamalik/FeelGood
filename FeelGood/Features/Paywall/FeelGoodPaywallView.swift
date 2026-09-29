@@ -245,11 +245,11 @@ struct FeelGoodPaywallView: View {
                 Text("✦ FeelGood Pro")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .tracking(0.3)
-                    .foregroundStyle(FGColor.sideBadge)
+                    .foregroundStyle(FGColor.sageDeep)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
-            .background(Capsule().fill(FGAura.sage.core.opacity(0.8)))
+            .background(Capsule().fill(FGColor.sagePanel))
             .overlay(Capsule().strokeBorder(FGColor.sideBadge.opacity(0.3), lineWidth: 1))
 
             Text("Stop deciding.\nStart moving.")
@@ -282,16 +282,16 @@ struct FeelGoodPaywallView: View {
                     HStack(spacing: 6) {
                         Image(systemName: power.sfSymbol)
                             .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(isSelected ? FGColor.ink : FGColor.inkMuted)
+                            .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.inkMuted)
 
                         Text(power.label)
                             .font(.system(size: 12, weight: isSelected ? .bold : .semibold, design: .rounded))
-                            .foregroundStyle(isSelected ? FGColor.ink : FGColor.inkMuted)
+                            .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.inkMuted)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
                     .background(
-                        Capsule().fill(isSelected ? AnyShapeStyle(power.badgeColor.opacity(0.55)) : AnyShapeStyle(FGColor.surface.opacity(0.7)))
+                        Capsule().fill(isSelected ? AnyShapeStyle(power.badgeColor) : AnyShapeStyle(FGColor.surface.opacity(0.7)))
                     )
                     .overlay(
                         Capsule().strokeBorder(isSelected ? FGColor.ink.opacity(0.2) : FGColor.line, lineWidth: 1)
@@ -389,7 +389,7 @@ struct FeelGoodPaywallView: View {
 
                     Text("Subbed in 1 tap")
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(FGColor.sideBadge)
+                        .foregroundStyle(FGColor.sageDeep)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -413,11 +413,11 @@ struct FeelGoodPaywallView: View {
             HStack(spacing: 5) {
                 Image(systemName: "moon.stars.fill")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(FGColor.sideBadge)
+                    .foregroundStyle(FGColor.sageDeep)
 
                 Text("8:00 PM · Evening check-in")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(FGColor.sideBadge)
+                    .foregroundStyle(FGColor.sageDeep)
 
                 Spacer()
 
@@ -462,7 +462,7 @@ struct FeelGoodPaywallView: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(FGAura.sage.core.opacity(0.65))
+                .background(FGColor.sagePanel)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
 
@@ -500,7 +500,7 @@ struct FeelGoodPaywallView: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("15-min free gap detected")
                             .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(FGColor.sideBadge)
+                            .foregroundStyle(FGColor.sageDeep)
                         Text("10-min Posture Reset")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundStyle(FGColor.ink)
@@ -510,14 +510,14 @@ struct FeelGoodPaywallView: View {
 
                     Text("Auto-fit")
                         .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundStyle(FGColor.sideBadge)
+                        .foregroundStyle(FGColor.sageDeep)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Capsule().fill(.white))
+                        .background(Capsule().fill(FGColor.surface))
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(FGAura.sage.core.opacity(0.65))
+                .background(FGColor.sagePanel)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
 
@@ -564,42 +564,41 @@ struct FeelGoodPaywallView: View {
                     HStack(spacing: FGSpace.xs) {
                         Text(plan.title)
                             .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundStyle(FGColor.ink)
+                            .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
 
                         if plan == .yearly, trialEligiblePlans.contains(.yearly) {
                             Text("· 7 days free")
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(FGColor.sideBadge)
+                                .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.sageDeep)
                         }
                     }
 
                     HStack(spacing: 4) {
                         Text(priceLine(for: package, plan: plan))
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(FGColor.inkMuted)
+                            .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.inkMuted)
 
                         if plan == .yearly, let monthlyEquivalent = monthlyEquivalentCaption(for: package) {
                             Text("· \(monthlyEquivalent)")
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(FGColor.ink)
+                                .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
                         }
                     }
                 }
 
                 Spacer(minLength: 0)
 
-                selectionMark(isSelected: isSelected)
             }
             .padding(.horizontal, FGSpace.m)
             .padding(.vertical, FGSpace.m - 2)
             .frame(minHeight: FGSize.minTouchTarget + 14)
             .background(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .fill(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(FGColor.surface.opacity(0.8)))
+                    .fill(isSelected ? AnyShapeStyle(FGAura.sage.mid) : AnyShapeStyle(FGColor.surface.opacity(0.8)))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .strokeBorder(isSelected ? FGColor.ink : FGColor.lineStrong, lineWidth: isSelected ? 2 : 1)
+                    .strokeBorder(isSelected ? FGColor.inkOnAccent : FGColor.lineStrong, lineWidth: isSelected ? 3 : 1)
             )
             .shadow(color: FGColor.ink.opacity(isSelected ? 0.08 : 0), radius: 8, y: 4)
         }
@@ -619,19 +618,6 @@ struct FeelGoodPaywallView: View {
             }
         }
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
-    }
-
-    private func selectionMark(isSelected: Bool) -> some View {
-        ZStack {
-            Circle()
-                .strokeBorder(isSelected ? FGColor.ink : FGColor.lineStrong, lineWidth: 1.5)
-                .frame(width: 22, height: 22)
-            if isSelected {
-                Circle()
-                    .fill(FGColor.ink)
-                    .frame(width: 12, height: 12)
-            }
-        }
     }
 
     private var savingsPercent: Int? {

@@ -173,7 +173,7 @@ struct SubscriptionSettingsView: View {
     }
 
     private var actions: some View {
-        VStack(spacing: FGSpace.xs) {
+        VStack(spacing: 16) {
             if purchasesManager.isProUnlocked {
                 FGPrimaryButton(title: "Manage subscription") {
                     isCustomerCenterPresented = true
@@ -203,19 +203,22 @@ struct SubscriptionSettingsView: View {
                         : "No active purchases found for this Apple ID. Try signing in with the Apple ID you subscribed with."
                 }
             } label: {
-                if isRestoring {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
-                } else {
-                    Text("Restore purchases")
-                        .font(FGFont.body.weight(.semibold))
-                        .foregroundStyle(FGColor.ink)
-                        .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
-                        .background(FGColor.surface.opacity(0.82), in: Capsule())
-                        .overlay {
-                            Capsule()
-                                .strokeBorder(FGColor.lineStrong, lineWidth: 1)
-                        }
+                Group {
+                    if isRestoring {
+                        ProgressView()
+                    } else {
+                        Text("Restore purchases")
+                            .font(FGFont.body.weight(.semibold))
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .foregroundStyle(FGColor.ink)
+                .padding(.horizontal, FGSpace.m)
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .background(FGColor.surface.opacity(0.82), in: Capsule())
+                .overlay {
+                    Capsule()
+                        .strokeBorder(FGColor.lineStrong, lineWidth: 1)
                 }
             }
             .buttonStyle(.feelGoodPress)
