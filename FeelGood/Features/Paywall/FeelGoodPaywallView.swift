@@ -174,7 +174,7 @@ struct FeelGoodPaywallView: View {
             ])
         }
         .alert(
-            "Something went wrong",
+            purchasesManager.lastError?.alertTitle ?? "Something went wrong",
             isPresented: Binding(
                 get: { purchasesManager.lastError != nil },
                 set: { if !$0 { purchasesManager.lastError = nil } }
@@ -566,22 +566,25 @@ struct FeelGoodPaywallView: View {
                             .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
 
-                        if plan == .yearly, trialEligiblePlans.contains(.yearly) {
-                            Text("· 7 days free")
+                        if let trial = freeTrialPeriod(for: plan, package: package) {
+                            Text("· \(trialLength(trial)) free")
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
                                 .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.sageDeep)
                         }
                     }
 
+                    // Guideline 3.1.2(c): the amount billed has to be the most
+                    // prominent price on the card, so it carries the weight and
+                    // the per-month figure stays secondary.
                     HStack(spacing: 4) {
                         Text(priceLine(for: package, plan: plan))
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.inkMuted)
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
 
                         if plan == .yearly, let monthlyEquivalent = monthlyEquivalentCaption(for: package) {
                             Text("· \(monthlyEquivalent)")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.inkMuted)
                         }
                     }
                 }
@@ -648,35 +651,67 @@ struct FeelGoodPaywallView: View {
 
     private func monthlyEquivalentCaption(for package: Package) -> String? {
         guard let perMonth = package.storeProduct.localizedPricePerMonth else { return nil }
-        return "just \(perMonth)/mo"
+        return "\(perMonth)/mo"
     }
 
-    private func trialLengthNoun(_ period: SubscriptionPeriod) -> String {
-        let unit: String
-        switch period.unit {
-        case .day: unit = "day"
-        case .week: unit = "week"
-        case .month: unit = "month"
-        case .year: unit = "year"
-        @unknown default: unit = "day"
+    /// The free trial this person would actually get on `plan`, or nil. Read
+    /// from StoreKit rather than written into the copy, so the card, the
+    /// button and App Store Connect can never disagree about its length.
+    private func freeTrialPeriod(for plan: Plan, package: Package) -> SubscriptionPeriod? {
+        guard trialEligiblePlans.contains(plan),
+              let discount = package.storeProduct.introductoryDiscount,
+              discount.paymentMode == .freeTrial else { return nil }
+        return discount.subscriptionPeriod
+    }
+
+    /// "7 days" rather than "1 week", so the badge and the button read the same.
+    private func trialLength(_ period: SubscriptionPeriod) -> String {
+        let (value, unit): (Int, String) = switch period.unit {
+        case .day: (period.value, "day")
+        case .week: (period.value * 7, "day")
+        case .month: (period.value, "month")
+        case .year: (period.value, "year")
+        @unknown default: (period.value, "day")
         }
-        return period.value == 1 ? "\(period.value) \(unit)" : "\(period.value) \(unit)s"
+        return value == 1 ? "1 \(unit)" : "\(value) \(unit)s"
     }
 
     // MARK: - 5. Value-Led CTA Buttons (Thumb-Zone)
 
+    private var selectedTrial: SubscriptionPeriod? {
+        guard let selectedPackage else { return nil }
+        return freeTrialPeriod(for: selectedPlan, package: selectedPackage)
+    }
+
     private var ctaTitle: String {
         guard let selectedPackage else { return "Continue" }
-        guard trialEligiblePlans.contains(selectedPlan),
-              let discount = selectedPackage.storeProduct.introductoryDiscount,
-              discount.paymentMode == .freeTrial else {
+        guard let trial = selectedTrial else {
             return "Subscribe · \(selectedPackage.storeProduct.localizedPriceString)\(selectedPlan.renewalSuffix)"
         }
-        return "Start \(trialLengthNoun(discount.subscriptionPeriod)) free trial"
+        return "Try \(trialLength(trial)) free"
+    }
+
+    /// What happens after the tap, next to the tap: the billed amount, when
+    /// it's charged, and that it renews until cancelled (Guideline 3.1.2).
+    private var billingDisclosure: String? {
+        guard let selectedPackage else { return nil }
+        let price = priceLine(for: selectedPackage, plan: selectedPlan)
+        let renewal = "Renews automatically until you cancel in Settings."
+        guard let trial = selectedTrial else { return "\(price). \(renewal)" }
+        return "Free for \(trialLength(trial)), then \(price). \(renewal)"
     }
 
     private var ctaButtons: some View {
         VStack(spacing: FGSpace.s) {
+            if let billingDisclosure {
+                Text(billingDisclosure)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(FGColor.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+            }
+
             FGPrimaryButton(title: ctaTitle, isEnabled: selectedPackage != nil && !isPurchasing) {
                 purchaseSelectedPlan()
             }
