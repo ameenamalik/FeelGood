@@ -3348,7 +3348,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "durationMin": 10,
     "intensity": "moderate",
     "course": "side",
-    "activity": "walking",
+    "activity": "strength",
     "places": [
       "gym"
     ],
