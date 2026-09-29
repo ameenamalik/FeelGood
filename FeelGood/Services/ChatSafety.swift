@@ -22,8 +22,13 @@ nonisolated enum ChatSafety {
     static let replacementReason = "Chosen to match your time and energy today."
     static let noCardMessage = "What would feel good right now?"
 
-    static func conflicts(_ session: Session, workArounds: Set<WorkAround>) -> Bool {
-        !Set(session.contraindications).isDisjoint(with: workArounds)
+    static func conflicts(_ session: Session, workArounds: Set<WorkAround>, otherNote: String = "") -> Bool {
+        if !Set(session.contraindications).isDisjoint(with: workArounds) { return true }
+        if !otherNote.isEmpty {
+            let engine = PlanEngine(catalog: [session])
+            if engine.conflictsWithCustomWorkAround(session, note: otherNote) { return true }
+        }
+        return false
     }
 
     /// - Parameters:
@@ -32,14 +37,15 @@ nonisolated enum ChatSafety {
     static func apply(
         to response: ChatResponse,
         workArounds: Set<WorkAround>,
+        otherNote: String = "",
         availability: ChatAvailability? = nil,
         lookup: (String) -> Session?,
         replacement: (StructuredRecommendation) -> Session?
     ) -> ChatResponse {
-        guard !workArounds.isEmpty || availability != nil, let card = response.recommendation else { return response }
+        guard !workArounds.isEmpty || !otherNote.isEmpty || availability != nil, let card = response.recommendation else { return response }
 
         func isAcceptable(_ session: Session) -> Bool {
-            !conflicts(session, workArounds: workArounds) && availability?.allows(session) ?? true
+            !conflicts(session, workArounds: workArounds, otherNote: otherNote) && availability?.allows(session) ?? true
         }
 
         // A card whose session cannot be found is treated as unsafe: the

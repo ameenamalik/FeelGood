@@ -160,20 +160,41 @@ struct OnboardingView: View {
                         selectedAura: .lilac,
                         isSelected: model.workArounds.isEmpty
                     ) {
-                        withAnimation(FGMotion.gentle) { model.workArounds = [] }
+                        withAnimation(FGMotion.gentle) {
+                            model.workArounds = []
+                            model.otherWorkAroundNote = ""
+                        }
                     }
+                }
+
+                if model.workArounds.contains(.other) {
+                    VStack(alignment: .leading, spacing: FGSpace.xs) {
+                        Text("What should we go easy on?")
+                            .font(FGFont.label)
+                            .foregroundStyle(FGColor.ink)
+
+                        TextField("e.g. Frozen shoulder, vertigo, no floor work...", text: $model.otherWorkAroundNote)
+                            .font(FGFont.body)
+                            .padding(.horizontal, FGSpace.m)
+                            .padding(.vertical, 12)
+                            .background(FGColor.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(FGColor.line, lineWidth: 1)
+                            )
+
+                        Text("Your menu and AI coach will avoid movements that stress this.")
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
                 Text("FeelGood provides general wellness recommendations and is not a substitute for medical advice or physical therapy.")
                     .font(FGFont.caption)
                     .foregroundStyle(FGColor.inkMuted)
                     .padding(.top, FGSpace.s)
-
-                if model.workArounds.contains(.other) {
-                    Text("We can’t tailor an unspecified need. Skip anything that doesn’t feel right.")
-                        .font(FGFont.caption)
-                        .foregroundStyle(FGColor.inkMuted)
-                }
             }
         }
     }

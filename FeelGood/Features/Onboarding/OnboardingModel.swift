@@ -86,6 +86,10 @@ final class OnboardingModel {
         get { answers.workArounds }
         set { answers.workArounds = newValue }
     }
+    var otherWorkAroundNote: String {
+        get { answers.otherWorkAroundNote }
+        set { answers.otherWorkAroundNote = newValue }
+    }
 
     var isFirstCard: Bool { card == .guidance }
     var isLastCard: Bool { card == .workArounds }
@@ -213,6 +217,9 @@ nonisolated extension WorkAround {
         case .lowBack: "Lower back"
         case .knees: "Knees"
         case .wrists: "Wrists"
+        case .neckShoulders: "Neck & shoulders"
+        case .hips: "Hips"
+        case .lowImpact: "No jumping"
         case .pregnancy: "Pregnant"
         case .postpartum: "Postpartum"
         case .pelvicFloor: "Pelvic floor"
@@ -323,6 +330,9 @@ nonisolated extension WorkAround {
         case .lowBack: "figure.core.training"
         case .knees: "figure.walk"
         case .wrists: "hand.raised"
+        case .neckShoulders: "figure.mind.and.body"
+        case .hips: "figure.flexibility"
+        case .lowImpact: "shoeprints.fill"
         case .fatigue: "battery.25percent"
         case .pregnancy: "figure.and.child.holdinghands"
         case .postpartum: "figure.2.and.child.holdinghands"

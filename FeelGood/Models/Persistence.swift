@@ -33,6 +33,7 @@ final class UserProfile {
     var intentRaw: String
     var intentsRaw: [String] = []
     var workAroundsRaw: [String]
+    var otherWorkAroundNote: String = ""
     /// Sessions explicitly hidden ("Don't suggest this again"). Hard-filtered by the engine.
     var hiddenSessionIDsRaw: [String] = []
     /// Local hour for the optional daily invitation. `nil` means no reminder.
@@ -79,6 +80,7 @@ final class UserProfile {
         intentsRaw = intentValues
         intentRaw = intentValues.first ?? Intent.energize.rawValue
         workAroundsRaw = answers.workArounds.map(\.rawValue).sorted()
+        otherWorkAroundNote = answers.otherWorkAroundNote
         hiddenSessionIDsRaw = answers.hiddenSessionIDs.sorted()
         self.reminderHour = reminderHour
         createdAt = now
@@ -102,6 +104,7 @@ final class UserProfile {
             bestTimeOfDay: TimeOfDay(rawValue: bestTimeOfDayRaw) ?? .varies,
             intents: decodedIntents,
             workArounds: Set(workAroundsRaw.compactMap(WorkAround.init(rawValue:))),
+            otherWorkAroundNote: otherWorkAroundNote,
             hiddenSessionIDs: Set(hiddenSessionIDsRaw)
         )
     }
@@ -127,6 +130,7 @@ final class UserProfile {
         intentsRaw = answers.intents.map(\.rawValue).sorted()
         intentRaw = intentsRaw.first ?? Intent.energize.rawValue
         workAroundsRaw = answers.workArounds.map(\.rawValue).sorted()
+        otherWorkAroundNote = answers.otherWorkAroundNote
         hiddenSessionIDsRaw = answers.hiddenSessionIDs.sorted()
         updatedAt = now
     }

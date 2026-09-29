@@ -689,6 +689,7 @@ struct ExploreView: View {
 
         let startedAt = Date()
         let workArounds = model.profile.workArounds
+        let otherWorkAroundNote = model.profile.otherWorkAroundNote
         let lookupSession: (String) -> Session? = { id in model.everything.first { $0.id == id } }
         Task {
             let response = await service.describeDay(
@@ -707,6 +708,7 @@ struct ExploreView: View {
                     ChatSafety.apply(
                         to: reply,
                         workArounds: workArounds,
+                        otherNote: otherWorkAroundNote,
                         availability: availability,
                         lookup: lookupSession,
                         replacement: { rejected in
@@ -716,6 +718,7 @@ struct ExploreView: View {
                                 excludeID: rejected.sessionID,
                                 userContext: userContext,
                                 workArounds: workArounds,
+                                otherNote: otherWorkAroundNote,
                                 availability: availability
                             )
                         }
