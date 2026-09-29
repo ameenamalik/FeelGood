@@ -78,7 +78,7 @@ struct ActivityHistorySection: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(FGColor.surface)
-                    .clipShape(Capsule())
+                    .clipShape(.capsule)
                     .overlay(Capsule().strokeBorder(FGColor.line, lineWidth: 1))
             }
         }
@@ -89,8 +89,8 @@ struct ActivityHistorySection: View {
             Image("MascotShowingUpBanana")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 48, height: 48)
-                .frame(width: 58, height: 58)
+                .frame(width: 44, height: 44)
+                .padding(6)
                 .background(FGAura.butter.core, in: Circle())
                 .overlay {
                     Circle()
@@ -219,7 +219,7 @@ private struct ActivityHistoryRow: View {
                 .foregroundStyle(aura.mid)
                 .frame(width: 36, height: 36)
                 .background(aura.core.opacity(0.35))
-                .clipShape(Circle())
+                .clipShape(.circle)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)

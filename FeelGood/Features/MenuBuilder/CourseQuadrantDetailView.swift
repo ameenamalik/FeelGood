@@ -155,7 +155,7 @@ struct CourseQuadrantDetailView: View {
             Image(course.menuMascotAsset)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 94, height: 94)
+                .frame(width: 68, height: 68)
                 .accessibilityHidden(true)
         }
         .padding(FGSpace.l)

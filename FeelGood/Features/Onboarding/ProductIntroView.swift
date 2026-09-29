@@ -382,7 +382,6 @@ struct ProductIntroView: View {
     private var carouselFooter: some View {
         FGPrimaryButton(title: page.buttonTitle, action: advance)
             .frame(maxWidth: 280)
-            .frame(maxWidth: .infinity)
     }
 
     private var pageTransition: AnyTransition {

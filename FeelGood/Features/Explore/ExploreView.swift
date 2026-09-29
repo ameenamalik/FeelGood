@@ -449,7 +449,7 @@ struct ExploreView: View {
                 Image(course.menuMascotAsset)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 64, height: 64)
+                    .frame(width: 48, height: 48)
                     .accessibilityHidden(true)
             }
 
@@ -468,7 +468,7 @@ struct ExploreView: View {
                 .foregroundStyle(FGColor.onActionFill)
                 .padding(.vertical, 14)
                 .background(FGColor.actionFill)
-                .clipShape(Capsule())
+                .clipShape(.capsule)
             }
             .buttonStyle(.plain)
 
@@ -487,14 +487,14 @@ struct ExploreView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
                 .background(FGColor.surface.opacity(0.55))
-                .clipShape(Capsule())
+                .clipShape(.capsule)
             }
             .buttonStyle(.plain)
             .disabled(isCommitted)
         }
         .padding(18)
         .background(course.accentGradient)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(.rect(cornerRadius: 24))
         .contentShape(Rectangle())
         .onTapGesture {
             launchSession(recommendation: recommendation)

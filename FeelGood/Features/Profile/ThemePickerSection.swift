@@ -54,7 +54,7 @@ private struct ThemeOption: View {
                     // look while the rest of the screen wears the current one.
                     .environment(\.fgTheme, id)
                     .frame(height: 132)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .clipShape(.rect(cornerRadius: 18))
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .strokeBorder(isSelected ? FGColor.ink : FGColor.lineStrong, lineWidth: isSelected ? 3 : 1.5)
