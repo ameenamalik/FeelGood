@@ -401,13 +401,26 @@ struct AddRoutineSheet: View {
     /// player falls back to a general line, but the person's own words are
     /// always better than ours.
     private func cueField(text: Binding<String>) -> some View {
-        TextField("How to do it (optional) — e.g. Knees soft, reach long through the crown", text: text, axis: .vertical)
-            .font(FGFont.caption)
-            .foregroundStyle(FGColor.inkMuted)
-            .textFieldStyle(.plain)
-            .textInputAutocapitalization(.sentences)
-            .lineLimit(1...5)
-            .padding(.top, 2)
+        // The system placeholder truncates to one line and washes out, so draw
+        // our own: full sentence, wrapped, at a readable contrast.
+        ZStack(alignment: .topLeading) {
+            if text.wrappedValue.isEmpty {
+                Text("How to do it (optional) — e.g. Knees soft, reach long through the crown")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+            TextField("", text: text, axis: .vertical)
+                .font(FGFont.caption)
+                .foregroundStyle(FGColor.ink)
+                .textFieldStyle(.plain)
+                .textInputAutocapitalization(.sentences)
+                .lineLimit(1...5)
+                .accessibilityLabel("How to do it, optional")
+        }
+        .padding(.top, 2)
             .postHogMask()
     }
 

@@ -235,7 +235,7 @@ struct ProductIntroView: View {
 
             introCopy(
                 title: "FeelGood",
-                detail: "A menu for the day you’re having.\nNo streaks. No scores. No guilt."
+                detail: "A menu for the day you’re having."
             )
         }
         .frame(maxWidth: .infinity)
@@ -250,7 +250,7 @@ struct ProductIntroView: View {
                 detail: "Your energy, your time, your space. That’s enough."
             )
 
-            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
+            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s, isCentered: true) {
                 signalChip("Low energy", aura: .butter)
                 signalChip("10 min", aura: .apricot)
                 signalChip("Home", aura: .sage)

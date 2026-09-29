@@ -62,6 +62,15 @@ struct FeelGoodPaywallView: View {
 
         var id: Int { rawValue }
 
+        /// Long enough for each demo to play through (swaps shows three).
+        var dwellSeconds: Double {
+            switch self {
+            case .swaps: 14
+            case .chat: 10
+            case .calendar: 6
+            }
+        }
+
         var label: String {
             switch self {
             case .swaps: "Swaps"
@@ -115,6 +124,14 @@ struct FeelGoodPaywallView: View {
     @State private var restoreResultMessage: String?
     @State private var activeSuperpower: Superpower = .swaps
     @State private var carouselResetToken = 0
+    @State private var swapDemoIndex = 0
+    @State private var swapCardOffset: CGFloat = 0
+    @State private var swapFinger: SwapFinger = .none
+    @State private var isShowingSwapPicker = false
+    @State private var isSwapPillPressed = false
+    @State private var swapPickerHighlight: Int?
+    @State private var swapCaption = ""
+    @State private var chatStep = 0
 
     init(
         context: PaywallContext = .general,
@@ -336,76 +353,260 @@ struct FeelGoodPaywallView: View {
 
     // MARK: - Hero Content 1: Instant Contrast Swap
 
-    private var swapsHeroContent: some View {
-        VStack(spacing: 12) {
-            // The Before -> After Transformation
-            HStack(spacing: 10) {
-                // Before Card
-                VStack(spacing: 5) {
-                    Image(Course.main.menuMascotAsset)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 36, height: 36)
-                        .padding(5)
-                        .background(Circle().fill(FGColor.surface))
+    private struct DemoSession {
+        let title: String
+        let detail: String
+        let course: Course
+    }
 
-                    Text("20m Flow")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundStyle(FGColor.ink)
+    /// A small slice of the library, enough to show the menu changing.
+    private static let demoSessions: [DemoSession] = [
+        DemoSession(title: "20m Full-Body Flow", detail: "20 min · Mat", course: .main),
+        DemoSession(title: "5m Evening Unwind", detail: "5 min · Floor", course: .dessert),
+        DemoSession(title: "15m Leg Strength", detail: "15 min · Weights", course: .main),
+        DemoSession(title: "8m Hip Opener", detail: "8 min · Mat", course: .appetizer),
+        DemoSession(title: "10m Posture Reset", detail: "10 min · Anywhere", course: .special),
+        DemoSession(title: "3m Box Breathing", detail: "3 min · Anywhere", course: .dessert)
+    ]
 
-                    Text("Scheduled")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(FGColor.inkMuted)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Course.main.fill.opacity(0.35))
-                )
+    private enum SwapFinger { case none, swipe, tap }
 
-                // Plum Animated Arrow
-                ZStack {
-                    Circle()
-                        .fill(FGColor.actionFill)
-                        .frame(width: 32, height: 32)
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 13, weight: .black))
-                        .foregroundStyle(FGColor.onActionFill)
-                }
+    private func demoCard(_ session: DemoSession, isPillPressed: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(session.course.menuMascotAsset)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 34, height: 34)
+                .padding(5)
+                .background(Circle().fill(FGColor.surface))
 
-                // After Card
-                VStack(spacing: 5) {
-                    Image(Course.dessert.menuMascotAsset)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 36, height: 36)
-                        .padding(5)
-                        .background(Circle().fill(FGColor.surface))
-
-                    Text("5m Unwind")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundStyle(FGColor.ink)
-
-                    Text("Subbed in 1 tap")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(FGColor.sageDeep)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Course.dessert.fill.opacity(0.35))
-                )
+            VStack(alignment: .leading, spacing: 2) {
+                Text(session.title)
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(FGColor.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text(session.detail)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(FGColor.inkMuted)
             }
 
-            Text("Too tired? Swap any session instantly.")
+            Spacer(minLength: 0)
+
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 11, weight: .bold))
+                Text("Swap")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(session.course.accentText)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(Capsule().fill(Color.white.opacity(0.88)))
+            .scaleEffect(isPillPressed ? 0.88 : 1)
+            .overlay {
+                if swapFinger == .tap {
+                    Circle()
+                        .fill(FGColor.ink.opacity(0.18))
+                        .frame(width: 26, height: 26)
+                        .scaleEffect(isPillPressed ? 0.8 : 1.1)
+                }
+            }
+        }
+        .padding(.horizontal, 10)
+        .frame(height: 62)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(session.course.fill.opacity(0.4))
+        )
+        .overlay(alignment: .center) {
+            if swapFinger == .swipe {
+                Circle()
+                    .fill(FGColor.ink.opacity(0.18))
+                    .frame(width: 26, height: 26)
+                    .offset(x: 60)
+            }
+        }
+    }
+
+    private func demoPickerRow(_ session: DemoSession, isHighlighted: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(session.course.menuMascotAsset)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 22, height: 22)
+            Text(session.title)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundStyle(FGColor.ink)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+            Text(session.detail.components(separatedBy: " · ").first ?? "")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(FGColor.inkMuted)
+        }
+        .padding(.horizontal, 10)
+        .frame(height: 30)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isHighlighted ? session.course.fill.opacity(0.55) : FGColor.panel.opacity(0.5))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(isHighlighted ? FGColor.ink.opacity(0.25) : .clear, lineWidth: 1)
+        )
+        .scaleEffect(isHighlighted ? 1.02 : 1)
+    }
+
+    private var swapsHeroContent: some View {
+        let count = Self.demoSessions.count
+        let current = Self.demoSessions[swapDemoIndex % count]
+        return VStack(spacing: 10) {
+            Text(swapCaption)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(FGColor.inkMuted)
+                .multilineTextAlignment(.center)
+                .frame(height: 16)
+                .id(swapCaption)
+                .transition(.opacity)
+
+            ZStack {
+                if isShowingSwapPicker {
+                    VStack(spacing: 4) {
+                        ForEach(0..<3, id: \.self) { row in
+                            demoPickerRow(
+                                Self.demoSessions[(swapDemoIndex + 1 + row) % count],
+                                isHighlighted: swapPickerHighlight == row
+                            )
+                        }
+                    }
+                    .transition(.scale(scale: 0.94).combined(with: .opacity))
+                } else {
+                    demoCard(current, isPillPressed: isSwapPillPressed)
+                        .offset(x: swapCardOffset)
+                        .opacity(swapCardOffset == 0 ? 1 : 0.4)
+                        .transition(.opacity)
+                }
+            }
+            .frame(height: 104)
+            .clipped()
+        }
+        .task { await runSwapDemo() }
+    }
+
+    private func pause(_ seconds: Double) async -> Bool {
+        try? await Task.sleep(for: .seconds(seconds))
+        return !Task.isCancelled
+    }
+
+    /// Plays the real gestures: a swipe, then a tap on Swap that opens the
+    /// library and picks from it, then another swipe. Reduced motion shows
+    /// a single resting card.
+    private func runSwapDemo() async {
+        swapDemoIndex = 0
+        swapCardOffset = 0
+        swapFinger = .none
+        isShowingSwapPicker = false
+        isSwapPillPressed = false
+        swapPickerHighlight = nil
+        swapCaption = "Swipe or tap Swap on any card."
+        guard !reduceMotion else { return }
+
+        func swipe(caption: String) async -> Bool {
+            withAnimation(FGMotion.gentle) { swapCaption = caption }
+            guard await pause(1.0) else { return false }
+            swapFinger = .swipe
+            withAnimation(.easeInOut(duration: 0.28)) { swapCardOffset = -56 }
+            guard await pause(0.4) else { return false }
+            withAnimation(.easeIn(duration: 0.18)) { swapCardOffset = -420 }
+            guard await pause(0.2) else { return false }
+            swapFinger = .none
+            swapDemoIndex += 1
+            swapCardOffset = 420
+            withAnimation(FGMotion.swap) { swapCardOffset = 0 }
+            return await pause(1.7)
+        }
+
+        while !Task.isCancelled {
+            guard await swipe(caption: "Swipe a card to swap it.") else { return }
+
+            // Tap Swap -> browse the library -> choose.
+            withAnimation(FGMotion.gentle) { swapCaption = "Or tap Swap to browse 100s of sessions." }
+            guard await pause(1.0) else { return }
+            swapFinger = .tap
+            withAnimation(.easeInOut(duration: 0.18)) { isSwapPillPressed = true }
+            guard await pause(0.35) else { return }
+            withAnimation(.easeInOut(duration: 0.18)) { isSwapPillPressed = false }
+            guard await pause(0.2) else { return }
+            swapFinger = .none
+            withAnimation(FGMotion.swap) { isShowingSwapPicker = true }
+            guard await pause(1.0) else { return }
+            withAnimation(FGMotion.gentle) { swapPickerHighlight = 1 }
+            guard await pause(1.0) else { return }
+            swapDemoIndex += 2
+            withAnimation(FGMotion.swap) {
+                isShowingSwapPicker = false
+                swapPickerHighlight = nil
+            }
+            guard await pause(1.8) else { return }
+
+            guard await swipe(caption: "Swap as often as your day changes.") else { return }
         }
     }
 
     // MARK: - Hero Content 2: Companion Chat
+
+    private func chatUserBubble(_ text: String) -> some View {
+        HStack {
+            Spacer(minLength: 24)
+            Text(text)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(FGColor.onDeepFill)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(FGColor.userBubble)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+    }
+
+    private func chatCompanionCard(title: String, reason: String) -> some View {
+        HStack(spacing: 8) {
+            Image("IntentCalmBlueberryMascot")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 28, height: 28)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(FGColor.ink)
+                Text(reason)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(FGColor.sagePanel)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    /// Message, recommendation with its reason, then a follow-up message and a
+    /// different recommendation. Reduced motion shows the final exchange.
+    private func runChatDemo() async {
+        chatStep = reduceMotion ? 3 : 0
+        guard !reduceMotion else { return }
+        while !Task.isCancelled {
+            for (step, hold) in [(0, 1.2), (1, 3.0), (2, 1.6), (3, 3.6)] {
+                withAnimation(FGMotion.swap) { chatStep = step }
+                try? await Task.sleep(for: .seconds(hold))
+                guard !Task.isCancelled else { return }
+            }
+        }
+    }
 
     private var chatHeroContent: some View {
         VStack(spacing: 8) {
@@ -430,46 +631,34 @@ struct FeelGoodPaywallView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                // User check-in bubble
-                HStack {
-                    Spacer(minLength: 24)
-                    Text("Exhausted and brain won't shut off.")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(FGColor.onDeepFill)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(FGColor.userBubble)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                chatUserBubble(chatStep < 2 ? "Exhausted and brain won't shut off." : "I want something longer. I feel restless, especially my legs.")
+                    .id("user-\(chatStep < 2 ? 0 : 1)")
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+
+                if chatStep == 1 {
+                    chatCompanionCard(title: "7-min legs-up-the-wall breathwork", reason: "Floor rest · Quiet the noise")
+                        .transition(.move(edge: .leading).combined(with: .opacity))
+                } else if chatStep == 3 {
+                    chatCompanionCard(title: "15-min Leg Release flow", reason: "Longer, with leg work to settle the restlessness")
+                        .transition(.move(edge: .leading).combined(with: .opacity))
                 }
-
-                // Companion recommendation
-                HStack(spacing: 8) {
-                    Image("IntentCalmBlueberryMascot")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 28, height: 28)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("7-min legs-up-the-wall breathwork")
-                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundStyle(FGColor.ink)
-                        Text("Floor rest · Quiet the noise")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(FGColor.inkMuted)
-                    }
-
-                    Spacer(minLength: 0)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(FGColor.sagePanel)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text("Check in whenever your energy changes.")
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(FGColor.inkMuted)
+            Spacer(minLength: 0)
+
+            // Drops out on the last step: two message lines plus a two-line
+            // reason already fill the card, and clipping a sentence is worse
+            // than losing a footer.
+            if chatStep < 3 {
+                Text("Check in whenever your energy changes.")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(FGColor.inkMuted)
+                    .transition(.opacity)
+            }
         }
+        .frame(maxHeight: .infinity, alignment: .top)
+        .task { await runChatDemo() }
     }
 
     // MARK: - Hero Content 3: Calendar Sync
@@ -530,7 +719,7 @@ struct FeelGoodPaywallView: View {
     private func runSuperpowerAutoCycle() async {
         guard !reduceMotion else { return }
         while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(4))
+            try? await Task.sleep(for: .seconds(activeSuperpower.dwellSeconds))
             guard !Task.isCancelled else { return }
             withAnimation(FGMotion.swap) {
                 let all = Superpower.allCases
