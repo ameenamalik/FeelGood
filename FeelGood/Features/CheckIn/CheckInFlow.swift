@@ -36,8 +36,8 @@ nonisolated struct CheckInFlow: Hashable, Sendable {
     mutating func choose(goal: Intent) {
         if goal != self.goal {
             answer = nil
-            time = nil
         }
+        time = nil
         self.goal = goal
         step = .answer
     }
@@ -46,6 +46,7 @@ nonisolated struct CheckInFlow: Hashable, Sendable {
     mutating func choose(answer: CheckInAnswer) {
         guard let goal, goal.checkInAnswers.contains(answer) else { return }
         self.answer = answer
+        time = nil
         if goal.asksForTime {
             step = .time
         } else {

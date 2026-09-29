@@ -414,3 +414,22 @@ nonisolated struct PlanInput: Hashable, Sendable {
         self.banditState = banditState
     }
 }
+
+// MARK: - Calendar Movement Day
+
+nonisolated extension Calendar {
+    /// A wellness / movement day boundary starts at 5:00 AM local time.
+    /// Times between midnight and 4:59:59 AM belong to the preceding day's menu cycle,
+    /// ensuring late-night check-ins aren't immediately wiped at midnight and early
+    /// morning risers receive a fresh day's menu at 5:00 AM.
+    public func movementDayStart(for date: Date) -> Date {
+        let shifted = date.addingTimeInterval(-5 * 3600)
+        let midnight = startOfDay(for: shifted)
+        return self.date(byAdding: .hour, value: 5, to: midnight) ?? midnight
+    }
+
+    /// Whether two dates belong to the same 5:00 AM movement day cycle.
+    public func isSameMovementDay(_ date1: Date, _ date2: Date) -> Bool {
+        movementDayStart(for: date1) == movementDayStart(for: date2)
+    }
+}

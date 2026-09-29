@@ -37,6 +37,17 @@ test("saying you are at the gym opens gym sessions back up", () => {
   assert.ok(gymSessions.some((s) => isSessionAvailable(s, withGym)));
 });
 
+test("asking for pilates opens pilates sessions even if not in profile", () => {
+  const pilatesSessions = CATALOG_SESSIONS.filter((s) => s.activity === "pilates" && s.equipment.every((e) => e === "none" || e === "mat"));
+  assert.ok(pilatesSessions.length > 0);
+  const withPilatesPrompt = parseAvailability({
+    availableEquipment: ["none", "mat"],
+    availablePlaces: ["home"],
+    availableActivities: ["walking"],
+  }, "Can I do a 15-minute pilates session?");
+  assert.ok(pilatesSessions.some((s) => isSessionAvailable(s, withPilatesPrompt)));
+});
+
 test("matchBestSession never returns an unavailable session when one exists", () => {
   const pick = matchBestSession({ targetDuration: 30, intensity: "dynamic", isAvailable: (s) => isSessionAvailable(s, homeOnly) });
   assert.ok(isSessionAvailable(pick, homeOnly));

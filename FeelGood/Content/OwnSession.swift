@@ -76,6 +76,7 @@ nonisolated extension Activity {
         case .climbing: [.strength, .grip]
         case .martialArts: [.coordination, .agility]
         case .breathwork: [.downRegulation]
+        case .other: [.downRegulation]
         }
     }
 

@@ -87,7 +87,7 @@ final class TodayModel {
     ) {
         let own = log.kept()
         let engine = PlanEngine(catalog: store.sessions + own)
-        let today = calendar.startOfDay(for: now)
+        let today = calendar.movementDayStart(for: now)
 
         // Answers already given today are answers, not a question to ask again.
         let todaysCheckIn = checkIn ?? log.checkIn(on: today)
@@ -223,8 +223,8 @@ final class TodayModel {
     /// check-in and menu the same day-keyed way `init` does: reuse what's
     /// already stored for today if something is, generate fresh if not.
     func refreshForNewDay(now: Date = Date()) {
-        let today = calendar.startOfDay(for: now)
-        guard !calendar.isDate(menu.dayStart, inSameDayAs: today) else { return }
+        let today = calendar.movementDayStart(for: now)
+        guard !calendar.isSameMovementDay(menu.dayStart, now) else { return }
 
         checkIn = log.checkIn(on: today)
         calendarOpening = nil
@@ -273,7 +273,7 @@ final class TodayModel {
         self.calendarOpening = calendarOpening
         swappedAway = []
         menu = engine.makeMenu(input(now: now))
-        log.record(checkIn, at: now, dayStart: calendar.startOfDay(for: now))
+        log.record(checkIn, at: now, dayStart: calendar.movementDayStart(for: now))
         log.save(menu, generatedAt: now)
         publishSnapshot(now: now)
         requestCopyUpgrade(now: now)
@@ -868,7 +868,7 @@ final class TodayModel {
         calendar: Calendar
     ) -> Int {
         history.count { entry in
-            guard calendar.isDate(entry.date, inSameDayAs: date) else { return false }
+            guard calendar.isSameMovementDay(entry.date, date) else { return false }
             if case .swappedAway = entry.outcome { return true }
             return false
         }
@@ -909,7 +909,7 @@ final class TodayModel {
         guard !menu.items.isEmpty else { return }
 
         SharedContainer.writeSnapshot(TodaySnapshot(
-            day: calendar.startOfDay(for: now),
+            day: calendar.movementDayStart(for: now),
             items: menu.items.map { item in
                 TodayItem(
                     sessionID: item.session.id,
@@ -930,9 +930,9 @@ final class TodayModel {
     }
 
     func completedEntriesToday(now: Date = Date()) -> [HistoryEntry] {
-        let today = calendar.startOfDay(for: now)
+        let today = calendar.movementDayStart(for: now)
         return history
-            .filter { $0.wasCompleted && calendar.startOfDay(for: $0.date) == today }
+            .filter { $0.wasCompleted && calendar.movementDayStart(for: $0.date) == today }
             .sorted { $0.date > $1.date }
     }
 
@@ -979,10 +979,10 @@ final class TodayModel {
     }
 
     private func refreshCompletedToday(now: Date) {
-        let today = calendar.startOfDay(for: now)
+        let today = calendar.movementDayStart(for: now)
         completedToday = Set(
             history
-                .filter { $0.wasCompleted && calendar.startOfDay(for: $0.date) == today }
+                .filter { $0.wasCompleted && calendar.movementDayStart(for: $0.date) == today }
                 .map(\.sessionID)
         )
     }

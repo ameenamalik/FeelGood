@@ -86,6 +86,14 @@ struct ChatAvailabilityTests {
         }
     }
 
+    @Test("Saying you want pilates widens availability to allow mat pilates even if not picked in onboarding")
+    func pilatesOverride() throws {
+        let pilates = try session("main-pilates-core-20")
+        let nonPilatesProfile = PlanProfile(availableActivities: [.walking, .stretching], equipment: [.none, .mat], places: [.home])
+        let widened = ChatAvailability(profile: nonPilatesProfile, conversation: ["Can I do a 15-minute pilates session?"])
+        #expect(widened.allows(pilates))
+    }
+
     @Test("A profile that already has a gym still gets gym sessions")
     func profileWithGym() throws {
         let profile = PlanProfile(

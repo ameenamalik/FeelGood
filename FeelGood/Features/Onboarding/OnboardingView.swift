@@ -125,7 +125,8 @@ struct OnboardingView: View {
                 places: $model.places,
                 showsSymbols: false,
                 usesAura: false,
-                usesPills: true
+                usesPills: true,
+                showsWhere: false
             )
 
         case .intent:

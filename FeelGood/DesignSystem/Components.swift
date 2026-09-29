@@ -363,7 +363,7 @@ struct FGAuraTile: View {
                 RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
                     .strokeBorder(
                         isSelected ? selectedBorder : FGColor.line,
-                        lineWidth: isSelected ? 2.5 : 1
+                        lineWidth: isSelected ? 3.5 : 1
                     )
             )
         }
@@ -390,22 +390,55 @@ struct FGAuraTile: View {
 
     @ViewBuilder
     private var surface: some View {
-        if usesAuraSurface {
-            wash.opacity(isSelected ? 1 : 0.58)
+        if isSelected {
+            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [aura.mid, aura.edge.opacity(0.9)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay {
+                    washRadialOverlays
+                }
+        } else if showsAuraAtRest {
+            wash.opacity(0.58)
         } else {
             RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
                 .fill(FGAura.resting)
         }
     }
 
-    /// In dark mode a selection should not flash a pale replacement surface.
-    /// The resting card stays put and the stronger outline carries selection.
     private var usesAuraSurface: Bool {
-        showsAuraAtRest || (isSelected && colorScheme != .dark)
+        showsAuraAtRest || isSelected
     }
 
     private var selectedBorder: Color {
-        FGColor.ink
+        colorScheme == .dark ? FGColor.ink : FGColor.inkOnAccent
+    }
+
+    private var washRadialOverlays: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
+                .fill(
+                    RadialGradient(
+                        colors: [aura.core, aura.core.opacity(0)],
+                        center: UnitPoint(x: 0.28, y: 0.22),
+                        startRadius: 0,
+                        endRadius: 120
+                    )
+                )
+            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
+                .fill(
+                    RadialGradient(
+                        colors: [aura.mid, aura.mid.opacity(0)],
+                        center: UnitPoint(x: 0.78, y: 0.84),
+                        startRadius: 0,
+                        endRadius: 110
+                    )
+                )
+        }
     }
 
     /// Bright core at the upper left, a second bloom at the upper right, both
@@ -420,26 +453,7 @@ struct FGAuraTile: View {
                 )
             )
             .overlay {
-                RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
-                    .fill(
-                        RadialGradient(
-                            colors: [aura.core, aura.core.opacity(0)],
-                            center: UnitPoint(x: 0.28, y: 0.22),
-                            startRadius: 0,
-                            endRadius: 120
-                        )
-                    )
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
-                    .fill(
-                        RadialGradient(
-                            colors: [aura.mid, aura.mid.opacity(0)],
-                            center: UnitPoint(x: 0.78, y: 0.84),
-                            startRadius: 0,
-                            endRadius: 110
-                        )
-                    )
+                washRadialOverlays
             }
     }
 }

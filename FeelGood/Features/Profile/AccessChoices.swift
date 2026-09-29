@@ -23,21 +23,24 @@ struct AccessChoices: View {
     /// Onboarding presents these as quick text choices rather than a wall of
     /// illustrated tiles. Profile editing keeps its existing compact controls.
     var usesPills = false
+    /// Whether to show the Where section (omitted from onboarding, shown in profile editing).
+    var showsWhere = true
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
     /// A gym is asked about as a *place*, and the kit inside it follows from
     /// that — see `Place.impliedEquipment`. Asking again under Equipment would
     /// be the same question twice with two ways to answer it wrong.
+    /// A pool is covered under Swimming / Places rather than handheld equipment.
     private static let equipmentChoices = Equipment.allCases.filter {
-        $0 != .gym && $0 != .outdoor
+        $0 != .gym && $0 != .outdoor && $0 != .pool
     }
 
     /// Only movement that genuinely depends on owning something or going
     /// somewhere is worth a chip. Breathwork, qi gong, carries and footwork
     /// need nothing, so they are recommended when they fit rather than
     /// recognised from a list. See `Activity.isAlwaysAvailable`.
-    private static let movementChoices = Activity.allCases.filter { !$0.isAlwaysAvailable }
+    private static let movementChoices = Activity.allCases.filter { !$0.isAlwaysAvailable || $0 == .other }
 
     var body: some View {
         VStack(alignment: .leading, spacing: FGSpace.l) {
@@ -80,15 +83,17 @@ struct AccessChoices: View {
                     }
                 }
             }
-            group("Where") {
-                ForEach(Place.allCases, id: \.self) { place in
-                    choice(
-                        title: place.label,
-                        symbol: place.onboardingSymbol,
-                        aura: .blush,
-                        isSelected: places.contains(place)
-                    ) {
-                        toggle(place, in: $places)
+            if showsWhere {
+                group("Where") {
+                    ForEach(Place.allCases, id: \.self) { place in
+                        choice(
+                            title: place.label,
+                            symbol: place.onboardingSymbol,
+                            aura: .blush,
+                            isSelected: places.contains(place)
+                        ) {
+                            toggle(place, in: $places)
+                        }
                     }
                 }
             }

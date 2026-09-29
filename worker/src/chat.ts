@@ -220,9 +220,10 @@ function buildSystemPrompt(
   userContext?: UserPreferencesContext,
   knowledgeContext?: string | null,
   todaysMenu?: StructuredRecommendation[],
-  activeSessionID?: string
+  activeSessionID?: string,
+  userPrompt?: string
 ): string {
-  let prompt = CHAT_SYSTEM_PROMPT.replace(CATALOG_PLACEHOLDER, () => buildCatalogSummary(parseAvailability(userContext)));
+  let prompt = CHAT_SYSTEM_PROMPT.replace(CATALOG_PLACEHOLDER, () => buildCatalogSummary(parseAvailability(userContext, userPrompt)));
   if (todaysMenu && todaysMenu.length > 0) {
     const menuLines = todaysMenu
       .map((item) => `- session_id: ${item.session_id} | course: ${item.course} | title: "${item.title}" | duration: ${item.duration_min} min | reason: ${item.reason}`)
@@ -322,7 +323,7 @@ function resolveCanonicalRecommendation(
     intent,
     prompt,
   });
-  const availability = parseAvailability(userContext);
+  const availability = parseAvailability(userContext, prompt);
   let matchedSession: CatalogSessionItem | undefined = findSessionById(sessionId);
   if (matchedSession && (hidden.includes(matchedSession.id) || !isSessionAvailable(matchedSession, availability))) {
     matchedSession = undefined;
@@ -448,7 +449,7 @@ async function handleGeminiChat(
     parts: [{ text: payload.prompt }],
   });
 
-  const systemPrompt = buildSystemPrompt(payload.userContext, knowledgeContext, payload.todaysMenu, payload.activeSessionID);
+  const systemPrompt = buildSystemPrompt(payload.userContext, knowledgeContext, payload.todaysMenu, payload.activeSessionID, payload.prompt);
 
   const body = {
     contents,

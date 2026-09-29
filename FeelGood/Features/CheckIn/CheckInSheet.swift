@@ -431,6 +431,9 @@ private struct GoalPickCard: View {
                 Text(goal.checkInFeeling)
                     .font(.system(.title3, design: .rounded).weight(.bold))
                     .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                    .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
 
@@ -470,23 +473,25 @@ private struct GoalOtherPill: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: FGSpace.s) {
+            HStack(spacing: FGSpace.xs) {
                 ZStack {
                     Circle()
                         .fill(goal.aura.mid.opacity(0.35))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 32, height: 32)
 
                     Image(goal.artworkName)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 28, height: 28)
+                        .frame(width: 24, height: 24)
                 }
 
                 Text(goal.checkInFeeling)
-                    .font(.system(.body, design: .rounded).weight(.semibold))
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
                     .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.75)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Spacer(minLength: 0)
             }

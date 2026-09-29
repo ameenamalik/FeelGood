@@ -157,7 +157,7 @@ nonisolated enum CalendarMovementCompanionSelector {
             [.upperBody, .back, .full]
         case .martialArts:
             [.full, .hips, .lowerBody]
-        case .qigong, .stretching, .dance, .breathwork:
+        case .qigong, .stretching, .dance, .breathwork, .other:
             [.full]
         }
     }
