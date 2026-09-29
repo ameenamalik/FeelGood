@@ -499,7 +499,13 @@ struct CatalogTests {
     @Test("Movement nobody is asked about still needs nothing to do it")
     func alwaysAvailableActivitiesHaveAnUnequippedSession() throws {
         let sessions = try store().sessions
-        for activity in Activity.allCases where activity.isAlwaysAvailable {
+        // Catch-alls like general wellness are what somebody files their own
+        // routine or a logged workout under when nothing more specific fits.
+        // They skip the access question for that reason, not because they
+        // need nothing, and the catalog never authors them — so only movement
+        // the catalog actually offers unasked has to keep this promise.
+        let authored = Set(sessions.map(\.activity))
+        for activity in Activity.allCases where activity.isAlwaysAvailable && authored.contains(activity) {
             #expect(
                 sessions.contains { $0.activity == activity && $0.needsNoEquipment },
                 "\(activity) is never asked about, so it must be doable with nothing"
