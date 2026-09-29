@@ -422,6 +422,7 @@ final class TodayModel {
             // The card you exchanged stays exchanged when you come back to it.
             log.save(menu, generatedAt: now)
             publishSnapshot(now: now)
+            Analytics.capture(EngagementAnalytics.swapUsedEvent, properties: EngagementAnalytics.swapUsed(course: item.course, isPro: isProUser))
         } else if let cycleReplacement = engine.cyclicAlternative(
             for: item,
             onMenu: menu,
@@ -435,6 +436,7 @@ final class TodayModel {
             menu = engine.fitting(menu.replacing(item, with: cycleReplacement), to: currentInput)
             log.save(menu, generatedAt: now)
             publishSnapshot(now: now)
+            Analytics.capture(EngagementAnalytics.swapUsedEvent, properties: EngagementAnalytics.swapUsed(course: item.course, isPro: isProUser))
         }
     }
 

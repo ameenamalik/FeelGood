@@ -187,6 +187,10 @@ struct ExploreView: View {
         .sheet(isPresented: $isShowingChatConsent) {
             ChatConsentSheet { agreed in
                 chatConsentRaw = (agreed ? ChatConsent.Status.granted : .declined).rawValue
+                Analytics.capture(
+                    EngagementAnalytics.aiConsentChangedEvent,
+                    properties: EngagementAnalytics.aiConsentChanged(granted: agreed, source: .sheet)
+                )
                 isShowingChatConsent = false
                 // The message they wrote is still in the composer.
                 submitText()
