@@ -103,7 +103,7 @@ engine keeps working unchanged.
 | Card | Detail line | Energy | Favours |
 |---|---|---|---|
 | A quiet head | Just breathing | low | box breathing, breath pause |
-| Unwound | Slow stretches on the floor | low | floor unwind, bed yoga |
+| Unwind | Slow stretches on the floor | low | floor unwind, bed yoga |
 | Ready for sleep | Soft and slow, lights down | low | muscle relaxation, legs up the wall |
 | Grounded | Outside, feet on the ground | steady | barefoot breath, bench stretch |
 | Soft shoulders | Neck and shoulders let go | low | focus: neck & shoulders |

@@ -1194,26 +1194,16 @@ private struct MenuItemBody: View {
         // mascot needs to clear it even when the title is one short line.
         HStack(alignment: .bottom, spacing: FGSpace.m) {
             VStack(alignment: .leading, spacing: 10) {
-                // Top metadata row: White pill badge matching design reference
+                // Course and duration read as one compact piece of metadata.
                 HStack(alignment: .center, spacing: 6) {
-                    Text(item.course.label.uppercased())
+                    Text("\(item.course.label) · \(item.session.durationLabel)")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .lineLimit(1)
-                        .fixedSize()
+                        .minimumScaleFactor(0.8)
                         .foregroundStyle(item.course.chipText)
                         .padding(.horizontal, 11)
                         .padding(.vertical, 5)
                         .background(item.course.chipFill)
-                        .clipShape(Capsule())
-
-                    Text(item.session.durationLabel.uppercased())
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .lineLimit(1)
-                        .fixedSize()
-                        .foregroundStyle(item.course.accentText)
-                        .padding(.horizontal, 11)
-                        .padding(.vertical, 5)
-                        .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
                         .clipShape(Capsule())
 
                     if isDone {
