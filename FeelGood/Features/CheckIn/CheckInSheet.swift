@@ -211,7 +211,7 @@ struct CheckInSheet: View {
 
             VStack(spacing: FGSpace.s) {
                 if placeOptions.count > 1 {
-                    Menu {
+                    SwiftUI.Menu {
                         Picker("Where you are", selection: $flow.place) {
                             Text("Anywhere").tag(PlaceIntent?.none)
                             ForEach(placeOptions, id: \.self) { option in
@@ -578,7 +578,7 @@ private struct RestingTodayCard: View {
             .padding(.horizontal, FGSpace.m)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(isSelected ? FGColor.lilac.opacity(0.3) : FGColor.surface.opacity(0.5))
+                    .fill(isSelected ? FGAura.lilac.core : FGColor.surface.opacity(0.5))
             )
             .clipShape(.rect(cornerRadius: 22))
             .overlay(
