@@ -39,7 +39,8 @@ nonisolated struct CustomRoutinePart: Codable, Hashable, Sendable, Identifiable 
     /// of pretending they wrote it.
     static let fallbackCues: Set<String> = [
         "Take slow, steady breaths and stay present.",
-        "Move with control and breathe steadily."
+        "Move with control and breathe steadily.",
+        "Take this time for yourself, at your own pace."
     ]
 
     private static func defaultCue(for title: String) -> String {
@@ -75,7 +76,7 @@ nonisolated extension Activity {
         case .racquet: [.agility, .coordination]
         case .climbing: [.strength, .grip]
         case .martialArts: [.coordination, .agility]
-        case .breathwork: [.downRegulation]
+        case .breathwork, .generalWellness: [.downRegulation]
         }
     }
 
@@ -85,7 +86,7 @@ nonisolated extension Activity {
         switch self {
         case .swimming: [.pool]
         case .biking, .walking, .running, .climbing, .skating: [.outdoors]
-        case .racquet: []
+        case .racquet, .generalWellness: []
         case .strength, .carries: [.home, .gym]
         default: [.home]
         }
@@ -147,7 +148,14 @@ nonisolated extension Session {
             contraindications: qualities.contains(.impact) ? [.pregnancy, .postpartum, .pelvicFloor] : [],
             intents: intents(for: qualities),
             course: finalCourse,
-            source: .custom(steps: parts.map(\.step))
+            source: .custom(steps: parts.map { part in
+                if activity == .generalWellness,
+                   part.cue?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty != false {
+                    return Step(name: part.title, seconds: part.durationMin * 60,
+                                cue: "Take this time for yourself, at your own pace.")
+                }
+                return part.step
+            })
         )
     }
 

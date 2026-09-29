@@ -133,12 +133,28 @@ struct ProductIntroView: View {
                         pageContent
                             .id(page)
                             .transition(pageTransition)
+                            .contentShape(Rectangle())
+                            .simultaneousGesture(
+                                DragGesture(minimumDistance: 30)
+                                    .onEnded { value in
+                                        guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
+                                        if value.translation.width < -50, page == .promise {
+                                            advance()
+                                        } else if value.translation.width > 50 {
+                                            goBack()
+                                        }
+                                    }
+                            )
 
                         Spacer(minLength: FGSpace.l)
 
                         carouselFooter
                             .padding(.bottom, typeSize.isAccessibilitySize ? FGSpace.m : FGSpace.xxl)
                     }
+                    .frame(
+                        width: max(0, geometry.size.width - FGSpace.page * 2),
+                        alignment: .center
+                    )
                     .frame(
                         minHeight: max(0, geometry.size.height - 1),
                         alignment: .center
@@ -234,7 +250,7 @@ struct ProductIntroView: View {
                 detail: "Your energy, your time, your space. That’s enough."
             )
 
-            HStack(spacing: FGSpace.s) {
+            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
                 signalChip("Low energy", aura: .butter)
                 signalChip("10 min", aura: .apricot)
                 signalChip("Home", aura: .sage)
@@ -273,48 +289,54 @@ struct ProductIntroView: View {
     }
 
     private var checkInHero: some View {
-        ZStack {
-            IntroFruitBackdrop()
-                .fill(
-                    LinearGradient(
-                        colors: [FGAura.butter.core, FGAura.apricot.mid, FGAura.sage.core],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+        GeometryReader { geometry in
+            // Scale the artwork and its offsets together within the available
+            // width, leaving breathing room at both sides on smaller phones.
+            let scale = max(0, min(1, (geometry.size.width - 16) / 296, geometry.size.height / 220))
+            ZStack {
+                IntroFruitBackdrop()
+                    .fill(
+                        LinearGradient(
+                            colors: [FGAura.butter.core, FGAura.apricot.mid, FGAura.sage.core],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .frame(width: 296, height: 220)
+                    .frame(width: 296 * scale, height: 220 * scale)
 
-            Image("IntentStrengthPlum")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 84, height: 84)
-                .offset(x: -106, y: -62)
+                Image("IntentStrengthPlum")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 84 * scale, height: 84 * scale)
+                    .offset(x: -106 * scale, y: -62 * scale)
 
-            Image("IntentCalmBlueberryMascot")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 80, height: 80)
-                .offset(x: 108, y: -66)
+                Image("IntentCalmBlueberryMascot")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 80 * scale, height: 80 * scale)
+                    .offset(x: 108 * scale, y: -66 * scale)
 
-            Image("IntentShowingUpBanana")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 114, height: 114)
-                .offset(x: -82, y: 46)
+                Image("IntentShowingUpBanana")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 114 * scale, height: 114 * scale)
+                    .offset(x: -82 * scale, y: 46 * scale)
 
-            Image("IntentEnergyClementine")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 118, height: 118)
-                .offset(x: 18, y: -34)
+                Image("IntentEnergyClementine")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 118 * scale, height: 118 * scale)
+                    .offset(x: 18 * scale, y: -34 * scale)
 
-            Image("IntentMobilityPear")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 108, height: 108)
-                .offset(x: 86, y: 56)
+                Image("IntentMobilityPear")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 108 * scale, height: 108 * scale)
+                    .offset(x: 86 * scale, y: 56 * scale)
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
-        .frame(maxWidth: .infinity, minHeight: heroHeight)
+        .frame(height: heroHeight)
         .accessibilityHidden(true)
     }
 

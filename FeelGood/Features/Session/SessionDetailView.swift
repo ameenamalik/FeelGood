@@ -59,11 +59,11 @@ struct SessionDetailView: View {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     heading
 
-                    // Equipment, length, impact — not target area, which is
-                    // already the title's own words. A pill that repeats the
-                    // heading back isn't information, it's noise.
-                    WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
-                        ForEach(detailChips, id: \.self) { FGChip(text: $0) }
+                    // Equipment and impact; course and duration are in the heading.
+                    if !detailChips.isEmpty {
+                        WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
+                            ForEach(detailChips, id: \.self) { FGChip(text: $0) }
+                        }
                     }
 
                     benefitsSection
@@ -91,7 +91,7 @@ struct SessionDetailView: View {
                     // Custom routines remain editable whether they are a
                     // simple after-the-fact log or a playable list of parts.
                     if session.isOwn {
-                        VStack(spacing: FGSpace.s) {
+                        VStack(spacing: FGSpace.m) {
                             if session.source.steps.isEmpty {
                                 FGPrimaryButton(title: "I did this") {
                                     let completionStartedAt = Date()
@@ -108,6 +108,8 @@ struct SessionDetailView: View {
                                     startOrResumeSession()
                                 }
                             }
+                            AddRoutineToTodayButton(session: session, model: model)
+
                             HStack(spacing: FGSpace.m) {
                                 FGQuietButton("Edit", systemImage: "pencil") {
                                     isEditing = true
@@ -298,15 +300,12 @@ struct SessionDetailView: View {
         dismiss()
     }
 
-    /// `session.chips` minus target area, which is already spelled out in the
-    /// title above — showing it twice is the "same thing" this screen used
-    /// to repeat.
+    /// Details not already carried by the title or course-and-duration heading.
     private var detailChips: [String] {
         if session.isOwn {
-            return [session.durationLabel]
+            return []
         }
         var pills = session.equipment.compactMap(\.label)
-        pills.append(session.durationLabel)
         pills.append(session.impactLabel)
         return pills
     }
@@ -328,7 +327,7 @@ struct SessionDetailView: View {
     private var heading: some View {
         HStack(alignment: .top, spacing: FGSpace.m) {
             VStack(alignment: .leading, spacing: FGSpace.s) {
-                Text(course.label.uppercased())
+                Text("\(course.label) · \(session.durationLabel)")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .foregroundStyle(course.accentText)
                     .padding(.horizontal, 11)

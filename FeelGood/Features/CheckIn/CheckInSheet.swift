@@ -485,8 +485,8 @@ private struct GoalOtherPill: View {
                 Text(goal.checkInFeeling)
                     .font(.system(.body, design: .rounded).weight(.semibold))
                     .foregroundStyle(isSelected ? FGColor.inkOnAccent : FGColor.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Spacer(minLength: 0)
             }

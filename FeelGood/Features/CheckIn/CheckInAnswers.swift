@@ -77,7 +77,7 @@ nonisolated extension Intent {
         ]
         case .calm: [
             CheckInAnswer(id: "calm.quietHead", title: "A quiet head", detail: "Just breathing", energy: .low, favoured: [.breathwork], systemImage: "wind"),
-            CheckInAnswer(id: "calm.unwound", title: "Unwound", detail: "Slow stretches on the floor", energy: .low, favoured: [.yoga, .stretching], systemImage: "figure.flexibility"),
+            CheckInAnswer(id: "calm.unwound", title: "Unwind", detail: "Slow stretches on the floor", energy: .low, favoured: [.yoga, .stretching], systemImage: "figure.flexibility"),
             CheckInAnswer(id: "calm.sleep", title: "Ready for sleep", detail: "Soft and slow, lights down", energy: .low, favoured: [.yoga, .breathwork, .stretching], systemImage: "moon.stars"),
             CheckInAnswer(id: "calm.grounded", title: "Grounded", detail: "Outside, feet on the ground", energy: .steady, favoured: [.walking, .qigong], systemImage: "leaf"),
             CheckInAnswer(id: "calm.softShoulders", title: "Soft shoulders", detail: "Neck and shoulders let go", energy: .low, focus: .neckShoulders, favoured: [.stretching, .yoga], systemImage: "figure.mind.and.body"),

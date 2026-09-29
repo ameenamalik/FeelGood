@@ -13,6 +13,7 @@ struct CourseQuadrantDetailView: View {
     let course: Course
 
     @State private var isAddingRoutine = false
+    @State private var newlySavedSession: Session?
     @State private var selectedSession: Session?
     @State private var sessionToEdit: Session?
     @State private var sessionToDelete: Session?
@@ -110,8 +111,15 @@ struct CourseQuadrantDetailView: View {
                 .accessibilityLabel("Add \(course.label) routine")
             }
         }
-        .sheet(isPresented: $isAddingRoutine) {
-            AddRoutineSheet(model: model, initialCourse: course)
+        .sheet(isPresented: $isAddingRoutine, onDismiss: {
+            if let saved = newlySavedSession {
+                selectedSession = saved
+                newlySavedSession = nil
+            }
+        }) {
+            AddRoutineSheet(model: model, initialCourse: course) { saved in
+                newlySavedSession = saved
+            }
         }
         .sheet(item: $selectedSession) { session in
             SessionDetailView(session: session, model: model)
@@ -167,11 +175,9 @@ struct CourseQuadrantDetailView: View {
         )
     }
 
-    /// One tap opens it; everything else — rename, delete, put it on Today —
-    /// lives in the long-press menu instead of a row of always-visible
-    /// buttons.
+    /// Open a saved routine to start it or add it to Today.
     private func routineRow(_ session: Session) -> some View {
-        let isTodayOverride = model.todayCustomOverrides[course]?.id == session.id
+        let isTodayOverride = model.menu.items.contains { $0.session.id == session.id }
 
         return Button {
             selectedSession = session
@@ -223,16 +229,10 @@ struct CourseQuadrantDetailView: View {
         }
         .buttonStyle(.feelGoodPress)
         .contextMenu {
-            if isTodayOverride {
+            if model.todayCustomOverrides[course]?.id == session.id {
                 Button("Remove from Today's menu", systemImage: "minus.circle") {
                     withAnimation(FGMotion.settle) {
                         model.removeTodayCourseOverride(for: course)
-                    }
-                }
-            } else {
-                Button("Put on Today's menu", systemImage: "arrow.up.circle") {
-                    withAnimation(FGMotion.settle) {
-                        model.setTodayCourseOverride(session: session, for: course)
                     }
                 }
             }
@@ -248,5 +248,34 @@ struct CourseQuadrantDetailView: View {
                 isShowingDeleteConfirm = true
             }
         }
+    }
+}
+
+/// Available wherever a saved custom routine is shown, including after editing.
+struct AddRoutineToTodayButton: View {
+    let session: Session
+    let model: TodayModel
+
+    private var isOnToday: Bool {
+        model.menu.items.contains { $0.session.id == session.id }
+    }
+
+    var body: some View {
+        VStack(spacing: FGSpace.xs) {
+            FGPrimaryButton(
+                title: isOnToday ? "On Today’s Menu" : "Add to Today’s Menu",
+                isEnabled: !isOnToday
+            ) {
+                withAnimation(FGMotion.settle) {
+                    model.setTodayCourseOverride(session: session, for: session.course)
+                }
+            }
+            if !isOnToday {
+                Text("Replaces today’s \(session.course.label.lowercased()).")
+                    .font(FGFont.caption)
+                    .foregroundStyle(FGColor.inkMuted)
+            }
+        }
+        .accessibilityIdentifier("add-routine-to-today-\(session.id)")
     }
 }
