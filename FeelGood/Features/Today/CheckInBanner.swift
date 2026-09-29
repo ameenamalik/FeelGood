@@ -71,19 +71,19 @@ struct CheckInBanner: View {
                         colors: [FGColor.bannerGlow.opacity(0.42), .clear],
                         center: .center,
                         startRadius: 0,
-                        endRadius: 58
+                        endRadius: 46
                     )
                 )
-                .frame(width: 126, height: 126)
+                .frame(width: 98, height: 98)
 
-            mascot("IntentCalmPeach", size: 42)
-                .offset(x: -38, y: -15)
-            mascot("IntentMobilityPear", size: 46)
-                .offset(x: 34, y: -14)
-            mascot("IntentCalmBlueberryMascot", size: 40)
-                .offset(x: 2, y: 24)
+            mascot("IntentCalmPeach", size: 32)
+                .offset(x: -28, y: -11)
+            mascot("IntentMobilityPear", size: 36)
+                .offset(x: 25, y: -10)
+            mascot("IntentCalmBlueberryMascot", size: 30)
+                .offset(x: 2, y: 18)
         }
-        .frame(width: 132, height: 80)
+        .frame(width: 102, height: 68)
         .accessibilityHidden(true)
     }
 

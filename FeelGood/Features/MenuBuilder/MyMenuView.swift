@@ -133,7 +133,7 @@ struct MyMenuView: View {
                     Image(course.menuMascotAsset)
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 64, height: 64)
+                        .frame(width: 44, height: 44)
                         .accessibilityHidden(true)
 
                     Image(systemName: "chevron.right")
