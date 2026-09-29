@@ -27,6 +27,13 @@ protocol BreathingNarrationPlaying: AnyObject {
     func pause()
     func resume()
     func stop()
+
+    /// How long a clip runs, before playing it — so a caller pacing a live
+    /// visual (the breathing orb) against it can hold that visual still
+    /// until the clip actually finishes, rather than racing a fixed cadence
+    /// against however long the spoken words really took. `nil` when the
+    /// clip doesn't exist or its length can't be read.
+    func duration(for narrationID: String) -> TimeInterval?
 }
 
 /// No-op stand-in for previews, tests, and anyone without bundled narration —
@@ -38,6 +45,7 @@ final class SilentNarrationService: BreathingNarrationPlaying {
     func pause() {}
     func resume() {}
     func stop() {}
+    func duration(for narrationID: String) -> TimeInterval? { nil }
 }
 
 @MainActor
@@ -79,5 +87,10 @@ final class AVAudioPlayerNarrationService: BreathingNarrationPlaying {
     func stop() {
         player?.stop()
         player = nil
+    }
+
+    func duration(for narrationID: String) -> TimeInterval? {
+        guard let url = ExerciseNarration.audioURL(for: narrationID) else { return nil }
+        return try? AVAudioPlayer(contentsOf: url).duration
     }
 }
