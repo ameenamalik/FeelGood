@@ -15,7 +15,7 @@ import Foundation
 nonisolated enum Activity: String, Codable, CaseIterable, Sendable {
     case pilates, yoga, qigong, strength, stretching, walking, running, biking, swimming
     case skating, dance, jumpRope, agility, carries, racquet, climbing, martialArts
-    case breathwork
+    case breathwork, other
 
     /// Some movement is a genuine question of access — a pool, a bike, a pair
     /// of skates, somewhere to be outside. The rest needs nothing but a body
@@ -27,7 +27,7 @@ nonisolated enum Activity: String, Codable, CaseIterable, Sendable {
     /// any individual session is on the table.
     var isAlwaysAvailable: Bool {
         switch self {
-        case .qigong, .breathwork, .carries, .agility: true
+        case .qigong, .breathwork, .carries, .agility, .other: true
         default: false
         }
     }

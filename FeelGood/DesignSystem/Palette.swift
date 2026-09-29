@@ -413,7 +413,7 @@ nonisolated extension Activity {
         case .strength: .lilac // strengthen
         case .walking, .running, .biking, .swimming, .jumpRope: .apricot // energize
         case .dance: .butter // joy / play
-        case .agility, .carries, .racquet, .climbing, .martialArts, .skating: nil
+        case .agility, .carries, .racquet, .climbing, .martialArts, .skating, .other: nil
         }
     }
 

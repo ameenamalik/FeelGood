@@ -97,7 +97,7 @@ final class SessionLog: SessionLogging {
         let record = SessionRecord(
             session: session,
             startedAt: startedAt,
-            dayStart: calendar.startOfDay(for: endedAt),
+            dayStart: calendar.movementDayStart(for: endedAt),
             endedAt: endedAt,
             outcome: .completed(feel: feel),
             place: place
@@ -113,7 +113,7 @@ final class SessionLog: SessionLogging {
         let record = SessionRecord(
             session: session,
             startedAt: date,
-            dayStart: calendar.startOfDay(for: date),
+            dayStart: calendar.movementDayStart(for: date),
             endedAt: date,
             outcome: .swappedAway
         )
@@ -164,7 +164,7 @@ final class SessionLog: SessionLogging {
         let currentState = banditState() ?? BanditState()
         let planProfile = fetch(FetchDescriptor<UserProfile>()).first?.planProfile
             ?? PlanProfile(availableActivities: [session.activity, .stretching, .walking])
-        let dayStart = calendar.startOfDay(for: date)
+        let dayStart = calendar.movementDayStart(for: date)
         let todaysCheckIn = checkIn(on: dayStart) ?? PlanCheckIn(energy: .steady, time: .some)
         let planContext = PlanContext(now: date, calendar: calendar)
         let entries = history(before: date)
@@ -180,7 +180,7 @@ final class SessionLog: SessionLogging {
         var hardRun = 0
         for dayOffset in 0..<7 {
             let matches = completedEntries.filter {
-                let diff = calendar.dateComponents([.day], from: calendar.startOfDay(for: $0.date), to: dayStart).day ?? 999
+                let diff = calendar.dateComponents([.day], from: calendar.movementDayStart(for: $0.date), to: dayStart).day ?? 999
                 return diff == dayOffset && $0.intensity >= 4
             }
             if !matches.isEmpty {
@@ -428,10 +428,10 @@ final class InMemorySessionLog: SessionLogging {
 
         var hardRun = 0
         let completedEntries = entries.filter(\.wasCompleted)
-        let dayStart = Calendar.current.startOfDay(for: date)
+        let dayStart = Calendar.current.movementDayStart(for: date)
         for dayOffset in 0..<7 {
             let matches = completedEntries.filter {
-                let diff = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: $0.date), to: dayStart).day ?? 999
+                let diff = Calendar.current.dateComponents([.day], from: Calendar.current.movementDayStart(for: $0.date), to: dayStart).day ?? 999
                 return diff == dayOffset && $0.intensity >= 4
             }
             if !matches.isEmpty {

@@ -17,9 +17,9 @@ nonisolated struct ProfileAnswers: Hashable, Sendable {
     /// Empty until the person explicitly picks equipment or "No equipment".
     /// `availableEquipment` still adds `.none` as the engine's safe baseline.
     var equipment: Set<Equipment> = []
-    /// Starts empty so onboarding reflects an actual choice. `availablePlaces`
-    /// still adds home as the engine's safe floor-only fallback.
-    var places: Set<Place> = []
+    /// Defaults to home and outdoors since the where question is removed from onboarding.
+    /// Check-in allows day-by-day context ("At the gym", "Staying in").
+    var places: Set<Place> = [.home, .outdoors]
     var cadence: Cadence = .mostDays
     var moments: MovementMoments = .aCouple
     var realisticMinutes: Int = 20

@@ -108,6 +108,7 @@ nonisolated private extension Activity {
         case .climbing: "Working out a route with your hands, feet, and head."
         case .martialArts: "Sharp, deliberate movement that asks for your full attention."
         case .breathwork: "Nothing to do but follow your breath, in and out."
+        case .other: "Taking time out to move and reset on your terms."
         }
     }
 }

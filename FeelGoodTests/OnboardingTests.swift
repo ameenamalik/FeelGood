@@ -15,12 +15,13 @@ import UIKit
 @MainActor
 struct OnboardingTests {
 
-    @Test("Home is available to the engine but is not preselected")
-    func homeIsNotPreselected() {
+    @Test("Home and outdoors are defaults since Where is removed from onboarding")
+    func homeAndOutdoorsAreDefault() {
         let model = OnboardingModel()
 
-        #expect(model.places.isEmpty)
+        #expect(model.places == [.home, .outdoors])
         #expect(model.makeProfile().places.contains(.home))
+        #expect(model.makeProfile().places.contains(.outdoors))
     }
 
     @Test("Every choice icon is an available SF Symbol")
@@ -68,7 +69,7 @@ struct OnboardingTests {
         #expect(!model.canAdvance)
     }
 
-    @Test("Every section on the first slide needs an explicit answer")
+    @Test("Movement and Equipment sections on the access card need an explicit answer")
     func everyAccessSectionIsRequired() {
         let model = OnboardingModel()
         #expect(!model.canAdvance)
@@ -83,9 +84,6 @@ struct OnboardingTests {
         #expect(!model.canAdvance)
 
         model.equipment = [.none]
-        #expect(!model.canAdvance)
-
-        model.places = [.home]
         #expect(model.canAdvance)
     }
 

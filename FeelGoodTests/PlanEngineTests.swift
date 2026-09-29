@@ -743,8 +743,8 @@ struct PlanEngineTests {
         )
         let menu = Fixture.engine.makeMenu(input)
 
-        #expect(menu.dayStart == newYork.startOfDay(for: Fixture.now))
-        #expect(menu.dayStart != Fixture.utc.startOfDay(for: Fixture.now))
+        #expect(menu.dayStart == newYork.movementDayStart(for: Fixture.now))
+        #expect(menu.dayStart != Fixture.utc.movementDayStart(for: Fixture.now))
     }
 
     @Test("History from the future or beyond the window is ignored")

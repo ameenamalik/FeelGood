@@ -54,8 +54,8 @@ nonisolated extension Intent {
         }
     }
 
-    /// Whether the time question follows. Just showing up answers it already.
-    var asksForTime: Bool { self != .joy }
+    /// Whether the time question follows. Every goal allows the user to choose their time budget.
+    var asksForTime: Bool { true }
 
     var checkInAnswers: [CheckInAnswer] {
         switch self {
@@ -77,7 +77,7 @@ nonisolated extension Intent {
         ]
         case .calm: [
             CheckInAnswer(id: "calm.quietHead", title: "A quiet head", detail: "Just breathing", energy: .low, favoured: [.breathwork], systemImage: "wind"),
-            CheckInAnswer(id: "calm.unwound", title: "Unwound", detail: "Slow stretches on the floor", energy: .low, favoured: [.yoga, .stretching], systemImage: "figure.flexibility"),
+            CheckInAnswer(id: "calm.unwound", title: "Unwind", detail: "Slow stretches on the floor", energy: .low, favoured: [.yoga, .stretching], systemImage: "figure.flexibility"),
             CheckInAnswer(id: "calm.sleep", title: "Ready for sleep", detail: "Soft and slow, lights down", energy: .low, favoured: [.yoga, .breathwork, .stretching], systemImage: "moon.stars"),
             CheckInAnswer(id: "calm.grounded", title: "Grounded", detail: "Outside, feet on the ground", energy: .steady, favoured: [.walking, .qigong], systemImage: "leaf"),
             CheckInAnswer(id: "calm.softShoulders", title: "Soft shoulders", detail: "Neck and shoulders let go", energy: .low, focus: .neckShoulders, favoured: [.stretching, .yoga], systemImage: "figure.mind.and.body"),
@@ -92,12 +92,12 @@ nonisolated extension Intent {
             CheckInAnswer(id: "mobility.headToToe", title: "Head to toe", detail: "A bit of everything", energy: .steady, focus: .full, favoured: [.stretching, .yoga], systemImage: "figure.arms.open"),
         ]
         case .joy: [
-            CheckInAnswer(id: "showingUp.twoMinutes", title: "Two minutes", detail: "Tiny still counts", energy: .low, favoured: [.breathwork, .qigong], systemImage: "timer", time: .fiveMinutes),
-            CheckInAnswer(id: "showingUp.withoutThinking", title: "Without thinking", detail: "Just tell me what to do", energy: .low, systemImage: "arrow.right.circle", time: .aLittle),
-            CheckInAnswer(id: "showingUp.lyingDown", title: "Lying down", detail: "Bed or floor is fine", energy: .low, favoured: [.yoga, .stretching], systemImage: "bed.double", time: .aLittle),
-            CheckInAnswer(id: "showingUp.freshAir", title: "Some fresh air", detail: "Step outside", energy: .low, favoured: [.walking], systemImage: "sun.and.horizon", time: .aLittle),
-            CheckInAnswer(id: "showingUp.alongside", title: "While I do something else", detail: "Kettle, teeth, a call", energy: .low, favoured: [.stretching, .walking], systemImage: "cup.and.saucer", time: .fiveMinutes),
-            CheckInAnswer(id: "showingUp.youPick", title: "You pick", detail: "Surprise me", energy: .steady, systemImage: "sparkles", time: .fifteenMinutes),
+            CheckInAnswer(id: "showingUp.twoMinutes", title: "Two minutes", detail: "Tiny still counts", energy: .low, favoured: [.breathwork, .qigong], systemImage: "timer"),
+            CheckInAnswer(id: "showingUp.withoutThinking", title: "Without thinking", detail: "Just tell me what to do", energy: .low, systemImage: "arrow.right.circle"),
+            CheckInAnswer(id: "showingUp.lyingDown", title: "Lying down", detail: "Bed or floor is fine", energy: .low, favoured: [.yoga, .stretching], systemImage: "bed.double"),
+            CheckInAnswer(id: "showingUp.freshAir", title: "Some fresh air", detail: "Step outside", energy: .low, favoured: [.walking], systemImage: "sun.and.horizon"),
+            CheckInAnswer(id: "showingUp.alongside", title: "While I do something else", detail: "Kettle, teeth, a call", energy: .low, favoured: [.stretching, .walking], systemImage: "cup.and.saucer"),
+            CheckInAnswer(id: "showingUp.youPick", title: "You pick", detail: "Surprise me", energy: .steady, systemImage: "sparkles"),
         ]
         case .play: [
             CheckInAnswer(id: "play.dance", title: "Dance it out", detail: "Music on, no rules", energy: .steady, favoured: [.dance], systemImage: "music.note"),

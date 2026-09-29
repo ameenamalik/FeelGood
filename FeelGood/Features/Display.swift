@@ -53,6 +53,7 @@ nonisolated extension Activity {
         case .climbing: "Climbing"
         case .martialArts: "Martial arts"
         case .breathwork: "Breathwork"
+        case .other: "Other"
         }
     }
 
@@ -66,7 +67,7 @@ nonisolated extension Activity {
             "IntentMobilityPear"
         case .walking, .running, .biking, .swimming, .skating, .dance, .jumpRope, .agility, .racquet:
             "IntentEnergyClementine"
-        case .qigong:
+        case .qigong, .other:
             "IntentCalmPeach"
         }
     }
@@ -92,11 +93,11 @@ nonisolated extension Equipment {
         case .none: nil
         case .mat: "Mat"
         case .weights: "Weights"
-        case .band: "Band"
-        case .rope: "Rope"
+        case .band: "Resistance band"
+        case .rope: "Jump rope"
         case .bike: "Bike"
         case .pool: "Pool"
-        case .skates: "Skates"
+        case .skates: "Roller / Ice skates"
         case .outdoor: "Outside"
         case .gym: "Gym"
         case .reformer: "Reformer"
@@ -384,6 +385,7 @@ nonisolated extension Activity {
         case .climbing: "climbing"
         case .martialArts: "martial arts"
         case .breathwork: "breathwork"
+        case .other: "movement"
         }
     }
 }

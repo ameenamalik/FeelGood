@@ -112,7 +112,7 @@ struct DayStabilityTests {
         let today = model(log: log)
 
         #expect(today.menu.dayStart != yesterday.dayStart)
-        #expect(today.menu.dayStart == Fixture.utc.startOfDay(for: Fixture.now))
+        #expect(today.menu.dayStart == Fixture.utc.movementDayStart(for: Fixture.now))
     }
 
     @Test("Generating a day stores it; restoring one does not store it again")
@@ -174,7 +174,25 @@ struct DayStabilityTests {
             calendar: honolulu
         )
 
-        #expect(model.menu.dayStart == honolulu.startOfDay(for: Fixture.now))
-        #expect(model.menu.dayStart != Fixture.utc.startOfDay(for: Fixture.now))
+        #expect(model.menu.dayStart == honolulu.movementDayStart(for: Fixture.now))
+        #expect(model.menu.dayStart != Fixture.utc.movementDayStart(for: Fixture.now))
+    }
+
+    @Test("Late night check-ins before 5 AM belong to the current cycle; 5 AM resets")
+    func fiveAMResetBoundary() {
+        let cal = Fixture.utc
+        // 2026-06-20 23:30 (11:30 PM)
+        let evening = cal.date(from: DateComponents(year: 2026, month: 6, day: 20, hour: 23, minute: 30))!
+        // 2026-06-21 02:15 (2:15 AM next morning - should still be same movement day!)
+        let lateNight = cal.date(from: DateComponents(year: 2026, month: 6, day: 21, hour: 2, minute: 15))!
+        // 2026-06-21 04:59 (4:59 AM - last minute of previous movement day)
+        let justBeforeFive = cal.date(from: DateComponents(year: 2026, month: 6, day: 21, hour: 4, minute: 59))!
+        // 2026-06-21 05:00 (5:00 AM - new movement day starts)
+        let fiveAM = cal.date(from: DateComponents(year: 2026, month: 6, day: 21, hour: 5, minute: 0))!
+
+        #expect(cal.isSameMovementDay(evening, lateNight))
+        #expect(cal.isSameMovementDay(lateNight, justBeforeFive))
+        #expect(!cal.isSameMovementDay(evening, fiveAM))
+        #expect(!cal.isSameMovementDay(justBeforeFive, fiveAM))
     }
 }

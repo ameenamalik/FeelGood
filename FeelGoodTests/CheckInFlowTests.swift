@@ -19,7 +19,7 @@ struct CheckInFlowTests {
 
     // MARK: - Walking the flow
 
-    @Test("A goal, an answer and a length make a check-in", arguments: Intent.allCases.filter(\.asksForTime))
+    @Test("A goal, an answer and a length make a check-in", arguments: Intent.allCases)
     func threeTapsCompleteTheFlow(goal: Intent) {
         var flow = CheckInFlow()
         #expect(flow.step == .goal)
@@ -38,16 +38,18 @@ struct CheckInFlowTests {
         #expect(flow.checkIn?.todayIntent == goal)
     }
 
-    @Test("Just showing up is done after its answer, which already says how long")
-    func showingUpSkipsTheTimeQuestion() {
+    @Test("Just showing up allows choosing time budget like any goal")
+    func showingUpIncludesTimeQuestion() {
         for option in Intent.joy.checkInAnswers {
             var flow = CheckInFlow()
             flow.choose(goal: .joy)
             flow.choose(answer: option)
 
-            #expect(flow.isComplete, "\(option.title) should finish the check-in")
-            #expect(flow.step == .answer)
-            #expect(flow.checkIn?.time == option.time)
+            #expect(!flow.isComplete, "\(option.title) should wait for time selection")
+            #expect(flow.step == .time)
+            flow.choose(time: .fiveMinutes)
+            #expect(flow.isComplete)
+            #expect(flow.checkIn?.time == .fiveMinutes)
         }
     }
 
@@ -169,13 +171,28 @@ struct CheckInFlowTests {
         #expect(Set(answers.map(\.id)).count == 6)
     }
 
-    @Test("Only Just showing up answers carry their own length")
-    func onlyShowingUpSetsTime() {
+    @Test("Answers do not lock in time, giving users control over their budget")
+    func answersDoNotLockInTime() {
         for goal in Intent.allCases {
             for option in goal.checkInAnswers {
-                #expect((option.time != nil) == !goal.asksForTime, "\(option.id)")
+                #expect(option.time == nil, "\(option.id)")
             }
         }
+    }
+
+    @Test("Re-choosing an answer clears any previously set time budget")
+    func rechoosingAnswerClearsTime() {
+        var flow = CheckInFlow()
+        flow.choose(goal: .calm)
+        flow.choose(answer: answer(.calm, 0))
+        flow.choose(time: .fiveMinutes)
+        #expect(flow.isComplete)
+
+        // Switching answer must clear time so user is not rushed
+        flow.choose(answer: answer(.calm, 1))
+        #expect(!flow.isComplete)
+        #expect(flow.time == nil)
+        #expect(flow.step == .time)
     }
 
     @Test("Time chips are ordered and never include resting")

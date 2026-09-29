@@ -94,10 +94,10 @@ final class OnboardingModel {
     var isFirstCard: Bool { card == .guidance }
     var isLastCard: Bool { card == .workArounds }
 
-    /// Slide one has three distinct inputs. Each needs an explicit answer so
-    /// the menu does not infer access from a choice made in another section.
+    /// Slide one has movement and equipment inputs. Each needs an explicit answer.
+    /// Where defaults to home and outdoors, so it is no longer asked here.
     var accessSectionsAreComplete: Bool {
-        !activities.isEmpty && !equipment.isEmpty && !places.isEmpty
+        !activities.isEmpty && !equipment.isEmpty
     }
 
     var canAdvance: Bool {
@@ -252,6 +252,7 @@ nonisolated extension Activity {
         case .climbing: "figure.climbing"
         case .martialArts: "figure.martial.arts"
         case .breathwork: "wind"
+        case .other: "sparkles"
         }
     }
 }

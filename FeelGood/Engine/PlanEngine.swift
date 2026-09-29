@@ -266,7 +266,7 @@ nonisolated struct PlanEngine: Sendable {
         func said(_ item: MenuItem?) -> MenuItem? { item.flatMap { spoken[$0.id] } }
 
         return Menu(
-            dayStart: input.context.calendar.startOfDay(for: input.context.now),
+            dayStart: input.context.calendar.movementDayStart(for: input.context.now),
             appetizer: said(appetizer),
             main: said(main),
             sides: trimmedSides.compactMap { said($0) },
@@ -882,7 +882,7 @@ nonisolated struct PlanEngine: Sendable {
         )
 
         return Menu(
-            dayStart: input.context.calendar.startOfDay(for: input.context.now),
+            dayStart: input.context.calendar.movementDayStart(for: input.context.now),
             appetizer: appetizerItem,
             main: mainItem,
             sides: [],
