@@ -102,27 +102,22 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
             checkInBanner.tap()
             sleep(1)
 
-            // Tap Energized to reveal the time question
-            let energized = app.buttons["Energized"]
-            if energized.waitForExistence(timeout: 3) {
-                energized.tap()
+            // Pick a goal to reach its own question.
+            let energised = app.buttons["Energised"]
+            if energised.waitForExistence(timeout: 3) {
+                energised.tap()
                 sleep(1)
                 saveScreenshot(app, name: "check_in_clarified_prompts")
+                app.buttons["Back"].tap()
             }
 
-            let showMeToday = app.buttons["Show me today"]
-            if showMeToday.waitForExistence(timeout: 3) {
-                showMeToday.tap()
-                sleep(2)
+            let showMyMenu = app.buttons["Just show me my menu"]
+            if showMyMenu.waitForExistence(timeout: 3) {
+                showMyMenu.tap()
             } else {
-                let skipBtn = app.buttons["Skip — just show me something"]
-                if skipBtn.waitForExistence(timeout: 2) {
-                    skipBtn.tap()
-                } else {
-                    app.swipeDown()
-                }
-                sleep(2)
+                app.swipeDown()
             }
+            sleep(2)
         }
 
         // 4. You Tab (Activity History section)

@@ -182,13 +182,13 @@ struct OnboardingView: View {
         FGAuraTile(
             title: intent.label,
             detail: intentDetail(intent),
-            artworkName: intentArtworkName(intent),
+            artworkName: intent.artworkName,
             artworkSize: intent == .joy ? 104 : 92,
             artworkAlignment: .top,
             contentPlacement: .bottomLeading,
             preferredHeight: 156,
             showsAuraAtRest: false,
-            aura: intentAura(intent),
+            aura: intent.aura,
             isSelected: model.intents.contains(intent)
         ) {
             toggle(intent, in: \.intents)
@@ -203,28 +203,6 @@ struct OnboardingView: View {
         case .mobilize: "Move more freely"
         case .joy: "Keep it gentle"
         case .play: "Move for the fun of it"
-        }
-    }
-
-    private func intentArtworkName(_ intent: Intent) -> String {
-        switch intent {
-        case .energize: "IntentEnergyClementine"
-        case .strengthen: "IntentStrengthPlum"
-        case .calm: "IntentCalmPeach"
-        case .mobilize: "IntentMobilityPear"
-        case .joy: "IntentShowingUpBanana"
-        case .play: "IntentPlayLime"
-        }
-    }
-
-    private func intentAura(_ intent: Intent) -> FGAura {
-        switch intent {
-        case .energize: .apricot
-        case .strengthen: .lilac
-        case .calm: .blush
-        case .mobilize: .sage
-        case .joy: .butter
-        case .play: .blush
         }
     }
 

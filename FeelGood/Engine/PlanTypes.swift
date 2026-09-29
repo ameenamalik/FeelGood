@@ -222,6 +222,12 @@ nonisolated struct PlanCheckIn: Hashable, Sendable {
     /// later swap the same day, or reopening tomorrow, falls back to the
     /// profile's standing intents same as always.
     var todayIntent: Intent?
+    /// A body area asked for today ("Where do you want to feel strong?").
+    /// A scoring nudge, never a filter. Like `todayIntent`, not persisted.
+    var focus: BodyFocus? = nil
+    /// Activities today's answer leans toward. Also a nudge only, so a thin
+    /// catalog can never be left with an empty menu. Not persisted.
+    var favoured: Set<Activity> = []
 
     /// Compatibility for call sites that provide a single concern. New
     /// check-ins use `bodies`; reading this returns the first display-ordered

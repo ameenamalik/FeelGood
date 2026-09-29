@@ -220,6 +220,20 @@ nonisolated extension Session {
 // SF Symbols keep the check-in visually consistent with onboarding. Nothing
 // medical: no bandages or pills next to a question about someone's body.
 
+nonisolated extension Intent {
+    /// Each goal's fruit. Onboarding and the check-in both draw from here.
+    var artworkName: String {
+        switch self {
+        case .energize: "IntentEnergyClementine"
+        case .strengthen: "IntentStrengthPlum"
+        case .calm: "IntentCalmPeach"
+        case .mobilize: "IntentMobilityPear"
+        case .joy: "IntentShowingUpBanana"
+        case .play: "IntentPlayLime"
+        }
+    }
+}
+
 nonisolated extension Energy {
     var checkInLabel: String {
         switch self {

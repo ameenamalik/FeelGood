@@ -44,23 +44,18 @@ final class ScreenshotCaptureUITests: XCTestCase {
         add(attachment)
     }
 
-    /// Taps the "Available time" scale at the x position its own
-    /// `select(at:width:)` (CheckInSheet.swift) would map to for a given
-    /// `TimeBudget.allCases` index. Not a real UISlider, so there is no
-    /// `XCUIElement` API for this — has to be a coordinate tap.
-    private func selectTimeBudget(index: Int, of optionCount: Int, in app: XCUIApplication) {
-        let timeControl = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label == %@", "Available time"))
-            .firstMatch
-        XCTAssertTrue(timeControl.waitForExistence(timeout: 5))
-        let frame = timeControl.frame
-        let sideInset: CGFloat = 12
-        let targetProgress = CGFloat(index) / CGFloat(optionCount - 1)
-        let targetX = frame.minX + sideInset + (frame.width - sideInset * 2) * targetProgress
-        let targetY = frame.minY + 22 // mid-height of the 44pt track row at the top of the control
-        let coordinate = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: targetX, dy: targetY))
-        coordinate.tap()
-        usleep(500_000)
+    /// Walks the goal-led check-in: Energised, Clear-headed, then a length.
+    /// Every step moves on by itself, so the last tap closes the sheet.
+    private func checkIn(forLength length: String, in app: XCUIApplication) {
+        let goal = app.buttons["Energised"]
+        XCTAssertTrue(goal.waitForExistence(timeout: 5))
+        goal.tap()
+        let answer = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Clear-headed'")).firstMatch
+        XCTAssertTrue(answer.waitForExistence(timeout: 5))
+        answer.tap()
+        let chip = app.buttons[length]
+        XCTAssertTrue(chip.waitForExistence(timeout: 5))
+        chip.tap()
     }
 
     private func currentAppetizerLabel(in app: XCUIApplication, timeout: TimeInterval = 10) -> String? {
@@ -85,15 +80,11 @@ final class ScreenshotCaptureUITests: XCTestCase {
             "Expected the pre-existing qigong Appetizer before editing the check-in; found: \(appetizerLabel)"
         )
 
-        // Edit the check-in and change only the time budget (35 -> 25 min,
-        // TimeBudget.allCases index 5 of 12) so `didChange` is true and the
-        // menu actually regenerates against history that now includes the
-        // completed qigong session.
+        // Check in again with a shorter length (35 -> 20 min) so `didChange`
+        // is true and the menu actually regenerates against history that now
+        // includes the completed qigong session.
         editButton.tap()
-        let showMeToday = app.buttons["Show me today"]
-        XCTAssertTrue(showMeToday.waitForExistence(timeout: 5))
-        selectTimeBudget(index: 5, of: 12, in: app)
-        showMeToday.tap()
+        checkIn(forLength: "Twenty minutes", in: app)
         sleep(3)
 
         appetizerLabel = currentAppetizerLabel(in: app) ?? ""
@@ -102,9 +93,7 @@ final class ScreenshotCaptureUITests: XCTestCase {
             || appetizerLabel.localizedCaseInsensitiveContains("qigong") {
             // Second fallback: drop further, to 15 min (index 3).
             editButton.tap()
-            XCTAssertTrue(showMeToday.waitForExistence(timeout: 5))
-            selectTimeBudget(index: 3, of: 12, in: app)
-            showMeToday.tap()
+            checkIn(forLength: "Fifteen minutes", in: app)
             sleep(3)
             appetizerLabel = currentAppetizerLabel(in: app) ?? ""
         }

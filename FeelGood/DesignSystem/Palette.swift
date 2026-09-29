@@ -378,6 +378,24 @@ nonisolated extension PlaceIntent {
     }
 }
 
+// MARK: - One colour per goal
+
+nonisolated extension Intent {
+    /// Shared by onboarding and the check-in, so a goal keeps its colour from
+    /// the day it was chosen. Play and Calm used to share blush; they sit on
+    /// the same screen, so Play moved to sky.
+    var aura: FGAura {
+        switch self {
+        case .energize: .apricot
+        case .strengthen: .lilac
+        case .calm: .blush
+        case .mobilize: .sage
+        case .joy: .butter
+        case .play: .sky
+        }
+    }
+}
+
 // MARK: - Session completion, one colour per activity family
 
 nonisolated extension Activity {
