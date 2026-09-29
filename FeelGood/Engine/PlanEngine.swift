@@ -120,6 +120,7 @@ nonisolated struct PlanEngine: Sendable {
                     && !taken.contains($0.id)
                     && !input.profile.hiddenSessionIDs.contains($0.id)
                     && Set($0.contraindications).isDisjoint(with: input.profile.workArounds)
+                    && (input.profile.otherWorkAroundNote.isEmpty || !conflictsWithCustomWorkAround($0, note: input.profile.otherWorkAroundNote))
             }.map(\.durationMin).min() ?? 0
         }
         let reservedFloor = floorDuration(course: .appetizer) + floorDuration(course: .dessert)
@@ -445,6 +446,9 @@ nonisolated struct PlanEngine: Sendable {
         // Work-arounds. For this audience — many postpartum — pelvic floor,
         // joints and pregnancy are not edge cases.
         guard Set(session.contraindications).isDisjoint(with: input.profile.workArounds) else { return false }
+        if !input.profile.otherWorkAroundNote.isEmpty {
+            guard !conflictsWithCustomWorkAround(session, note: input.profile.otherWorkAroundNote) else { return false }
+        }
         // Never recommend equipment that isn't available.
         guard Set(session.equipment).subtracting([.none]).isSubset(of: input.profile.equipment) else { return false }
         // Specials are planned ahead, so today's time budget doesn't apply.
@@ -477,6 +481,71 @@ nonisolated struct PlanEngine: Sendable {
             allowed.formIntersection(intent.places)
         }
         return !Set(session.places).isDisjoint(with: allowed)
+    }
+
+    /// Checks whether a session conflicts with a user's custom work-around note.
+    func conflictsWithCustomWorkAround(_ session: Session, note: String) -> Bool {
+        let lower = note.lowercased()
+        let cues = session.source.steps.map(\.cue).joined(separator: " ")
+        let stepNames = session.source.steps.map(\.name).joined(separator: " ")
+        let sessionText = "\(session.title) \(session.subtitle) \(stepNames) \(cues)".lowercased()
+
+        // 1. Neck & shoulders
+        if lower.contains("neck") || lower.contains("shoulder") || lower.contains("rotator") {
+            if session.contraindications.contains(.neckShoulders) { return true }
+            if session.bodyFocus.contains(.neckShoulders) || session.bodyFocus.contains(.upperBody) { return true }
+            if sessionText.contains("shoulder press") || sessionText.contains("overhead") || sessionText.contains("pushup") || sessionText.contains("push up") || sessionText.contains("arm circles") {
+                return true
+            }
+        }
+
+        // 2. High impact / jumping
+        if lower.contains("jump") || lower.contains("impact") || lower.contains("hop") || lower.contains("bounce") {
+            if session.contraindications.contains(.lowImpact) { return true }
+            if session.activity == .jumpRope || session.activity == .agility || session.activity == .running { return true }
+            if sessionText.contains("jump") || sessionText.contains("skater") || sessionText.contains("hop") || sessionText.contains("burpee") {
+                return true
+            }
+        }
+
+        // 3. Floor / lying down
+        if lower.contains("floor") || lower.contains("lying down") || lower.contains("ground") || lower.contains("mat") {
+            if sessionText.contains("on your hands and knees") || sessionText.contains("lie down") || sessionText.contains("on your back") || sessionText.contains("on the floor") {
+                return true
+            }
+        }
+
+        // 4. Hips & pelvis
+        if lower.contains("hip") || lower.contains("sciatica") || lower.contains("piriformis") {
+            if session.contraindications.contains(.hips) { return true }
+            if session.bodyFocus.contains(.hips) { return true }
+            if sessionText.contains("deep lunge") || sessionText.contains("pigeon") || sessionText.contains("hip flexor") {
+                return true
+            }
+        }
+
+        // 5. Wrists
+        if lower.contains("wrist") || lower.contains("carpal") {
+            if session.contraindications.contains(.wrists) { return true }
+            if sessionText.contains("plank") || sessionText.contains("pushup") || sessionText.contains("hands and knees") {
+                return true
+            }
+        }
+
+        // 6. Knees
+        if lower.contains("knee") || lower.contains("patella") || lower.contains("meniscus") {
+            if session.contraindications.contains(.knees) { return true }
+            if sessionText.contains("lunge") || sessionText.contains("deep squat") || sessionText.contains("jump") {
+                return true
+            }
+        }
+
+        // 7. Lower back
+        if lower.contains("lower back") || lower.contains("low back") || lower.contains("lumbar") || lower.contains("herniat") {
+            if session.contraindications.contains(.lowBack) { return true }
+        }
+
+        return false
     }
 
     // MARK: - Scoring
@@ -758,6 +827,7 @@ nonisolated struct PlanEngine: Sendable {
                 && !excluding.contains($0.id)
                 && !input.profile.hiddenSessionIDs.contains($0.id)
                 && Set($0.contraindications).isDisjoint(with: input.profile.workArounds)
+                && (input.profile.otherWorkAroundNote.isEmpty || !conflictsWithCustomWorkAround($0, note: input.profile.otherWorkAroundNote))
         }
         let fallback = maxDuration == nil ? eligible.min(by: { $0.durationMin < $1.durationMin }) : eligible.first
         return fallback.map { candidate(for: $0, input: input, checkIn: checkIn, stats: stats).item }
@@ -781,6 +851,7 @@ nonisolated struct PlanEngine: Sendable {
                 && !excluding.contains($0.id)
                 && !input.profile.hiddenSessionIDs.contains($0.id)
                 && Set($0.contraindications).isDisjoint(with: input.profile.workArounds)
+                && (input.profile.otherWorkAroundNote.isEmpty || !conflictsWithCustomWorkAround($0, note: input.profile.otherWorkAroundNote))
         }
         let fallback = maxDuration == nil ? eligible.min(by: { $0.durationMin < $1.durationMin }) : eligible.first
         return fallback.map { candidate(for: $0, input: input, checkIn: checkIn, stats: stats).item }

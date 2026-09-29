@@ -97,6 +97,9 @@ struct ProfileEditView: View {
                                         withAnimation(FGMotion.gentle) {
                                             if answers.workArounds.contains(workAround) {
                                                 answers.workArounds.remove(workAround)
+                                                if workAround == .other {
+                                                    answers.otherWorkAroundNote = ""
+                                                }
                                             } else {
                                                 answers.workArounds.insert(workAround)
                                             }
@@ -108,14 +111,36 @@ struct ProfileEditView: View {
                                     selectedAura: .butter,
                                     isSelected: answers.workArounds.isEmpty
                                 ) {
-                                    withAnimation(FGMotion.gentle) { answers.workArounds = [] }
+                                    withAnimation(FGMotion.gentle) {
+                                        answers.workArounds = []
+                                        answers.otherWorkAroundNote = ""
+                                    }
                                 }
                             }
 
                             if answers.workArounds.contains(.other) {
-                                Text("We can’t tailor an unspecified need. Skip anything that doesn’t feel right.")
-                                    .font(FGFont.caption)
-                                    .foregroundStyle(FGColor.inkMuted)
+                                VStack(alignment: .leading, spacing: FGSpace.xs) {
+                                    Text("What should we go easy on?")
+                                        .font(FGFont.label)
+                                        .foregroundStyle(FGColor.ink)
+
+                                    TextField("e.g. Frozen shoulder, vertigo, no floor work...", text: $answers.otherWorkAroundNote)
+                                        .font(FGFont.body)
+                                        .padding(.horizontal, FGSpace.m)
+                                        .padding(.vertical, 12)
+                                        .background(FGColor.surface)
+                                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                                .strokeBorder(FGColor.line, lineWidth: 1)
+                                        )
+
+                                    Text("Your menu and AI coach will avoid movements that stress this.")
+                                        .font(FGFont.caption)
+                                        .foregroundStyle(FGColor.inkMuted)
+                                }
+                                .padding(.top, FGSpace.xs)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
                             }
                         }
                         // `pregnancy`, `postpartum` and `pelvicFloor` are on this

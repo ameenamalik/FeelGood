@@ -660,6 +660,7 @@ nonisolated enum LocalStatefulChatEngine {
         excludeID: String? = nil,
         userContext: ChatUserContext? = nil,
         workArounds: Set<WorkAround> = [],
+        otherNote: String = "",
         availability: ChatAvailability? = nil
     ) -> Session? {
         let availability = availability ?? userContext?.availability
@@ -671,7 +672,7 @@ nonisolated enum LocalStatefulChatEngine {
             if let hidden = userContext?.hiddenSessionIDs, hidden.contains(s.id) { continue }
             if let shown = userContext?.shownSessionIDs, shown.contains(s.id) { continue }
             if let excludeID, s.id == excludeID { continue }
-            if ChatSafety.conflicts(s, workArounds: workArounds) { continue }
+            if ChatSafety.conflicts(s, workArounds: workArounds, otherNote: otherNote) { continue }
             if let availability, !availability.allows(s) { continue }
             if let excludedFocus, s.bodyFocus.contains(excludedFocus) { continue }
             var score = 0

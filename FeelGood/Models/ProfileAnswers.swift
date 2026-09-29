@@ -26,6 +26,7 @@ nonisolated struct ProfileAnswers: Hashable, Sendable {
     var bestTimeOfDay: TimeOfDay = .varies
     var intents: Set<Intent> = []
     var workArounds: Set<WorkAround> = []
+    var otherWorkAroundNote: String = ""
     var hiddenSessionIDs: Set<String> = []
 
     /// A room implies what happens in it: a gym means somewhere to lift, even
@@ -73,6 +74,7 @@ nonisolated struct ProfileAnswers: Hashable, Sendable {
             realisticMinutes: realisticMinutes,
             bestTimeOfDay: bestTimeOfDay,
             workArounds: workArounds,
+            otherWorkAroundNote: otherWorkAroundNote,
             intents: intents,
             hiddenSessionIDs: hiddenSessionIDs
         )

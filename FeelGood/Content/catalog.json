@@ -342,7 +342,8 @@
         "pregnancy",
         "postpartum",
         "pelvicFloor",
-        "knees"
+        "knees",
+        "lowImpact"
       ]
     },
     {
@@ -1773,7 +1774,8 @@
         "pregnancy",
         "postpartum",
         "pelvicFloor",
-        "knees"
+        "knees",
+        "lowImpact"
       ]
     },
     {
@@ -5189,7 +5191,8 @@
         "pregnancy",
         "postpartum",
         "pelvicFloor",
-        "knees"
+        "knees",
+        "lowImpact"
       ],
       "source": {
         "type": "authored",
@@ -5478,7 +5481,8 @@
       "contraindications": [
         "wrists",
         "pregnancy",
-        "postpartum"
+        "postpartum",
+        "neckShoulders"
       ]
     },
     {
@@ -7227,7 +7231,8 @@
         "wrists",
         "lowBack",
         "pregnancy",
-        "postpartum"
+        "postpartum",
+        "neckShoulders"
       ]
     },
     {
@@ -7308,7 +7313,8 @@
         ]
       },
       "contraindications": [
-        "wrists"
+        "wrists",
+        "neckShoulders"
       ]
     },
     {
@@ -8488,7 +8494,8 @@
         "pregnancy",
         "postpartum",
         "pelvicFloor",
-        "knees"
+        "knees",
+        "lowImpact"
       ],
       "course": "main",
       "source": {
@@ -8549,7 +8556,8 @@
         "pregnancy",
         "postpartum",
         "pelvicFloor",
-        "knees"
+        "knees",
+        "lowImpact"
       ],
       "course": "main",
       "source": {
@@ -8603,7 +8611,8 @@
         "pregnancy",
         "postpartum",
         "pelvicFloor",
-        "knees"
+        "knees",
+        "lowImpact"
       ],
       "course": "main",
       "source": {
@@ -8658,7 +8667,8 @@
         "pregnancy",
         "postpartum",
         "pelvicFloor",
-        "knees"
+        "knees",
+        "lowImpact"
       ],
       "course": "side",
       "source": {
