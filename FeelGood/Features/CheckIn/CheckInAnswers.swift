@@ -37,7 +37,7 @@ nonisolated extension Intent {
         case .energize: "Energised"
         case .strengthen: "Strong"
         case .calm: "Calm"
-        case .mobilize: "Loose"
+        case .mobilize: "Mobile"
         case .joy: "Like I showed up"
         case .play: "Playful"
         }

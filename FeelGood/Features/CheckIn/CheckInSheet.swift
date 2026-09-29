@@ -107,7 +107,7 @@ struct CheckInSheet: View {
         }
 
         if !goals.picks.isEmpty {
-            VStack(alignment: .leading, spacing: FGSpace.s) {
+            VStack(alignment: .leading, spacing: FGSpace.xs) {
                 sectionLabel("Your picks")
                 ForEach(goals.picks, id: \.self) { goal in
                     GoalPickCard(goal: goal) {
@@ -118,10 +118,10 @@ struct CheckInSheet: View {
         }
 
         if !goals.others.isEmpty {
-            VStack(alignment: .leading, spacing: FGSpace.s) {
+            VStack(alignment: .leading, spacing: FGSpace.xs) {
                 if !goals.picks.isEmpty {
                     Text("Or something different today")
-                        .font(FGFont.caption)
+                        .font(FGFont.caption.weight(.medium))
                         .foregroundStyle(FGColor.inkMuted)
                 }
 
@@ -285,9 +285,8 @@ struct CheckInSheet: View {
     }
 
     private func sectionLabel(_ text: String) -> some View {
-        Text(text.uppercased())
-            .font(FGFont.label)
-            .tracking(0.8)
+        Text(text)
+            .font(FGFont.caption.weight(.medium))
             .foregroundStyle(FGColor.inkMuted)
     }
 
@@ -432,20 +431,20 @@ private struct GoalPickCard: View {
         Button(action: action) {
             HStack(alignment: .center, spacing: FGSpace.m) {
                 Text(goal.checkInFeeling)
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(.title3, design: .rounded).weight(.bold))
                     .foregroundStyle(FGColor.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Image(goal.artworkName)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 76, height: 76)
+                    .frame(width: 44, height: 44)
             }
-            .padding(.horizontal, FGSpace.l)
-            .padding(.vertical, FGSpace.m)
-            .frame(maxWidth: .infinity, minHeight: 96)
+            .padding(.horizontal, FGSpace.m)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, minHeight: 58)
             .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [goal.aura.core, goal.aura.mid.opacity(0.75)],
@@ -454,9 +453,9 @@ private struct GoalPickCard: View {
                         )
                     )
             )
-            .clipShape(.rect(cornerRadius: 24))
+            .clipShape(.rect(cornerRadius: 18))
             .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(FGColor.line, lineWidth: 1)
             )
         }
