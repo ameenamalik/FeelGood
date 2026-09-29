@@ -616,7 +616,7 @@ struct ProfileHeaderView: View {
 
                 Spacer()
 
-                Text("PRO")
+                Text("Connect")
                     .font(FGFont.caption.weight(.bold))
                     .foregroundStyle(FGColor.ink)
 
