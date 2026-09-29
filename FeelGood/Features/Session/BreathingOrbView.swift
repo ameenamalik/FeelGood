@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// Grows through the inhale, rests full through a hold, softens through the
 /// exhale, rests empty through the second hold. Cosine easing has zero
@@ -101,6 +102,42 @@ struct BreathingPhaseLabel: View {
                 .contentTransition(.opacity)
                 .accessibilityLabel(text)
         }
+    }
+}
+
+/// A light tap on every phase change — inhale starting, a hold beginning,
+/// the exhale starting, the second hold. Narration only speaks the pattern
+/// once near the start of a step and then goes quiet for however much of the
+/// step is left; this keeps a felt cue running for the whole thing, voice or
+/// no voice, so pacing doesn't go silent-in-every-sense the moment the clip
+/// ends. Invisible — it exists only to call `impactOccurred()` on a phase
+/// change, never drawn.
+struct BreathingHapticPulse: View {
+    let cadence: BreathingCadence
+    let isActive: Bool
+    let startedAt: Date
+    let pausedAt: Date?
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 12.0, paused: reduceMotion || !isActive)) { timeline in
+            let phase = BreathingCycleState(
+                at: timeline.date,
+                cadence: cadence,
+                isActive: isActive,
+                reduceMotion: reduceMotion,
+                startedAt: startedAt,
+                pausedAt: pausedAt
+            ).phase
+
+            Color.clear
+                .frame(width: 0, height: 0)
+                .onChange(of: phase) { _, _ in
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                }
+        }
+        .accessibilityHidden(true)
     }
 }
 
