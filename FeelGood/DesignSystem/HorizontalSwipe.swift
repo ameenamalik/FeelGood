@@ -105,7 +105,7 @@ extension View {
                             _ = onSkip()
                         } else {
                             withAnimation(.easeOut(duration: 0.18)) {
-                                offset.wrappedValue = -UIScreen.main.bounds.width
+                                offset.wrappedValue = -800
                             }
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
                                 let didReplaceCard = onSkip()

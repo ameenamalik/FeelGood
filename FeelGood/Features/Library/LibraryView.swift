@@ -129,34 +129,36 @@ struct LibraryView: View {
     }
 
     private func row(_ session: Session) -> some View {
-        FGCard {
-            VStack(alignment: .leading, spacing: FGSpace.xs) {
-                Text(session.title)
-                    .font(FGFont.body.weight(.medium))
-                    .foregroundStyle(FGColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                if session.isOwn && !session.subtitle.isEmpty {
-                    Text(session.subtitle)
-                        .font(FGFont.caption)
-                        .foregroundStyle(FGColor.inkMuted)
+        Button {
+            selected = session
+        } label: {
+            FGCard {
+                VStack(alignment: .leading, spacing: FGSpace.xs) {
+                    Text(session.title)
+                        .font(FGFont.body.weight(.medium))
+                        .foregroundStyle(FGColor.ink)
                         .fixedSize(horizontal: false, vertical: true)
-                }
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                WrapRow(spacing: FGSpace.xs, lineSpacing: FGSpace.xs) {
-                    ForEach(session.chips, id: \.self) { FGChip(text: $0) }
+                    if session.isOwn && !session.subtitle.isEmpty {
+                        Text(session.subtitle)
+                            .font(FGFont.caption)
+                            .foregroundStyle(FGColor.inkMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    WrapRow(spacing: FGSpace.xs, lineSpacing: FGSpace.xs) {
+                        ForEach(session.chips, id: \.self) { FGChip(text: $0) }
+                    }
                 }
             }
         }
-        .contentShape(Rectangle())
-        .onTapGesture { selected = session }
+        .buttonStyle(.feelGoodPress)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(
             ([session.title, session.subtitle] + session.chips)
                 .filter { !$0.isEmpty }
                 .joined(separator: ". ")
         )
-        .accessibilityAddTraits(.isButton)
     }
 }

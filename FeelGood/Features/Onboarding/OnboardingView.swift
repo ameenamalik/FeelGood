@@ -88,16 +88,9 @@ struct OnboardingView: View {
         // on transition instead of the whole capsule snapping to `ink`.
         HStack(spacing: FGSpace.xs) {
             ForEach(OnboardingModel.Card.allCases, id: \.self) { card in
-                GeometryReader { geometry in
-                    Capsule()
-                        .fill(FGColor.line)
-                        .overlay(alignment: .leading) {
-                            Capsule()
-                                .fill(FGColor.ink)
-                                .frame(width: card.rawValue <= model.card.rawValue ? geometry.size.width : 0)
-                        }
-                }
-                .frame(height: 4)
+                Capsule()
+                    .fill(card.rawValue <= model.card.rawValue ? FGColor.ink : FGColor.line)
+                    .frame(height: 4)
             }
         }
         .accessibilityElement()

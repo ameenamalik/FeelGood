@@ -40,7 +40,7 @@ private struct MenuPersonalizationAura: View {
 }
 
 struct TodayView: View {
-    @State var model: TodayModel
+    let model: TodayModel
     /// Set by a widget tap. Consumed here and cleared, so the same link does
     /// not reopen the sheet every time this view is rebuilt.
     var requestedSessionID: Binding<String?> = .constant(nil)
@@ -810,8 +810,8 @@ struct TodayView: View {
                 Image(plan.activity.calendarMascotAsset)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 66, height: 66)
-                    .padding(8)
+                    .frame(width: 44, height: 44)
+                    .padding(4)
                     .background(Circle().fill(FGColor.gold.opacity(0.28)))
                     .accessibilityHidden(true)
 
@@ -941,8 +941,8 @@ private struct CalendarCompanionCard: View {
         Image(item.course.menuMascotAsset)
             .resizable()
             .scaledToFit()
-            .frame(width: 58, height: 58)
-            .padding(8)
+            .frame(width: 40, height: 40)
+            .padding(4)
             .background(Circle().fill(FGColor.rose.opacity(colorScheme == .dark ? 0.22 : 0.16)))
             .accessibilityHidden(true)
     }
@@ -1238,7 +1238,7 @@ private struct MenuItemBody: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 88, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: 76, alignment: .topLeading)
 
             // The course's mascot — the same fruit this course wears on My
             // Menu and the paywall, so a Side here and a Side there read as
@@ -1248,7 +1248,7 @@ private struct MenuItemBody: View {
             Image(item.course.menuMascotAsset)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 52, height: 52)
+                .frame(width: 40, height: 40)
                 .padding(4)
                 .background(Circle().fill(item.course.plate))
                 .accessibilityHidden(true)

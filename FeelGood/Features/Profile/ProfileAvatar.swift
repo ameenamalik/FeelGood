@@ -197,7 +197,7 @@ struct ProfileAvatarPickerView: View {
                                 .padding(.vertical, 10)
                                 .frame(maxWidth: .infinity, minHeight: 128)
                                 .background(FGColor.surface)
-                                .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
+                                .clipShape(.rect(cornerRadius: FGRadius.card))
                                 .overlay {
                                     RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
                                         .strokeBorder(
