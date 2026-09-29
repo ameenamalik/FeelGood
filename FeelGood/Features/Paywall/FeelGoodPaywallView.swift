@@ -6,8 +6,8 @@
 import RevenueCat
 import SwiftUI
 
-/// Why the paywall was opened. The first message should answer the action the
-/// person just took instead of dropping every intent into the same sales pitch.
+/// Why the paywall was opened. The screen immediately showcases the relevant
+/// superpower before the person explores the broader Pro story.
 nonisolated enum PaywallContext: String, Sendable {
     case general
     case secondSwap = "second_swap"
@@ -16,16 +16,17 @@ nonisolated enum PaywallContext: String, Sendable {
     case calendar
 }
 
-/// FeelGood's own paywall. Unlike the dashboard-configured screen it replaced,
-/// the hero shows the real menu — the same course/course-mascot pairing
-/// (`Course.menuMascotAsset`) already shipping on Today and My Menu — instead
-/// of a standalone illustration. The fruits don't get their own dialogue here;
-/// they're doing the job they already do everywhere else in the app: marking
-/// which course is which. RevenueCat still owns products, pricing, and the
-/// purchase itself; this view only decides what to show and calls
-/// `PurchasesManager`.
+/// FeelGood Pro Paywall.
+///
+/// Designed around RevenueCat's LTV & JTBD conversion architecture:
+/// 1. Problem-Led Headline ("A menu that bends to your day")
+/// 2. Live Superpower Demonstrations (Instant Contrast Swap, Companion Chat, Calendar Auto-Fit)
+/// 3. Scannable 3-Point Value Anchors (No tiny grey text)
+/// 4. LTV-Optimized Offer Architecture (Yearly default with 7-day free trial & SAVE 58% badge)
+/// 5. Value-Led CTA in the Thumb Zone ("Start my 7-day free trial")
 struct FeelGoodPaywallView: View {
     let context: PaywallContext
+    var onFinished: (() -> Void)?
 
     private enum Plan: CaseIterable {
         case yearly
@@ -38,7 +39,6 @@ struct FeelGoodPaywallView: View {
             }
         }
 
-        /// Appended to the price on the CTA so the renewal terms are on the button itself.
         var renewalSuffix: String {
             switch self {
             case .yearly: "/yr"
@@ -54,68 +54,52 @@ struct FeelGoodPaywallView: View {
         }
     }
 
-    /// A course teaser row for the hero. Real course/mascot pairing, placeholder
-    /// session titles pulled from the app's own App Store screenshots so the copy
-    /// is already-approved rather than invented for this screen.
-    private struct MenuTeaser {
-        let course: Course
-        let title: String
-    }
+    /// The 3 Core Pro Superpowers
+    private enum Superpower: Int, CaseIterable, Identifiable {
+        case swaps = 0
+        case chat = 1
+        case calendar = 2
 
-    private static let menuTeasers: [MenuTeaser] = [
-        MenuTeaser(course: .appetizer, title: "Four rounds of box breathing"),
-        MenuTeaser(course: .main, title: "Twenty minutes of flow"),
-        MenuTeaser(course: .side, title: "Shoulder reset"),
-        MenuTeaser(course: .dessert, title: "Dance to three songs"),
-    ]
+        var id: Int { rawValue }
 
-    /// Which illustration sits above a given slide's line. Most slides show
-    /// the menu; "Talk to it when you're stuck" swaps in a chat exchange,
-    /// since that's the one benefit the menu card can't demonstrate on its own.
-    private enum HeroScene {
-        case menu
-        case quickPick
-        case chat
-    }
+        var label: String {
+            switch self {
+            case .swaps: "Swaps"
+            case .chat: "Chat"
+            case .calendar: "Calendar"
+            }
+        }
 
-    /// One slide at a time instead of a fixed headline plus a separate
-    /// benefits list — the header rotates through the hook and the benefits
-    /// itself, so only one short line is ever on screen in this spot.
-    private struct HeroSlide {
-        let title: String
-        let scene: HeroScene
-        /// How long the slide stays up before the carousel advances. Chat
-        /// slides play a typing sequence first, so they need that time plus
-        /// enough left over to actually read the bubbles.
-        let dwell: Duration
-    }
+        var sfSymbol: String {
+            switch self {
+            case .swaps: "arrow.triangle.2.circlepath"
+            case .chat: "bubble.left.and.bubble.right"
+            case .calendar: "calendar"
+            }
+        }
 
-    private static let defaultHeroSlides: [HeroSlide] = [
-        HeroSlide(title: "Stop deciding. Start moving.", scene: .menu, dwell: .seconds(3.5)),
-        HeroSlide(title: "Know what to do in 10 seconds", scene: .quickPick, dwell: .seconds(4.5)),
-        HeroSlide(title: "Say how you're feeling", scene: .chat, dwell: .seconds(5)),
-        HeroSlide(title: "Talk to it when you're stuck", scene: .chat, dwell: .seconds(7)),
-    ]
+        var iconAsset: String {
+            switch self {
+            case .swaps: Course.appetizer.menuMascotAsset // Clementine
+            case .chat: "IntentCalmBlueberryMascot"
+            case .calendar: Course.special.menuMascotAsset // Banana
+            }
+        }
 
-    /// Lead with the benefit the person just asked for. They can still swipe
-    /// through the broader Pro story after seeing that immediate answer.
-    private var heroSlides: [HeroSlide] {
-        guard let contextualSlide else { return Self.defaultHeroSlides }
-        return [contextualSlide] + Self.defaultHeroSlides
-    }
+        var badgeLabel: String {
+            switch self {
+            case .swaps: "Instant Swap"
+            case .chat: "AI Companion"
+            case .calendar: "Calendar Sync"
+            }
+        }
 
-    private var contextualSlide: HeroSlide? {
-        switch context {
-        case .general:
-            nil
-        case .secondSwap:
-            HeroSlide(title: "Keep shaping today’s menu", scene: .quickPick, dwell: .seconds(5))
-        case .library:
-            HeroSlide(title: "Choose exactly what fits today", scene: .menu, dwell: .seconds(5))
-        case .chatLimit:
-            HeroSlide(title: "Keep talking it through", scene: .chat, dwell: .seconds(6))
-        case .calendar:
-            HeroSlide(title: "Plan movement around your actual day", scene: .quickPick, dwell: .seconds(5))
+        var badgeColor: Color {
+            switch self {
+            case .swaps: FGColor.clay
+            case .chat: FGColor.sky
+            case .calendar: FGColor.gold
+            }
         }
     }
 
@@ -124,7 +108,13 @@ struct FeelGoodPaywallView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    var onFinished: (() -> Void)?
+    @State private var selectedPlan: Plan = .yearly
+    @State private var isPurchasing = false
+    @State private var trialEligiblePlans: Set<Plan> = []
+    @State private var isRestoring = false
+    @State private var restoreResultMessage: String?
+    @State private var activeSuperpower: Superpower = .swaps
+    @State private var carouselResetToken = 0
 
     init(
         context: PaywallContext = .general,
@@ -133,38 +123,6 @@ struct FeelGoodPaywallView: View {
         self.context = context
         self.onFinished = onFinished
     }
-
-    @State private var selectedPlan: Plan = .yearly
-    @State private var isPurchasing = false
-    /// Plans this person can still take a free trial on. Apple allows one
-    /// intro offer per subscription group per person, so a product having a
-    /// trial does not mean this person gets it. Starts empty and only ever
-    /// grows on a definite `.eligible`, so until the check answers (or if it
-    /// can't) the button never promises a trial.
-    @State private var trialEligiblePlans: Set<Plan> = []
-    @State private var isRestoring = false
-    @State private var restoreResultMessage: String?
-    @State private var hasRevealedMenu = false
-    @State private var carouselResetToken = 0
-    #if DEBUG
-    @State private var heroSlideIndex = Self.debugForcedHeroSlideIndex ?? 0
-    @State private var chatPhase: ChatPhase = (Self.debugForcedHeroSlideIndex == 3) ? .assistantFollowUp : .userOpener
-    @State private var quickPickPhase: QuickPickPhase = (Self.debugForcedHeroSlideIndex == 1) ? .resultShown : .initial
-    #else
-    @State private var heroSlideIndex = 0
-    @State private var chatPhase: ChatPhase = .userOpener
-    @State private var quickPickPhase: QuickPickPhase = .initial
-    #endif
-
-    #if DEBUG
-    private static var debugForcedHeroSlideIndex: Int? {
-        let args = ProcessInfo.processInfo.arguments
-        guard let flagIndex = args.firstIndex(of: "-FGHeroSlideIndex"), args.count > flagIndex + 1 else {
-            return nil
-        }
-        return Int(args[flagIndex + 1])
-    }
-    #endif
 
     private var yearlyPackage: Package? { purchasesManager.yearlyPackage }
     private var monthlyPackage: Package? { purchasesManager.monthlyPackage }
@@ -179,7 +137,8 @@ struct FeelGoodPaywallView: View {
     var body: some View {
         ZStack {
             FGColor.bg.ignoresSafeArea()
-            FGBrandWash(reach: 0.7).ignoresSafeArea()
+            // Vibrant ambient brand aura bloom
+            FGBrandWash(reach: 0.85).ignoresSafeArea()
 
             if purchasesManager.isLoadingOfferings, yearlyPackage == nil, monthlyPackage == nil {
                 ProgressView()
@@ -190,7 +149,18 @@ struct FeelGoodPaywallView: View {
         }
         .guaranteedPaywallCloseButton { finish() }
         .sensoryFeedback(.selection, trigger: selectedPlan)
+        .sensoryFeedback(.impact(weight: .medium), trigger: activeSuperpower)
         .task {
+            // Set initial superpower tab based on presentation context
+            switch context {
+            case .secondSwap, .library, .general:
+                activeSuperpower = .swaps
+            case .chatLimit:
+                activeSuperpower = .chat
+            case .calendar:
+                activeSuperpower = .calendar
+            }
+
             if purchasesManager.offerings == nil {
                 await purchasesManager.fetchOfferings()
             }
@@ -202,9 +172,6 @@ struct FeelGoodPaywallView: View {
                 "plan": selectedPlan.analyticsID,
                 "context": context.rawValue,
             ])
-            withAnimation(reduceMotion ? nil : FGMotion.settle) {
-                hasRevealedMenu = true
-            }
         }
         .alert(
             "Something went wrong",
@@ -233,44 +200,31 @@ struct FeelGoodPaywallView: View {
     private var content: some View {
         ScrollView {
             VStack(spacing: FGSpace.m) {
-                VStack(spacing: FGSpace.s + 4) {
-                    heroCard {
-                        topSceneContent
-                    }
+                // 1. Problem-Led Headline & Eyebrow
+                headerSection
 
-                    heroCarousel
-                        .padding(.top, FGSpace.xs)
-                }
-                .contentShape(Rectangle())
-                .simultaneousGesture(heroSwipe)
-                .accessibilityAdjustableAction { direction in
-                    switch direction {
-                    case .increment: stepHeroSlide(by: 1)
-                    case .decrement: stepHeroSlide(by: -1)
-                    @unknown default: break
-                    }
+                // 2. Interactive Superpower Tabs & Hero Demo
+                VStack(spacing: FGSpace.s + 2) {
+                    superpowerTabBar
+                    superpowerHeroCard
                 }
 
+                // 3. LTV-Optimized Plan Picker
                 planPicker
 
-                // At accessibility sizes a pinned bar would swallow the screen,
-                // so the buy section joins the scroll flow instead.
+                // 4. Thumb-Zone CTA for Accessibility sizes
                 if typeSize.isAccessibilitySize {
                     ctaButtons
                 }
 
+                // 5. Transparent Fine Print & Legal
                 legalSection
             }
             .padding(.horizontal, FGSpace.page)
-            // Clears the close button overlay (pinned to the safe area's top
-            // trailing corner) so it never sits on top of the hero card.
-            .padding(.top, FGSize.minTouchTarget + FGSpace.s)
+            .padding(.top, FGSize.minTouchTarget + FGSpace.xs)
             .padding(.bottom, FGSpace.l)
         }
         .scrollBounceBehavior(.basedOnSize)
-        // The buy button and its escape hatch stay pinned so they are on
-        // screen at every device size and Dynamic Type setting, while the
-        // proof and plans scroll behind them.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if !typeSize.isAccessibilitySize {
                 ctaButtons
@@ -283,512 +237,310 @@ struct FeelGoodPaywallView: View {
         }
     }
 
-    // MARK: - Hero scene
+    // MARK: - 1. Header Section (Problem-Led JTBD)
 
-    /// Just the content that differs per scene — no box/border/shadow here.
-    /// Those live once on `heroCard` at the call site so the card itself
-    /// never re-inserts (and never animates) when the content swaps.
-    /// Cross-fades inside a top-aligned `ZStack` keyed on `currentSlide.scene`,
-    /// so slides sharing the same scene (e.g. slides 1–2 or 3–4) stay perfectly
-    /// stable with zero glitching or teardown.
-    @ViewBuilder
-    private var topSceneContent: some View {
-        ZStack(alignment: .top) {
-            switch currentSlide.scene {
-            case .menu:
-                menuHeroContent
-                    .transition(.opacity)
-            case .quickPick:
-                quickPickHeroContent
+    private var headerSection: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Text("✦ FeelGood Pro")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .tracking(0.3)
+                    .foregroundStyle(FGColor.sideBadge)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(FGAura.sage.core.opacity(0.8)))
+            .overlay(Capsule().strokeBorder(FGColor.sideBadge.opacity(0.3), lineWidth: 1))
+
+            Text("Stop deciding.\nStart moving.")
+                .font(.system(size: 30, weight: .bold, design: .rounded))
+                .tracking(-0.8)
+                .foregroundStyle(FGColor.ink)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("Movement that bends to your day.")
+                .font(FGFont.reason.weight(.medium))
+                .foregroundStyle(FGColor.inkMuted)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.top, 2)
+    }
+
+    // MARK: - 2. Superpower Tab Bar & Hero Card
+
+    private var superpowerTabBar: some View {
+        HStack(spacing: 6) {
+            ForEach(Superpower.allCases) { power in
+                let isSelected = activeSuperpower == power
+                Button {
+                    withAnimation(reduceMotion ? nil : FGMotion.swap) {
+                        activeSuperpower = power
+                        carouselResetToken += 1
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: power.sfSymbol)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(isSelected ? FGColor.ink : FGColor.inkMuted)
+
+                        Text(power.label)
+                            .font(.system(size: 12, weight: isSelected ? .bold : .semibold, design: .rounded))
+                            .foregroundStyle(isSelected ? FGColor.ink : FGColor.inkMuted)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(
+                        Capsule().fill(isSelected ? AnyShapeStyle(power.badgeColor.opacity(0.55)) : AnyShapeStyle(FGColor.surface.opacity(0.7)))
+                    )
+                    .overlay(
+                        Capsule().strokeBorder(isSelected ? FGColor.ink.opacity(0.2) : FGColor.line, lineWidth: 1)
+                    )
+                    .scaleEffect(isSelected ? 1.03 : 1.0)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .task(id: carouselResetToken) { await runSuperpowerAutoCycle() }
+    }
+
+    /// Fixed 170pt height so there is zero screen jumping between slides
+    private var superpowerHeroCard: some View {
+        ZStack(alignment: .center) {
+            switch activeSuperpower {
+            case .swaps:
+                swapsHeroContent
                     .transition(.opacity)
             case .chat:
-                chatSceneContent
+                chatHeroContent
+                    .transition(.opacity)
+            case .calendar:
+                calendarHeroContent
                     .transition(.opacity)
             }
         }
-        .animation(reduceMotion ? nil : FGMotion.gentle, value: currentSlide.scene)
-    }
-
-    /// The shared "printed card" chrome both scenes sit inside, so swapping
-    /// between them on a carousel tick reads as one card's content changing
-    /// rather than two differently-shaped things trading places.
-    /// Pinned to `maxWidth: .infinity`; height tracks the current scene
-    /// (menu/quick-pick are short, chat's four bubbles need more) and
-    /// animates between them, rather than one fixed height sized for the
-    /// tallest scene that leaves the shorter ones with dead space below.
-    private var heroCardHeight: CGFloat {
-        switch currentSlide.scene {
-        case .menu: 196
-        case .quickPick: 210
-        case .chat: 260
-        }
-    }
-
-    private func heroCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        ZStack(alignment: .top) {
-            content()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(FGSpace.m)
         .frame(maxWidth: .infinity)
-        .frame(height: heroCardHeight, alignment: .top)
+        .frame(height: 170, alignment: .center)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                .fill(FGColor.bg)
-                .opacity(hasCardChrome ? 1 : 0)
+                .fill(FGColor.surface)
         )
         .overlay(
             RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
                 .strokeBorder(FGColor.lineStrong, lineWidth: 1)
-                .opacity(hasCardChrome ? 1 : 0)
         )
-        .shadow(color: FGColor.ink.opacity(hasCardChrome ? 0.08 : 0), radius: 12, y: 6)
-        .rotationEffect(.degrees(hasCardChrome ? -1 : 0))
-        .animation(reduceMotion ? nil : FGMotion.gentle, value: currentSlide.scene)
+        .shadow(color: FGColor.ink.opacity(0.06), radius: 12, y: 4)
+        .animation(reduceMotion ? nil : FGMotion.gentle, value: activeSuperpower)
     }
 
-    /// The printed-menu card frames the menu scene only. Chat bubbles float
-    /// straight on the page, the way they do in the real Chat tab; the chrome
-    /// fades rather than being removed so the frame never re-inserts.
-    private var hasCardChrome: Bool { currentSlide.scene != .chat }
+    // MARK: - Hero Content 1: Instant Contrast Swap
 
-    /// A single printed-menu card rather than four separate blocks — the
-    /// "creative, skeuomorphic" read the user asked for, and far shorter than
-    /// stacked course cards. Each line keeps the real course/mascot pairing
-    /// from Today and My Menu; rows settle in staggered on appear the same
-    /// way `FGMotion` describes items landing on the menu.
-    private var menuHeroContent: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 6) {
-                Image(systemName: "fork.knife")
-                    .font(.system(size: 12, weight: .semibold))
-                Text("TODAY'S MENU")
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .tracking(0.5)
-            }
-            .foregroundStyle(FGColor.inkMuted)
-            .padding(.bottom, 4)
+    private var swapsHeroContent: some View {
+        VStack(spacing: 12) {
+            // The Before -> After Transformation
+            HStack(spacing: 10) {
+                // Before Card
+                VStack(spacing: 5) {
+                    Image(Course.main.menuMascotAsset)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 36, height: 36)
+                        .padding(5)
+                        .background(Circle().fill(FGColor.surface))
 
-            Divider()
-                .overlay(FGColor.lineStrong)
-                .padding(.bottom, 8)
-
-            VStack(spacing: 0) {
-                ForEach(Array(Self.menuTeasers.enumerated()), id: \.offset) { index, teaser in
-                    if index > 0 {
-                        Divider().overlay(FGColor.line)
-                    }
-                    menuTeaserRow(teaser)
-                        .opacity(hasRevealedMenu ? 1 : 0)
-                        .offset(y: hasRevealedMenu ? 0 : 10)
-                        .animation(
-                            reduceMotion ? nil : FGMotion.settle.delay(FGMotion.stagger(index)),
-                            value: hasRevealedMenu
-                        )
-                }
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Today's menu preview")
-    }
-
-    /// Live proof of the "10 seconds" headline, played out instead of stated:
-    /// a tap on Energy, a tap on Time — the app's own coarse check-in signals
-    /// (`Energy`, `TimeBudget`; see the allow-list in CLAUDE.md) — then one
-    /// answer, not a list to choose from. Auto-advances with the carousel,
-    /// the same way the chat scene mimes its exchange.
-    private enum QuickPickPhase: Int {
-        case initial
-        case energyPicked
-        case timePicked
-        case resultShown
-    }
-
-    private static let quickPickEnergyOptions = ["Low", "Steady", "Strong"]
-    private static let quickPickEnergySelection = 0
-    private static let quickPickTimeOptions = ["5 min", "15 min", "30 min"]
-    private static let quickPickTimeSelection = 1
-
-    private var quickPickHeroContent: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            quickPickChipRow(
-                label: "ENERGY",
-                options: Self.quickPickEnergyOptions,
-                selected: quickPickPhase.rawValue >= QuickPickPhase.energyPicked.rawValue ? Self.quickPickEnergySelection : nil
-            )
-            quickPickChipRow(
-                label: "TIME",
-                options: Self.quickPickTimeOptions,
-                selected: quickPickPhase.rawValue >= QuickPickPhase.timePicked.rawValue ? Self.quickPickTimeSelection : nil
-            )
-
-            Divider().overlay(FGColor.line)
-
-            HStack(spacing: FGSpace.s) {
-                Image(Course.dessert.menuMascotAsset)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 26, height: 26)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Barefoot porch breath")
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    Text("20m Flow")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
                         .foregroundStyle(FGColor.ink)
-                    Text("Slow and low-effort. No gear needed.")
-                        .font(FGFont.caption)
+
+                    Text("Scheduled")
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(FGColor.inkMuted)
                 }
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Course.main.fill.opacity(0.35))
+                )
+
+                // Plum Animated Arrow
+                ZStack {
+                    Circle()
+                        .fill(FGColor.actionFill)
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 13, weight: .black))
+                        .foregroundStyle(FGColor.onActionFill)
+                }
+
+                // After Card
+                VStack(spacing: 5) {
+                    Image(Course.dessert.menuMascotAsset)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 36, height: 36)
+                        .padding(5)
+                        .background(Circle().fill(FGColor.surface))
+
+                    Text("5m Unwind")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(FGColor.ink)
+
+                    Text("Subbed in 1 tap")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(FGColor.sideBadge)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Course.dessert.fill.opacity(0.35))
+                )
             }
-            .opacity(quickPickPhase == .resultShown ? 1 : 0)
-            .animation(reduceMotion ? nil : FGMotion.gentle, value: quickPickPhase)
+
+            Text("Too tired? Swap any session instantly.")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(FGColor.inkMuted)
         }
-        .task(id: heroSlideIndex) { await handleQuickPickSlideChange(heroSlideIndex) }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Example. You pick: low energy, then 15 minutes. FeelGood answers: barefoot porch breath, slow and low-effort, no gear needed.")
     }
 
-    private func quickPickChipRow(label: String, options: [String], selected: Int?) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .tracking(0.5)
-                .foregroundStyle(FGColor.inkMuted)
-            HStack(spacing: 6) {
-                ForEach(options.indices, id: \.self) { index in
-                    let isSelected = selected == index
-                    Text(options[index])
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(isSelected ? .white : FGColor.ink)
-                        .padding(.horizontal, 10)
+    // MARK: - Hero Content 2: Companion Chat
+
+    private var chatHeroContent: some View {
+        VStack(spacing: 8) {
+            // Subtle time marker indicating an evening check-in
+            HStack(spacing: 5) {
+                Image(systemName: "moon.stars.fill")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(FGColor.sideBadge)
+
+                Text("8:00 PM · Evening check-in")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(FGColor.sideBadge)
+
+                Spacer()
+
+                Text("Unlimited")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(FGColor.inkMuted)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(FGColor.surface.opacity(0.8)))
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                // User check-in bubble
+                HStack {
+                    Spacer(minLength: 24)
+                    Text("Exhausted and brain won't shut off.")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(FGColor.onDeepFill)
+                        .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(
-                            Capsule().fill(isSelected ? AnyShapeStyle(Course.appetizer.accentGradient) : AnyShapeStyle(FGColor.surface))
-                        )
-                        .overlay(
-                            Capsule().strokeBorder(FGColor.line, lineWidth: isSelected ? 0 : 1)
-                        )
-                        .scaleEffect(isSelected ? 1.05 : 1)
-                        .animation(reduceMotion ? nil : FGMotion.swap, value: selected)
-                }
-            }
-        }
-    }
-
-    /// Plays only while slide 2 (index 1) is showing; any other index resets
-    /// so returning to this slide replays the tap-through from the top.
-    private func handleQuickPickSlideChange(_ index: Int) async {
-        guard !reduceMotion else {
-            quickPickPhase = .resultShown
-            return
-        }
-        guard index == 1 else {
-            quickPickPhase = .initial
-            return
-        }
-        quickPickPhase = .initial
-        try? await Task.sleep(for: .milliseconds(500))
-        guard !Task.isCancelled else { return }
-        quickPickPhase = .energyPicked
-        try? await Task.sleep(for: .milliseconds(700))
-        guard !Task.isCancelled else { return }
-        quickPickPhase = .timePicked
-        try? await Task.sleep(for: .milliseconds(700))
-        guard !Task.isCancelled else { return }
-        quickPickPhase = .resultShown
-    }
-
-    /// "Talk to it when you're stuck," shown rather than told: a two-line
-    /// exchange in the app's own bubble style (see `ExploreView`'s
-    /// `userTextBubble`/`assistantTextBubble`) ending in a recommendation,
-    /// not a promise about what chat can do.
-    /// Mirrors how a real reply actually arrives in Chat (see `ExploreView`'s
-    /// `messageRow`/`typingIndicator`): the user's line lands first, a typing
-    /// indicator holds the beat, then the reply replaces it — rather than
-    /// dropping the whole exchange on screen at once.
-    private enum ChatPhase: Int {
-        case userOpener
-        case assistantThinking1
-        case assistantReplied
-        case userFollowUp
-        case assistantThinking2
-        case assistantFollowUp
-    }
-
-    private var chatSceneContent: some View {
-        VStack(alignment: .trailing, spacing: 6) {
-            // Turn 1: User check-in
-            if chatPhase.rawValue >= ChatPhase.userOpener.rawValue {
-                HStack {
-                    Spacer(minLength: 24)
-                    Text("My back is sore, I have 20 minutes, and I'm tired.")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundStyle(FGColor.onDeepFill)
-                        .multilineTextAlignment(.trailing)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
                         .background(FGColor.userBubble)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
-                .transition(chatBubbleTransition)
-            }
 
-            // Turn 1: Assistant thinking
-            if chatPhase == .assistantThinking1 {
-                HStack {
-                    chatTypingIndicator
-                    Spacer(minLength: 24)
-                }
-                .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
-            }
+                // Companion recommendation
+                HStack(spacing: 8) {
+                    Image("IntentCalmBlueberryMascot")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 28, height: 28)
 
-            // Turn 1: Assistant gentle recommendation
-            if chatPhase.rawValue >= ChatPhase.assistantReplied.rawValue {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Here's something gentle for your back:")
-                            .font(.system(size: 11, weight: .regular))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("7-min legs-up-the-wall breathwork")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundStyle(FGColor.ink)
-
-                        HStack(spacing: 6) {
-                            Image(Course.main.menuMascotAsset)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 18, height: 18)
-
-                            Text("Ten gentle minutes on the mat")
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                .foregroundStyle(FGColor.ink)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 5)
-                        .background(FGAura.sage.core.opacity(0.55))
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        Text("Floor rest · Quiet the noise")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(FGColor.inkMuted)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(FGColor.panel)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 
-                    Spacer(minLength: 24)
+                    Spacer(minLength: 0)
                 }
-                .transition(chatBubbleTransition)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(FGAura.sage.core.opacity(0.65))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
 
-            // Turn 2: User follow-up asking for something shorter
-            if chatPhase.rawValue >= ChatPhase.userFollowUp.rawValue {
-                HStack {
-                    Spacer(minLength: 24)
-                    Text("Hmm, something else shorter?")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundStyle(FGColor.onDeepFill)
-                        .multilineTextAlignment(.trailing)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(FGColor.userBubble)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                }
-                .transition(chatBubbleTransition)
-            }
-
-            // Turn 2: Assistant thinking or follow-up reply
-            if chatPhase == .assistantThinking2 {
-                HStack {
-                    chatTypingIndicator
-                    Spacer(minLength: 24)
-                }
-                .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
-            } else if chatPhase == .assistantFollowUp {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Five minutes on the floor, zero pressure:")
-                            .font(.system(size: 11, weight: .regular))
-                            .foregroundStyle(FGColor.ink)
-
-                        HStack(spacing: 6) {
-                            Image(Course.dessert.menuMascotAsset)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 18, height: 18)
-
-                            Text("Living room floor unwind")
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                .foregroundStyle(FGColor.ink)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 5)
-                        .background(FGAura.apricot.core.opacity(0.45))
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(FGColor.panel)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-                    Spacer(minLength: 24)
-                }
-                .transition(chatBubbleTransition)
-            }
-        }
-        .padding(.horizontal, FGSpace.s)
-        .frame(maxWidth: .infinity, alignment: .top)
-        .animation(reduceMotion ? nil : FGMotion.settle, value: chatPhase)
-        .task(id: heroSlideIndex) { await handleSlideChange(heroSlideIndex) }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Example chat. You: my back is sore, I have 20 minutes, and I'm tired. FeelGood: here's something gentle for your back — ten gentle minutes on the mat. You: hmm, something else shorter? FeelGood: five minutes on the floor, zero pressure — living room floor unwind.")
-    }
-
-    private var chatBubbleTransition: AnyTransition {
-        reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .bottom))
-    }
-
-    private var chatTypingIndicator: some View {
-        HStack(spacing: 6) {
-            ProgressView()
-                .scaleEffect(0.7)
-                .tint(FGColor.controlAccent)
-            Text("Adapting routine...")
-                .font(.system(size: 11, weight: .medium))
+            Text("Check in whenever your energy changes.")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .foregroundStyle(FGColor.inkMuted)
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 12)
-        .background(FGColor.panel)
-        .clipShape(Capsule())
     }
 
-    /// Choreographs the dialogue turns with the carousel slides:
-    /// - Slide 3 ("Say how you're feeling"): Turn 1 (check-in + initial recommendation)
-    /// - Slide 4 ("Talk to it when you're stuck"): Turn 2 (request shorter session + adapted 5-min floor unwind)
-    private func handleSlideChange(_ index: Int) async {
-        guard !reduceMotion else {
-            chatPhase = .assistantFollowUp
-            return
-        }
-        if index == 2 {
-            chatPhase = .userOpener
-            try? await Task.sleep(for: .milliseconds(550))
-            guard !Task.isCancelled else { return }
-            chatPhase = .assistantThinking1
-            try? await Task.sleep(for: .milliseconds(950))
-            guard !Task.isCancelled else { return }
-            chatPhase = .assistantReplied
-        } else if index == 3 {
-            if chatPhase.rawValue < ChatPhase.assistantReplied.rawValue {
-                chatPhase = .assistantReplied
-            }
-            try? await Task.sleep(for: .milliseconds(700))
-            guard !Task.isCancelled else { return }
-            chatPhase = .userFollowUp
-            try? await Task.sleep(for: .milliseconds(550))
-            guard !Task.isCancelled else { return }
-            chatPhase = .assistantThinking2
-            try? await Task.sleep(for: .milliseconds(950))
-            guard !Task.isCancelled else { return }
-            chatPhase = .assistantFollowUp
-        }
-    }
+    // MARK: - Hero Content 3: Calendar Sync
 
-    private func menuTeaserRow(_ teaser: MenuTeaser) -> some View {
-        HStack(spacing: FGSpace.s) {
-            Circle()
-                .fill(teaser.course.accent)
-                .frame(width: 6, height: 6)
-
-            Text(teaser.course.label.uppercased())
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .tracking(0.5)
-                .foregroundStyle(FGColor.inkMuted)
-                .frame(width: 66, alignment: .leading)
-
-            Text(teaser.title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(FGColor.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
-
-            Spacer(minLength: FGSpace.xs)
-
-            Image(teaser.course.menuMascotAsset)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 24, height: 24)
-                .accessibilityHidden(true)
-        }
-        .padding(.vertical, 6)
-    }
-
-    // MARK: - Hero carousel
-
-    /// The hook and the three benefits, one line at a time — replaces a fixed
-    /// headline sitting above a separate rotating benefits card. Fewer things
-    /// on screen at once, and each slide is short enough to read at a glance.
-    private var heroCarousel: some View {
-        VStack(spacing: FGSpace.s) {
-            ZStack {
-                Text(currentSlide.title)
-                    .font(FGFont.display)
-                    .tracking(-0.6)
-                    .foregroundStyle(FGColor.ink)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .id("title-\(heroSlideIndex)")
-                    .transition(.opacity)
-                    .accessibilityAddTraits(.isHeader)
-            }
-
-            HStack(spacing: 6) {
-                ForEach(heroSlides.indices, id: \.self) { index in
-                    Capsule()
-                        .fill(index == heroSlideIndex ? FGColor.ink : FGColor.line)
-                        .frame(width: index == heroSlideIndex ? 16 : 6, height: 6)
+    private var calendarHeroContent: some View {
+        VStack(spacing: 10) {
+            VStack(spacing: 6) {
+                HStack {
+                    Text("1:00 PM – 2:00 PM")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(FGColor.inkMuted)
+                    Spacer()
+                    Text("Team Sync")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(FGColor.inkMuted)
                 }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(FGColor.panel.opacity(0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                HStack(spacing: 8) {
+                    Image(Course.special.menuMascotAsset)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 26, height: 26)
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("15-min free gap detected")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(FGColor.sideBadge)
+                        Text("10-min Posture Reset")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(FGColor.ink)
+                    }
+
+                    Spacer()
+
+                    Text("Auto-fit")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(FGColor.sideBadge)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(.white))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(FGAura.sage.core.opacity(0.65))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
+
+            Text("Finds open windows between meetings automatically.")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(FGColor.inkMuted)
         }
-        .frame(maxWidth: 340)
-        .fgAnimation(FGMotion.gentle, value: heroSlideIndex)
-        // Keyed on the reset token so a manual swipe restarts the dwell timer
-        // instead of letting it fire right after the person moved on.
-        .task(id: carouselResetToken) { await runHeroCarousel() }
     }
 
-    /// Horizontal swipes step the carousel; mostly-vertical drags fall
-    /// through so the page still scrolls.
-    private var heroSwipe: some Gesture {
-        DragGesture(minimumDistance: 24)
-            .onEnded { value in
-                let dx = value.translation.width
-                guard abs(dx) > abs(value.translation.height) * 1.5, abs(dx) > 40 else { return }
-                stepHeroSlide(by: dx < 0 ? 1 : -1)
-            }
-    }
-
-    private func stepHeroSlide(by delta: Int) {
-        let count = heroSlides.count
-        heroSlideIndex = (heroSlideIndex + delta + count) % count
-        carouselResetToken += 1
-    }
-
-    private var currentSlide: HeroSlide {
-        heroSlides[heroSlideIndex]
-    }
-
-    /// Cycles on its own — nothing here needs a tap, and the dots make clear
-    /// there's more without asking for one. Stops advancing under Reduce
-    /// Motion, since a still-changing headline is itself the kind of motion
-    /// that setting asks to avoid.
-    private func runHeroCarousel() async {
+    private func runSuperpowerAutoCycle() async {
         guard !reduceMotion else { return }
         while !Task.isCancelled {
-            try? await Task.sleep(for: currentSlide.dwell)
+            try? await Task.sleep(for: .seconds(4))
             guard !Task.isCancelled else { return }
-            heroSlideIndex = (heroSlideIndex + 1) % heroSlides.count
+            withAnimation(FGMotion.swap) {
+                let all = Superpower.allCases
+                let nextIdx = (activeSuperpower.rawValue + 1) % all.count
+                activeSuperpower = all[nextIdx]
+            }
         }
     }
 
-    // MARK: - Proof and boundary
-
-    // MARK: - Plan picker
+    // MARK: - 4. Plan Picker (LTV-Optimized Offer Architecture)
 
     private var planPicker: some View {
         VStack(spacing: FGSpace.s + 4) {
@@ -811,21 +563,25 @@ struct FeelGoodPaywallView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: FGSpace.xs) {
                         Text(plan.title)
-                            .font(.system(.title3, design: .rounded).weight(.medium))
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
                             .foregroundStyle(FGColor.ink)
+
+                        if plan == .yearly, trialEligiblePlans.contains(.yearly) {
+                            Text("· 7 days free")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundStyle(FGColor.sideBadge)
+                        }
                     }
 
                     HStack(spacing: 4) {
                         Text(priceLine(for: package, plan: plan))
-                            .font(FGFont.caption)
-                            .foregroundStyle(isSelected ? FGColor.inkMuted : FGColor.ink.opacity(0.75))
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(FGColor.inkMuted)
 
-                        // Makes the yearly savings concrete rather than abstract —
-                        // the percent badge says "cheaper," this says how cheap.
                         if plan == .yearly, let monthlyEquivalent = monthlyEquivalentCaption(for: package) {
                             Text("· \(monthlyEquivalent)")
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                .foregroundStyle(isSelected ? FGColor.ink.opacity(0.7) : FGColor.ink.opacity(0.55))
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundStyle(FGColor.ink)
                         }
                     }
                 }
@@ -835,30 +591,27 @@ struct FeelGoodPaywallView: View {
                 selectionMark(isSelected: isSelected)
             }
             .padding(.horizontal, FGSpace.m)
-            .padding(.vertical, FGSpace.m)
-            .frame(minHeight: FGSize.minTouchTarget + 16)
+            .padding(.vertical, FGSpace.m - 2)
+            .frame(minHeight: FGSize.minTouchTarget + 14)
             .background(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .fill(isSelected ? AnyShapeStyle(Course.appetizer.accentGradient) : AnyShapeStyle(FGColor.surface))
+                    .fill(isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(FGColor.surface.opacity(0.8)))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
-                    .strokeBorder(isSelected ? FGColor.ink.opacity(0.2) : FGColor.lineStrong, lineWidth: 1)
+                    .strokeBorder(isSelected ? FGColor.ink : FGColor.lineStrong, lineWidth: isSelected ? 2 : 1)
             )
+            .shadow(color: FGColor.ink.opacity(isSelected ? 0.08 : 0), radius: 8, y: 4)
         }
         .buttonStyle(.plain)
         .overlay(alignment: .topTrailing) {
-            // Straddles the card's top edge, clear of the plan name.
             if plan == .yearly, let savingsPercent {
-                Text("SAVE \(savingsPercent)%")
-                    .font(.system(.caption2, design: .rounded).weight(.heavy))
-                    .tracking(0.4)
+                Text("Save \(savingsPercent)%")
+                    .font(.system(.caption2, design: .rounded).weight(.bold))
+                    .tracking(0.3)
                     .foregroundStyle(FGColor.onDeepFill)
                     .padding(.horizontal, FGSpace.s + 2)
                     .padding(.vertical, 4)
-                    // Deep botanical green — the saturated end of the Side
-                    // course's sage — so white text clears 4.5:1 and the
-                    // pill leads instead of receding into the card.
                     .background(Capsule().fill(FGColor.sideBadge))
                     .padding(.trailing, FGSpace.m)
                     .offset(y: -10)
@@ -907,17 +660,11 @@ struct FeelGoodPaywallView: View {
         return "\(product.localizedPriceString) \(unit)"
     }
 
-    /// "~just $2.92/mo" — RevenueCat/StoreKit's own per-month breakdown
-    /// (`localizedPricePerMonth`), already formatted in the product's real
-    /// currency and locale rather than a hand-rolled division.
     private func monthlyEquivalentCaption(for package: Package) -> String? {
         guard let perMonth = package.storeProduct.localizedPricePerMonth else { return nil }
-        return "~just \(perMonth)/mo"
+        return "just \(perMonth)/mo"
     }
 
-    /// Plain plural noun ("7 days", "1 week") for a sentence that already
-    /// supplies its own verb — "1 week free, then…," not the clipped
-    /// "1-week free."
     private func trialLengthNoun(_ period: SubscriptionPeriod) -> String {
         let unit: String
         switch period.unit {
@@ -930,20 +677,16 @@ struct FeelGoodPaywallView: View {
         return period.value == 1 ? "\(period.value) \(unit)" : "\(period.value) \(unit)s"
     }
 
-    // MARK: - Actions
+    // MARK: - 5. Value-Led CTA Buttons (Thumb-Zone)
 
-    /// Selecting a plan only changes its price line and this button's label —
-    /// never whether the button itself can be tapped. A plan is selected the
-    /// moment this screen appears (Yearly, by default), so there is always a
-    /// single, obvious next step.
     private var ctaTitle: String {
         guard let selectedPackage else { return "Continue" }
         guard trialEligiblePlans.contains(selectedPlan),
               let discount = selectedPackage.storeProduct.introductoryDiscount,
               discount.paymentMode == .freeTrial else {
-            return "Subscribe, \(selectedPackage.storeProduct.localizedPriceString)\(selectedPlan.renewalSuffix)"
+            return "Subscribe · \(selectedPackage.storeProduct.localizedPriceString)\(selectedPlan.renewalSuffix)"
         }
-        return "\(trialLengthNoun(discount.subscriptionPeriod)) free, then \(selectedPackage.storeProduct.localizedPriceString)\(selectedPlan.renewalSuffix)"
+        return "Start \(trialLengthNoun(discount.subscriptionPeriod)) free trial"
     }
 
     private var ctaButtons: some View {
@@ -957,56 +700,29 @@ struct FeelGoodPaywallView: View {
                 finish()
             } label: {
                 Text("Continue with free menu")
-                    .font(.system(.subheadline).weight(.semibold))
-                    .foregroundStyle(FGColor.ink)
-                    .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
-                    .contentShape(Rectangle())
-                    .background(FGColor.surface.opacity(0.82), in: Capsule())
-                    .overlay {
-                        Capsule()
-                            .strokeBorder(FGColor.lineStrong, lineWidth: 1)
-                    }
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(FGColor.inkMuted)
+                    .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget - 4)
             }
-            .buttonStyle(.feelGoodPress)
+            .buttonStyle(.plain)
         }
     }
 
-    /// One line instead of two stacked blocks: the renewal disclosure and
-    /// the legal links read as a single fine-print row, falling back to a
-    /// stack only if a device is too narrow to fit it on one line.
+    // MARK: - 6. Transparent Fine Print & Legal
+
     private var legalSection: some View {
-        ViewThatFits(in: .horizontal) {
-            legalLinks(spacing: FGSpace.xs, isStacked: false)
-            legalLinks(spacing: FGSpace.xs, isStacked: true)
+        HStack(spacing: 8) {
+            Text("Auto-renews")
+            Text("·")
+            Link("Terms", destination: LegalLinks.termsOfUse)
+            Text("·")
+            Link("Privacy", destination: LegalLinks.privacyPolicy)
+            Text("·")
+            restoreButton
         }
-        .font(FGFont.caption)
+        .font(.system(size: 11, weight: .medium))
         .foregroundStyle(FGColor.inkMuted.opacity(0.8))
-    }
-
-    @ViewBuilder
-    private func legalLinks(spacing: CGFloat, isStacked: Bool) -> some View {
-        if isStacked {
-            VStack(spacing: spacing) {
-                Text("Auto-renews. Cancel anytime.")
-                HStack(spacing: spacing) {
-                    Link("Terms of Use", destination: LegalLinks.termsOfUse)
-                    Text("·")
-                    Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
-                    Text("·")
-                    restoreButton
-                }
-            }
-        } else {
-            HStack(spacing: spacing) {
-                Text("Auto-renews")
-                Text("·")
-                Link("Terms of Use", destination: LegalLinks.termsOfUse)
-                Text("·")
-                Link("Privacy Policy", destination: LegalLinks.privacyPolicy)
-                Text("·")
-                restoreButton
-            }
-        }
+        .padding(.top, 2)
     }
 
     private var restoreButton: some View {
@@ -1024,6 +740,7 @@ struct FeelGoodPaywallView: View {
         } label: {
             if isRestoring {
                 ProgressView()
+                    .scaleEffect(0.8)
             } else {
                 Text("Restore")
             }
@@ -1049,7 +766,17 @@ struct FeelGoodPaywallView: View {
     }
 }
 
-#Preview {
-    FeelGoodPaywallView()
+#Preview("General (Swaps)") {
+    FeelGoodPaywallView(context: .general)
+        .environment(PurchasesManager.shared)
+}
+
+#Preview("Chat Limit (Evening Check-in)") {
+    FeelGoodPaywallView(context: .chatLimit)
+        .environment(PurchasesManager.shared)
+}
+
+#Preview("Calendar Context") {
+    FeelGoodPaywallView(context: .calendar)
         .environment(PurchasesManager.shared)
 }
