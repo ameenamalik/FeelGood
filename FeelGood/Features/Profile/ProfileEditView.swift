@@ -65,25 +65,6 @@ struct ProfileEditView: View {
                         )
                     }
 
-                    section("How often do you want to move?") {
-                        VStack(alignment: .leading, spacing: FGSpace.m) {
-                            choices(Cadence.allCases, label: \.label, selection: $answers.cadence)
-                            Text("Within a day")
-                                .font(FGFont.label)
-                                .foregroundStyle(FGColor.inkMuted)
-                            choices(MovementMoments.allCases, label: \.label, selection: $answers.moments)
-                        }
-                    }
-
-                    section("On a normal day, how much time is realistic?") {
-                        choices([10, 20, 30, 45], label: { $0 == 45 ? "45+ min" : "\($0) min" },
-                                selection: $answers.realisticMinutes)
-                    }
-
-                    section("When do you have the most in you?") {
-                        choices(TimeOfDay.allCases, label: \.label, selection: $answers.bestTimeOfDay)
-                    }
-
                     section("What are you moving toward?") {
                         WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
                             ForEach(Array(Intent.allCases.enumerated()), id: \.element) { index, intent in
