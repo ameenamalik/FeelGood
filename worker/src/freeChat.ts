@@ -1,4 +1,4 @@
-import { Env } from "./types";
+import type { Env } from "./types";
 
 // A free user's first chat reply is the one that decides whether the app
 // seems smart, so it comes from the model too. One exchange, then the
