@@ -699,6 +699,10 @@ struct ProfileHeaderView: View {
             Button("Connect") {
                 Task {
                     calendarConnectionState = await EventKitCalendarAvailabilityService.shared.requestAccess()
+                    Analytics.capture(
+                        EngagementAnalytics.calendarAccessResultEvent,
+                        properties: EngagementAnalytics.calendarAccessResult(calendarConnectionState == .connected ? .connected : .denied)
+                    )
                     if calendarConnectionState == .connected {
                         isCalendarPersonalizationEnabled = true
                     }
@@ -739,7 +743,13 @@ struct ProfileHeaderView: View {
     private var chatPrivacySection: some View {
         Toggle(isOn: Binding(
             get: { chatConsentRaw == ChatConsent.Status.granted.rawValue },
-            set: { chatConsentRaw = ($0 ? ChatConsent.Status.granted : .declined).rawValue }
+            set: {
+                chatConsentRaw = ($0 ? ChatConsent.Status.granted : .declined).rawValue
+                Analytics.capture(
+                    EngagementAnalytics.aiConsentChangedEvent,
+                    properties: EngagementAnalytics.aiConsentChanged(granted: $0, source: .settings)
+                )
+            }
         )) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("AI replies in Chat")
