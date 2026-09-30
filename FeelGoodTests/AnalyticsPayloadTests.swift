@@ -138,6 +138,48 @@ struct AnalyticsPayloadTests {
     }
 }
 
+// MARK: - Engagement events
+
+@Suite("Engagement analytics")
+struct EngagementAnalyticsTests {
+    @Test("Each event carries exactly its permitted keys")
+    func wireShapesAreClosed() {
+        #expect(Set(EngagementAnalytics.swapUsed(course: .main, isPro: true).keys) == EngagementAnalytics.swapUsedKeys)
+        #expect(Set(EngagementAnalytics.swapLimitReached(course: .main).keys) == EngagementAnalytics.swapLimitReachedKeys)
+        #expect(Set(EngagementAnalytics.menuViewed(itemCount: 4).keys) == EngagementAnalytics.menuViewedKeys)
+        #expect(Set(EngagementAnalytics.tabViewed(.chat).keys) == EngagementAnalytics.tabViewedKeys)
+        #expect(Set(EngagementAnalytics.calendarAccessResult(.denied).keys) == EngagementAnalytics.calendarAccessResultKeys)
+        #expect(Set(EngagementAnalytics.aiConsentChanged(granted: false, source: .sheet).keys) == EngagementAnalytics.aiConsentChangedKeys)
+    }
+
+    @Test("Values are coarse and carry no body state or free text")
+    func valuesAreCoarse() throws {
+        let all: [[String: Any]] = [
+            EngagementAnalytics.swapUsed(course: .main, isPro: false),
+            EngagementAnalytics.swapLimitReached(course: .main),
+            EngagementAnalytics.menuViewed(itemCount: 4),
+            EngagementAnalytics.tabViewed(.you),
+            EngagementAnalytics.calendarAccessResult(.connected),
+            EngagementAnalytics.aiConsentChanged(granted: true, source: .settings),
+        ]
+        for properties in all {
+            let data = try JSONSerialization.data(withJSONObject: properties, options: [.sortedKeys])
+            let json = try #require(String(data: data, encoding: .utf8)).lowercased()
+            for body in BodyState.allCases where body != .good {
+                #expect(!json.contains(body.rawValue.lowercased()), "\(body.rawValue) reached an engagement event")
+            }
+        }
+    }
+
+    @Test("Consent choice reports granted or declined, with its source")
+    func consentChoice() {
+        let granted = EngagementAnalytics.aiConsentChanged(granted: true, source: .sheet)
+        #expect(granted["choice"] as? String == "granted")
+        #expect(granted["source"] as? String == "sheet")
+        #expect(EngagementAnalytics.aiConsentChanged(granted: false, source: .settings)["choice"] as? String == "declined")
+    }
+}
+
 // MARK: - Fake
 
 /// Records what it was handed. Lives here rather than in `Fixtures`, the way

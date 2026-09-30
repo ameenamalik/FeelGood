@@ -196,6 +196,7 @@ struct TodayView: View {
         }
         .onAppear {
             isViewVisible = true
+            Analytics.capture(EngagementAnalytics.menuViewedEvent, properties: EngagementAnalytics.menuViewed(itemCount: model.menu.items.count))
             // Calendar availability now shapes the menu quietly. Clear any
             // exact-time reminder saved by the previous scheduling UI.
             CalendarOpeningReminderService.shared.cancel()
@@ -312,6 +313,7 @@ struct TodayView: View {
                 return updated.id != item.id
             }
         } else {
+            Analytics.capture(EngagementAnalytics.swapLimitReachedEvent, properties: EngagementAnalytics.swapLimitReached(course: item.course))
             paywallContext = .secondSwap
             isShowingPaywall = true
         }
@@ -327,6 +329,7 @@ struct TodayView: View {
             // catalog picker remains Pro's more-controlled replacement flow.
             _ = performSwipeSkip(item)
         } else {
+            Analytics.capture(EngagementAnalytics.swapLimitReachedEvent, properties: EngagementAnalytics.swapLimitReached(course: item.course))
             paywallContext = .secondSwap
             isShowingPaywall = true
         }
@@ -688,12 +691,10 @@ struct TodayView: View {
         guard shouldOfferProAfterDismissal else { return }
         shouldOfferProAfterDismissal = false
 
-        // Adding these local triggers makes the discovery message eligible
-        // only now: the completed session sheet has fully dismissed and Today
-        // is visible again. They are deliberately absent while a session is
-        // being considered or played.
-        syncOneSignalDiscoveryTriggers()
-
+        // The first-completion sign-up sheet gets the moment to itself. Arming
+        // the OneSignal discovery message here would stack a second full-screen
+        // prompt on top of it for a brand-new person, so those triggers wait
+        // for a later completion.
         if !authService.isAuthenticated,
            !hasShownFirstMenuAuthPrompt,
            !hasShownFirstCompletionAuthPrompt {
@@ -701,6 +702,12 @@ struct TodayView: View {
             isShowingAuthPrompt = true
             return
         }
+
+        // Adding these local triggers makes the discovery message eligible
+        // only now: the completed session sheet has fully dismissed and Today
+        // is visible again. They are deliberately absent while a session is
+        // being considered or played.
+        syncOneSignalDiscoveryTriggers()
 
         guard !model.isProUser, !hasShownFirstCompletionPaywall else { return }
         hasShownFirstCompletionPaywall = true

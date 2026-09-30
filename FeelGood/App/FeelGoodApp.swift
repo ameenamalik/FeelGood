@@ -482,6 +482,14 @@ private struct TodayScreen: View {
                 .toolbarVisibility(.hidden, for: .tabBar)
             }
         }
+        .onChange(of: tab) { _, destination in
+            let name: EngagementAnalytics.Tab = switch destination {
+            case .today: .today
+            case .explore: .chat
+            case .you: .you
+            }
+            Analytics.capture(EngagementAnalytics.tabViewedEvent, properties: EngagementAnalytics.tabViewed(name))
+        }
         .tint(FGColor.ink)
         // The system bar is a see-through glass pill; ours is solid (TabBar.swift).
         .toolbarVisibility(.hidden, for: .tabBar)
