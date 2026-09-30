@@ -60,7 +60,7 @@ struct DebugSeeder {
         switch scenario {
         case .freshStart:
             wipe(includingProfile: true)
-            FirstRunFlow.resetForSignedOutUser()
+            FirstRunFlow.resetWelcomeFlow()
 
         case .returningAfterGap:
             wipe(includingProfile: false)

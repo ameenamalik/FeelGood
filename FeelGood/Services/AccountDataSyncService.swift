@@ -71,11 +71,12 @@ enum AccountDataSyncService {
     }
 
     /// Account data remains in Firebase; only the device cache is removed.
-    /// Removing the profile returns RootView to the product intro/onboarding,
-    /// which creates a genuinely separate guest rather than exposing the last
-    /// account's preferences.
+    /// Replace the account profile with a fresh guest so RootView stays in the
+    /// app without replaying onboarding or exposing the account's preferences.
     static func clearAccountDataFromDevice(context: ModelContext) {
         clearActivityData(in: context, removeProfile: true)
+        context.insert(UserProfile(answers: ProfileAnswers(), now: Date()))
+        try? context.save()
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: localOwnerKey)
         defaults.removeObject(forKey: "sessionProgress.v1")

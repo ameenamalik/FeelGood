@@ -77,3 +77,6 @@ htmlcov/
 venv/
 .cursor/
 screenshots/demo-video/
+
+# Markdown files in every directory
+*.md

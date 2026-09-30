@@ -56,7 +56,7 @@ enum InstallationFirstRun {
     }
 
     private static func resetWelcomeState(defaults: UserDefaults) {
-        FirstRunFlow.resetForSignedOutUser(defaults: defaults)
+        FirstRunFlow.resetWelcomeFlow(defaults: defaults)
         defaults.set(false, forKey: "hasShownFirstCompletionAuthPrompt")
         defaults.set(false, forKey: "hasShownFirstCompletionPaywall")
         defaults.set(false, forKey: "hasSeenDopamineMenuTour")
@@ -71,9 +71,9 @@ struct FirstRunFlow: View {
     @AppStorage(Self.hasSeenIntroKey) private var hasSeenIntro = false
     @State private var settingUpModel: OnboardingModel?
 
-    /// A signed-out account becomes a fresh local guest. Replay the product
-    /// promises and account choice before asking for new preferences.
-    static func resetForSignedOutUser(defaults: UserDefaults = .standard) {
+    /// Reset the welcome screens for a fresh installation or a debug restart.
+    /// Signing out preserves these flags so onboarding is not repeated.
+    static func resetWelcomeFlow(defaults: UserDefaults = .standard) {
         defaults.set(false, forKey: hasSeenIntroKey)
         defaults.set(false, forKey: hasSeenWelcomeSignUpKey)
     }

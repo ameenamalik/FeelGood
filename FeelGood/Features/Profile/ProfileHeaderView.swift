@@ -349,7 +349,6 @@ struct ProfileHeaderView: View {
     private func handleSignOut() {
         do {
             try authService.signOut()
-            FirstRunFlow.resetForSignedOutUser()
             AccountDataSyncService.clearAccountDataFromDevice(context: modelContext)
             resetAnalyticsIdentity()
             dismiss()

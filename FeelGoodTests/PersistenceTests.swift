@@ -243,7 +243,7 @@ struct PersistenceTests {
         #expect(!first.contains("/"))
     }
 
-    @Test("Signing out removes account data from the device")
+    @Test("Signing out replaces account data with a guest profile without resetting onboarding")
     func accountSignOutClearsLocalData() throws {
         let context = try context()
         let profile = UserProfile(answers: ProfileAnswers(activities: [.walking]), now: Fixture.now)
@@ -256,9 +256,17 @@ struct PersistenceTests {
         UserDefaults.standard.set("test-user", forKey: AccountDataSyncService.localOwnerKey)
         UserDefaults.standard.set(Data([1]), forKey: "FeelGood.ChatThreads.v1")
 
+        let introBefore = UserDefaults.standard.bool(forKey: FirstRunFlow.hasSeenIntroKey)
+        let onboardingBefore = UserDefaults.standard.bool(forKey: InstallationFirstRun.completedKey)
+
         AccountDataSyncService.clearAccountDataFromDevice(context: context)
 
-        #expect(try context.fetch(FetchDescriptor<UserProfile>()).isEmpty)
+        let guests = try context.fetch(FetchDescriptor<UserProfile>())
+        #expect(guests.count == 1)
+        let guest = try #require(guests.first)
+        #expect(guest.answers == UserProfile(answers: ProfileAnswers(), now: Fixture.now).answers)
+        #expect(UserDefaults.standard.bool(forKey: FirstRunFlow.hasSeenIntroKey) == introBefore)
+        #expect(UserDefaults.standard.bool(forKey: InstallationFirstRun.completedKey) == onboardingBefore)
         #expect(try context.fetch(FetchDescriptor<SessionRecord>()).isEmpty)
         #expect(try context.fetch(FetchDescriptor<CustomSession>()).isEmpty)
         #expect(AccountDataSyncService.localOwnerUID() == nil)

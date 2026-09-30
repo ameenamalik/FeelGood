@@ -141,8 +141,8 @@ struct AuthServiceTests {
         #expect(FirstRunFlow.hasSeenWelcomeSignUpKey == "hasSeenWelcomeSignUp")
     }
 
-    @Test("Signing out replays the welcome screens")
-    func signOutResetsWelcomeFlow() throws {
+    @Test("An explicit fresh-start reset replays the welcome screens")
+    func freshStartResetsWelcomeFlow() throws {
         let suiteName = "FirstRunFlowTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
@@ -150,7 +150,7 @@ struct AuthServiceTests {
         defaults.set(true, forKey: FirstRunFlow.hasSeenIntroKey)
         defaults.set(true, forKey: FirstRunFlow.hasSeenWelcomeSignUpKey)
 
-        FirstRunFlow.resetForSignedOutUser(defaults: defaults)
+        FirstRunFlow.resetWelcomeFlow(defaults: defaults)
 
         #expect(!defaults.bool(forKey: FirstRunFlow.hasSeenIntroKey))
         #expect(!defaults.bool(forKey: FirstRunFlow.hasSeenWelcomeSignUpKey))

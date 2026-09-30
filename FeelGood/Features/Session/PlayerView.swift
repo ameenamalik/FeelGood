@@ -82,7 +82,6 @@ struct PlayerView: View {
     @State private var isHidingSession = false
     @State private var breathingStartedAt = Date()
     @State private var breathingPausedAt: Date?
-    @State private var breathingAnchorIndex: Int?
     /// The step index narration has already been triggered for, so re-entering
     /// this `.task(id: index)` block (e.g. after the reading buffer finishes
     /// on its own tick, right after "Start now" already fired it) never plays
@@ -275,9 +274,6 @@ struct PlayerView: View {
                 }
             }
 
-            if isBreathingStep(step), breathingAnchorIndex != index {
-                restartBreathingCycle(for: step)
-            }
             playStepNarrationIfNeeded(for: step)
 
             // Counted or untimed rest exercises advance through user action ("Done"), not a hidden countdown timer.
@@ -690,7 +686,6 @@ struct PlayerView: View {
                     }
                     readingRemaining = 0
                     isReadingPaused = false
-                    if isBreathingStep(step) { restartBreathingCycle(for: step) }
                     playStepNarrationIfNeeded(for: step)
                 }
             } else if step.isCounted {
@@ -1255,34 +1250,20 @@ struct PlayerView: View {
         steps.contains { $0.narrationID != nil }
     }
 
-    /// Anchors the orb's clock. When this step has narration, the anchor is
-    /// pushed back by the clip's real, measured length rather than started
-    /// immediately — otherwise the orb (a fixed cadence) and the spoken
-    /// words (natural speech, never exactly on the second) drift apart
-    /// within a single utterance: "Breathe in" on screen while the voice is
-    /// already saying "Hold". `BreathingCycleState` clamps elapsed time to
-    /// zero for a `startedAt` still in the future, so the orb simply holds
-    /// at rest — inhale phase, empty scale — for however long the clip
-    /// actually runs, then starts pacing for real the moment it ends.
-    private func restartBreathingCycle(for step: Step) {
-        breathingStartedAt = Date().addingTimeInterval(narrationDelay(for: step))
-        breathingPausedAt = nil
-        breathingAnchorIndex = index
-    }
-
-    private func narrationDelay(for step: Step) -> TimeInterval {
-        guard !narrationService.isMuted, let narrationID = step.narrationID else { return 0 }
-        return narrationService.duration(for: narrationID) ?? 0
-    }
-
     /// Plays a step's narration once, the moment its reading buffer ends —
     /// whether that's a breathing step's paced cue or a plain setup/close
     /// step read aloud. `narratedIndex` keeps this to exactly once per step
     /// regardless of which of the two call sites gets there first.
     private func playStepNarrationIfNeeded(for step: Step) {
-        guard narratedIndex != index, let narrationID = step.narrationID else { return }
+        guard narratedIndex != index else { return }
         narratedIndex = index
-        narrationService.play(narrationID: narrationID)
+        let narrationDuration = step.narrationID.flatMap { narrationService.play(narrationID: $0) }
+        if isBreathingStep(step) {
+            // Wait out the spoken cue only if playback actually started.
+            // Failed, missing, or muted audio lets the orb pace immediately.
+            breathingStartedAt = Date().addingTimeInterval(narrationDuration ?? 0)
+            breathingPausedAt = nil
+        }
     }
 
     /// Move the cycle's origin forward by the paused duration. Resuming then

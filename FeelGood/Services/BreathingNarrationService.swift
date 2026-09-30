@@ -23,17 +23,13 @@ protocol BreathingNarrationPlaying: AnyObject {
     /// Starts a narration clip from the beginning. Replaces whatever was
     /// already playing, matching a fresh step always starting its cue from
     /// the top. A no-op while `isMuted` is `true`.
-    func play(narrationID: String)
+    /// Returns the clip duration only when playback starts successfully;
+    /// `nil` means there is no audio to wait for (including when muted).
+    @discardableResult
+    func play(narrationID: String) -> TimeInterval?
     func pause()
     func resume()
     func stop()
-
-    /// How long a clip runs, before playing it — so a caller pacing a live
-    /// visual (the breathing orb) against it can hold that visual still
-    /// until the clip actually finishes, rather than racing a fixed cadence
-    /// against however long the spoken words really took. `nil` when the
-    /// clip doesn't exist or its length can't be read.
-    func duration(for narrationID: String) -> TimeInterval?
 }
 
 /// No-op stand-in for previews, tests, and anyone without bundled narration —
@@ -41,11 +37,11 @@ protocol BreathingNarrationPlaying: AnyObject {
 @MainActor
 final class SilentNarrationService: BreathingNarrationPlaying {
     var isMuted = false
-    func play(narrationID: String) {}
+    @discardableResult
+    func play(narrationID: String) -> TimeInterval? { nil }
     func pause() {}
     func resume() {}
     func stop() {}
-    func duration(for narrationID: String) -> TimeInterval? { nil }
 }
 
 @MainActor
@@ -64,14 +60,18 @@ final class AVAudioPlayerNarrationService: BreathingNarrationPlaying {
         }
     }
 
-    func play(narrationID: String) {
-        guard !isMuted, let url = ExerciseNarration.audioURL(for: narrationID) else { return }
+    @discardableResult
+    func play(narrationID: String) -> TimeInterval? {
+        stop()
+        guard !isMuted, let url = ExerciseNarration.audioURL(for: narrationID) else { return nil }
         do {
             let player = try AVAudioPlayer(contentsOf: url)
-            player.play()
+            guard player.play() else { return nil }
             self.player = player
+            return player.duration
         } catch {
             self.player = nil
+            return nil
         }
     }
 
@@ -87,10 +87,5 @@ final class AVAudioPlayerNarrationService: BreathingNarrationPlaying {
     func stop() {
         player?.stop()
         player = nil
-    }
-
-    func duration(for narrationID: String) -> TimeInterval? {
-        guard let url = ExerciseNarration.audioURL(for: narrationID) else { return nil }
-        return try? AVAudioPlayer(contentsOf: url).duration
     }
 }
