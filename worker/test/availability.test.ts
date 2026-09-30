@@ -63,3 +63,44 @@ test("the app's snake_case user_context and todays_menu reach the handler", () =
   assert.ok(parseAvailability(body.userContext as never));
   assert.ok(Array.isArray(body.todaysMenu));
 });
+
+const homeWalker = { availableEquipment: ["none", "mat"], availablePlaces: ["home"], availableActivities: ["walking"] };
+
+test("asking about bands opens band sessions even if bands aren't in the profile", () => {
+  const bandSessions = CATALOG_SESSIONS.filter((s) => s.equipment.includes("band"));
+  assert.ok(bandSessions.length > 0);
+  assert.ok(bandSessions.every((s) => !isSessionAvailable(s, parseAvailability(homeWalker))));
+  const asked = parseAvailability(homeWalker, "do u have any exercises with bands");
+  assert.ok(bandSessions.every((s) => isSessionAvailable(s, asked)));
+});
+
+test("asking for a kettlebell or the gym opens gym sessions even if not in the profile", () => {
+  const gymSessions = CATALOG_SESSIONS.filter((s) => s.activity === "strength" && s.equipment.includes("gym"));
+  assert.ok(gymSessions.length > 0);
+  for (const prompt of ["I'm at the gym today", "anything with a kettlebell?"]) {
+    const asked = parseAvailability(homeWalker, prompt);
+    assert.ok(gymSessions.some((s) => isSessionAvailable(s, asked)), prompt);
+  }
+});
+
+test("saying you have no band doesn't add band sessions", () => {
+  const asked = parseAvailability(homeWalker, "I don't have a band");
+  assert.ok(!asked!.equipment.has("band"));
+});
+
+test("every session in the catalog can be reached by plainly asking for it", () => {
+  const bare = { availableEquipment: ["none"], availablePlaces: ["home"], availableActivities: [] as string[] };
+  const ask: Record<string, string> = {
+    strength: "a strength workout", stretching: "some stretching", breathwork: "breathing", pilates: "pilates",
+    walking: "a walk", agility: "agility", dance: "dance", running: "a run", yoga: "yoga", carries: "carries",
+    qigong: "qi gong", biking: "a bike ride", swimming: "a swim", jumpRope: "jump rope", skating: "skating",
+    racquet: "tennis", climbing: "climbing", other: "something",
+  };
+  const extras = ["", " at the gym", " outside", " with a band", " at a studio class", " on a reformer"];
+  const unreachable = CATALOG_SESSIONS.filter((s) => {
+    const what = ask[s.activity];
+    assert.ok(what, `no plain ask for activity "${s.activity}" — add a prompt rule and an entry here`);
+    return !extras.some((extra) => isSessionAvailable(s, parseAvailability(bare, `can I do ${what}${extra}`)));
+  });
+  assert.deepEqual(unreachable.map((s) => s.id), []);
+});
