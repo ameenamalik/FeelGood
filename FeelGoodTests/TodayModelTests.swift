@@ -58,6 +58,50 @@ struct TodayModelTests {
         #expect(model.menu.main?.session.durationMin ?? 0 <= opening.budget.maxMinutes)
     }
 
+    @Test("Declining calendar movement restores and saves a menu without counting a workout or swap")
+    func declinedCalendarMovementRebuildsMenu() throws {
+        let log = InMemorySessionLog()
+        let model = model(log: log)
+        let checkIn = PlanCheckIn(energy: .low, time: .aLittle)
+        model.apply(checkIn, now: Fixture.now)
+        let swapsBefore = model.dailySwapsCount
+        let plan = CalendarMovementPlan(
+            id: "declined-calendar-\(UUID().uuidString)",
+            start: Fixture.now.addingTimeInterval(-90 * 60),
+            end: Fixture.now.addingTimeInterval(-30 * 60),
+            activity: .pilates
+        )
+
+        model.declineCalendarMovement(plan, now: Fixture.now)
+
+        #expect(CalendarMovementPreferences.isHandled(plan.id))
+        #expect(model.history.isEmpty)
+        #expect(log.allHistory().isEmpty)
+        #expect(model.dailySwapsCount == swapsBefore)
+        #expect(model.checkIn == checkIn)
+        #expect(!model.menu.items.isEmpty)
+        #expect(log.day(Fixture.utc.movementDayStart(for: Fixture.now), resolving: { id in
+            Fixture.catalog.first { $0.id == id }
+        }) == model.menu)
+    }
+
+    @Test("Declining calendar movement refreshes actual history before rebuilding")
+    func declinedCalendarMovementUsesActualHistory() throws {
+        let log = InMemorySessionLog()
+        let model = model(log: log)
+        let session = try #require(Fixture.catalog.first)
+        log.recordCompletion(of: session, startedAt: Fixture.now.addingTimeInterval(-600),
+            endedAt: Fixture.now.addingTimeInterval(-60), feel: nil, place: nil)
+        let plan = CalendarMovementPlan(id: "declined-calendar-\(UUID().uuidString)",
+            start: Fixture.now.addingTimeInterval(-3600), end: Fixture.now.addingTimeInterval(-1800), activity: .pilates)
+
+        model.declineCalendarMovement(plan, now: Fixture.now)
+
+        #expect(model.history.count == 1)
+        #expect(model.history.first?.sessionID == session.id)
+        #expect(model.completedSessionCount == 1)
+    }
+
     @Test("A confirmed calendar movement plan counts as completed movement")
     func confirmedCalendarMovementCounts() throws {
         let eventID = "calendar-test-\(UUID().uuidString)"

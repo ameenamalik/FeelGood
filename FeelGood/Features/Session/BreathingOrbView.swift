@@ -22,6 +22,7 @@ struct BreathingOrbView: View {
     let isActive: Bool
     let startedAt: Date
     let pausedAt: Date?
+    var narrationPosition: (Date) -> NarrationPlaybackPosition? = { _ in nil }
     var diameter: CGFloat = 200
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -34,7 +35,8 @@ struct BreathingOrbView: View {
                 isActive: isActive,
                 reduceMotion: reduceMotion,
                 startedAt: startedAt,
-                pausedAt: pausedAt
+                pausedAt: pausedAt,
+                narrationPosition: narrationPosition(timeline.date)
             )
 
             ZStack {
@@ -81,6 +83,7 @@ struct BreathingPhaseLabel: View {
     let isActive: Bool
     let startedAt: Date
     let pausedAt: Date?
+    var narrationPosition: (Date) -> NarrationPlaybackPosition? = { _ in nil }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -92,7 +95,8 @@ struct BreathingPhaseLabel: View {
                 isActive: isActive,
                 reduceMotion: reduceMotion,
                 startedAt: startedAt,
-                pausedAt: pausedAt
+                pausedAt: pausedAt,
+                narrationPosition: narrationPosition(timeline.date)
             )
             let text = isActive && !reduceMotion ? state.phase.label : (isActive ? "Breathe slowly" : "Paused")
 
@@ -118,6 +122,7 @@ struct BreathingHapticPulse: View {
     let isActive: Bool
     let startedAt: Date
     let pausedAt: Date?
+    var narrationPosition: (Date) -> NarrationPlaybackPosition? = { _ in nil }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var lastPulsedPhase: BreathingCycleState.Phase?
@@ -125,14 +130,17 @@ struct BreathingHapticPulse: View {
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 12.0, paused: reduceMotion || !isActive)) { timeline in
             let sampleDate = isActive ? timeline.date : (pausedAt ?? timeline.date)
-            let wholeSecond = Int(max(sampleDate.timeIntervalSince(startedAt), 0))
+            let position = narrationPosition(timeline.date)
+            let elapsed = position?.breathingElapsed(for: cadence) ?? max(sampleDate.timeIntervalSince(startedAt), 0)
+            let wholeSecond = Int(elapsed)
             let phase = BreathingCycleState(
                 at: sampleDate,
                 cadence: cadence,
                 isActive: isActive,
                 reduceMotion: reduceMotion,
                 startedAt: startedAt,
-                pausedAt: pausedAt
+                pausedAt: pausedAt,
+                narrationPosition: narrationPosition(timeline.date)
             ).phase
 
             Color.clear
@@ -196,14 +204,15 @@ nonisolated struct BreathingCycleState: Equatable, Sendable {
         isActive: Bool,
         reduceMotion: Bool,
         startedAt: Date,
-        pausedAt: Date?
+        pausedAt: Date?,
+        narrationPosition: NarrationPlaybackPosition? = nil
     ) {
         guard !reduceMotion, isActive || pausedAt != nil, cadence.cycleSeconds > 0 else {
             self = .resting
             return
         }
         let sampleDate = isActive ? date : (pausedAt ?? date)
-        let elapsed = max(sampleDate.timeIntervalSince(startedAt), 0)
+        let elapsed = (narrationPosition?.breathingElapsed(for: cadence) ?? max(sampleDate.timeIntervalSince(startedAt), 0))
             .truncatingRemainder(dividingBy: Double(cadence.cycleSeconds))
         self = Self.state(atSecond: elapsed, in: cadence)
     }

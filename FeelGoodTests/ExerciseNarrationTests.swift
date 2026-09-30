@@ -5,6 +5,7 @@
 
 import Testing
 import Foundation
+import CryptoKit
 @testable import FeelGood
 
 @Suite("Exercise narration")
@@ -61,4 +62,16 @@ struct ExerciseNarrationTests {
         let step = try JSONDecoder().decode(Step.self, from: json)
         #expect(step.narrationID == "box-breathing-round-one")
     }
+    @Test("Recorded timing matches the exact bundled audio and its count pattern")
+    func narrationTimingMatchesAudio() throws {
+        for (id, timing) in BreathingNarrationTiming.all {
+            let url = try #require(ExerciseNarration.audioURL(for: id))
+            let data = try Data(contentsOf: url)
+            let hash = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+            #expect(hash == timing.audioSHA256, "Realign timing after regenerating \(id)")
+            #expect(timing.countTimes.count == timing.cadence.cycleSeconds + 1)
+            #expect(zip(timing.countTimes, timing.countTimes.dropFirst()).allSatisfy { $1 > $0 })
+        }
+    }
+
 }

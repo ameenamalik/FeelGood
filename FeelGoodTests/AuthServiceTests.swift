@@ -156,6 +156,14 @@ struct AuthServiceTests {
         #expect(!defaults.bool(forKey: FirstRunFlow.hasSeenWelcomeSignUpKey))
     }
 
+    @Test("Completed installations restore missing profiles instead of replaying onboarding")
+    func returningInstallationRoutesToRecovery() {
+        #expect(InstallationFirstRun.route(requiresOnboarding: false, hasProfile: false) == .restoreProfile)
+        #expect(InstallationFirstRun.route(requiresOnboarding: false, hasProfile: true) == .today)
+        #expect(InstallationFirstRun.route(requiresOnboarding: true, hasProfile: false) == .onboarding)
+        #expect(InstallationFirstRun.route(requiresOnboarding: true, hasProfile: true) == .onboarding)
+    }
+
     @Test("A fresh installation always requires onboarding")
     func freshInstallationRequiresOnboarding() throws {
         let suiteName = "InstallationFirstRunTests.\(UUID().uuidString)"

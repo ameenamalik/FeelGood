@@ -20,6 +20,13 @@ import UIKit
 /// before account restoration or a recovered profile can route to Today.
 @MainActor
 enum InstallationFirstRun {
+    enum Route { case onboarding, today, restoreProfile }
+
+    static func route(requiresOnboarding: Bool, hasProfile: Bool) -> Route {
+        if requiresOnboarding { return .onboarding }
+        return hasProfile ? .today : .restoreProfile
+    }
+
     static let completedKey = "FeelGood.InstallationOnboardingCompleted.v1"
     private static let startedKey = "FeelGood.InstallationOnboardingStarted.v1"
 

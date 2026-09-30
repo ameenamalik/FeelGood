@@ -298,12 +298,19 @@ struct ProfileHeaderView: View {
                     Spacer()
                 }
 
-                Button("Sign out") {
+                Button {
                     isShowingSignOutConfirmation = true
+                } label: {
+                    Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right")
+                        .font(FGFont.body.weight(.semibold))
+                        .foregroundStyle(FGColor.onActionFill)
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: FGRadius.chip, style: .continuous)
+                                .fill(FGColor.actionFill)
+                        )
                 }
-                .font(FGFont.caption.weight(.medium))
-                .foregroundStyle(FGColor.inkMuted)
-                .padding(.leading, 32)
+                .buttonStyle(.feelGoodPress)
             }
             .padding(FGSpace.m)
             .background(

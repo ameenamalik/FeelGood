@@ -30,6 +30,7 @@ protocol BreathingNarrationPlaying: AnyObject {
     func pause()
     func resume()
     func stop()
+    func playbackPosition(at date: Date) -> NarrationPlaybackPosition?
 }
 
 /// No-op stand-in for previews, tests, and anyone without bundled narration —
@@ -42,6 +43,7 @@ final class SilentNarrationService: BreathingNarrationPlaying {
     func pause() {}
     func resume() {}
     func stop() {}
+    func playbackPosition(at date: Date) -> NarrationPlaybackPosition? { nil }
 }
 
 @MainActor
@@ -51,6 +53,25 @@ final class AVAudioPlayerNarrationService: BreathingNarrationPlaying {
     private static let mutedDefaultsKey = "FeelGood.NarrationMuted"
 
     private var player: AVAudioPlayer?
+    private var narrationID: String?
+    private var completedAt: Date?
+    private var pausedAt: Date?
+
+    func playbackPosition(at date: Date) -> NarrationPlaybackPosition? {
+        guard let player, let narrationID else { return nil }
+        // AVAudioPlayer resets currentTime when playback finishes. Keep the
+        // breathing clock advancing from the end instead of jumping to zero.
+        if !player.isPlaying, pausedAt == nil, completedAt == nil {
+            completedAt = date
+        }
+        let seconds: TimeInterval
+        if let completedAt {
+            seconds = player.duration + max((pausedAt ?? date).timeIntervalSince(completedAt), 0)
+        } else {
+            seconds = player.currentTime
+        }
+        return NarrationPlaybackPosition(narrationID: narrationID, seconds: seconds)
+    }
 
     var isMuted: Bool {
         get { UserDefaults.standard.bool(forKey: Self.mutedDefaultsKey) }
@@ -68,6 +89,7 @@ final class AVAudioPlayerNarrationService: BreathingNarrationPlaying {
             let player = try AVAudioPlayer(contentsOf: url)
             guard player.play() else { return nil }
             self.player = player
+            self.narrationID = narrationID
             return player.duration
         } catch {
             self.player = nil
@@ -76,16 +98,28 @@ final class AVAudioPlayerNarrationService: BreathingNarrationPlaying {
     }
 
     func pause() {
+        guard pausedAt == nil else { return }
+        let now = Date()
+        _ = playbackPosition(at: now)
+        pausedAt = now
         player?.pause()
     }
 
     func resume() {
-        guard !isMuted else { return }
-        player?.play()
+        guard !isMuted, let pausedAt else { return }
+        if let completedAt {
+            self.completedAt = completedAt.addingTimeInterval(Date().timeIntervalSince(pausedAt))
+        } else if player?.play() != true {
+            stop()
+        }
+        self.pausedAt = nil
     }
 
     func stop() {
         player?.stop()
         player = nil
+        narrationID = nil
+        completedAt = nil
+        pausedAt = nil
     }
 }

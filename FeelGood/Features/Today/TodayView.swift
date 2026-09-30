@@ -901,11 +901,12 @@ struct TodayView: View {
     }
 
     private func dismissCalendarMovementPlan(_ plan: CalendarMovementPlan) {
-        CalendarMovementPreferences.markHandled(plan.id)
-        withAnimation(FGMotion.settle) {
+        withAnimation(reduceMotion ? nil : FGMotion.settle) {
+            model.declineCalendarMovement(plan)
             calendarMovementPlan = nil
+            countedCalendarPlanID = nil
         }
-        AccessibilityNotification.Announcement("Your regular main routine is back").post()
+        AccessibilityNotification.Announcement("Your menu is updated. That movement hasn't been counted.").post()
         scheduleCalendarMovementRefresh(after: .milliseconds(150))
     }
 }

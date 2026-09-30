@@ -109,7 +109,7 @@ struct FeelGoodApp: App {
 
 }
 
-/// Routing. No profile yet means onboarding; otherwise, today's menu.
+/// Onboarding belongs to the installation; missing profiles are restored separately.
 struct RootView: View {
     let content: ContentStore?
 
@@ -120,6 +120,8 @@ struct RootView: View {
     @State private var accountReloadID = UUID()
     @State private var accountSyncError: String?
     @State private var isSyncingAccount = false
+    @State private var profileRecoveryError: String?
+    @State private var profileRecoveryAttempt = 0
     /// Account credentials may survive an uninstall in the Keychain. Keep the
     /// installation's welcome flow in front of both that restored session and
     /// any profile state until the person finishes onboarding on this install.
@@ -165,17 +167,19 @@ struct RootView: View {
             // notification history and targeting follow their account, not a device.
             OneSignalManager.shared.login(externalId: userID)
 
-            guard let user = authService.currentUser, let content else { return }
+            // The recovery screen owns syncing while no local profile exists.
+            guard !profiles.isEmpty, let user = authService.currentUser, let content else { return }
             Task {
                 // Firebase's auth-state listener and the interactive method can
                 // finish in either order. A brief debounce lets the method publish
                 // whether this was account creation before deciding to prompt.
                 try? await Task.sleep(for: .milliseconds(200))
+                guard authService.currentUser?.uid == userID else { return }
                 await handleAccountArrival(user: user, userID: userID, content: content)
             }
         }
         .onChange(of: profiles.count) { _, count in
-            guard !requiresInstallationOnboarding,
+            guard !requiresInstallationOnboarding, !isSyncingAccount,
                   count > 0,
                   let userID = authService.currentUser?.uid,
                   let content else { return }
@@ -262,7 +266,7 @@ struct RootView: View {
     @ViewBuilder
     private var routedContent: some View {
         if let content {
-            if requiresInstallationOnboarding {
+            if InstallationFirstRun.route(requiresOnboarding: requiresInstallationOnboarding, hasProfile: !profiles.isEmpty) == .onboarding {
                 FirstRunFlow(onFinish: finishInstallationOnboarding)
             } else if let profile = profiles.first {
                 TodayScreen(
@@ -272,10 +276,7 @@ struct RootView: View {
                 )
                 .id("\(profile.updatedAt.timeIntervalSince1970)-\(accountReloadID.uuidString)")
             } else {
-                FirstRunFlow { onboarding in
-                    context.insert(onboarding.makeRecord(now: Date()))
-                    try? context.save()
-                }
+                profileRecoveryView
             }
         } else {
             // The catalog ships in the bundle, so this is a build problem
@@ -285,6 +286,53 @@ struct RootView: View {
                 systemImage: "leaf",
                 description: Text("Reinstalling the app should fix it.")
             )
+        }
+    }
+
+    private var profileRecoveryView: some View {
+        VStack(spacing: FGSpace.m) {
+            if let profileRecoveryError {
+                Text("Your profile couldn't load")
+                    .font(FGFont.body.weight(.semibold))
+                Text(profileRecoveryError)
+                    .font(FGFont.caption)
+                    .multilineTextAlignment(.center)
+                Button("Try again") { profileRecoveryAttempt += 1 }
+                    .buttonStyle(.borderedProminent)
+            } else {
+                ProgressView("Getting your profile ready…")
+            }
+        }
+        .padding(FGSpace.page)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(FGColor.bg)
+        .task(id: "\(authService.currentUser?.uid ?? "guest")-\(profileRecoveryAttempt)") {
+            await restoreMissingProfile()
+        }
+    }
+
+    @MainActor
+    private func restoreMissingProfile() async {
+        guard !requiresInstallationOnboarding, profiles.isEmpty else { return }
+        profileRecoveryError = nil
+        let userID = authService.currentUser?.uid
+        isSyncingAccount = true
+        defer { isSyncingAccount = false }
+        do {
+            if let userID {
+                // Restore account preferences before considering a default guest
+                // profile, so empty local state cannot overwrite cloud preferences.
+                try await AccountDataSyncService.restoreLocalAccount(
+                    userID: userID, context: context
+                )
+            }
+            try Task.checkCancellation()
+            guard authService.currentUser?.uid == userID else { return }
+            try AccountDataSyncService.ensureLocalProfile(context: context)
+        } catch is CancellationError {
+            // A restored profile or a different account superseded this screen.
+        } catch {
+            profileRecoveryError = "Please try again. Your saved account data hasn't been reset."
         }
     }
 

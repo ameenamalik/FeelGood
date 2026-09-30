@@ -2,6 +2,148 @@
   "version": 3,
   "sessions": [
     {
+      "id": "app-gentle-wrist-mobility",
+      "title": "Gentle movement for stiff wrists",
+      "subtitle": "Two minutes for mild wrist soreness or stiffness, with no weight on your hands",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 2,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "outdoors",
+        "gym"
+      ],
+      "bodyFocus": [
+        "upperBody"
+      ],
+      "intents": [
+        "mobilize",
+        "calm"
+      ],
+      "course": "appetizer",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Support and settle",
+            "seconds": 20,
+            "cue": "Sit with forearms resting on your thighs and hands relaxed. This is for mild stiffness, not a new injury. Stop if movement increases pain or causes tingling."
+          },
+          {
+            "name": "Open and soften your hands",
+            "seconds": 20,
+            "cue": "Slowly spread your fingers, then make a loose fist. Keep your thumbs relaxed. Repeat gently without squeezing."
+          },
+          {
+            "name": "Right wrist, small bends",
+            "seconds": 20,
+            "cue": "Rest your right forearm on your thigh with the hand just beyond your knee. Slowly bend the wrist up and down in a small comfortable range. No weight or pulling."
+          },
+          {
+            "name": "Left wrist, small bends",
+            "seconds": 20,
+            "cue": "Support your left forearm the same way. Slowly bend the wrist up and down, using only the range that feels comfortable. Pause whenever you need."
+          },
+          {
+            "name": "Turn your palms",
+            "seconds": 20,
+            "cue": "Keep elbows tucked by your sides and wrists straight. Slowly turn palms toward the ceiling, then toward the floor. Stay within an easy range."
+          },
+          {
+            "name": "Let your hands rest",
+            "seconds": 20,
+            "cue": "Rest both hands on your thighs and release your grip. Notice how they feel. If soreness has increased, leave it there rather than repeating."
+          }
+        ]
+      }
+    },
+    {
+      "id": "app-tight-neck-shoulders",
+      "title": "Gentle reset for a tight neck and shoulders",
+      "subtitle": "Three seated minutes, with small movements and no pulling",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 3,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "outdoors",
+        "gym"
+      ],
+      "bodyFocus": [
+        "neckShoulders"
+      ],
+      "intents": [
+        "mobilize",
+        "calm"
+      ],
+      "course": "appetizer",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Settle into your seat",
+            "seconds": 20,
+            "cue": "Sit comfortably with feet supported and hands resting on your thighs. Keep every movement gentle. Stop for pain, dizziness, or tingling."
+          },
+          {
+            "name": "Small shoulder rolls",
+            "seconds": 30,
+            "cue": "Slowly lift your shoulders a little, roll them back, and let them lower. Use small, comfortable circles and breathe normally."
+          },
+          {
+            "name": "Gentle chin tuck",
+            "seconds": 30,
+            "cue": "Look straight ahead. Slide your chin gently backward without tipping your head. Hold briefly, then release. Repeat slowly; do not force the movement.",
+            "glossaryID": "chin-tuck"
+          },
+          {
+            "name": "Look gently from side to side",
+            "seconds": 40,
+            "cue": "Turn your head slowly to the right, back to center, then left. Keep shoulders relaxed and stop well before any painful or strained position."
+          },
+          {
+            "name": "Right ear toward shoulder",
+            "seconds": 20,
+            "cue": "Tip your right ear a little toward your right shoulder. Keep both shoulders relaxed. Use no hand pressure, and return to center if uncomfortable.",
+            "glossaryID": "neck-side-stretch"
+          },
+          {
+            "name": "Left ear toward shoulder",
+            "seconds": 20,
+            "cue": "Tip your left ear a little toward your left shoulder. Keep the movement small and comfortable, with no pulling. Return slowly to center.",
+            "glossaryID": "neck-side-stretch"
+          },
+          {
+            "name": "Release and settle",
+            "seconds": 20,
+            "cue": "Let your shoulders rest and your hands soften. Breathe normally with your head comfortably centered. You can stop here."
+          }
+        ]
+      }
+    },
+    {
       "id": "app-box-breathing",
       "title": "Four rounds of box breathing",
       "subtitle": "Two minutes, anywhere, eyes open or closed",

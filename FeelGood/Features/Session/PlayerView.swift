@@ -577,13 +577,15 @@ struct PlayerView: View {
                         cadence: cadence,
                         isActive: isRunning && !isSwitchingSides,
                         startedAt: breathingStartedAt,
-                        pausedAt: breathingPausedAt
+                        pausedAt: breathingPausedAt,
+                        narrationPosition: narrationService.playbackPosition
                     )
                     BreathingHapticPulse(
                         cadence: cadence,
                         isActive: isRunning && !isSwitchingSides,
                         startedAt: breathingStartedAt,
-                        pausedAt: breathingPausedAt
+                        pausedAt: breathingPausedAt,
+                        narrationPosition: narrationService.playbackPosition
                     )
                 }
             }
@@ -657,7 +659,8 @@ struct PlayerView: View {
                 aura: aura,
                 isBreathingActive: readingRemaining == 0 && isRunning && !isSwitchingSides,
                 breathingStartedAt: breathingStartedAt,
-                breathingPausedAt: breathingPausedAt
+                breathingPausedAt: breathingPausedAt,
+                narrationPosition: narrationService.playbackPosition
             )
         }
         .padding(.horizontal, FGSpace.s)
@@ -1257,12 +1260,14 @@ struct PlayerView: View {
     private func playStepNarrationIfNeeded(for step: Step) {
         guard narratedIndex != index else { return }
         narratedIndex = index
-        let narrationDuration = step.narrationID.flatMap { narrationService.play(narrationID: $0) }
         if isBreathingStep(step) {
-            // Wait out the spoken cue only if playback actually started.
-            // Failed, missing, or muted audio lets the orb pace immediately.
-            breathingStartedAt = Date().addingTimeInterval(narrationDuration ?? 0)
+            // The visual guides breathing throughout the step, including while
+            // narration speaks. Waiting for the clip can freeze most of a round.
+            breathingStartedAt = Date()
             breathingPausedAt = nil
+        }
+        if let narrationID = step.narrationID {
+            narrationService.play(narrationID: narrationID)
         }
     }
 
@@ -1295,6 +1300,13 @@ struct PlayerView: View {
     }
 
     private func toggleNarrationMute() {
+        // Preserve the current visual phase when switching from the recording
+        // to silent pacing; the wall clock may be ahead of the spoken counts.
+        let now = Date()
+        if let cadence = step?.visual?.breathingCadence,
+           let elapsed = narrationService.playbackPosition(at: now)?.breathingElapsed(for: cadence) {
+            breathingStartedAt = (breathingPausedAt ?? now).addingTimeInterval(-elapsed)
+        }
         narrationService.isMuted.toggle()
         isNarrationMuted = narrationService.isMuted
 

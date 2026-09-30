@@ -602,6 +602,14 @@ final class TodayModel {
         complete(session, startedAt: now, feel: nil, place: workout.place, now: now)
     }
 
+    /// A declined calendar event is not completed movement. Rebuild the regular
+    /// menu from the current check-in and real history, and persist it for return
+    /// visits and the widget without charging a swap or logging a missed workout.
+    func declineCalendarMovement(_ plan: CalendarMovementPlan, now: Date = Date()) {
+        CalendarMovementPreferences.markHandled(plan.id)
+        reload(now: now)
+    }
+
     /// A calendar title can suggest that movement was planned, but only this
     /// explicit confirmation turns it into history. The original title is
     /// never available here and therefore cannot be persisted or uploaded.

@@ -90,6 +90,20 @@ struct CheckInSheet: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .scrollBounceBehavior(.basedOnSize)
+                .task(id: flow.time) {
+                    guard flow.time != nil, flow.isComplete else { return }
+                    // Let the newly inserted button lay out before scrolling.
+                    // Changing the time again cancels any pending scroll.
+                    do {
+                        try await Task.sleep(for: .milliseconds(60))
+                    } catch {
+                        return
+                    }
+                    guard !Task.isCancelled, flow.isComplete else { return }
+                    withAnimation(reduceMotion ? nil : FGMotion.gentle) {
+                        proxy.scrollTo("done-button", anchor: .bottom)
+                    }
+                }
             }
         }
         .fgAnimation(FGMotion.gentle, value: flow.goal)

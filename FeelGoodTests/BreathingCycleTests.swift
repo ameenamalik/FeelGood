@@ -79,4 +79,58 @@ struct BreathingCycleTests {
         )
         #expect(reduced == .resting)
     }
+    @Test("The recorded hold and exhale override the independent wall clock")
+    func followsRecordedPhases() {
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        for (second, expected): (Double, BreathingCycleState.Phase) in [
+            (6.92, .holdIn), (10.36, .holdIn), (12.58, .exhale), (18.18, .holdOut)
+        ] {
+            let state = BreathingCycleState(
+                at: start.addingTimeInterval(second), cadence: box, isActive: true,
+                reduceMotion: false, startedAt: start, pausedAt: nil,
+                narrationPosition: NarrationPlaybackPosition(narrationID: "box-breathing-round-one", seconds: second)
+            )
+            #expect(state.phase == expected)
+        }
+    }
+
+    @Test("Every spoken count and phase shares the narration timeline")
+    func recordedCounts() {
+        for (id, timing) in BreathingNarrationTiming.all {
+            for (index, time) in timing.countTimes.dropLast().enumerated() {
+                let position = NarrationPlaybackPosition(narrationID: id, seconds: time)
+                #expect(abs((position.breathingElapsed(for: timing.cadence) ?? -1) - Double(index)) < 0.001)
+            }
+        }
+    }
+
+    @Test("The final spoken cycle continues smoothly into silent breathing")
+    func narrationHandoff() throws {
+        let timing = try #require(BreathingNarrationTiming.all["slow-breaths-four-six"])
+        let end = try #require(timing.countTimes.last)
+        let before = BreathingCycleState.state(atSecond: timing.elapsed(at: end - 0.001), in: .default)
+        let after = BreathingCycleState.state(atSecond: timing.elapsed(at: end + 0.001).truncatingRemainder(dividingBy: 10), in: .default)
+        #expect(abs(before.scale - after.scale) < 0.001)
+        #expect(before.phase == .exhale)
+        #expect(after.phase == .inhale)
+        #expect(abs(timing.elapsed(at: end + 2) - 12) < 0.001)
+    }
+
+    @Test("Paused narration freezes the visual even as wall time advances")
+    func narrationPause() {
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        let position = NarrationPlaybackPosition(narrationID: "box-breathing-round-one", seconds: 14)
+        let first = BreathingCycleState(at: start.addingTimeInterval(14), cadence: box, isActive: true,
+            reduceMotion: false, startedAt: start, pausedAt: nil, narrationPosition: position)
+        let paused = BreathingCycleState(at: start.addingTimeInterval(40), cadence: box, isActive: false,
+            reduceMotion: false, startedAt: start, pausedAt: start.addingTimeInterval(14), narrationPosition: position)
+        #expect(first == paused)
+    }
+
+    @Test("Unknown narration keeps the normal breathing cadence")
+    func unknownNarration() {
+        let position = NarrationPlaybackPosition(narrationID: "missing", seconds: 100)
+        #expect(position.breathingElapsed(for: box) == nil)
+    }
+
 }

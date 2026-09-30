@@ -25,6 +25,7 @@ struct StepVisualView: View {
     let isBreathingActive: Bool
     let breathingStartedAt: Date
     let breathingPausedAt: Date?
+    var narrationPosition: (Date) -> NarrationPlaybackPosition? = { _ in nil }
 
     var body: some View {
         if ExerciseDemo.hasDemo(for: step.glossaryID) {
@@ -35,7 +36,8 @@ struct StepVisualView: View {
                 aura: aura,
                 isActive: isBreathingActive,
                 startedAt: breathingStartedAt,
-                pausedAt: breathingPausedAt
+                pausedAt: breathingPausedAt,
+                narrationPosition: narrationPosition
             )
             .frame(width: Self.slotSize, height: Self.slotSize)
         }

@@ -70,6 +70,23 @@ enum AccountDataSyncService {
         UserDefaults.standard.set(userID, forKey: localOwnerKey)
     }
 
+    /// Recovery downloads the account before creating any fallback profile.
+    /// It must not upload an incomplete local store over saved preferences.
+    static func restoreLocalAccount(userID: String, context: ModelContext) async throws {
+        try await importCloudData(userID: userID, context: context)
+        UserDefaults.standard.set(userID, forKey: localOwnerKey)
+    }
+
+    /// Used only after installation onboarding, and after cloud restoration for
+    /// signed-in users. Existing preferences always win over a default profile.
+    static func ensureLocalProfile(context: ModelContext) throws {
+        var request = FetchDescriptor<UserProfile>()
+        request.fetchLimit = 1
+        guard try context.fetch(request).isEmpty else { return }
+        context.insert(UserProfile(answers: ProfileAnswers(), now: Date()))
+        try context.save()
+    }
+
     /// Account data remains in Firebase; only the device cache is removed.
     /// Replace the account profile with a fresh guest so RootView stays in the
     /// app without replaying onboarding or exposing the account's preferences.
@@ -155,6 +172,7 @@ enum AccountDataSyncService {
         let cloudCompletions = try await FirestoreService.shared.fetchAllCompletions(userId: userID)
         let cloudRoutines = try await FirestoreService.shared.fetchAllCustomWorkouts(userId: userID)
         let cloudPreferences = try await FirestoreService.shared.fetchUserPreferences(userId: userID)
+        try Task.checkCancellation()
 
         let localRecords = (try? context.fetch(FetchDescriptor<SessionRecord>())) ?? []
         var completionKeys = Set(localRecords.filter(\.wasCompleted).map {

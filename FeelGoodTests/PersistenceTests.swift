@@ -272,4 +272,20 @@ struct PersistenceTests {
         #expect(AccountDataSyncService.localOwnerUID() == nil)
         #expect(UserDefaults.standard.data(forKey: "FeelGood.ChatThreads.v1") == nil)
     }
+    @Test("Missing-profile recovery creates one local profile and preserves restored preferences")
+    func missingProfileRecovery() throws {
+        let context = try context()
+        try AccountDataSyncService.ensureLocalProfile(context: context)
+        let profile = try #require(context.fetch(FetchDescriptor<UserProfile>()).first)
+        profile.apply(ProfileAnswers(activities: [.walking], realisticMinutes: 30), now: Fixture.now)
+        try context.save()
+
+        try AccountDataSyncService.ensureLocalProfile(context: context)
+
+        let profiles = try context.fetch(FetchDescriptor<UserProfile>())
+        #expect(profiles.count == 1)
+        #expect(profiles.first?.answers.activities == [.walking])
+        #expect(profiles.first?.answers.realisticMinutes == 30)
+    }
+
 }
