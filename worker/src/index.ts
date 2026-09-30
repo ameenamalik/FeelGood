@@ -135,11 +135,12 @@ export default {
   },
 };
 
-// Ordered: the first model that answers wins. Only the 2.5 models think by
+// Ordered: the first model that answers wins. The 2.5 models think by
 // default, and thinking tokens count against maxOutputTokens, so on those the
 // budget is set to zero — otherwise the visible line can be cut off after a
-// few words. (2.0 rejects a thinkingConfig, so it only goes to 2.5.)
-const COPY_MODELS = ["gemini-2.0-flash", "gemini-2.5-flash"];
+// few words. gemini-2.0-flash was retired 2026-06-01 (it 404ed on every call,
+// costing a round trip before the fallback), so it is no longer tried.
+const COPY_MODELS = ["gemini-2.5-flash"];
 
 function copyRequestBody(model: string, body: unknown): string {
   const generationConfig: Record<string, unknown> = {
