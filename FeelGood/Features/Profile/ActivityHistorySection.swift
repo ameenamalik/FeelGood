@@ -154,6 +154,8 @@ private struct ActivityHistoryList: View {
     let entries: [HistoryEntry]
     let model: TodayModel
 
+    @State private var selected: Session?
+
     private var groups: [ActivityHistoryDayGroup] {
         ActivityHistoryDayGroup.make(from: entries)
     }
@@ -168,11 +170,26 @@ private struct ActivityHistoryList: View {
 
                     VStack(spacing: FGSpace.xs) {
                         ForEach(group.entries, id: \.self) { entry in
-                            ActivityHistoryRow(entry: entry, title: model.title(for: entry))
+                            // A logged workout that wasn't kept has no session
+                            // to open, so its row stays a plain record.
+                            if let session = model.everything.first(where: { $0.id == entry.sessionID }) {
+                                Button {
+                                    selected = session
+                                } label: {
+                                    ActivityHistoryRow(entry: entry, title: session.title, isOpenable: true)
+                                }
+                                .buttonStyle(.feelGoodPress)
+                                .accessibilityHint("Opens the session")
+                            } else {
+                                ActivityHistoryRow(entry: entry, title: model.title(for: entry), isOpenable: false)
+                            }
                         }
                     }
                 }
             }
+        }
+        .sheet(item: $selected) { session in
+            SessionDetailView(session: session, model: model)
         }
     }
 }
@@ -207,6 +224,7 @@ private struct ActivityHistoryDayGroup: Identifiable {
 private struct ActivityHistoryRow: View {
     let entry: HistoryEntry
     let title: String
+    let isOpenable: Bool
 
     private var aura: FGAura {
         entry.activity.completionAura ?? .sage
@@ -248,6 +266,13 @@ private struct ActivityHistoryRow: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 16))
                 .foregroundStyle(FGColor.sageDeep)
+
+            if isOpenable {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(FGColor.inkMuted)
+                    .accessibilityHidden(true)
+            }
         }
         .padding(.horizontal, FGSpace.m)
         .padding(.vertical, 12)

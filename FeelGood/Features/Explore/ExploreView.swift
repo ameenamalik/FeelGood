@@ -508,18 +508,13 @@ struct ExploreView: View {
     // MARK: - Typing Indicator
 
     private var typingIndicator: some View {
-        HStack(spacing: 8) {
-            ProgressView()
-                .scaleEffect(0.8)
-                .tint(FGColor.controlAccent)
-            Text("Shaping routine...")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(FGColor.inkMuted)
-        }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
-        .background(FGColor.panel)
-        .clipShape(Capsule())
+        TypingDots()
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(FGColor.panel)
+            .clipShape(Capsule())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Thinking")
     }
 
     // MARK: - Quick Replies Bar
@@ -1025,6 +1020,34 @@ struct ExploreView: View {
         }
         if let currentActive = activeThreadID {
             UserDefaults.standard.set(currentActive.uuidString, forKey: activeThreadKey)
+        }
+    }
+}
+
+/// Three dots that rise in turn. Holds still under Reduce Motion.
+private struct TypingDots: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if reduceMotion {
+            dots(phase: 0)
+        } else {
+            TimelineView(.animation) { context in
+                dots(phase: context.date.timeIntervalSinceReferenceDate)
+            }
+        }
+    }
+
+    private func dots(phase: TimeInterval) -> some View {
+        HStack(spacing: 5) {
+            ForEach(0..<3, id: \.self) { index in
+                let lift = reduceMotion ? 0 : max(0, sin(phase * 6 - Double(index) * 0.7))
+                Circle()
+                    .fill(FGColor.inkMuted)
+                    .frame(width: 7, height: 7)
+                    .offset(y: -4 * lift)
+                    .opacity(0.5 + 0.5 * lift)
+            }
         }
     }
 }

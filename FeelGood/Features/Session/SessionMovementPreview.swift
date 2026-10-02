@@ -62,7 +62,9 @@ struct SessionMovementPreview: View {
                 .frame(maxWidth: .infinity, minHeight: 34, alignment: .topLeading)
         }
         .padding(FGSpace.s)
-        .containerRelativeFrame(.horizontal, count: 2, spacing: FGSpace.s)
+        // Five columns, two and a half cards wide: the third card is always
+        // partly in view, so the strip reads as scrollable at first glance.
+        .containerRelativeFrame(.horizontal, count: 5, span: 2, spacing: FGSpace.s)
         .background(
             RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
                 .fill(FGColor.bg)
