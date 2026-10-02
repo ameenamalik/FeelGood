@@ -25,6 +25,54 @@ export interface CatalogGlossaryItem {
 
 export const CATALOG_SESSIONS: CatalogSessionItem[] = [
   {
+    "id": "app-gentle-wrist-mobility",
+    "title": "Gentle movement for stiff wrists",
+    "subtitle": "Two minutes for mild wrist soreness or stiffness, with no weight on your hands",
+    "durationMin": 2,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "outdoors",
+      "gym"
+    ],
+    "bodyFocus": [
+      "upperBody"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "app-tight-neck-shoulders",
+    "title": "Gentle reset for a tight neck and shoulders",
+    "subtitle": "Three seated minutes, with small movements and no pulling",
+    "durationMin": 3,
+    "intensity": "gentle",
+    "course": "appetizer",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "outdoors",
+      "gym"
+    ],
+    "bodyFocus": [
+      "neckShoulders"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
     "id": "app-box-breathing",
     "title": "Four rounds of box breathing",
     "subtitle": "Two minutes, anywhere, eyes open or closed",
