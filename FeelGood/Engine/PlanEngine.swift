@@ -63,6 +63,14 @@ nonisolated struct PlanEngine: Sendable {
     static let reentryGapDays = 5
     /// Three to five items. If we ever need a "see more", we've failed.
     static let maxMenuItems = 5
+    /// From this budget up, the time someone said they have is a target as well
+    /// as a ceiling: an hour should not come back as a 28-minute day. Below it
+    /// the menu already fills the budget, so nothing changes.
+    static let fillsTimeFrom = 25
+    /// How much of the budget a menu aims to use, never going over.
+    static let fillTarget = 0.85
+    /// Minutes a longer main must leave free for one more item.
+    static let roomForOneMore = 5
 
     let catalog: [Session]
     var weights: PlanWeights
@@ -130,7 +138,10 @@ nonisolated struct PlanEngine: Sendable {
         // items" degradation `alwaysOffersAnAppetizer` already covers.
         let mainAndSidesBudget = max(0, budget - reservedFloor)
 
-        let main = first(from: scored, course: .main, excluding: taken, maxDuration: mainAndSidesBudget)
+        let fillsTime = budget >= Self.fillsTimeFrom
+        let main = fillsTime
+            ? longerMain(from: scored, excluding: taken, maxDuration: mainAndSidesBudget, input: input, checkIn: checkIn, stats: stats)
+            : first(from: scored, course: .main, excluding: taken, maxDuration: mainAndSidesBudget)
         if let main {
             taken.insert(main.session.id)
             takenActivities.insert(main.session.activity)
@@ -217,6 +228,34 @@ nonisolated struct PlanEngine: Sendable {
             taken.insert(dessert.session.id)
             takenActivities.insert(dessert.session.activity)
             usedMinutes += dessert.session.durationMin
+        }
+
+        // Top up. One side, an appetizer and a dessert around a mid-length main
+        // is a half-hour day whatever was asked for, so when the budget is long
+        // enough to matter, add sides (best score first, never past the budget
+        // or the one-screen cap) until the day reaches `fillTarget` of it.
+        // Anyone who chose not to be given sides keeps the menu they asked for.
+        if fillsTime, sideCount > 0 {
+            let desired = Int((Double(budget) * Self.fillTarget).rounded(.up))
+            var itemCount = [special, main, appetizer, dessert].compactMap { $0 }.count + sides.count
+            while usedMinutes < desired, itemCount < Self.maxMenuItems {
+                let remaining = budget - usedMinutes
+                let fitting = scored.filter {
+                    $0.session.course == .side
+                        && !taken.contains($0.session.id)
+                        && $0.session.durationMin <= remaining
+                }
+                // Of the better-scoring sides, the longest: five-minute sides
+                // alone cannot reach an hour inside five items.
+                let fresh = fitting.filter { !takenActivities.contains($0.session.activity) }
+                let pool = Array((fresh.isEmpty ? fitting : fresh).prefix(20))
+                guard let extra = pool.max(by: { $0.session.durationMin < $1.session.durationMin }) else { break }
+                sides.append(extra.item)
+                taken.insert(extra.session.id)
+                takenActivities.insert(extra.session.activity)
+                usedMinutes += extra.session.durationMin
+                itemCount += 1
+            }
         }
 
         // Trim to one screen. The appetizer and the main are the two things the
@@ -557,11 +596,34 @@ nonisolated struct PlanEngine: Sendable {
     }
 
     private func rankedCandidates(_ input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats) -> [Candidate] {
-        catalog
+        let day = input.context.calendar.movementDayStart(for: input.context.now)
+        let daySeed = Int64(day.timeIntervalSince1970)
+        return catalog
             .filter { isEligible($0, input: input, checkIn: checkIn) }
             .map { candidate(for: $0, input: input, checkIn: checkIn, stats: stats) }
-            // Deterministic: score first, id as the stable tie-break.
-            .sorted { $0.score == $1.score ? $0.session.id < $1.session.id : $0.score > $1.score }
+            // Deterministic: score first, then a hash of the id and the day.
+            // Many sessions score the same, and tie-breaking on the id alone
+            // made the alphabetically-first one ("side-ankle-mobility-five")
+            // the answer to every swap. Seeding with the day keeps one day's
+            // menu and swap order stable while letting a different tied
+            // session lead tomorrow. The id is the last resort, so a hash
+            // collision still sorts the same way every time.
+            .sorted { lhs, rhs in
+                if lhs.score != rhs.score { return lhs.score > rhs.score }
+                let lhsKey = Self.tieBreak(lhs.session.id, daySeed: daySeed)
+                let rhsKey = Self.tieBreak(rhs.session.id, daySeed: daySeed)
+                return lhsKey == rhsKey ? lhs.session.id < rhs.session.id : lhsKey < rhsKey
+            }
+    }
+
+    /// FNV-1a over the day and the id. Not `Hasher`, which is re-seeded on every
+    /// launch and would reshuffle the menu each time the app opened.
+    private static func tieBreak(_ id: String, daySeed: Int64) -> UInt64 {
+        var hash: UInt64 = 0xcbf29ce484222325
+        for byte in withUnsafeBytes(of: daySeed.littleEndian, Array.init) + Array(id.utf8) {
+            hash = (hash ^ UInt64(byte)) &* 0x100000001b3
+        }
+        return hash
     }
 
     private func candidate(for session: Session, input: PlanInput, checkIn: PlanCheckIn, stats: HistoryStats) -> Candidate {
@@ -773,6 +835,54 @@ nonisolated struct PlanEngine: Sendable {
     }
 
     // MARK: - Assembly helpers
+
+    /// The longest main that suits the day, unless the history is asking for
+    /// something else. Recovery after hard days, a real gap since the last
+    /// session, and a main someone loved all keep the best-scoring pick, as does
+    /// anything asked for in today's check-in. Anything that would repeat a
+    /// recent activity, or that someone found too much, is left out. Otherwise the main comes
+    /// from the longest tier that fits today's energy, so an hour is not
+    /// answered with the same fifteen minutes as half an hour. Someone with no
+    /// history yet still gets a calm first day, only a longer one: the pool is
+    /// restricted to restful mains rather than capped at fifteen minutes.
+    private func longerMain(
+        from scored: [Candidate],
+        excluding: Set<String>,
+        maxDuration: Int,
+        input: PlanInput,
+        checkIn: PlanCheckIn,
+        stats: HistoryStats
+    ) -> MenuItem? {
+        let mains = scored.filter {
+            $0.session.course == .main
+                && !excluding.contains($0.session.id)
+                && $0.session.durationMin <= maxDuration
+        }
+        guard let top = mains.first else { return nil }
+
+        let hasGap = stats.daysSinceLastCompleted.map { $0 >= Self.reentryGapDays } ?? false
+        let topAffinity = (input.affinity[top.session.id] ?? 0) + stats.derivedAffinity[top.session.id, default: 0]
+        // Something said today ("I want to feel strong in my legs", a body that
+        // needs care) is a request for a particular session, not for a length.
+        let askedForSomething = checkIn.todayIntent != nil || checkIn.focus != nil
+            || !checkIn.favoured.isEmpty || !checkIn.bodies.isEmpty
+        if hasGap || stats.recoveryOwed || topAffinity > 0 || askedForSomething { return top.item }
+
+        // The longer main leaves room for one more item, so it can never crowd
+        // the menu below the three it is meant to have.
+        var pool = mains.filter {
+            $0.session.durationMin <= maxDuration - Self.roomForOneMore
+                && $0.session.energyFit.contains(checkIn.energy)
+                && (stats.recentActivityCounts[$0.session.activity] ?? 0) == 0
+                && (input.affinity[$0.session.id] ?? 0) + stats.derivedAffinity[$0.session.id, default: 0] >= 0
+        }
+        if stats.hasNoHistory {
+            pool = pool.filter { $0.session.intensity <= weights.restfulIntensity }
+        }
+        guard let longest = pool.map(\.session.durationMin).max() else { return top.item }
+        let floor = Int((Double(longest) * 0.9).rounded(.up))
+        return pool.first { $0.session.durationMin >= floor }?.item ?? top.item
+    }
 
     private func first(from scored: [Candidate], course: Course, excluding: Set<String>, excludingActivities: Set<Activity> = [], maxDuration: Int? = nil) -> MenuItem? {
         scored.first {
