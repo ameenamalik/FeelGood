@@ -45,11 +45,11 @@ struct ExploreView: View {
         purchasesManager.isProUnlocked || !hasUsedFreeChatExchange
     }
 
-    /// Answers "am I chatting with an AI?" before anyone has to ask.
-    private var headerSubtitle: String {
+    /// Whether replies can come from the model right now. Consent was already
+    /// given, so this is shown as a quiet sparkle rather than spelled out; the
+    /// words stay on the VoiceOver label.
+    private var showsAIHeader: Bool {
         canReachAI && chatConsentRaw == ChatConsent.Status.granted.rawValue
-            ? "Replies written by AI"
-            : "Replies from your phone"
     }
 
     private let threadsPersistenceKey = "FeelGood.ChatThreads.v1"
@@ -239,9 +239,16 @@ struct ExploreView: View {
                 Text("Chat")
                     .font(.custom("SFProRounded-Semibold", size: 18))
                     .foregroundStyle(FGColor.ink)
-                Text(headerSubtitle)
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(FGColor.inkMuted)
+                if showsAIHeader {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(FGColor.inkMuted)
+                        .accessibilityLabel("Replies written by AI")
+                } else {
+                    Text("Replies from your phone")
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(FGColor.inkMuted)
+                }
             }
             .accessibilityElement(children: .combine)
 
@@ -310,10 +317,10 @@ struct ExploreView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         assistantTextBubble(text: message.text)
                         if message.isFromAI == true {
-                            Label("AI reply", systemImage: "sparkles")
-                                .font(.system(.caption2, design: .rounded))
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 11, weight: .medium))
                                 .foregroundStyle(FGColor.inkMuted)
-                                .padding(.leading, 6)
+                                .padding(.leading, 8)
                                 .accessibilityLabel("Written by AI")
                         }
                     }
@@ -508,18 +515,13 @@ struct ExploreView: View {
     // MARK: - Typing Indicator
 
     private var typingIndicator: some View {
-        HStack(spacing: 8) {
-            ProgressView()
-                .scaleEffect(0.8)
-                .tint(FGColor.controlAccent)
-            Text("Shaping routine...")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(FGColor.inkMuted)
-        }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 16)
-        .background(FGColor.panel)
-        .clipShape(Capsule())
+        TypingDots()
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(FGColor.panel)
+            .clipShape(Capsule())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Thinking")
     }
 
     // MARK: - Quick Replies Bar
@@ -1025,6 +1027,34 @@ struct ExploreView: View {
         }
         if let currentActive = activeThreadID {
             UserDefaults.standard.set(currentActive.uuidString, forKey: activeThreadKey)
+        }
+    }
+}
+
+/// Three dots that rise in turn. Holds still under Reduce Motion.
+private struct TypingDots: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if reduceMotion {
+            dots(phase: 0)
+        } else {
+            TimelineView(.animation) { context in
+                dots(phase: context.date.timeIntervalSinceReferenceDate)
+            }
+        }
+    }
+
+    private func dots(phase: TimeInterval) -> some View {
+        HStack(spacing: 5) {
+            ForEach(0..<3, id: \.self) { index in
+                let lift = reduceMotion ? 0 : max(0, sin(phase * 6 - Double(index) * 0.7))
+                Circle()
+                    .fill(FGColor.inkMuted)
+                    .frame(width: 7, height: 7)
+                    .offset(y: -4 * lift)
+                    .opacity(0.5 + 0.5 * lift)
+            }
         }
     }
 }

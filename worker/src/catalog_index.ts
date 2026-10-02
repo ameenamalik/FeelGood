@@ -4673,6 +4673,222 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "equipment": [
       "outdoor"
     ]
+  },
+  {
+    "id": "main-mobility-30",
+    "title": "Thirty minutes of stretching",
+    "subtitle": "A longer, slower stretch for the days everything feels tight",
+    "durationMin": 30,
+    "intensity": "gentle",
+    "course": "main",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym",
+      "studio"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-mobility-40",
+    "title": "Forty minutes of deep stretching",
+    "subtitle": "Long holds, one area at a time, nowhere to be",
+    "durationMin": 40,
+    "intensity": "gentle",
+    "course": "main",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym",
+      "studio"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-mobility-50",
+    "title": "Fifty minutes of slow stretching",
+    "subtitle": "The whole body, held long enough to actually let go",
+    "durationMin": 50,
+    "intensity": "gentle",
+    "course": "main",
+    "activity": "stretching",
+    "places": [
+      "home",
+      "gym",
+      "studio"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "mobilize",
+      "calm"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-yoga-flow-40",
+    "title": "Forty minutes of yoga flow",
+    "subtitle": "Flow, balance and long hip openers, ending in stillness",
+    "durationMin": 40,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "yoga",
+    "places": [
+      "home",
+      "gym",
+      "studio"
+    ],
+    "bodyFocus": [
+      "full",
+      "hips",
+      "back"
+    ],
+    "intents": [
+      "calm",
+      "mobilize"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "main-yoga-flow-50",
+    "title": "Fifty minutes of slow yoga",
+    "subtitle": "A full class at home: flow, hold, twist and rest",
+    "durationMin": 50,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "yoga",
+    "places": [
+      "home",
+      "gym",
+      "studio"
+    ],
+    "bodyFocus": [
+      "full",
+      "hips",
+      "back"
+    ],
+    "intents": [
+      "calm",
+      "mobilize"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "main-pilates-full-40",
+    "title": "Forty minutes of Pilates",
+    "subtitle": "A full mat class: core first, then legs, then a long stretch out",
+    "durationMin": 40,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym",
+      "studio"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "strengthen",
+      "energize"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "main-pilates-full-50",
+    "title": "Fifty minutes of Pilates",
+    "subtitle": "The whole classical mat sequence, unhurried",
+    "durationMin": 50,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "pilates",
+    "places": [
+      "home",
+      "gym",
+      "studio"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "strengthen",
+      "energize"
+    ],
+    "equipment": [
+      "mat"
+    ]
+  },
+  {
+    "id": "main-bodyweight-strength-45",
+    "title": "Forty-five minutes of bodyweight strength",
+    "subtitle": "Legs, then upper body and core, twice through, nothing but you",
+    "durationMin": 45,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
+  },
+  {
+    "id": "main-upper-core-strength-50",
+    "title": "Fifty minutes of upper body and core",
+    "subtitle": "Push, plank and core work in two rounds, then a proper cool-down",
+    "durationMin": 50,
+    "intensity": "moderate",
+    "course": "main",
+    "activity": "strength",
+    "places": [
+      "home",
+      "gym"
+    ],
+    "bodyFocus": [
+      "full"
+    ],
+    "intents": [
+      "strengthen"
+    ],
+    "equipment": [
+      "none"
+    ]
   }
 ];
 
