@@ -730,19 +730,19 @@
           },
           {
             "name": "Pelvic tilts",
-            "seconds": 90,
+            "seconds": 60,
             "cue": "Rock the pelvis gently. Small range, slow.",
             "glossaryID": "pelvic-tilt"
           },
           {
             "name": "Dead bug",
-            "seconds": 120,
+            "seconds": 90,
             "cue": "Opposite arm and leg, lower back staying heavy.",
             "glossaryID": "dead-bug"
           },
           {
             "name": "Bridge",
-            "seconds": 120,
+            "seconds": 90,
             "cue": "Peel up one vertebra at a time, roll down the same way.",
             "glossaryID": "glute-bridge"
           },
@@ -1345,27 +1345,27 @@
           },
           {
             "name": "Thoracic opening — right",
-            "seconds": 105,
+            "seconds": 75,
             "cue": "Side-lying book openers. Follow your hand with your eyes.",
             "glossaryID": "thoracic-rotation",
             "switchSides": false
           },
           {
             "name": "Thoracic opening — left",
-            "seconds": 105,
+            "seconds": 75,
             "cue": "Switch sides.",
             "glossaryID": "thoracic-rotation",
             "switchSides": false
           },
           {
             "name": "Child's pose",
-            "seconds": 180,
+            "seconds": 120,
             "cue": "Knees wide, arms long.",
             "glossaryID": "childs-pose"
           },
           {
             "name": "Legs up the wall",
-            "seconds": 180,
+            "seconds": 120,
             "cue": "Hips close to the wall, let gravity do the work.",
             "glossaryID": "legs-up-the-wall"
           }
@@ -1521,24 +1521,24 @@
         "steps": [
           {
             "name": "Child's pose",
-            "seconds": 120,
+            "seconds": 90,
             "cue": "Start here. Let the breath get long.",
             "glossaryID": "childs-pose"
           },
           {
             "name": "Cat cow",
-            "seconds": 150,
+            "seconds": 120,
             "cue": "Move with the breath, not with the count.",
             "glossaryID": "cat-cow"
           },
           {
             "name": "Down dog and lunges",
-            "seconds": 300,
+            "seconds": 240,
             "cue": "Step forward, sink the hips, breathe."
           },
           {
             "name": "Standing sequence",
-            "seconds": 360,
+            "seconds": 270,
             "cue": "Whatever shape you know. Hold each one for five breaths."
           },
           {
@@ -1616,7 +1616,7 @@
           },
           {
             "name": "Steady",
-            "seconds": 1500,
+            "seconds": 1200,
             "cue": "A pace you could hold for an hour."
           },
           {
@@ -2949,21 +2949,21 @@
           },
           {
             "name": "Seated figure four — right",
-            "seconds": 120,
+            "seconds": 150,
             "cue": "Ankle over knee, gentle lean forward.",
             "glossaryID": "figure-four-stretch",
             "switchSides": false
           },
           {
             "name": "Seated figure four — left",
-            "seconds": 120,
+            "seconds": 150,
             "cue": "Switch sides.",
             "glossaryID": "figure-four-stretch",
             "switchSides": false
           },
           {
             "name": "Chest opener",
-            "seconds": 120,
+            "seconds": 180,
             "cue": "Hands behind bench, open the collarbones."
           },
           {
