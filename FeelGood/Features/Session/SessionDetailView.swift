@@ -2,8 +2,8 @@
 //  SessionDetailView.swift
 //  FeelGood
 //
-//  What it is, what you need, one action. The title carries the screen; the
-//  detail waits behind a disclosure for whoever actually wants it.
+//  What it is, what you need, one action. The title carries the screen, the
+//  steps sit open in a card, and Start stays pinned above the home indicator.
 //
 //  The "why" lives here now, not on the card that offered it — Today's menu
 //  card and Chat's recommendation card both stay to a title and a mascot;
@@ -26,7 +26,6 @@ struct SessionDetailView: View {
     @State private var isPlaying = false
     @State private var startedAt = Date()
     @State private var explaining: ExerciseTerm?
-    @State private var isShowingSteps = false
     @State private var isEditing = false
     @State private var isConfirmingRemoval = false
     @State private var isConfirmingHide = false
@@ -59,10 +58,10 @@ struct SessionDetailView: View {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     heading
 
-                    // Equipment and impact; course and duration are in the heading.
-                    if !detailChips.isEmpty {
+                    // Equipment only; course, duration and impact are in the heading.
+                    if !equipmentChips.isEmpty {
                         WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s) {
-                            ForEach(detailChips, id: \.self) { FGChip(text: $0) }
+                            ForEach(equipmentChips, id: \.self) { FGChip(text: $0) }
                         }
                     }
 
@@ -73,41 +72,14 @@ struct SessionDetailView: View {
                     }
 
                     if !session.source.steps.isEmpty {
-                        VStack(alignment: .leading, spacing: FGSpace.m) {
-                            Divider()
-                                .overlay(FGColor.line)
-
-                            lineup
-
-                            Divider()
-                                .overlay(FGColor.line)
-
-                            if let firstStep = session.source.steps.first {
-                                firstUpSection(firstStep)
-                            }
-                        }
+                        lineup
                     }
 
-                    // Custom routines remain editable whether they are a
-                    // simple after-the-fact log or a playable list of parts.
+                    // Custom routines stay editable whether they are a simple
+                    // after-the-fact log or a playable list of parts. Their
+                    // primary action is pinned below; the rest scrolls.
                     if session.isOwn {
                         VStack(spacing: FGSpace.m) {
-                            if session.source.steps.isEmpty {
-                                FGPrimaryButton(title: "I did this") {
-                                    let completionStartedAt = Date()
-                                    Analytics.capture("workout_completed", properties: workoutProperties)
-                                    OneSignalManager.shared.trackSessionCompleted(
-                                        sessionID: session.id,
-                                        startedAt: completionStartedAt
-                                    )
-                                    model.complete(session, startedAt: completionStartedAt, feel: nil)
-                                    presentLittleWinOrFinish()
-                                }
-                            } else {
-                                FGPrimaryButton(title: savedProgress == nil ? "Start" : "Resume") {
-                                    startOrResumeSession()
-                                }
-                            }
                             AddRoutineToTodayButton(session: session, model: model)
 
                             HStack(spacing: FGSpace.m) {
@@ -119,20 +91,12 @@ struct SessionDetailView: View {
                                 }
                             }
                         }
-                        .padding(.top, FGSpace.s)
-                    } else {
-                        VStack(spacing: FGSpace.s) {
-                            FGPrimaryButton(title: savedProgress == nil ? "Start" : "Resume") {
-                                startOrResumeSession()
-                            }
-                            FGQuietButton("Don't suggest this again", systemImage: "eye.slash") {
-                                isConfirmingHide = true
-                            }
-                        }
-                        .padding(.top, FGSpace.s)
                     }
                 }
                 .padding(FGSpace.page)
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                bottomBar
             }
         }
         .fullScreenCover(isPresented: $isPlaying, onDismiss: handlePlayerDismiss) {
@@ -300,14 +264,9 @@ struct SessionDetailView: View {
         dismiss()
     }
 
-    /// Details not already carried by the title or course-and-duration heading.
-    private var detailChips: [String] {
-        if session.isOwn {
-            return []
-        }
-        var pills = session.equipment.compactMap(\.label)
-        pills.append(session.impactLabel)
-        return pills
+    /// Equipment not already carried by the heading.
+    private var equipmentChips: [String] {
+        session.isOwn ? [] : session.equipment.compactMap(\.label)
     }
 
     private var workoutProperties: [String: Any] {
@@ -325,41 +284,56 @@ struct SessionDetailView: View {
     /// story it walked in with. Whoever wants the "why" gets it here, since
     /// the card upstream stayed to a title.
     private var heading: some View {
-        HStack(alignment: .top, spacing: FGSpace.m) {
-            VStack(alignment: .leading, spacing: FGSpace.s) {
-                Text("\(course.label) · \(session.durationLabel)")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(course.accentText)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 5)
-                    .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
-                    .clipShape(Capsule())
-
-                Text(session.title)
-                    .font(FGFont.display)
-                    .foregroundStyle(course.accentText)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if let explanation {
-                    Text(explanation)
-                        .font(FGFont.reason)
-                        .foregroundStyle(course.accentText.opacity(0.78))
-                        .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: FGSpace.s) {
+            // The mascot sits beside the pill rather than beside the whole
+            // block, so a long title gets the card's full width instead of
+            // wrapping to a word or two per line.
+            HStack(alignment: .center) {
+                HStack(spacing: FGSpace.xs) {
+                    headingPill("\(course.label) · \(session.durationLabel)")
+                    if !session.isOwn {
+                        headingPill(session.impactLabel)
+                    }
                 }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
 
-            Image(course.menuMascotAsset)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 72, height: 72)
-                .accessibilityHidden(true)
+                Spacer(minLength: FGSpace.s)
+
+                Image(course.menuMascotAsset)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 56, height: 56)
+                    .accessibilityHidden(true)
+            }
+
+            Text(session.title)
+                .font(FGFont.display)
+                .foregroundStyle(course.accentText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let explanation {
+                Text(explanation)
+                    .font(FGFont.reason)
+                    .foregroundStyle(course.accentText.opacity(0.78))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .padding(FGSpace.l)
         .background(course.accentGradient)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
+    }
+
+    private func headingPill(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 12, weight: .bold, design: .rounded))
+            .foregroundStyle(course.accentText)
+            .padding(.horizontal, 11)
+            .padding(.vertical, 5)
+            .background(Color.white.opacity(colorScheme == .dark ? 0.20 : 0.88))
+            .clipShape(Capsule())
     }
 
     /// The session's own blurb if it has one, otherwise the reason this was
@@ -370,82 +344,67 @@ struct SessionDetailView: View {
         return reasonText
     }
 
-    /// Closed by default. Someone deciding whether to start needs the title and
-    /// the length; the breakdown is for whoever wants to know before they say
-    /// yes, and it should cost them one tap rather than everyone else a screen.
+    /// Open by default, in a card that matches "Why this feels good" above it.
     private var lineup: some View {
-        VStack(alignment: .leading, spacing: FGSpace.s) {
-            Button {
-                isShowingSteps.toggle()
-            } label: {
-                HStack(spacing: FGSpace.s) {
-                    Text("What you'll do")
-                        .font(FGFont.body.weight(.medium))
-                        .foregroundStyle(FGColor.ink)
-                    Spacer(minLength: FGSpace.s)
-                    Text(partsLabel)
-                        .font(FGFont.body)
-                        .foregroundStyle(FGColor.inkMuted)
-                    Image(systemName: "chevron.right")
-                        .font(FGFont.body.weight(.semibold))
-                        .foregroundStyle(FGColor.inkMuted)
-                        .rotationEffect(.degrees(isShowingSteps ? 90 : 0))
+        VStack(alignment: .leading, spacing: FGSpace.m) {
+            Text("What you'll do")
+                .font(FGFont.itemTitle)
+                .foregroundStyle(FGColor.ink)
+                .accessibilityAddTraits(.isHeader)
+
+            steps
+        }
+        .padding(FGSpace.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: FGRadius.tile, style: .continuous)
+                .fill(FGColor.surface)
+        )
+    }
+
+    /// The primary action stays above the home indicator however long the
+    /// page above it runs.
+    private var bottomBar: some View {
+        VStack(spacing: FGSpace.s) {
+            if session.isOwn && session.source.steps.isEmpty {
+                FGPrimaryButton(title: "I did this") {
+                    let completionStartedAt = Date()
+                    Analytics.capture("workout_completed", properties: workoutProperties)
+                    OneSignalManager.shared.trackSessionCompleted(
+                        sessionID: session.id,
+                        startedAt: completionStartedAt
+                    )
+                    model.complete(session, startedAt: completionStartedAt, feel: nil)
+                    presentLittleWinOrFinish()
                 }
-                .frame(minHeight: FGSize.minTouchTarget)
-                .contentShape(Rectangle())
+            } else {
+                FGPrimaryButton(title: savedProgress == nil ? "Start" : "Resume") {
+                    startOrResumeSession()
+                }
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("What you'll do, \(partsLabel)")
-            .accessibilityValue(isShowingSteps ? "Expanded" : "Collapsed")
-            .accessibilityHint(isShowingSteps ? "Hides the steps" : "Shows the steps")
 
-            if isShowingSteps {
-                steps
-                    .padding(.top, FGSpace.xs)
-            }
-        }
-        .fgAnimation(FGMotion.gentle, value: isShowingSteps)
-    }
-
-    /// Tinted to the course's own accent, not a fixed colour — so this
-    /// screen never argues with the tag it just walked in from.
-    private func firstUpSection(_ firstStep: Step) -> some View {
-        HStack(alignment: .center, spacing: FGSpace.m) {
-            ZStack {
-                Circle()
-                    .fill(course.tagFill)
-                    .frame(width: 40, height: 40)
-                Image(systemName: "record.circle")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(course.tagText)
-            }
-            .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text("FIRST UP")
-                    .font(FGFont.label.weight(.bold))
-                    .tracking(0.5)
-                    .foregroundStyle(course.tagText)
-
-                Text("\(stepCost(firstStep)) \(firstStep.name.lowercased())")
-                    .font(FGFont.body)
-                    .foregroundStyle(FGColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
+            if !session.isOwn {
+                FGQuietButton("Don't suggest this again", systemImage: "eye.slash") {
+                    isConfirmingHide = true
+                }
             }
         }
-        .padding(.vertical, FGSpace.xs)
+        .padding(.horizontal, FGSpace.page)
+        .padding(.top, FGSpace.s)
+        .padding(.bottom, FGSpace.s)
+        .background(FGColor.bg)
     }
 
+    /// Whole seconds, not rounded up to a minute: a 20-second step reads
+    /// "20 sec", so the parts add up to the length promised in the heading.
     private func stepCost(_ step: Step) -> String {
         if step.isCounted, let reps = step.reps {
             return step.setCount > 1 ? "\(step.setCount) × \(reps)" : "\(reps) reps"
         }
-        return "\(max(1, step.seconds / 60)) min"
-    }
-
-    private var partsLabel: String {
-        let count = session.source.steps.count
-        return count == 1 ? "1 part" : "\(count) parts"
+        let minutes = step.seconds / 60
+        let seconds = step.seconds % 60
+        if minutes == 0 { return "\(seconds) sec" }
+        return seconds == 0 ? "\(minutes) min" : "\(minutes) min \(seconds) sec"
     }
 
     private var steps: some View {
