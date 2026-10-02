@@ -508,11 +508,13 @@ private struct TodayScreen: View {
         TabView(selection: $tab) {
             Tab("Today", systemImage: "sun.max", value: Destination.today) {
                 TodayView(model: model, requestedSessionID: $requestedSessionID)
+                    .fgReadableWidth()
                     .fgTabBarInset()
                     .toolbarVisibility(.hidden, for: .tabBar)
             }
             Tab("Chat", systemImage: "bubble.left.and.bubble.right", value: Destination.explore) {
                 ExploreView(model: model)
+                    .fgReadableWidth()
                     .toolbarVisibility(.hidden, for: .tabBar)
             }
             Tab("You", systemImage: "person", value: Destination.you) {
@@ -527,6 +529,7 @@ private struct TodayScreen: View {
                         }
                     }
                 }
+                .fgReadableWidth()
                 .toolbarVisibility(.hidden, for: .tabBar)
             }
         }
