@@ -5,7 +5,7 @@
       "id": "app-gentle-wrist-mobility",
       "title": "Gentle movement for stiff wrists",
       "subtitle": "Two minutes for mild wrist soreness or stiffness, with no weight on your hands",
-      "activity": "stretching",
+      "activity": "other",
       "qualities": [
         "mobility"
       ],
@@ -72,7 +72,7 @@
       "id": "app-tight-neck-shoulders",
       "title": "Gentle reset for a tight neck and shoulders",
       "subtitle": "Three seated minutes, with small movements and no pulling",
-      "activity": "stretching",
+      "activity": "other",
       "qualities": [
         "mobility"
       ],
