@@ -16,6 +16,50 @@ export interface Availability {
 // Activities the engine treats as needing nothing: see Activity.isAlwaysAvailable.
 const ALWAYS_AVAILABLE_ACTIVITIES = new Set(["qigong", "breathwork", "carries", "agility", "other"]);
 
+// Mirrors ContentTypes.swift: Place.impliedEquipment and Equipment.impliedEquipment.
+const PLACE_IMPLIES: Record<string, string[]> = {
+  gym: ["gym", "mat", "weights", "band", "bike"],
+  studio: ["mat", "reformer"],
+  pool: ["pool"],
+  outdoors: ["outdoor"],
+};
+const EQUIPMENT_IMPLIES: Record<string, string[]> = {
+  gym: ["mat", "weights", "band", "bike"],
+};
+
+interface PromptRule {
+  pattern: RegExp;
+  activities?: string[];
+  equipment?: string[];
+  places?: string[];
+}
+
+// What someone asks for in Chat widens their profile for that conversation.
+// Every activity in the catalog should be reachable by asking for it plainly;
+// test/availability.test.ts checks that.
+const PROMPT_RULES: PromptRule[] = [
+  { pattern: /\bpilates\b/, activities: ["pilates"], equipment: ["mat"] },
+  { pattern: /\breformer\b/, activities: ["pilates"], equipment: ["reformer"], places: ["studio"] },
+  { pattern: /\byoga\b/, activities: ["yoga"], equipment: ["mat"] },
+  { pattern: /\b(dance|dancing)\b/, activities: ["dance"] },
+  { pattern: /\b(stretch|stretches|stretching|flexibility|mobility|foam roll(ing|er)?)\b/, activities: ["stretching"], equipment: ["mat"] },
+  { pattern: /\b(breathe|breathing|breathwork|breath|relax|relaxing|wind down)\b/, activities: ["breathwork"], equipment: ["mat"] },
+  { pattern: /\b(mat|floor)\b/, equipment: ["mat"] },
+  { pattern: /\b(strength|lifting|lift|weights?|dumbbells?)\b/, activities: ["strength"], equipment: ["weights"] },
+  { pattern: /\b(resistance bands?|loop bands?|bands?)\b/, activities: ["strength"], equipment: ["band"] },
+  { pattern: /\b(gym|kettlebells?|barbells?|cables?|machines?|smith|landmine|pull-?up bar|rack|rowing machine|rower|elliptical|stair ?master|treadmill)\b/, activities: ["strength"], places: ["gym"] },
+  { pattern: /\b(walk|walks|walking|stroll|hike|hiking)\b/, activities: ["walking"], places: ["outdoors"] },
+  { pattern: /\b(run|running|jog|jogging)\b/, activities: ["running"], places: ["outdoors"] },
+  { pattern: /\b(bike|biking|cycle|cycling|ride)\b/, activities: ["biking"], equipment: ["bike"], places: ["outdoors"] },
+  { pattern: /\b(swim|swimming|pool)\b/, activities: ["swimming"], places: ["pool"] },
+  { pattern: /\b(skate|skates|skating|rollerblad(e|ing))\b/, activities: ["skating"], equipment: ["skates"], places: ["outdoors"] },
+  { pattern: /\b(jump rope|jumprope|skipping)\b/, activities: ["jumpRope"], equipment: ["rope"] },
+  { pattern: /\b(tennis|pickleball|padel|badminton|squash|racquet|racket)\b/, activities: ["racquet"], places: ["outdoors"] },
+  { pattern: /\b(climb|climbing|boulder|bouldering)\b/, activities: ["climbing"], places: ["gym", "outdoors"] },
+  { pattern: /\b(outside|outdoors?|park|trail|nature)\b/, places: ["outdoors"] },
+  { pattern: /\b(studio|class|sauna|spa)\b/, activities: ["dance", "stretching"], places: ["studio"] },
+];
+
 export interface AvailabilityFields {
   availableEquipment?: string[];
   available_equipment?: string[];
@@ -45,49 +89,25 @@ export function parseAvailability(ctx?: AvailabilityFields, prompt?: string): Av
     const text = prompt.toLowerCase();
     const hasNegation = /n't|\bno\b|\bnot\b|\bnever\b|\bwithout\b/.test(text);
     if (!hasNegation) {
-      if (/\bpilates\b/.test(text)) {
-        parsedActivities.add("pilates");
-        parsedEquipment.add("mat");
-      }
-      if (/\byoga\b/.test(text)) {
-        parsedActivities.add("yoga");
-        parsedEquipment.add("mat");
-      }
-      if (/\b(dance|dancing)\b/.test(text)) {
-        parsedActivities.add("dance");
-      }
-      if (/\b(stretch|stretching|flexibility|mobility)\b/.test(text)) {
-        parsedActivities.add("stretching");
-      }
-      if (/\b(strength|lifting|lift|weights?|dumbbells?)\b/.test(text)) {
-        parsedActivities.add("strength");
-        parsedEquipment.add("weights");
-      }
-      if (/\b(run|running|jog|jogging)\b/.test(text)) {
-        parsedActivities.add("running");
-        parsedEquipment.add("outdoor");
-        parsedPlaces.add("outdoors");
-      }
-      if (/\b(bike|biking|cycle|cycling)\b/.test(text)) {
-        parsedActivities.add("biking");
-        parsedEquipment.add("bike");
-        parsedPlaces.add("outdoors");
-      }
-      if (/\b(swim|swimming|pool)\b/.test(text)) {
-        parsedActivities.add("swimming");
-        parsedEquipment.add("pool");
-        parsedPlaces.add("pool");
-      }
-      if (/\b(skate|skating)\b/.test(text)) {
-        parsedActivities.add("skating");
-        parsedEquipment.add("skates");
-      }
-      if (/\b(jump rope|jumprope|skipping)\b/.test(text)) {
-        parsedActivities.add("jumpRope");
-        parsedEquipment.add("rope");
+      for (const rule of PROMPT_RULES) {
+        if (!rule.pattern.test(text)) continue;
+        rule.activities?.forEach((x) => parsedActivities.add(x));
+        rule.equipment?.forEach((x) => parsedEquipment.add(x));
+        rule.places?.forEach((x) => parsedPlaces.add(x));
       }
     }
   }
+
+  // Somewhere to be implies what's in it, as in the app's
+  // Place.impliedEquipment / Equipment.impliedEquipment — otherwise "I'm
+  // outdoors" or "at the gym" still filters out the sessions that need them.
+  for (const place of [...parsedPlaces]) {
+    PLACE_IMPLIES[place]?.forEach((x) => parsedEquipment.add(x));
+  }
+  for (const item of [...parsedEquipment]) {
+    EQUIPMENT_IMPLIES[item]?.forEach((x) => parsedEquipment.add(x));
+  }
+  if (parsedEquipment.has("gym") || parsedEquipment.has("weights")) parsedActivities.add("strength");
 
   return {
     equipment: parsedEquipment,
