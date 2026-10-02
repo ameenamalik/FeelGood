@@ -78,4 +78,19 @@ struct TimeFillTests {
             #expect(count <= PlanEngine.maxMenuItems)
         }
     }
+
+    @Test("The check-in sheet's answers do not switch the fill off")
+    func checkInAnswersStillFillTheTime() throws {
+        // The sheet always sends a feeling, usually a body area and favoured
+        // activities with it. An early version treated any of those as "asked
+        // for something specific" and gave an hour as 43 minutes.
+        let profile = Fixture.profile(realisticMinutes: 60)
+        let engine = PlanEngine(catalog: try ContentStore.bundled().sessions)
+        var checkIn = PlanCheckIn(energy: .steady, time: .plenty, todayIntent: .mobilize)
+        checkIn.focus = .full
+        let menu = engine.makeMenu(PlanInput(profile: profile, checkIn: checkIn, context: Fixture.context()))
+        let minutes = total(menu)
+        #expect(minutes <= 60)
+        #expect(Double(minutes) >= 60 * 0.85, "\(minutes) min for an hour with a feeling and a body area chosen")
+    }
 }

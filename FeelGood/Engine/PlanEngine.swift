@@ -69,6 +69,9 @@ nonisolated struct PlanEngine: Sendable {
     static let fillsTimeFrom = 25
     /// How much of the budget a menu aims to use, never going over.
     static let fillTarget = 0.85
+    /// How much less a longer main may score than the best one when today's
+    /// check-in asked for something, and still count as matching it.
+    static let askedMatchWindow = 1.0
     /// Minutes a longer main must leave free for one more item.
     static let roomForOneMore = 5
 
@@ -170,7 +173,23 @@ nonisolated struct PlanEngine: Sendable {
             max(2, input.profile.moments.sideCount)
         }
         var sides: [MenuItem] = []
-        if sideCount > 0 {
+        if fillsTime, sideCount > 0 {
+            // A long budget is not served by the shortest sides: of the better
+            // scoring ones that fit, take the longest.
+            while sides.count < sideCount {
+                let fitting = scored.filter {
+                    $0.session.course == .side
+                        && !taken.contains($0.session.id)
+                        && !takenActivities.contains($0.session.activity)
+                        && $0.session.durationMin <= mainAndSidesBudget - usedMinutes
+                }
+                guard let pick = Self.longestOfBest(fitting) else { break }
+                sides.append(pick.item)
+                taken.insert(pick.session.id)
+                takenActivities.insert(pick.session.activity)
+                usedMinutes += pick.session.durationMin
+            }
+        } else if sideCount > 0 {
             for candidate in scored where candidate.session.course == .side {
                 guard !taken.contains(candidate.session.id) else { continue }
                 if takenActivities.contains(candidate.session.activity) { continue }
@@ -220,7 +239,20 @@ nonisolated struct PlanEngine: Sendable {
         // promise that allows it to overshoot the user's check-in budget.
         // If nothing fits what remains of the budget, no dessert is offered.
         let remainingForDessert = max(0, budget - usedMinutes)
-        let dessert = first(from: scored, course: .dessert, excluding: taken, excludingActivities: takenActivities, maxDuration: remainingForDessert)
+        let longDessert: MenuItem? = fillsTime ? {
+            let fitting = scored.filter {
+                $0.session.course == .dessert
+                    && !taken.contains($0.session.id)
+                    && $0.session.durationMin <= remainingForDessert
+            }
+            // The same fallback order as below: no repeated activity, then not
+            // echoing the day's hero activities, then anything that fits.
+            let fresh = fitting.filter { !takenActivities.contains($0.session.activity) }
+            let notHero = fitting.filter { !heroActivities.contains($0.session.activity) }
+            return Self.longestOfBest(!fresh.isEmpty ? fresh : (!notHero.isEmpty ? notHero : fitting))?.item
+        }() : nil
+        let dessert = longDessert
+            ?? first(from: scored, course: .dessert, excluding: taken, excludingActivities: takenActivities, maxDuration: remainingForDessert)
             ?? first(from: scored, course: .dessert, excluding: taken, excludingActivities: heroActivities, maxDuration: remainingForDessert)
             ?? first(from: scored, course: .dessert, excluding: taken, maxDuration: remainingForDessert)
             ?? guaranteedDessert(input, checkIn: checkIn, stats: stats, excluding: taken, maxDuration: remainingForDessert)
@@ -245,11 +277,8 @@ nonisolated struct PlanEngine: Sendable {
                         && !taken.contains($0.session.id)
                         && $0.session.durationMin <= remaining
                 }
-                // Of the better-scoring sides, the longest: five-minute sides
-                // alone cannot reach an hour inside five items.
                 let fresh = fitting.filter { !takenActivities.contains($0.session.activity) }
-                let pool = Array((fresh.isEmpty ? fitting : fresh).prefix(20))
-                guard let extra = pool.max(by: { $0.session.durationMin < $1.session.durationMin }) else { break }
+                guard let extra = Self.longestOfBest(fresh.isEmpty ? fitting : fresh) else { break }
                 sides.append(extra.item)
                 taken.insert(extra.session.id)
                 takenActivities.insert(extra.session.activity)
@@ -839,8 +868,8 @@ nonisolated struct PlanEngine: Sendable {
     /// The longest main that suits the day, unless the history is asking for
     /// something else. Recovery after hard days, a real gap since the last
     /// session, and a main someone loved all keep the best-scoring pick, as does
-    /// anything asked for in today's check-in. Anything that would repeat a
-    /// recent activity, or that someone found too much, is left out. Otherwise the main comes
+    /// a body that needs care. Anything that would repeat a recent activity, or
+    /// that someone found too much, is left out. Otherwise the main comes
     /// from the longest tier that fits today's energy, so an hour is not
     /// answered with the same fifteen minutes as half an hour. Someone with no
     /// history yet still gets a calm first day, only a longer one: the pool is
@@ -862,19 +891,34 @@ nonisolated struct PlanEngine: Sendable {
 
         let hasGap = stats.daysSinceLastCompleted.map { $0 >= Self.reentryGapDays } ?? false
         let topAffinity = (input.affinity[top.session.id] ?? 0) + stats.derivedAffinity[top.session.id, default: 0]
-        // Something said today ("I want to feel strong in my legs", a body that
-        // needs care) is a request for a particular session, not for a length.
-        let askedForSomething = checkIn.todayIntent != nil || checkIn.focus != nil
-            || !checkIn.favoured.isEmpty || !checkIn.bodies.isEmpty
-        if hasGap || stats.recoveryOwed || topAffinity > 0 || askedForSomething { return top.item }
+        // A body that needs care keeps the best-scoring pick outright.
+        if hasGap || stats.recoveryOwed || topAffinity > 0 || !checkIn.bodies.isEmpty { return top.item }
+        // Something asked for today (a feeling, a body area, an activity) is
+        // not a request for a length, but it is a request for *that* kind of
+        // main: the check-in sheet always sends one, so refusing to lengthen
+        // would switch this off for nearly everybody. Instead the longer main
+        // must match what was asked about as well as the best one does, which
+        // is a score within `askedMatchWindow`; a main that misses the intent
+        // or the body area loses by more than that.
+        let askedForSomething = checkIn.todayIntent != nil || checkIn.focus != nil || !checkIn.favoured.isEmpty
 
-        // The longer main leaves room for one more item, so it can never crowd
-        // the menu below the three it is meant to have.
         var pool = mains.filter {
             $0.session.durationMin <= maxDuration - Self.roomForOneMore
                 && $0.session.energyFit.contains(checkIn.energy)
                 && (stats.recentActivityCounts[$0.session.activity] ?? 0) == 0
                 && (input.affinity[$0.session.id] ?? 0) + stats.derivedAffinity[$0.session.id, default: 0] >= 0
+        }
+        if askedForSomething {
+            // With no history every short, restful main carries the "start
+            // small" bonus (see `returningAfterGap`). That is a calm first day,
+            // not a reason a longer main matches worse, so the window allows
+            // for it.
+            // Time fit is likewise about length, not about what was asked for,
+            // so a longer main is not marked down for sitting further from the
+            // profile's usual minutes.
+            let window = Self.askedMatchWindow + weights.timeFit
+                + (stats.hasNoHistory ? weights.returningAfterGap : 0)
+            pool = pool.filter { $0.score >= top.score - window }
         }
         if stats.hasNoHistory {
             pool = pool.filter { $0.session.intensity <= weights.restfulIntensity }
@@ -882,6 +926,12 @@ nonisolated struct PlanEngine: Sendable {
         guard let longest = pool.map(\.session.durationMin).max() else { return top.item }
         let floor = Int((Double(longest) * 0.9).rounded(.up))
         return pool.first { $0.session.durationMin >= floor }?.item ?? top.item
+    }
+
+    /// Of the better-scoring candidates (the list is already best-first), the
+    /// longest. Five-minute sides alone cannot reach an hour inside five items.
+    private static func longestOfBest(_ candidates: [Candidate], among count: Int = 20) -> Candidate? {
+        candidates.prefix(count).max { $0.session.durationMin < $1.session.durationMin }
     }
 
     private func first(from scored: [Candidate], course: Course, excluding: Set<String>, excludingActivities: Set<Activity> = [], maxDuration: Int? = nil) -> MenuItem? {
