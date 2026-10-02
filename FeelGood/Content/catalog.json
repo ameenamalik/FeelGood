@@ -19280,6 +19280,1563 @@
           }
         ]
       }
+    },
+    {
+      "id": "main-mobility-30",
+      "title": "Thirty minutes of stretching",
+      "subtitle": "A longer, slower stretch for the days everything feels tight",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 30,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "mobilize",
+        "calm"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Breathe",
+            "seconds": 90,
+            "cue": "On your back. Let the floor hold you.",
+            "visual": {
+              "type": "breathing"
+            },
+            "glossaryID": "deep-breath",
+            "narrationID": "main-mobility-20-step-1-breath"
+          },
+          {
+            "name": "Cat-cow",
+            "seconds": 60,
+            "cue": "On hands and knees, round and lift with your breath.",
+            "glossaryID": "cat-cow"
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 60,
+            "cue": "Sit back toward your heels, arms long.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Neck side stretch",
+            "seconds": 60,
+            "cue": "Ear toward shoulder. Switch sides halfway.",
+            "glossaryID": "neck-side-stretch",
+            "switchSides": true,
+            "switchAfterSeconds": 24
+          },
+          {
+            "name": "Cross-body shoulder stretch",
+            "seconds": 60,
+            "cue": "Bring one arm across your chest. Switch sides halfway.",
+            "glossaryID": "cross-body-shoulder-stretch",
+            "switchSides": true,
+            "switchAfterSeconds": 30
+          },
+          {
+            "name": "Doorway chest stretch",
+            "seconds": 60,
+            "cue": "Forearm on the door frame, step through gently.",
+            "glossaryID": "doorway-chest-stretch"
+          },
+          {
+            "name": "Hamstrings — right",
+            "seconds": 120,
+            "cue": "Strap, towel or hands.",
+            "glossaryID": "supine-hamstring-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Hamstrings — left",
+            "seconds": 120,
+            "cue": "Switch sides. Same slow stretch.",
+            "glossaryID": "supine-hamstring-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Figure four — right",
+            "seconds": 120,
+            "cue": "One ankle over the opposite knee, draw in slowly.",
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Figure four — left",
+            "seconds": 120,
+            "cue": "Switch sides.",
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Low lunge — right",
+            "seconds": 120,
+            "cue": "Hips forward, breathe into the front of the back leg.",
+            "glossaryID": "low-lunge",
+            "switchSides": false
+          },
+          {
+            "name": "Low lunge — left",
+            "seconds": 120,
+            "cue": "Switch sides.",
+            "glossaryID": "low-lunge",
+            "switchSides": false
+          },
+          {
+            "name": "Kneeling hip flexor stretch",
+            "seconds": 120,
+            "cue": "Back knee down, front foot forward, ribs stacked over hips. Switch sides halfway.",
+            "glossaryID": "kneeling-hip-flexor-stretch",
+            "switchSides": true,
+            "switchAfterSeconds": 45
+          },
+          {
+            "name": "Thoracic opening — right",
+            "seconds": 90,
+            "cue": "Side-lying book openers. Follow your hand with your eyes.",
+            "glossaryID": "thoracic-rotation",
+            "switchSides": false
+          },
+          {
+            "name": "Thoracic opening — left",
+            "seconds": 90,
+            "cue": "Switch sides.",
+            "glossaryID": "thoracic-rotation",
+            "switchSides": false
+          },
+          {
+            "name": "Butterfly stretch",
+            "seconds": 90,
+            "cue": "Soles of your feet together, knees falling open.",
+            "glossaryID": "butterfly-stretch"
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 120,
+            "cue": "Knees wide, arms long.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Legs up the wall",
+            "seconds": 180,
+            "cue": "Hips close to the wall, let gravity do the work.",
+            "glossaryID": "legs-up-the-wall"
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-mobility-40",
+      "title": "Forty minutes of deep stretching",
+      "subtitle": "Long holds, one area at a time, nowhere to be",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 40,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "mobilize",
+        "calm"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Breathe",
+            "seconds": 90,
+            "cue": "On your back. Let the floor hold you.",
+            "visual": {
+              "type": "breathing"
+            },
+            "glossaryID": "deep-breath",
+            "narrationID": "main-mobility-20-step-1-breath"
+          },
+          {
+            "name": "Cat-cow",
+            "seconds": 90,
+            "cue": "On hands and knees, round and lift with your breath.",
+            "glossaryID": "cat-cow"
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 90,
+            "cue": "Sit back toward your heels, arms long.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Neck side stretch",
+            "seconds": 90,
+            "cue": "Ear toward shoulder. Switch sides halfway.",
+            "glossaryID": "neck-side-stretch",
+            "switchSides": true,
+            "switchAfterSeconds": 24
+          },
+          {
+            "name": "Cross-body shoulder stretch",
+            "seconds": 90,
+            "cue": "Bring one arm across your chest. Switch sides halfway.",
+            "glossaryID": "cross-body-shoulder-stretch",
+            "switchSides": true,
+            "switchAfterSeconds": 30
+          },
+          {
+            "name": "Doorway chest stretch",
+            "seconds": 90,
+            "cue": "Forearm on the door frame, step through gently.",
+            "glossaryID": "doorway-chest-stretch"
+          },
+          {
+            "name": "Hamstrings — right",
+            "seconds": 150,
+            "cue": "Strap, towel or hands.",
+            "glossaryID": "supine-hamstring-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Hamstrings — left",
+            "seconds": 150,
+            "cue": "Switch sides. Same slow stretch.",
+            "glossaryID": "supine-hamstring-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Figure four — right",
+            "seconds": 150,
+            "cue": "One ankle over the opposite knee, draw in slowly.",
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Figure four — left",
+            "seconds": 150,
+            "cue": "Switch sides.",
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Low lunge — right",
+            "seconds": 150,
+            "cue": "Hips forward, breathe into the front of the back leg.",
+            "glossaryID": "low-lunge",
+            "switchSides": false
+          },
+          {
+            "name": "Low lunge — left",
+            "seconds": 150,
+            "cue": "Switch sides.",
+            "glossaryID": "low-lunge",
+            "switchSides": false
+          },
+          {
+            "name": "Kneeling hip flexor stretch",
+            "seconds": 150,
+            "cue": "Back knee down, front foot forward, ribs stacked over hips. Switch sides halfway.",
+            "glossaryID": "kneeling-hip-flexor-stretch",
+            "switchSides": true,
+            "switchAfterSeconds": 45
+          },
+          {
+            "name": "Thoracic opening — right",
+            "seconds": 120,
+            "cue": "Side-lying book openers. Follow your hand with your eyes.",
+            "glossaryID": "thoracic-rotation",
+            "switchSides": false
+          },
+          {
+            "name": "Thoracic opening — left",
+            "seconds": 120,
+            "cue": "Switch sides.",
+            "glossaryID": "thoracic-rotation",
+            "switchSides": false
+          },
+          {
+            "name": "Butterfly stretch",
+            "seconds": 120,
+            "cue": "Soles of your feet together, knees falling open.",
+            "glossaryID": "butterfly-stretch"
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 150,
+            "cue": "Knees wide, arms long.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Legs up the wall",
+            "seconds": 300,
+            "cue": "Hips close to the wall, let gravity do the work.",
+            "glossaryID": "legs-up-the-wall"
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-mobility-50",
+      "title": "Fifty minutes of slow stretching",
+      "subtitle": "The whole body, held long enough to actually let go",
+      "activity": "stretching",
+      "qualities": [
+        "mobility"
+      ],
+      "durationMin": 50,
+      "intensity": 1,
+      "energyFit": [
+        "low",
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "mobilize",
+        "calm"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Breathe",
+            "seconds": 90,
+            "cue": "On your back. Let the floor hold you.",
+            "visual": {
+              "type": "breathing"
+            },
+            "glossaryID": "deep-breath",
+            "narrationID": "main-mobility-20-step-1-breath"
+          },
+          {
+            "name": "Cat-cow",
+            "seconds": 120,
+            "cue": "On hands and knees, round and lift with your breath.",
+            "glossaryID": "cat-cow"
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 120,
+            "cue": "Sit back toward your heels, arms long.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Neck side stretch",
+            "seconds": 120,
+            "cue": "Ear toward shoulder. Switch sides halfway.",
+            "glossaryID": "neck-side-stretch",
+            "switchSides": true,
+            "switchAfterSeconds": 24
+          },
+          {
+            "name": "Cross-body shoulder stretch",
+            "seconds": 120,
+            "cue": "Bring one arm across your chest. Switch sides halfway.",
+            "glossaryID": "cross-body-shoulder-stretch",
+            "switchSides": true,
+            "switchAfterSeconds": 30
+          },
+          {
+            "name": "Doorway chest stretch",
+            "seconds": 120,
+            "cue": "Forearm on the door frame, step through gently.",
+            "glossaryID": "doorway-chest-stretch"
+          },
+          {
+            "name": "Hamstrings — right",
+            "seconds": 180,
+            "cue": "Strap, towel or hands.",
+            "glossaryID": "supine-hamstring-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Hamstrings — left",
+            "seconds": 180,
+            "cue": "Switch sides. Same slow stretch.",
+            "glossaryID": "supine-hamstring-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Figure four — right",
+            "seconds": 180,
+            "cue": "One ankle over the opposite knee, draw in slowly.",
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Figure four — left",
+            "seconds": 180,
+            "cue": "Switch sides.",
+            "glossaryID": "figure-four-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Low lunge — right",
+            "seconds": 180,
+            "cue": "Hips forward, breathe into the front of the back leg.",
+            "glossaryID": "low-lunge",
+            "switchSides": false
+          },
+          {
+            "name": "Low lunge — left",
+            "seconds": 180,
+            "cue": "Switch sides.",
+            "glossaryID": "low-lunge",
+            "switchSides": false
+          },
+          {
+            "name": "Kneeling hip flexor stretch",
+            "seconds": 180,
+            "cue": "Back knee down, front foot forward, ribs stacked over hips. Switch sides halfway.",
+            "glossaryID": "kneeling-hip-flexor-stretch",
+            "switchSides": true,
+            "switchAfterSeconds": 45
+          },
+          {
+            "name": "Thoracic opening — right",
+            "seconds": 150,
+            "cue": "Side-lying book openers. Follow your hand with your eyes.",
+            "glossaryID": "thoracic-rotation",
+            "switchSides": false
+          },
+          {
+            "name": "Thoracic opening — left",
+            "seconds": 150,
+            "cue": "Switch sides.",
+            "glossaryID": "thoracic-rotation",
+            "switchSides": false
+          },
+          {
+            "name": "Butterfly stretch",
+            "seconds": 150,
+            "cue": "Soles of your feet together, knees falling open.",
+            "glossaryID": "butterfly-stretch"
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 240,
+            "cue": "Knees wide, arms long.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Legs up the wall",
+            "seconds": 360,
+            "cue": "Hips close to the wall, let gravity do the work.",
+            "glossaryID": "legs-up-the-wall"
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-yoga-flow-40",
+      "title": "Forty minutes of yoga flow",
+      "subtitle": "Flow, balance and long hip openers, ending in stillness",
+      "activity": "yoga",
+      "qualities": [
+        "mobility",
+        "downRegulation"
+      ],
+      "durationMin": 40,
+      "intensity": 2,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full",
+        "hips",
+        "back"
+      ],
+      "contraindications": [
+        "wrists"
+      ],
+      "intents": [
+        "calm",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Centering & belly breathing",
+            "seconds": 180,
+            "cue": "Sit cross-legged or kneel on your mat. Place hands on lower belly and match breath to 4-in, 4-out.",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "exhale": 4
+            },
+            "glossaryID": "deep-breath",
+            "narrationID": "main-mindful-yoga-flow-step-1-breath"
+          },
+          {
+            "name": "Cat-cow & gentle spinal waves",
+            "seconds": 240,
+            "cue": "Move between arched back on the inhale and rounded spine on the exhale. Flow with your rhythm.",
+            "glossaryID": "cat-cow"
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 120,
+            "cue": "Start here. Let the breath get long.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Down dog and lunges",
+            "seconds": 360,
+            "cue": "Step forward, sink the hips, breathe."
+          },
+          {
+            "name": "Standing sequence",
+            "seconds": 360,
+            "cue": "Whatever shape you know. Hold each one for five breaths."
+          },
+          {
+            "name": "Balance — right",
+            "seconds": 120,
+            "cue": "One leg. Wobbling is the work.",
+            "glossaryID": "tree-pose",
+            "switchSides": false
+          },
+          {
+            "name": "Balance — left",
+            "seconds": 120,
+            "cue": "Switch legs. Same wobble, same work.",
+            "glossaryID": "tree-pose",
+            "switchSides": false
+          },
+          {
+            "name": "Deep Yin hip openers — right",
+            "seconds": 240,
+            "cue": "Settle into Pigeon or Lizard pose. Surrender into the stretch and breathe into tightness.",
+            "switchSides": false
+          },
+          {
+            "name": "Deep Yin hip openers — left",
+            "seconds": 240,
+            "cue": "Switch sides. Same surrender, same breath.",
+            "switchSides": false
+          },
+          {
+            "name": "Twists — right",
+            "seconds": 120,
+            "cue": "Seated, right side first.",
+            "switchSides": false
+          },
+          {
+            "name": "Twists — left",
+            "seconds": 120,
+            "cue": "Switch to the left.",
+            "switchSides": false
+          },
+          {
+            "name": "Final rest (Savasana)",
+            "seconds": 180,
+            "cue": "Flat on your back. Don't skip this part."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-yoga-flow-50",
+      "title": "Fifty minutes of slow yoga",
+      "subtitle": "A full class at home: flow, hold, twist and rest",
+      "activity": "yoga",
+      "qualities": [
+        "mobility",
+        "downRegulation"
+      ],
+      "durationMin": 50,
+      "intensity": 2,
+      "energyFit": [
+        "low",
+        "steady"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full",
+        "hips",
+        "back"
+      ],
+      "contraindications": [
+        "wrists"
+      ],
+      "intents": [
+        "calm",
+        "mobilize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Centering & belly breathing",
+            "seconds": 180,
+            "cue": "Sit cross-legged or kneel on your mat. Place hands on lower belly and match breath to 4-in, 4-out.",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "exhale": 4
+            },
+            "glossaryID": "deep-breath",
+            "narrationID": "main-mindful-yoga-flow-step-1-breath"
+          },
+          {
+            "name": "Cat-cow & gentle spinal waves",
+            "seconds": 240,
+            "cue": "Move between arched back on the inhale and rounded spine on the exhale. Flow with your rhythm.",
+            "glossaryID": "cat-cow"
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 240,
+            "cue": "Start here. Let the breath get long.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Down dog and lunges",
+            "seconds": 420,
+            "cue": "Step forward, sink the hips, breathe."
+          },
+          {
+            "name": "Standing sequence",
+            "seconds": 480,
+            "cue": "Whatever shape you know. Hold each one for five breaths."
+          },
+          {
+            "name": "Balance — right",
+            "seconds": 150,
+            "cue": "One leg. Wobbling is the work.",
+            "glossaryID": "tree-pose",
+            "switchSides": false
+          },
+          {
+            "name": "Balance — left",
+            "seconds": 150,
+            "cue": "Switch legs. Same wobble, same work.",
+            "glossaryID": "tree-pose",
+            "switchSides": false
+          },
+          {
+            "name": "Deep Yin hip openers — right",
+            "seconds": 300,
+            "cue": "Settle into Pigeon or Lizard pose. Surrender into the stretch and breathe into tightness.",
+            "switchSides": false
+          },
+          {
+            "name": "Deep Yin hip openers — left",
+            "seconds": 300,
+            "cue": "Switch sides. Same surrender, same breath.",
+            "switchSides": false
+          },
+          {
+            "name": "Twists — right",
+            "seconds": 120,
+            "cue": "Seated, right side first.",
+            "switchSides": false
+          },
+          {
+            "name": "Twists — left",
+            "seconds": 120,
+            "cue": "Switch to the left.",
+            "switchSides": false
+          },
+          {
+            "name": "Final rest (Savasana)",
+            "seconds": 300,
+            "cue": "Flat on your back. Don't skip this part."
+          }
+        ]
+      }
+    },
+    {
+      "id": "main-pilates-full-40",
+      "title": "Forty minutes of Pilates",
+      "subtitle": "A full mat class: core first, then legs, then a long stretch out",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility",
+        "balance"
+      ],
+      "durationMin": 40,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "strengthen",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Breath and set-up",
+            "seconds": 120,
+            "cue": "Find the ribs-down, long-spine position you'll keep all session.",
+            "visual": {
+              "type": "breathing"
+            },
+            "narrationID": "main-pilates-core-20-step-1-breath"
+          },
+          {
+            "name": "Warm up",
+            "seconds": 60,
+            "cue": "Breath, pelvic tilts, shoulder rolls.",
+            "glossaryID": "pelvic-tilt"
+          },
+          {
+            "name": "The hundred",
+            "seconds": 150,
+            "cue": "Set the tone. Steady breath.",
+            "glossaryID": "the-hundred"
+          },
+          {
+            "name": "Roll ups",
+            "seconds": 150,
+            "cue": "Slow through every vertebra.",
+            "switchSides": false
+          },
+          {
+            "name": "Roll overs",
+            "seconds": 120,
+            "cue": "Legs overhead, then roll back down with control.",
+            "switchSides": false
+          },
+          {
+            "name": "Single leg stretch",
+            "seconds": 120,
+            "cue": "Pull one knee in at a time, switch smoothly.",
+            "glossaryID": "single-leg-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Double leg stretch",
+            "seconds": 120,
+            "cue": "Both knees in, reach long, circle back.",
+            "switchSides": false
+          },
+          {
+            "name": "Scissors",
+            "seconds": 120,
+            "cue": "Legs open and switch in the air, steady breath.",
+            "switchSides": false
+          },
+          {
+            "name": "Dead bug",
+            "seconds": 150,
+            "cue": "Opposite arm and leg, lower back heavy.",
+            "glossaryID": "dead-bug"
+          },
+          {
+            "name": "Bridge series — part 1",
+            "seconds": 150,
+            "cue": "Add single-leg lifts if it feels good.",
+            "glossaryID": "glute-bridge",
+            "switchSides": false
+          },
+          {
+            "name": "Bridge series — part 2",
+            "seconds": 150,
+            "cue": "Keep lifting through the hips. A few more.",
+            "glossaryID": "glute-bridge",
+            "switchSides": false
+          },
+          {
+            "name": "Leg lifts",
+            "seconds": 120,
+            "cue": "Top leg lifts, both sides.",
+            "switchSides": false
+          },
+          {
+            "name": "Circles",
+            "seconds": 120,
+            "cue": "Small circles with the top leg, both directions.",
+            "switchSides": false
+          },
+          {
+            "name": "Side plank (Right)",
+            "seconds": 120,
+            "cue": "Knees down is a full version, not a lesser one.",
+            "glossaryID": "side-plank"
+          },
+          {
+            "name": "Side plank (Left)",
+            "seconds": 120,
+            "cue": "Match it.",
+            "glossaryID": "side-plank"
+          },
+          {
+            "name": "Plank",
+            "seconds": 90,
+            "cue": "Hold steady, ribs knitting in.",
+            "glossaryID": "plank",
+            "switchSides": false
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 90,
+            "cue": "Sink back and breathe. Then once more.",
+            "glossaryID": "childs-pose",
+            "switchSides": false
+          },
+          {
+            "name": "Spine stretch",
+            "seconds": 120,
+            "cue": "Long, open, unhurried.",
+            "glossaryID": "seated-forward-fold-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Twist",
+            "seconds": 90,
+            "cue": "Rotate from the waist, both sides.",
+            "switchSides": false
+          },
+          {
+            "name": "Finish",
+            "seconds": 120,
+            "cue": "Knees to chest, then stand up slowly."
+          }
+        ]
+      },
+      "contraindications": [
+        "postpartum",
+        "pregnancy",
+        "wrists"
+      ]
+    },
+    {
+      "id": "main-pilates-full-50",
+      "title": "Fifty minutes of Pilates",
+      "subtitle": "The whole classical mat sequence, unhurried",
+      "activity": "pilates",
+      "qualities": [
+        "strength",
+        "mobility",
+        "balance"
+      ],
+      "durationMin": 50,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "mat"
+      ],
+      "places": [
+        "home",
+        "gym",
+        "studio"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "strengthen",
+        "energize"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Breath and set-up",
+            "seconds": 120,
+            "cue": "Find the ribs-down, long-spine position you'll keep all session.",
+            "visual": {
+              "type": "breathing"
+            },
+            "narrationID": "main-pilates-core-20-step-1-breath"
+          },
+          {
+            "name": "Warm up",
+            "seconds": 165,
+            "cue": "Breath, pelvic tilts, shoulder rolls.",
+            "glossaryID": "pelvic-tilt"
+          },
+          {
+            "name": "The hundred",
+            "seconds": 180,
+            "cue": "Set the tone. Steady breath.",
+            "glossaryID": "the-hundred"
+          },
+          {
+            "name": "Roll ups",
+            "seconds": 180,
+            "cue": "Slow through every vertebra.",
+            "switchSides": false
+          },
+          {
+            "name": "Roll overs",
+            "seconds": 150,
+            "cue": "Legs overhead, then roll back down with control.",
+            "switchSides": false
+          },
+          {
+            "name": "Single leg stretch",
+            "seconds": 150,
+            "cue": "Pull one knee in at a time, switch smoothly.",
+            "glossaryID": "single-leg-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Double leg stretch",
+            "seconds": 150,
+            "cue": "Both knees in, reach long, circle back.",
+            "switchSides": false
+          },
+          {
+            "name": "Scissors",
+            "seconds": 150,
+            "cue": "Legs open and switch in the air, steady breath.",
+            "switchSides": false
+          },
+          {
+            "name": "Dead bug",
+            "seconds": 180,
+            "cue": "Opposite arm and leg, lower back heavy.",
+            "glossaryID": "dead-bug"
+          },
+          {
+            "name": "Bridge series — part 1",
+            "seconds": 180,
+            "cue": "Add single-leg lifts if it feels good.",
+            "glossaryID": "glute-bridge",
+            "switchSides": false
+          },
+          {
+            "name": "Bridge series — part 2",
+            "seconds": 180,
+            "cue": "Keep lifting through the hips. A few more.",
+            "glossaryID": "glute-bridge",
+            "switchSides": false
+          },
+          {
+            "name": "Leg lifts",
+            "seconds": 150,
+            "cue": "Top leg lifts, both sides.",
+            "switchSides": false
+          },
+          {
+            "name": "Circles",
+            "seconds": 150,
+            "cue": "Small circles with the top leg, both directions.",
+            "switchSides": false
+          },
+          {
+            "name": "Side plank (Right)",
+            "seconds": 150,
+            "cue": "Knees down is a full version, not a lesser one.",
+            "glossaryID": "side-plank"
+          },
+          {
+            "name": "Side plank (Left)",
+            "seconds": 150,
+            "cue": "Match it.",
+            "glossaryID": "side-plank"
+          },
+          {
+            "name": "Plank",
+            "seconds": 105,
+            "cue": "Hold steady, ribs knitting in.",
+            "glossaryID": "plank",
+            "switchSides": false
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 105,
+            "cue": "Sink back and breathe. Then once more.",
+            "glossaryID": "childs-pose",
+            "switchSides": false
+          },
+          {
+            "name": "Spine stretch",
+            "seconds": 150,
+            "cue": "Long, open, unhurried.",
+            "glossaryID": "seated-forward-fold-stretch",
+            "switchSides": false
+          },
+          {
+            "name": "Twist",
+            "seconds": 105,
+            "cue": "Rotate from the waist, both sides.",
+            "switchSides": false
+          },
+          {
+            "name": "Finish",
+            "seconds": 150,
+            "cue": "Knees to chest, then stand up slowly."
+          }
+        ]
+      },
+      "contraindications": [
+        "postpartum",
+        "pregnancy",
+        "wrists"
+      ]
+    },
+    {
+      "id": "main-bodyweight-strength-45",
+      "title": "Forty-five minutes of bodyweight strength",
+      "subtitle": "Legs, then upper body and core, twice through, nothing but you",
+      "activity": "strength",
+      "qualities": [
+        "strength",
+        "endurance"
+      ],
+      "durationMin": 45,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "gym"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Warm-up",
+            "seconds": 30,
+            "cue": "March in place with arm circles.",
+            "glossaryID": "arm-circles"
+          },
+          {
+            "name": "March in place",
+            "seconds": 60,
+            "cue": "Lift your knees and swing your arms. Keep it easy; this is your warm-up."
+          },
+          {
+            "name": "Bodyweight squats",
+            "seconds": 120,
+            "cue": "Sit back and stand, chest tall.",
+            "glossaryID": "bodyweight-squat"
+          },
+          {
+            "name": "Reverse lunges — right",
+            "seconds": 90,
+            "cue": "Step your right foot back and lower your back knee toward the floor. Push through your front foot to stand.",
+            "glossaryID": "reverse-lunge"
+          },
+          {
+            "name": "Reverse lunges — left",
+            "seconds": 90,
+            "cue": "Switch sides. Step your left foot back, lower, and push through your front foot to stand.",
+            "glossaryID": "reverse-lunge"
+          },
+          {
+            "name": "Calf raises",
+            "seconds": 60,
+            "cue": "Rest one hand on the wall. Rise up onto your toes, then lower slowly.",
+            "glossaryID": "calf-raise"
+          },
+          {
+            "name": "Wall sit",
+            "seconds": 60,
+            "cue": "Lean your back against a wall and slide down until your thighs are as level as feels comfortable. Hold and keep breathing.",
+            "glossaryID": "wall-sit"
+          },
+          {
+            "name": "Break and shake out",
+            "seconds": 45,
+            "cue": "Shake out your arms and legs."
+          },
+          {
+            "name": "Incline push-ups",
+            "seconds": 120,
+            "cue": "Hands on a counter or chair, body in one line.",
+            "glossaryID": "incline-push-up"
+          },
+          {
+            "name": "Plank",
+            "seconds": 90,
+            "cue": "Body in one line from head to heels.",
+            "glossaryID": "plank"
+          },
+          {
+            "name": "Bear crawl",
+            "seconds": 90,
+            "cue": "Knees just off the floor, crawl a few steps forward and back.",
+            "glossaryID": "bear-crawl"
+          },
+          {
+            "name": "Break and shake out",
+            "seconds": 45,
+            "cue": "Shake out your wrists and breathe."
+          },
+          {
+            "name": "Hollow body hold",
+            "seconds": 90,
+            "cue": "Lift your head, shoulders and legs and hold.",
+            "glossaryID": "hollow-body-hold"
+          },
+          {
+            "name": "Superman",
+            "seconds": 90,
+            "cue": "On your front, lift your arms and chest a little, then lower.",
+            "glossaryID": "superman"
+          },
+          {
+            "name": "Inchworm",
+            "seconds": 90,
+            "cue": "Walk your hands out to a plank and back to your feet.",
+            "glossaryID": "inchworm"
+          },
+          {
+            "name": "Break and shake out",
+            "seconds": 45,
+            "cue": "Shake out your wrists and breathe."
+          },
+          {
+            "name": "Round two: Bodyweight squats",
+            "seconds": 120,
+            "cue": "Sit back and stand, chest tall.",
+            "glossaryID": "bodyweight-squat"
+          },
+          {
+            "name": "Round two: Reverse lunges — right",
+            "seconds": 90,
+            "cue": "Step your right foot back and lower your back knee toward the floor. Push through your front foot to stand.",
+            "glossaryID": "reverse-lunge"
+          },
+          {
+            "name": "Round two: Reverse lunges — left",
+            "seconds": 90,
+            "cue": "Switch sides. Step your left foot back, lower, and push through your front foot to stand.",
+            "glossaryID": "reverse-lunge"
+          },
+          {
+            "name": "Round two: Calf raises",
+            "seconds": 60,
+            "cue": "Rest one hand on the wall. Rise up onto your toes, then lower slowly.",
+            "glossaryID": "calf-raise"
+          },
+          {
+            "name": "Round two: Wall sit",
+            "seconds": 60,
+            "cue": "Lean your back against a wall and slide down until your thighs are as level as feels comfortable. Hold and keep breathing.",
+            "glossaryID": "wall-sit"
+          },
+          {
+            "name": "Break and shake out",
+            "seconds": 45,
+            "cue": "Shake out your arms and legs."
+          },
+          {
+            "name": "Round two: Incline push-ups",
+            "seconds": 120,
+            "cue": "Hands on a counter or chair, body in one line.",
+            "glossaryID": "incline-push-up"
+          },
+          {
+            "name": "Round two: Plank",
+            "seconds": 90,
+            "cue": "Body in one line from head to heels.",
+            "glossaryID": "plank"
+          },
+          {
+            "name": "Round two: Bear crawl",
+            "seconds": 90,
+            "cue": "Knees just off the floor, crawl a few steps forward and back.",
+            "glossaryID": "bear-crawl"
+          },
+          {
+            "name": "Break and shake out",
+            "seconds": 45,
+            "cue": "Shake out your wrists and breathe."
+          },
+          {
+            "name": "Round two: Hollow body hold",
+            "seconds": 90,
+            "cue": "Lift your head, shoulders and legs and hold.",
+            "glossaryID": "hollow-body-hold"
+          },
+          {
+            "name": "Round two: Superman",
+            "seconds": 90,
+            "cue": "On your front, lift your arms and chest a little, then lower.",
+            "glossaryID": "superman"
+          },
+          {
+            "name": "Round two: Inchworm",
+            "seconds": 90,
+            "cue": "Walk your hands out to a plank and back to your feet.",
+            "glossaryID": "inchworm"
+          },
+          {
+            "name": "Break and shake out",
+            "seconds": 45,
+            "cue": "Shake out your wrists and breathe."
+          },
+          {
+            "name": "Slow squats",
+            "seconds": 120,
+            "cue": "Take three counts to lower into the squat and three counts to stand back up.",
+            "glossaryID": "bodyweight-squat"
+          },
+          {
+            "name": "Glute bridge",
+            "seconds": 90,
+            "cue": "Press through your feet and lift your hips.",
+            "glossaryID": "glute-bridge"
+          },
+          {
+            "name": "Cool-down stretch",
+            "seconds": 120,
+            "cue": "Hug your knees in, then rest on your back."
+          },
+          {
+            "name": "Slow breaths",
+            "seconds": 30,
+            "cue": "Lie back and breathe slowly.",
+            "glossaryID": "deep-breath",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 0,
+              "exhale": 6,
+              "holdOut": 0
+            },
+            "narrationID": "side-core-control-five-step-5-breath"
+          }
+        ]
+      },
+      "contraindications": [
+        "knees",
+        "lowBack",
+        "postpartum",
+        "pregnancy",
+        "wrists"
+      ]
+    },
+    {
+      "id": "main-upper-core-strength-50",
+      "title": "Fifty minutes of upper body and core",
+      "subtitle": "Push, plank and core work in two rounds, then a proper cool-down",
+      "activity": "strength",
+      "qualities": [
+        "strength",
+        "endurance"
+      ],
+      "durationMin": 50,
+      "intensity": 3,
+      "energyFit": [
+        "steady",
+        "strong"
+      ],
+      "equipment": [
+        "none"
+      ],
+      "places": [
+        "home",
+        "gym"
+      ],
+      "bodyFocus": [
+        "full"
+      ],
+      "intents": [
+        "strengthen"
+      ],
+      "course": "main",
+      "source": {
+        "type": "authored",
+        "steps": [
+          {
+            "name": "Warm-up",
+            "seconds": 120,
+            "cue": "March, arm circles, easy squats.",
+            "glossaryID": "arm-circles"
+          },
+          {
+            "name": "Incline push-ups",
+            "seconds": 90,
+            "cue": "Hands on a counter or chair.",
+            "glossaryID": "incline-push-up"
+          },
+          {
+            "name": "Plank shoulder taps",
+            "seconds": 90,
+            "cue": "In a high plank, tap each shoulder. Hips still.",
+            "glossaryID": "plank-shoulder-tap"
+          },
+          {
+            "name": "Break and shake out",
+            "seconds": 60,
+            "cue": "Shake out your wrists and breathe."
+          },
+          {
+            "name": "Push-ups",
+            "seconds": 90,
+            "cue": "Full or on your knees. Elbows angled back.",
+            "glossaryID": "push-up"
+          },
+          {
+            "name": "Bear plank",
+            "seconds": 90,
+            "cue": "Hands under shoulders, knees just off the floor.",
+            "glossaryID": "bear-plank"
+          },
+          {
+            "name": "Break and shake out",
+            "seconds": 60,
+            "cue": "Sit back on your heels and breathe."
+          },
+          {
+            "name": "Chair dips",
+            "seconds": 90,
+            "cue": "Hands on a chair, elbows back.",
+            "glossaryID": "chair-dip"
+          },
+          {
+            "name": "Superman",
+            "seconds": 90,
+            "cue": "Lift your arms and chest a little, then lower.",
+            "glossaryID": "superman"
+          },
+          {
+            "name": "Break and breathe",
+            "seconds": 60,
+            "cue": "Lie on your back and breathe.",
+            "narrationID": "main-shoulders-core-thirty-step-10-breath"
+          },
+          {
+            "name": "Round two: Incline push-ups",
+            "seconds": 90,
+            "cue": "Hands on a counter or chair.",
+            "glossaryID": "incline-push-up"
+          },
+          {
+            "name": "Round two: Plank shoulder taps",
+            "seconds": 90,
+            "cue": "In a high plank, tap each shoulder. Hips still.",
+            "glossaryID": "plank-shoulder-tap"
+          },
+          {
+            "name": "Break and shake out",
+            "seconds": 60,
+            "cue": "Shake out your wrists and breathe."
+          },
+          {
+            "name": "Round two: Push-ups",
+            "seconds": 90,
+            "cue": "Full or on your knees. Elbows angled back.",
+            "glossaryID": "push-up"
+          },
+          {
+            "name": "Round two: Bear plank",
+            "seconds": 90,
+            "cue": "Hands under shoulders, knees just off the floor.",
+            "glossaryID": "bear-plank"
+          },
+          {
+            "name": "Break and shake out",
+            "seconds": 60,
+            "cue": "Sit back on your heels and breathe."
+          },
+          {
+            "name": "Round two: Chair dips",
+            "seconds": 90,
+            "cue": "Hands on a chair, elbows back.",
+            "glossaryID": "chair-dip"
+          },
+          {
+            "name": "Round two: Superman",
+            "seconds": 90,
+            "cue": "Lift your arms and chest a little, then lower.",
+            "glossaryID": "superman"
+          },
+          {
+            "name": "Side plank",
+            "seconds": 120,
+            "cue": "Forearm under your shoulder. Stack your feet or drop a knee. Switch sides halfway.",
+            "glossaryID": "side-plank",
+            "switchSides": true,
+            "switchAfterSeconds": 60
+          },
+          {
+            "name": "Dead bug",
+            "seconds": 120,
+            "cue": "Lower one arm and the opposite leg slowly, then switch.",
+            "glossaryID": "dead-bug"
+          },
+          {
+            "name": "Bicycle crunch",
+            "seconds": 120,
+            "cue": "Elbow toward the opposite knee.",
+            "glossaryID": "bicycle-crunch"
+          },
+          {
+            "name": "Break and breathe",
+            "seconds": 60,
+            "cue": "Lie back and let your arms fall open.",
+            "narrationID": "main-shoulders-core-thirty-step-14-breath"
+          },
+          {
+            "name": "Hollow body hold",
+            "seconds": 90,
+            "cue": "Lift your head, shoulders and legs and hold.",
+            "glossaryID": "hollow-body-hold"
+          },
+          {
+            "name": "Reverse crunch",
+            "seconds": 90,
+            "cue": "Draw your knees toward your chest.",
+            "glossaryID": "reverse-crunch"
+          },
+          {
+            "name": "Round two: Side plank",
+            "seconds": 120,
+            "cue": "Forearm under your shoulder. Stack your feet or drop a knee. Switch sides halfway.",
+            "glossaryID": "side-plank",
+            "switchSides": true,
+            "switchAfterSeconds": 60
+          },
+          {
+            "name": "Round two: Dead bug",
+            "seconds": 120,
+            "cue": "Lower one arm and the opposite leg slowly, then switch.",
+            "glossaryID": "dead-bug"
+          },
+          {
+            "name": "Round two: Bicycle crunch",
+            "seconds": 120,
+            "cue": "Elbow toward the opposite knee.",
+            "glossaryID": "bicycle-crunch"
+          },
+          {
+            "name": "Round two: Hollow body hold",
+            "seconds": 90,
+            "cue": "Lift your head, shoulders and legs and hold.",
+            "glossaryID": "hollow-body-hold"
+          },
+          {
+            "name": "Round two: Reverse crunch",
+            "seconds": 90,
+            "cue": "Draw your knees toward your chest.",
+            "glossaryID": "reverse-crunch"
+          },
+          {
+            "name": "Cross-body shoulder stretch",
+            "seconds": 90,
+            "cue": "One arm across your chest. Switch sides halfway.",
+            "glossaryID": "cross-body-shoulder-stretch",
+            "switchSides": true,
+            "switchAfterSeconds": 45
+          },
+          {
+            "name": "Child's pose",
+            "seconds": 90,
+            "cue": "Sit back toward your heels, arms long.",
+            "glossaryID": "childs-pose"
+          },
+          {
+            "name": "Slow breaths",
+            "seconds": 60,
+            "cue": "Lie back and breathe slowly.",
+            "glossaryID": "deep-breath",
+            "narrationID": "side-core-control-five-step-5-breath"
+          },
+          {
+            "name": "Cool-down",
+            "seconds": 120,
+            "cue": "Hug your knees in and rock gently."
+          }
+        ]
+      },
+      "contraindications": [
+        "lowBack",
+        "neckShoulders",
+        "postpartum",
+        "pregnancy",
+        "wrists"
+      ]
     }
   ],
   "glossary": [
