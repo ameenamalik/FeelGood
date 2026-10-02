@@ -73,6 +73,7 @@ struct OnboardingView: View {
                     }
                 }
             }
+            .fgReadableWidth()
         }
     }
 

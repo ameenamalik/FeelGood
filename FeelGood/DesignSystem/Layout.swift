@@ -59,3 +59,19 @@ nonisolated enum FGSize {
     /// the two are combined.
     static let choiceTileMinimum: CGFloat = 96
 }
+
+extension FGSize {
+    /// The widest a screen's content gets. A phone is narrower than this so
+    /// nothing changes there; on iPad it keeps cards, headers and chat bubbles
+    /// at a phone-like reading width instead of stretching across 13".
+    static let readableWidth: CGFloat = 640
+}
+
+extension View {
+    /// Caps the content at `FGSize.readableWidth` and centres it. Backgrounds
+    /// applied *after* this still fill the screen.
+    func fgReadableWidth() -> some View {
+        frame(maxWidth: FGSize.readableWidth)
+            .frame(maxWidth: .infinity)
+    }
+}

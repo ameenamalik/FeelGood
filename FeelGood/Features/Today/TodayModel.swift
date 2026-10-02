@@ -33,10 +33,6 @@ final class TodayModel {
     /// already-coarsened value `CopyPayload` sends the copy Worker — one
     /// definition of "days since last", reused rather than recomputed.
     private let syncEngagementTrigger: (Int?) -> Void
-    /// In flight while the copy layer upgrades the headline. Cancelled and
-    /// restarted whenever the menu changes underneath it, so a slow response
-    /// can never land on a headline it no longer describes.
-    @ObservationIgnored private var copyTask: Task<Void, Never>?
 
     var profile: PlanProfile
     private(set) var checkIn: PlanCheckIn?
@@ -48,13 +44,6 @@ final class TodayModel {
     private(set) var littleWins: [LittleWinProgress]
     private(set) var pendingLittleWinCelebration: LittleWinCelebration?
     private(set) var menu: Menu
-    /// `Menu.headline` upgraded by the copy layer, PRD §7.3 — a sibling
-    /// property rather than a mutation of `menu.headline` in place, because
-    /// `menu` is what gets persisted verbatim: overwriting `headline` there
-    /// would either be lost on next launch or force a re-save on every
-    /// response. `nil` until (and unless) a warmer line comes back; the view
-    /// always has the deterministic one to fall back to.
-    private(set) var upgradedHeadline: String?
     /// Sessions already turned down today, so a swap never circles back.
     private(set) var swappedAway: Set<String> = []
 
@@ -289,9 +278,6 @@ final class TodayModel {
     func applyConversationalCheckIn(_ response: ChatResponse, now: Date = Date()) {
         let newCheckIn = response.overrides.toPlanCheckIn(fallback: checkIn ?? menu.assumedCheckIn)
         apply(newCheckIn, now: now)
-        if !response.message.isEmpty {
-            upgradedHeadline = response.message
-        }
     }
 
     /// Explicitly pins or places a chosen session onto today's menu (e.g. from chat exploration).
@@ -884,30 +870,12 @@ final class TodayModel {
         }
     }
 
-    /// Asks the copy layer to upgrade `menu.headline` in place. Not called
-    /// from `swap(_:)` — the headline depends on `reasons`/`checkIn`, not on
-    /// which specific items are on the menu, so a swap shouldn't re-bill a
-    /// call for a line that wouldn't actually change.
+    /// Keeps the engagement trigger in step with history. The Today headline
+    /// stays the short deterministic `menu.headline` — neither the copy layer
+    /// nor a chat reply replaces it.
     private func requestCopyUpgrade(now: Date) {
-        copyTask?.cancel()
-        // Clears immediately rather than waiting for the new response, so a
-        // stale line never lingers on screen through a menu change.
-        upgradedHeadline = nil
-
-        let requestedMenu = menu
-        let requestedCheckIn = checkIn ?? menu.assumedCheckIn
         let stats = HistoryStats(input: input(now: now))
         syncEngagementTrigger(stats.daysSinceLastCompleted)
-        let copy = copy
-
-        copyTask = Task { @MainActor [weak self] in
-            guard let line = await copy.upgradedHeadline(menu: requestedMenu, checkIn: requestedCheckIn, stats: stats) else { return }
-            guard let self, !Task.isCancelled else { return }
-            // Only lands if the menu/check-in this was asked about are still
-            // current — guards a swap or a second check-in landing first.
-            guard self.menu == requestedMenu, (self.checkIn ?? self.menu.assumedCheckIn) == requestedCheckIn else { return }
-            self.upgradedHeadline = line
-        }
     }
 
     /// The home screen's copy of today's menu.

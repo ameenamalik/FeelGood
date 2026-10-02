@@ -105,6 +105,7 @@ struct TodayView: View {
                     menuHeading
                     menuItems
                 }
+                .fgReadableWidth()
                 .padding(FGSpace.page)
                 .containerRelativeFrame(.horizontal)
             }
@@ -252,16 +253,17 @@ struct TodayView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: FGSpace.xs) {
-            Text(model.upgradedHeadline ?? model.menu.headline)
+            Text(model.menu.headline)
                 // The copy changes after check-in, but its visual hierarchy
                 // should not. A large-title-sized line made longer generated
                 // headlines feel dramatically bigger once they wrapped.
                 .font(.system(.title, design: .rounded).weight(.bold))
                 .tracking(-0.4)
                 .foregroundStyle(FGColor.ink)
-                // No line cap: the text is data, and a menu restored on launch
-                // carries its long personalised headline before any check-in.
-                .lineLimit(nil)
+                // Always a short deterministic MenuCopy line; the cap and scale
+                // are a guard so a restored long headline can never balloon.
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
                 .fixedSize(horizontal: false, vertical: true)
 
             // Until there is a check-in, ask for one with a real card; after,
