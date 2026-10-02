@@ -6,6 +6,7 @@ import { traceAgentTurn, traceChatModel, traceToolExecution } from "./tracing";
 import { excludedSessionIDs, isRejection, normalizeReply } from "./repeats";
 import { bodyFocusLabel } from "./labels";
 import { aliasSnakeCaseFields } from "./payloadKeys";
+import { correctPlace, sanitizeQuickReplies } from "./chatSanitize";
 import { isSessionAvailable, parseAvailability, type Availability, type AvailabilityFields } from "./availability";
 
 export type ChatRole = "user" | "assistant" | "model";
@@ -532,7 +533,11 @@ async function handleGeminiChat(
               "plenty",
             ],
           },
-          place: { type: "STRING", enum: ["stayingIn", "happyToGoOut", "atTheGym"] },
+          place: {
+            type: "STRING",
+            enum: ["stayingIn", "happyToGoOut", "atTheGym"],
+            description: "stayingIn: at home. happyToGoOut: anywhere else that is not the gym, including outdoors, a pool, or a studio. atTheGym: only when they say gym.",
+          },
           body: { type: "STRING", enum: ["sore", "stiff", "stressed", "cramping", "good"] },
           intentField: { type: "STRING", enum: ["energize", "strengthen", "calm", "mobilize", "joy"] },
           quickFilter: { type: "STRING", enum: ["shorter", "gentler", "moreEnergizing", "canNotLeave"] },
@@ -609,7 +614,7 @@ async function handleGeminiChat(
   const extractedCheckIn: ExtractedCheckIn = {};
   if (parsed.energy) extractedCheckIn.energy = parsed.energy;
   if (parsed.timeBudget) extractedCheckIn.timeBudget = parsed.timeBudget;
-  if (parsed.place) extractedCheckIn.place = parsed.place;
+  if (parsed.place) extractedCheckIn.place = correctPlace(parsed.place, payload.prompt);
   if (parsed.body) extractedCheckIn.body = parsed.body;
   if (parsed.intentField) extractedCheckIn.intent = parsed.intentField;
   if (parsed.quickFilter) extractedCheckIn.quickFilter = parsed.quickFilter;
@@ -677,7 +682,7 @@ async function handleGeminiChat(
     intent: parsed.intent || "general_check_in",
     phase: parsed.phase || (mode === "clarifying" ? "needs_discovery" : "recommendation_active"),
     recommendation: finalRecommendation,
-    quick_replies: quickReplies,
+    quick_replies: sanitizeQuickReplies(quickReplies),
     extracted_check_in: Object.keys(extractedCheckIn).length > 0 ? extractedCheckIn : null,
   };
 
