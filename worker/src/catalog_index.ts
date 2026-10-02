@@ -31,7 +31,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "durationMin": 2,
     "intensity": "gentle",
     "course": "appetizer",
-    "activity": "stretching",
+    "activity": "other",
     "places": [
       "home",
       "outdoors",
@@ -55,7 +55,7 @@ export const CATALOG_SESSIONS: CatalogSessionItem[] = [
     "durationMin": 3,
     "intensity": "gentle",
     "course": "appetizer",
-    "activity": "stretching",
+    "activity": "other",
     "places": [
       "home",
       "outdoors",
