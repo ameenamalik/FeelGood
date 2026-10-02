@@ -45,6 +45,18 @@ struct ExerciseNarrationTests {
         #expect(!checked.isEmpty, "No session in the bundled catalog references a narrationID — has the field been renamed?")
     }
 
+    @Test("Every breathing step in the catalog has narration")
+    func everyBreathingStepIsNarrated() throws {
+        let store = try ContentStore.bundled()
+        for session in store.sessions {
+            for step in session.source.steps {
+                let isBreathing = step.visual?.breathingCadence != nil || step.name.localizedCaseInsensitiveContains("breath")
+                guard isBreathing else { continue }
+                #expect(step.narrationID != nil, "\(session.id) step '\(step.name)' has no narrationID — add it to catalog.json and scripts/narration_scripts.json")
+            }
+        }
+    }
+
     @Test("A step without narrationID decodes as silent")
     func stepWithoutNarrationIDDecodes() throws {
         let json = Data("""

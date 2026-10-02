@@ -725,7 +725,8 @@
             "visual": {
               "type": "breathing"
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "main-pilates-gentle-10-step-1-breath"
           },
           {
             "name": "Pelvic tilts",
@@ -805,7 +806,8 @@
             "cue": "Find the ribs-down, long-spine position you'll keep all session.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "narrationID": "main-pilates-core-20-step-1-breath"
           },
           {
             "name": "The hundred",
@@ -1296,7 +1298,8 @@
             "visual": {
               "type": "breathing"
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "main-mobility-20-step-1-breath"
           },
           {
             "name": "Hamstrings — right",
@@ -2378,7 +2381,8 @@
           {
             "name": "Set down and breathe",
             "seconds": 45,
-            "cue": "Put them down before your grip gives out, not after."
+            "cue": "Put them down before your grip gives out, not after.",
+            "narrationID": "side-gym-carry-the-floor-step-3-breath"
           },
           {
             "name": "Once more",
@@ -2840,7 +2844,8 @@
             "visual": {
               "type": "breathing"
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "dessert-favorite-playlist-groove-step-3-breath"
           }
         ]
       }
@@ -2968,7 +2973,8 @@
             "visual": {
               "type": "breathing"
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "dessert-park-bench-stretch-step-5-breath"
           }
         ]
       }
@@ -3589,7 +3595,8 @@
             "visual": {
               "type": "breathing"
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "app-single-song-dance-step-4-breath"
           }
         ]
       }
@@ -3647,7 +3654,8 @@
               "inhale": 4,
               "exhale": 6
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "app-sunlight-strut-step-3-breath"
           },
           {
             "name": "Slow grounding strut",
@@ -3779,7 +3787,8 @@
             "name": "Active recovery breath",
             "seconds": 30,
             "cue": "Hands on hips. Deep inhale, slow exhale while pacing in place.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "app-power-explosions-step-3-breath"
           },
           {
             "name": "Second explosion: 15 rapid reps",
@@ -3792,7 +3801,8 @@
             "cue": "Stand tall, palms forward. Feel the energetic pulse humming through your body.",
             "visual": {
               "type": "breathing"
-            }
+            },
+            "narrationID": "app-power-explosions-step-5-breath"
           }
         ]
       }
@@ -3957,7 +3967,8 @@
               "inhale": 4,
               "exhale": 4
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "main-mindful-yoga-flow-step-1-breath"
           },
           {
             "name": "Cat-cow & gentle spinal waves",
@@ -4327,7 +4338,8 @@
           {
             "name": "Forest descent & deep breathing",
             "seconds": 1500,
-            "cue": "Navigate the descent with soft knees, inhaling forest air and soaking in the calm vitality."
+            "cue": "Navigate the descent with soft knees, inhaling forest air and soaking in the calm vitality.",
+            "narrationID": "spec-nature-immersion-step-4-breath"
           }
         ]
       }
@@ -4501,7 +4513,8 @@
             "visual": {
               "type": "breathing"
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "app-shake-out-five-step-1-breath"
           },
           {
             "name": "Shake arms & wrists",
@@ -4512,7 +4525,8 @@
             "name": "Catch your breath",
             "seconds": 15,
             "cue": "Pause and notice the tingling warmth in your hands and shoulders.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "app-shake-out-five-step-3-breath"
           },
           {
             "name": "Shake legs & hips",
@@ -4523,7 +4537,8 @@
             "name": "Catch your breath",
             "seconds": 15,
             "cue": "Stay grounded through the soles of your feet and breathe deeply.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "app-shake-out-five-step-5-breath"
           },
           {
             "name": "Full body shake",
@@ -4585,7 +4600,8 @@
             "visual": {
               "type": "breathing"
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "app-power-pose-two-step-2-breath"
           },
           {
             "name": "Ground & soften",
@@ -4993,7 +5009,8 @@
           {
             "name": "Slow breaths",
             "seconds": 45,
-            "cue": "Rest your hands on your belly. Breathe in through your nose and out through your mouth."
+            "cue": "Rest your hands on your belly. Breathe in through your nose and out through your mouth.",
+            "narrationID": "main-standing-strength-12-step-11-breath"
           }
         ]
       }
@@ -5160,7 +5177,8 @@
           {
             "name": "Splash & breathe",
             "seconds": 30,
-            "cue": "Splash cold water across your face, cheeks, and forehead. Feel the immediate thermal sensation."
+            "cue": "Splash cold water across your face, cheeks, and forehead. Feel the immediate thermal sensation.",
+            "narrationID": "app-cold-water-splash-step-2-breath"
           },
           {
             "name": "Long slow exhale",
@@ -5169,7 +5187,8 @@
             "visual": {
               "type": "breathing"
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "app-cold-water-splash-step-3-breath"
           }
         ]
       }
@@ -5237,7 +5256,8 @@
             "visual": {
               "type": "breathing"
             },
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "side-stretch-and-breathe-step-5-breath"
           }
         ]
       }
@@ -5360,7 +5380,8 @@
             "name": "Breathe & recover",
             "seconds": 15,
             "cue": "Hands on your hips, stand tall, take two full inhales.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "app-jumping-jacks-two-step-3-breath"
           },
           {
             "name": "Burst interval two",
@@ -5587,7 +5608,8 @@
           {
             "name": "Rest and breathe",
             "seconds": 30,
-            "cue": "Shake out your hands and take a few slow breaths."
+            "cue": "Shake out your hands and take a few slow breaths.",
+            "narrationID": "main-arms-shoulders-ten-step-3-breath"
           },
           {
             "name": "Chair dips",
@@ -5685,7 +5707,8 @@
           {
             "name": "Rest and breathe",
             "seconds": 30,
-            "cue": "Shake out your hands and breathe."
+            "cue": "Shake out your hands and breathe.",
+            "narrationID": "main-push-ups-planks-fifteen-step-4-breath"
           },
           {
             "name": "Plank",
@@ -6502,7 +6525,8 @@
             "name": "Slow breaths",
             "seconds": 60,
             "cue": "Stand tall and breathe slowly.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "main-morning-energy-twelve-step-12-breath"
           }
         ]
       },
@@ -6589,7 +6613,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "side-gentle-reset-five-step-8-breath"
           }
         ]
       },
@@ -6652,7 +6677,8 @@
             "name": "Slow breaths",
             "seconds": 30,
             "cue": "Stand and breathe in through your nose, out slowly.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "side-morning-floor-five-step-5-breath"
           }
         ]
       },
@@ -6719,7 +6745,8 @@
             "name": "Slow breaths",
             "seconds": 30,
             "cue": "Lie back and breathe slowly.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "side-core-control-five-step-5-breath"
           }
         ]
       },
@@ -6769,7 +6796,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "side-gentle-core-five-step-1-breath"
           },
           {
             "name": "Pelvic tilts",
@@ -6799,7 +6827,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "side-gentle-core-five-step-5-breath"
           }
         ]
       },
@@ -6916,7 +6945,8 @@
             "name": "Slow breaths",
             "seconds": 30,
             "cue": "Lie back and breathe.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "main-core-mat-twenty-step-13-breath"
           }
         ]
       },
@@ -6986,7 +7016,8 @@
           {
             "name": "Breathe and reset",
             "seconds": 30,
-            "cue": "Lie back and shake out your arms."
+            "cue": "Lie back and shake out your arms.",
+            "narrationID": "side-ab-circuit-eight-step-5-breath"
           },
           {
             "name": "Round two: crunch",
@@ -7143,7 +7174,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "side-core-control-five-step-5-breath"
           }
         ]
       },
@@ -7309,7 +7341,8 @@
           {
             "name": "Break and breathe",
             "seconds": 60,
-            "cue": "Lie on your back and breathe."
+            "cue": "Lie on your back and breathe.",
+            "narrationID": "main-shoulders-core-thirty-step-10-breath"
           },
           {
             "name": "Side plank",
@@ -7334,7 +7367,8 @@
           {
             "name": "Break and breathe",
             "seconds": 60,
-            "cue": "Lie back and let your arms fall open."
+            "cue": "Lie back and let your arms fall open.",
+            "narrationID": "main-shoulders-core-thirty-step-14-breath"
           },
           {
             "name": "Hollow body hold",
@@ -7366,7 +7400,8 @@
             "name": "Slow breaths",
             "seconds": 60,
             "cue": "Lie back and breathe slowly.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "side-core-control-five-step-5-breath"
           },
           {
             "name": "Cool-down",
@@ -7507,7 +7542,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "main-bed-yoga-ten-step-1-breath"
           },
           {
             "name": "Knees to chest",
@@ -7556,7 +7592,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "side-core-control-five-step-5-breath"
           }
         ]
       },
@@ -7606,7 +7643,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "main-gentle-yoga-five-poses-step-1-breath"
           },
           {
             "name": "Cat-cow",
@@ -7825,7 +7863,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "app-pilates-breath-pelvic-three-step-1-breath"
           },
           {
             "name": "Pelvic tilts",
@@ -7885,7 +7924,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "side-pilates-hundred-five-step-1-breath"
           },
           {
             "name": "Pelvic tilts",
@@ -8095,7 +8135,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "side-pilates-hundred-five-step-1-breath"
           },
           {
             "name": "Pelvic tilts",
@@ -8165,7 +8206,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "main-pilates-head-down-fifteen-step-11-breath"
           }
         ]
       },
@@ -8269,7 +8311,8 @@
             "name": "Slow breaths",
             "seconds": 30,
             "cue": "Sit or lie and breathe slowly.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "main-pilates-classic-fifteen-step-11-breath"
           },
           {
             "name": "Reach and roll your shoulders",
@@ -8410,7 +8453,8 @@
             "name": "Slow breaths",
             "seconds": 60,
             "cue": "Lie back and breathe slowly.",
-            "glossaryID": "deep-breath"
+            "glossaryID": "deep-breath",
+            "narrationID": "side-core-control-five-step-5-breath"
           },
           {
             "name": "Cool-down",
@@ -8560,7 +8604,8 @@
               "holdIn": 0,
               "exhale": 6,
               "holdOut": 0
-            }
+            },
+            "narrationID": "side-pilates-hundred-five-step-1-breath"
           },
           {
             "name": "Cat-cow",
