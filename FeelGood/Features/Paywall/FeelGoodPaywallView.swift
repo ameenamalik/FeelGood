@@ -341,6 +341,7 @@ struct FeelGoodPaywallView: View {
         .padding(FGSpace.m)
         .frame(maxWidth: .infinity)
         .frame(height: 170, alignment: .center)
+        .clipShape(RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous))
         .background(
             RoundedRectangle(cornerRadius: FGRadius.card, style: .continuous)
                 .fill(FGColor.surface)
@@ -604,6 +605,16 @@ struct FeelGoodPaywallView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
+    /// A new message grows out of its own bottom corner and fades in, the way
+    /// a real chat bubble lands, instead of sliding in from the screen edge.
+    /// Going away is a plain fade so a replaced bubble never flies out of the card.
+    private func chatMessageTransition(anchor: UnitPoint) -> AnyTransition {
+        .asymmetric(
+            insertion: .scale(scale: 0.85, anchor: anchor).combined(with: .opacity),
+            removal: .opacity
+        )
+    }
+
     /// Message, recommendation with its reason, then a follow-up message and a
     /// different recommendation. Reduced motion shows the final exchange.
     private func runChatDemo() async {
@@ -643,14 +654,14 @@ struct FeelGoodPaywallView: View {
             VStack(alignment: .leading, spacing: 6) {
                 chatUserBubble(chatStep < 2 ? "Exhausted and brain won't shut off." : "I want something longer. I feel restless, especially my legs.")
                     .id("user-\(chatStep < 2 ? 0 : 1)")
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                    .transition(chatMessageTransition(anchor: .bottomTrailing))
 
                 if chatStep == 1 {
                     chatCompanionCard(title: "7-min legs-up-the-wall breathwork", reason: "Floor rest · Quiet the noise")
-                        .transition(.move(edge: .leading).combined(with: .opacity))
+                        .transition(chatMessageTransition(anchor: .bottomLeading))
                 } else if chatStep == 3 {
                     chatCompanionCard(title: "15-min Leg Release flow", reason: "Longer, with leg work to settle the restlessness")
-                        .transition(.move(edge: .leading).combined(with: .opacity))
+                        .transition(chatMessageTransition(anchor: .bottomLeading))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
