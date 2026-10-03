@@ -216,6 +216,7 @@ public final class AuthService: AuthProviding, @unchecked Sendable {
         let mapped = Self.mapUser(user)
         self.currentUser = mapped
         FirestoreService.shared.startListening(for: mapped.uid)
+        Analytics.identifySignedIn(mapped)
         // Subscription identity is secondary to authentication. Keep it in a
         // separate task so RevenueCat can never hold the sign-in UI open.
         Task {
