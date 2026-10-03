@@ -121,7 +121,7 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
         }
 
         // 4. You Tab (Activity History section)
-        let youTab = app.tabBars.buttons["You"]
+        let youTab = app.buttons["You"]
         if youTab.waitForExistence(timeout: 5) {
             youTab.tap()
             sleep(2)
@@ -141,7 +141,7 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
             sleep(1)
         }
 
-        let todayTab = app.tabBars.buttons["Today"]
+        let todayTab = app.buttons["Today"]
         if todayTab.waitForExistence(timeout: 3) {
             todayTab.tap()
             sleep(1)
@@ -156,7 +156,7 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
         }
 
         // 3. Go to You tab
-        let youTab = app.tabBars.buttons["You"]
+        let youTab = app.buttons["You"]
         if youTab.waitForExistence(timeout: 3) {
             youTab.tap()
             sleep(1)
@@ -233,7 +233,7 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        let todayTab = app.tabBars.buttons["Today"]
+        let todayTab = app.buttons["Today"]
         if todayTab.waitForExistence(timeout: 3) {
             todayTab.tap()
             sleep(1)
@@ -252,7 +252,7 @@ final class ShowcaseNewFeaturesUITests: XCTestCase {
         app.launchArguments.append("-FGResetTour")
         app.launch()
 
-        let todayTab = app.tabBars.buttons["Today"]
+        let todayTab = app.buttons["Today"]
         if todayTab.waitForExistence(timeout: 3) {
             todayTab.tap()
             sleep(2)

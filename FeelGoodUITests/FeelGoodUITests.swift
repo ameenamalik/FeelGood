@@ -88,7 +88,7 @@ final class FeelGoodUITests: XCTestCase {
         app.launch()
         completeOnboarding(app)
 
-        let youTab = app.tabBars.buttons["You"]
+        let youTab = app.buttons["You"]
         XCTAssertTrue(youTab.waitForExistence(timeout: 5))
         youTab.tap()
 
@@ -102,7 +102,7 @@ final class FeelGoodUITests: XCTestCase {
 
     @MainActor
     private func openViaLibrary(_ app: XCUIApplication, titleContains: String) {
-        app.tabBars.buttons["You"].tap()
+        app.buttons["You"].tap()
         let library = app.buttons["Library"]
         XCTAssertTrue(library.waitForExistence(timeout: 5))
         library.tap()
@@ -168,7 +168,7 @@ final class FeelGoodUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         completeOnboarding(app)
-        app.tabBars.buttons["You"].tap()
+        app.buttons["You"].tap()
         sleep(1)
         screenshot(app, name: "YouTabLookBack", afterSteps: [])
     }
