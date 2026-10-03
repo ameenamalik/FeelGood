@@ -46,8 +46,7 @@ struct ExploreView: View {
     }
 
     /// Whether replies can come from the model right now. Consent was already
-    /// given, so this is shown as a quiet sparkle rather than spelled out; the
-    /// words stay on the VoiceOver label.
+    /// given, so nothing is shown; the header only labels the on-device case.
     private var showsAIHeader: Bool {
         canReachAI && chatConsentRaw == ChatConsent.Status.granted.rawValue
     }
@@ -239,12 +238,7 @@ struct ExploreView: View {
                 Text("Chat")
                     .font(.custom("SFProRounded-Semibold", size: 18))
                     .foregroundStyle(FGColor.ink)
-                if showsAIHeader {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(FGColor.inkMuted)
-                        .accessibilityLabel("Replies written by AI")
-                } else {
+                if !showsAIHeader {
                     Text("Replies from your phone")
                         .font(.system(.caption2, design: .rounded))
                         .foregroundStyle(FGColor.inkMuted)
@@ -316,13 +310,6 @@ struct ExploreView: View {
                 if !message.text.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
                         assistantTextBubble(text: message.text)
-                        if message.isFromAI == true {
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(FGColor.inkMuted)
-                                .padding(.leading, 8)
-                                .accessibilityLabel("Written by AI")
-                        }
                     }
                 }
 
