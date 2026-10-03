@@ -243,22 +243,15 @@ private struct ActivityHistoryRow: View {
                 Text(title)
                     .font(FGFont.itemTitle)
                     .foregroundStyle(FGColor.ink)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                HStack(spacing: 6) {
-                    Text(entry.activity.label)
-                    Text("•").foregroundStyle(FGColor.lineStrong)
-                    Text("\(max(1, entry.durationMin)) min")
-
-                    if case .completed(feel: let feel?) = entry.outcome {
-                        Text("•").foregroundStyle(FGColor.lineStrong)
-                        Text(feelLabel(feel))
-                            .fontWeight(.medium)
-                            .foregroundStyle(feelColor(feel))
-                    }
-                }
-                .font(FGFont.label)
-                .foregroundStyle(FGColor.inkMuted)
+                // One Text, so a long line wraps between items rather than
+                // splitting a word ("Stretch-ing") inside a squeezed column.
+                metaLine
+                    .font(FGFont.label)
+                    .foregroundStyle(FGColor.inkMuted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer()
@@ -292,6 +285,16 @@ private struct ActivityHistoryRow: View {
         case .fine: "Felt good"
         case .tooMuch: "Challenging"
         }
+    }
+
+    private var metaLine: Text {
+        let separator = Text("  •  ").foregroundColor(FGColor.lineStrong)
+        var line = Text(entry.activity.label) + separator + Text("\(max(1, entry.durationMin)) min")
+        if case .completed(feel: let feel?) = entry.outcome {
+            line = line + separator
+                + Text(feelLabel(feel)).fontWeight(.medium).foregroundColor(feelColor(feel))
+        }
+        return line
     }
 
     private func feelColor(_ feel: Feel) -> Color {
