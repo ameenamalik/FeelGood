@@ -92,6 +92,24 @@ enum Analytics {
         sink.identify(userID, properties: properties)
     }
 
+    /// Emails that belong to the team, so PostHog can filter them out of
+    /// real-user counts. Add more here; Apple "hide my email" relay addresses
+    /// won't match, so tag those people by hand in PostHog.
+    static let internalEmails: Set<String> = ["ameenazara3@gmail.com"]
+
+    /// Identifies the Firebase user to PostHog (uid as distinct ID) and flags
+    /// team accounts with `is_internal`. Safe to call on every auth-state
+    /// change, including launch restores.
+    static func identifySignedIn(_ user: AuthUser) {
+        var properties: [String: Any] = [
+            "auth_provider": user.providerID,
+            "is_internal": user.email.map { internalEmails.contains($0.lowercased()) } ?? false,
+        ]
+        if let email = user.email { properties["email"] = email }
+        if let name = user.displayName { properties["name"] = name }
+        identify(user.uid, properties: properties)
+    }
+
     /// Call on sign-out so a shared device doesn't keep attributing the next
     /// person's activity to whoever signed out.
     static func reset() {
