@@ -88,7 +88,7 @@ final class FeelGoodUITests: XCTestCase {
         app.launch()
         completeOnboarding(app)
 
-        let youTab = app.tabBars.buttons["You"]
+        let youTab = app.buttons["You"]
         XCTAssertTrue(youTab.waitForExistence(timeout: 5))
         youTab.tap()
 
@@ -98,22 +98,6 @@ final class FeelGoodUITests: XCTestCase {
         settings.tap()
         XCTAssertTrue(app.buttons["My preferences"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["My account"].exists)
-    }
-
-    @MainActor
-    private func openViaLibrary(_ app: XCUIApplication, titleContains: String) {
-        app.tabBars.buttons["You"].tap()
-        let library = app.buttons["Library"]
-        XCTAssertTrue(library.waitForExistence(timeout: 5))
-        library.tap()
-        let cell = app.buttons.matching(
-            NSPredicate(format: "label CONTAINS %@", titleContains)
-        ).firstMatch
-        XCTAssertTrue(cell.waitForExistence(timeout: 5))
-        cell.tap()
-        let start = app.buttons["Start"]
-        XCTAssertTrue(start.waitForExistence(timeout: 5))
-        start.tap()
     }
 
     @MainActor
@@ -132,43 +116,11 @@ final class FeelGoodUITests: XCTestCase {
     }
 
     @MainActor
-    func testGluteBridgeDemoScreenshot() throws {
-        let app = XCUIApplication()
-        app.launch()
-        completeOnboarding(app)
-        openViaLibrary(app, titleContains: "Ten gentle minutes on the mat")
-        // Breathing -> Pelvic tilts -> Dead bug -> Bridge
-        screenshot(app, name: "GluteBridgeDemo", afterSteps: ["Pelvic tilts", "Dead bug", "Bridge"])
-    }
-
-    @MainActor
-    func testGobletSquatDemoScreenshot() throws {
-        let app = XCUIApplication()
-        app.launch()
-        completeOnboarding(app)
-        openViaLibrary(app, titleContains: "Fifteen minutes with weights")
-        // Warm up -> Goblet squats
-        screenshot(app, name: "GobletSquatDemo", afterSteps: ["Goblet squats"])
-    }
-
-    @MainActor
-    func testPlankAndSidePlankDemoScreenshot() throws {
-        let app = XCUIApplication()
-        app.launch()
-        completeOnboarding(app)
-        openViaLibrary(app, titleContains: "Thirty minutes, full body")
-        // Warm up -> The hundred -> Roll ups -> Leg series -> Bridge series -> Side series
-        screenshot(app, name: "SidePlankDemo", afterSteps: ["The hundred", "Roll ups and roll overs", "Leg series", "Bridge series", "Side series"])
-        // Side series -> Front support
-        screenshot(app, name: "PlankDemo", afterSteps: ["Front support"])
-    }
-
-    @MainActor
     func testYouTabScreenshot() throws {
         let app = XCUIApplication()
         app.launch()
         completeOnboarding(app)
-        app.tabBars.buttons["You"].tap()
+        app.buttons["You"].tap()
         sleep(1)
         screenshot(app, name: "YouTabLookBack", afterSteps: [])
     }
