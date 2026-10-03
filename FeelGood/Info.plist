@@ -23,23 +23,19 @@
 	</array>
 	<key>GIDClientID</key>
 	<string>177113770799-7837tmpi0nqt89r6boaohpvnvf1tq2i1.apps.googleusercontent.com</string>
-	<key>WorkerBaseURL</key>
-	<string>$(WORKER_BASE_URL)</string>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
+	<key>OneSignalAppID</key>
+	<string>$(ONESIGNAL_APP_ID)</string>
 	<key>PostHogHost</key>
 	<string>$(POSTHOG_HOST)</string>
 	<key>PostHogProjectToken</key>
 	<string>$(POSTHOG_PROJECT_TOKEN)</string>
 	<key>RevenueCatAPIKey</key>
 	<string>$(REVENUECAT_API_KEY)</string>
-	<key>OneSignalAppID</key>
-	<string>$(ONESIGNAL_APP_ID)</string>
-	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>FeelGood uses today’s event times to plan around your day and, only when you enable movement recognition, checks event names on this device for workouts or classes.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>WorkerBaseURL</key>
+	<string>$(WORKER_BASE_URL)</string>
 </dict>
 </plist>
