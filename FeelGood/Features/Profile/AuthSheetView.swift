@@ -605,6 +605,10 @@ struct AuthSheetView: View {
                 .font(FGFont.body)
                 .foregroundStyle(FGColor.ink)
                 .textContentType(mode == .signIn ? .username : .emailAddress)
+                // A new identity per mode: iOS reads the content type when the
+                // field is created and can keep the first one it saw, so a
+                // sign-in/sign-up switch would leave AutoFill on the wrong kind.
+                .id("email-\(mode)")
                 .textInputAutocapitalization(.never)
                 .keyboardType(.emailAddress)
                 .autocorrectionDisabled(true)
@@ -637,6 +641,7 @@ struct AuthSheetView: View {
                 .font(FGFont.body)
                 .foregroundStyle(FGColor.ink)
                 .textContentType(mode == .signIn ? .password : .newPassword)
+                .id("password-\(mode)")
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(true)
 
