@@ -14,6 +14,7 @@ nonisolated enum PaywallContext: String, Sendable {
     case library
     case chatLimit = "chat_limit"
     case calendar
+    case onboarding
 }
 
 /// FeelGood Pro Paywall.
@@ -172,7 +173,7 @@ struct FeelGoodPaywallView: View {
         .task {
             // Set initial superpower tab based on presentation context
             switch context {
-            case .secondSwap, .library, .general:
+            case .secondSwap, .library, .general, .onboarding:
                 activeSuperpower = .swaps
             case .chatLimit:
                 activeSuperpower = .chat
@@ -942,7 +943,10 @@ struct FeelGoodPaywallView: View {
             }
 
             Button {
-                Analytics.capture("paywall_declined", properties: ["plan": selectedPlan.analyticsID])
+                Analytics.capture("paywall_declined", properties: [
+                    "plan": selectedPlan.analyticsID,
+                    "context": context.rawValue,
+                ])
                 finish()
             } label: {
                 Text("Continue with free menu")
@@ -998,7 +1002,10 @@ struct FeelGoodPaywallView: View {
     private func purchaseSelectedPlan() {
         guard let selectedPackage, !isPurchasing else { return }
         isPurchasing = true
-        Analytics.capture("paywall_purchase_tapped", properties: ["plan": selectedPlan.analyticsID])
+        Analytics.capture("paywall_purchase_tapped", properties: [
+            "plan": selectedPlan.analyticsID,
+            "context": context.rawValue,
+        ])
         Task {
             let unlocked = await purchasesManager.purchase(package: selectedPackage)
             isPurchasing = false
