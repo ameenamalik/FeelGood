@@ -14,6 +14,9 @@ struct AccessChoices: View {
     @Binding var sports: Set<SportPreference>
     @Binding var equipment: Set<Equipment>
     @Binding var places: Set<Place>
+    /// Where the person types what "Other" means. Optional so a caller that
+    /// has nowhere to keep the text still gets a working chip list.
+    var otherNote: Binding<String>? = nil
     var showsSymbols = false
     var accent: FGAccent = .ink
     /// Draws the tiles as washes instead of white cards. Onboarding opts in;
@@ -55,10 +58,20 @@ struct AccessChoices: View {
                         toggleActivity(activity)
                     }
                 }
+                // Pickleball is what a lot of people mean by "movement", so it
+                // sits beside the other choices instead of inside Sports.
+                choice(
+                    title: SportPreference.pickleball.label,
+                    symbol: SportPreference.pickleball.onboardingSymbol,
+                    aura: .sage,
+                    isSelected: sports.contains(.pickleball)
+                ) {
+                    togglePickleball()
+                }
             }
             if activities.contains(.racquet) {
                 group("Which sports? (optional)") {
-                    ForEach(SportPreference.allCases, id: \.self) { sport in
+                    ForEach(Self.sportChoices, id: \.self) { sport in
                         choice(
                             title: sport.label,
                             symbol: sport.onboardingSymbol,
@@ -68,6 +81,24 @@ struct AccessChoices: View {
                             toggle(sport, in: $sports)
                         }
                     }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+            if let otherNote, showsOtherNote {
+                VStack(alignment: .leading, spacing: FGSpace.xs) {
+                    Text("What do you do?")
+                        .font(FGFont.label)
+                        .foregroundStyle(FGColor.ink)
+                    TextField("e.g. Kayaking, roller derby, rock climbing...", text: otherNote)
+                        .font(FGFont.body)
+                        .padding(.horizontal, FGSpace.m)
+                        .padding(.vertical, 12)
+                        .background(FGColor.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(FGColor.line, lineWidth: 1)
+                        )
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -97,6 +128,10 @@ struct AccessChoices: View {
                     }
                 }
             }
+        }
+        // Text typed for an "Other" that is no longer ticked should not linger.
+        .onChange(of: showsOtherNote) { _, shows in
+            if !shows { otherNote?.wrappedValue = "" }
         }
     }
 
@@ -179,6 +214,28 @@ struct AccessChoices: View {
             }
         }
     }
+
+    /// Pickleball is stored the way it always was, as a sport under the racquet
+    /// activity, so the engine and saved profiles need no migration.
+    private func togglePickleball() {
+        withAnimation(FGMotion.gentle) {
+            if sports.contains(.pickleball) {
+                sports.remove(.pickleball)
+                if sports.isEmpty { activities.remove(.racquet) }
+            } else {
+                sports.insert(.pickleball)
+                activities.insert(.racquet)
+            }
+        }
+    }
+
+    /// Pickleball has its own chip, so it is not repeated under Which sports.
+    private static let sportChoices = SportPreference.allCases.filter { $0 != .pickleball }
+
+    private var showsOtherNote: Bool {
+        activities.contains(.other) || sports.contains(.other)
+    }
+
 
     /// "No equipment" is an answer, not equipment that can coexist with a
     /// mat or weights. Choosing either side clears the contradictory side.

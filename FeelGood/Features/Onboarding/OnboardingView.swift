@@ -124,6 +124,7 @@ struct OnboardingView: View {
                 sports: $model.sports,
                 equipment: $model.equipment,
                 places: $model.places,
+                otherNote: $model.otherMovementNote,
                 showsSymbols: false,
                 usesAura: false,
                 usesPills: true,

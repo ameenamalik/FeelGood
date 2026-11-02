@@ -34,6 +34,8 @@ final class UserProfile {
     var intentsRaw: [String] = []
     var workAroundsRaw: [String]
     var otherWorkAroundNote: String = ""
+    /// Default keeps stores created before this field migration-safe.
+    var otherMovementNote: String = ""
     /// Sessions explicitly hidden ("Don't suggest this again"). Hard-filtered by the engine.
     var hiddenSessionIDsRaw: [String] = []
     /// Local hour for the optional daily invitation. `nil` means no reminder.
@@ -81,6 +83,7 @@ final class UserProfile {
         intentRaw = intentValues.first ?? Intent.energize.rawValue
         workAroundsRaw = answers.workArounds.map(\.rawValue).sorted()
         otherWorkAroundNote = answers.otherWorkAroundNote
+        otherMovementNote = answers.otherMovementNote
         hiddenSessionIDsRaw = answers.hiddenSessionIDs.sorted()
         self.reminderHour = reminderHour
         createdAt = now
@@ -105,6 +108,7 @@ final class UserProfile {
             intents: decodedIntents,
             workArounds: Set(workAroundsRaw.compactMap(WorkAround.init(rawValue:))),
             otherWorkAroundNote: otherWorkAroundNote,
+            otherMovementNote: otherMovementNote,
             hiddenSessionIDs: Set(hiddenSessionIDsRaw)
         )
     }
@@ -131,6 +135,7 @@ final class UserProfile {
         intentRaw = intentsRaw.first ?? Intent.energize.rawValue
         workAroundsRaw = answers.workArounds.map(\.rawValue).sorted()
         otherWorkAroundNote = answers.otherWorkAroundNote
+        otherMovementNote = answers.otherMovementNote
         hiddenSessionIDsRaw = answers.hiddenSessionIDs.sorted()
         updatedAt = now
     }

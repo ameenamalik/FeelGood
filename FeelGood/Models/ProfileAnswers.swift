@@ -27,6 +27,8 @@ nonisolated struct ProfileAnswers: Hashable, Sendable {
     var intents: Set<Intent> = []
     var workArounds: Set<WorkAround> = []
     var otherWorkAroundNote: String = ""
+    /// What the person typed when they picked "Other" under Movement or Sports.
+    var otherMovementNote: String = ""
     var hiddenSessionIDs: Set<String> = []
 
     /// A room implies what happens in it: a gym means somewhere to lift, even

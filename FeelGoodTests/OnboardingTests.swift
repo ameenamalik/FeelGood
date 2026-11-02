@@ -24,6 +24,29 @@ struct OnboardingTests {
         #expect(model.makeProfile().places.contains(.outdoors))
     }
 
+    @Test("The text typed for Other is kept with the answers")
+    func otherMovementNoteIsKept() {
+        let model = OnboardingModel()
+        model.otherMovementNote = "Roller derby"
+
+        let record = model.makeRecord(now: Date(timeIntervalSince1970: 0))
+
+        #expect(record.otherMovementNote == "Roller derby")
+        #expect(record.answers.otherMovementNote == "Roller derby")
+    }
+
+    @Test("Pickleball is still stored as a sport under the racquet activity")
+    func pickleballStorage() {
+        var answers = ProfileAnswers()
+        answers.activities = [.racquet]
+        answers.sports = [.pickleball]
+
+        let record = UserProfile(answers: answers, now: Date(timeIntervalSince1970: 0))
+
+        #expect(record.answers.sports == [.pickleball])
+        #expect(record.answers.activities.contains(.racquet))
+    }
+
     @Test("Every choice icon is an available SF Symbol")
     func choiceSymbolsExist() {
         var symbols = Activity.allCases.map(\.onboardingSymbol)

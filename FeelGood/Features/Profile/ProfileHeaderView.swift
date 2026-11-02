@@ -528,7 +528,7 @@ struct ProfileHeaderView: View {
             HStack(spacing: FGSpace.s) {
                 Image(systemName: purchasesManager.isProUnlocked ? "checkmark.seal.fill" : "sparkles")
                     .foregroundStyle(purchasesManager.isProUnlocked ? FGColor.clayDeep : FGColor.inkMuted)
-                Text(purchasesManager.isProUnlocked ? "FeelGood Pro" : "Free plan")
+                Text(subscriptionRowTitle)
                     .font(FGFont.body.weight(.medium))
                     .foregroundStyle(FGColor.ink)
                 Spacer()
@@ -543,8 +543,17 @@ struct ProfileHeaderView: View {
             )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(purchasesManager.isProUnlocked ? "FeelGood Pro" : "Free plan")
+        .accessibilityLabel(subscriptionRowTitle)
         .accessibilityHint("Manage your subscription")
+    }
+
+    /// "Free trial · 5 days left" while on a trial, so the plan row never
+    /// hides that a charge is coming.
+    private var subscriptionRowTitle: String {
+        if let status = purchasesManager.proStatus, status.phase != .active {
+            return status.badge()
+        }
+        return purchasesManager.isProUnlocked ? "FeelGood Pro" : "Free plan"
     }
 
     // MARK: Notifications

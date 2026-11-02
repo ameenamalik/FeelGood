@@ -112,6 +112,15 @@ struct SubscriptionSettingsView: View {
                     Text(purchasesManager.isProUnlocked ? "FeelGood Pro" : "FeelGood Free")
                         .font(FGFont.sectionTitle)
                         .foregroundStyle(FGColor.inkOnAccent)
+                    if let status = purchasesManager.proStatus, status.phase != .active {
+                        Text(status.badge())
+                            .font(FGFont.label)
+                            .foregroundStyle(FGColor.inkOnAccent)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(FGColor.surface.opacity(0.85), in: Capsule())
+                            .accessibilityLabel(status.badge())
+                    }
                     Text(statusDetail)
                         .font(FGFont.reason)
                         .foregroundStyle(FGColor.inkOnAccent.opacity(0.72))
@@ -125,7 +134,7 @@ struct SubscriptionSettingsView: View {
                 .entitlements[RevenueCatConstants.proEntitlementID]?.expirationDate {
                 Divider().overlay(FGColor.line)
                 HStack {
-                    Text("Renews or expires")
+                    Text(purchasesManager.proStatus?.dateLabel ?? "Renews or expires")
                     Spacer()
                     Text(expirationDate.formatted(date: .abbreviated, time: .omitted))
                         .fontWeight(.medium)
@@ -244,6 +253,7 @@ struct SubscriptionSettingsView: View {
         if !purchasesManager.hasLoadedCustomerInfo {
             return "Checking your subscription status…"
         }
+        if let status = purchasesManager.proStatus { return status.detail() }
         return purchasesManager.isProUnlocked
             ? "All FeelGood Pro features are unlocked."
             : "Your daily menu and core check-in are available without a subscription."
