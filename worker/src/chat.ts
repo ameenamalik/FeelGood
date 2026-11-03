@@ -7,6 +7,7 @@ import { excludedSessionIDs, isRejection, normalizeReply } from "./repeats";
 import { bodyFocusLabel } from "./labels";
 import { aliasSnakeCaseFields } from "./payloadKeys";
 import { correctPlace, sanitizeQuickReplies } from "./chatSanitize";
+import { drainSseData, partialMessage, sseFrame } from "./messageStream";
 import { isSessionAvailable, parseAvailability, type Availability, type AvailabilityFields } from "./availability";
 
 export type ChatRole = "user" | "assistant" | "model";
@@ -176,7 +177,7 @@ export function isValidChatPayload(body: unknown): body is ChatPayload {
   return true;
 }
 
-export async function handleChat(payload: ChatPayload, env: Env): Promise<Response> {
+export async function handleChat(payload: ChatPayload, env: Env, options: { stream?: boolean } = {}): Promise<Response> {
   return traceAgentTurn(
     {
       agentName: "feelgood-chat-agent",
@@ -208,7 +209,7 @@ ${matchedExercise.instructions.map((inst) => `  * ${inst}`).join("\n")}`;
         if (!env.GEMINI_API_KEY) {
           return new Response("upstream error: GEMINI_API_KEY is not configured", { status: 500 });
         }
-        return await handleGeminiChat(payload, env.GEMINI_API_KEY, knowledgeContext);
+        return await handleGeminiChat(payload, env.GEMINI_API_KEY, knowledgeContext, options);
       } catch (error) {
         console.error("handleChat error:", error);
         return new Response(`upstream error: ${error instanceof Error ? error.message : "unknown"}`, { status: 500 });
@@ -413,7 +414,8 @@ function resolveCanonicalRecommendation(
 async function handleGeminiChat(
   payload: ChatPayload,
   apiKey: string,
-  knowledgeContext?: string | null
+  knowledgeContext?: string | null,
+  options: { stream?: boolean } = {}
 ): Promise<Response> {
   const startedAt = Date.now();
   let modelUsed: string | null = null;
@@ -433,6 +435,85 @@ async function handleGeminiChat(
       })
     );
 
+  const { body, contents, systemPrompt } = buildGeminiRequest(payload, knowledgeContext);
+
+  const { res, candidateText } = await traceChatModel(
+    {
+      agentName: "feelgood-chat-agent",
+      agentId: "feelgood-companion",
+      conversationId: payload.subscriberID,
+    },
+    {
+      system: "gemini",
+      model: "gemini-2.5-flash",
+      systemPrompt,
+      inputMessages: contents,
+    },
+    async (setResponse) => {
+      const candidateModels = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-pro"];
+      let response: Response | null = null;
+
+      for (const model of candidateModels) {
+        modelUsed = model;
+        response = await fetch(
+          options.stream
+            ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`
+            : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }
+        );
+        // Move to the next model on "not found" and on transient failures
+        // (rate limit, overload). Anything else is a real answer.
+        const shouldTryNextModel = response.status === 404 || response.status === 429 || response.status >= 500;
+        if (!shouldTryNextModel) {
+          break;
+        }
+      }
+
+      if (!response || !response.ok) {
+        const errText = response ? await response.text() : "No response";
+        // Status only. The body is the provider's error text and can echo
+        // request content, which is never logged.
+        console.error("Gemini API error:", response?.status);
+        return { res: response || new Response("gemini 404", { status: 404 }), candidateText: null, errorDetail: errText };
+      }
+
+      // A stream is read by the caller, a chunk at a time.
+      if (options.stream) return { res: response, candidateText: null, errorDetail: null };
+
+      const json = (await response.json()) as any;
+      const text = json.candidates?.[0]?.content?.parts?.[0]?.text || null;
+      if (text) {
+        setResponse([{ role: "model", content: text }]);
+      }
+      return { res: response, candidateText: text, errorDetail: null };
+    }
+  );
+
+  upstreamStatus = res.status;
+  if (!res.ok) {
+    logOutcome("gemini_error");
+    const detail = (res as any).errorDetail || "";
+    return new Response(`upstream error: gemini ${res.status} - ${detail}`, { status: 500 });
+  }
+
+  if (options.stream && res.body) {
+    return streamChatResponse(res.body, payload, logOutcome);
+  }
+
+  if (!candidateText) {
+    logOutcome("empty_response");
+    return new Response("empty response from gemini", { status: 500 });
+  }
+
+  const parsed = JSON.parse(candidateText);
+  return Response.json(finalizeChat(parsed, payload, logOutcome));
+}
+
+function buildGeminiRequest(payload: ChatPayload, knowledgeContext?: string | null) {
   const contents = [];
   if (payload.history && payload.history.length > 0) {
     for (const item of payload.history.slice(-8)) {
@@ -461,6 +542,12 @@ async function handleGeminiChat(
       responseMimeType: "application/json",
       responseSchema: {
         type: "OBJECT",
+        // The reply text comes first so it can be shown while the rest of
+        // the document (card, chips) is still being written.
+        propertyOrdering: [
+          "message", "mode", "intent", "phase", "session_id", "reason", "quick_replies",
+          "energy", "timeBudget", "place", "body", "intentField", "quickFilter",
+        ],
         properties: {
           message: { type: "STRING", description: "Warm, calm, empathetic 1-2 sentence response." },
           mode: {
@@ -546,71 +633,10 @@ async function handleGeminiChat(
       },
     },
   };
+  return { body, contents, systemPrompt };
+}
 
-  const { res, candidateText } = await traceChatModel(
-    {
-      agentName: "feelgood-chat-agent",
-      agentId: "feelgood-companion",
-      conversationId: payload.subscriberID,
-    },
-    {
-      system: "gemini",
-      model: "gemini-2.5-flash",
-      systemPrompt,
-      inputMessages: contents,
-    },
-    async (setResponse) => {
-      const candidateModels = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-pro"];
-      let response: Response | null = null;
-
-      for (const model of candidateModels) {
-        modelUsed = model;
-        response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          }
-        );
-        // Move to the next model on "not found" and on transient failures
-        // (rate limit, overload). Anything else is a real answer.
-        const shouldTryNextModel = response.status === 404 || response.status === 429 || response.status >= 500;
-        if (!shouldTryNextModel) {
-          break;
-        }
-      }
-
-      if (!response || !response.ok) {
-        const errText = response ? await response.text() : "No response";
-        // Status only. The body is the provider's error text and can echo
-        // request content, which is never logged.
-        console.error("Gemini API error:", response?.status);
-        return { res: response || new Response("gemini 404", { status: 404 }), candidateText: null, errorDetail: errText };
-      }
-
-      const json = (await response.json()) as any;
-      const text = json.candidates?.[0]?.content?.parts?.[0]?.text || null;
-      if (text) {
-        setResponse([{ role: "model", content: text }]);
-      }
-      return { res: response, candidateText: text, errorDetail: null };
-    }
-  );
-
-  upstreamStatus = res.status;
-  if (!res.ok) {
-    logOutcome("gemini_error");
-    const detail = (res as any).errorDetail || "";
-    return new Response(`upstream error: gemini ${res.status} - ${detail}`, { status: 500 });
-  }
-
-  if (!candidateText) {
-    logOutcome("empty_response");
-    return new Response("empty response from gemini", { status: 500 });
-  }
-
-  const parsed = JSON.parse(candidateText);
+function finalizeChat(parsed: any, payload: ChatPayload, logOutcome: (failure: ChatFailure, extra?: Partial<ChatOutcomeInput>) => void): ChatResponseData {
   const extractedCheckIn: ExtractedCheckIn = {};
   if (parsed.energy) extractedCheckIn.energy = parsed.energy;
   if (parsed.timeBudget) extractedCheckIn.timeBudget = parsed.timeBudget;
@@ -695,5 +721,76 @@ async function handleGeminiChat(
     quickReplyCount: quickReplies.length,
     extractedCheckIn: data.extracted_check_in !== null,
   });
-  return Response.json(data);
+  return data;
+}
+
+type LogOutcome = (failure: ChatFailure, extra?: Partial<ChatOutcomeInput>) => void;
+
+/**
+ * Relays Gemini's streamed JSON as server-sent events: `delta` frames carry the
+ * reply text as it is written, then one `done` frame carries the same payload
+ * the non-streaming endpoint returns. A failure after the stream has started
+ * is an `error` frame, since the 200 status is already sent.
+ */
+function streamChatResponse(upstream: ReadableStream<Uint8Array>, payload: ChatPayload, logOutcome: LogOutcome): Response {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (event: string, data: unknown) => controller.enqueue(encoder.encode(sseFrame(event, data)));
+      const reader = upstream.getReader();
+      let buffer = "";
+      let json = "";
+      let sentLength = 0;
+
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const drained = drainSseData(buffer);
+          buffer = drained.rest;
+
+          for (const raw of drained.payloads) {
+            let chunk: any;
+            try {
+              chunk = JSON.parse(raw);
+            } catch {
+              continue;
+            }
+            const text = chunk?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (typeof text !== "string") continue;
+            json += text;
+
+            const message = partialMessage(json);
+            if (message.length > sentLength) {
+              send("delta", { text: message.slice(sentLength) });
+              sentLength = message.length;
+            }
+          }
+        }
+
+        if (!json) {
+          logOutcome("empty_response");
+          send("error", { reason: "empty_response" });
+        } else {
+          send("done", finalizeChat(JSON.parse(json), payload, logOutcome));
+        }
+      } catch (error) {
+        console.error("chat stream error:", error instanceof Error ? error.name : "unknown");
+        logOutcome("exception");
+        send("error", { reason: "stream_failed" });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+  });
 }

@@ -371,9 +371,33 @@ nonisolated protocol ChatProviding: Sendable {
         userContext: ChatUserContext?,
         todaysMenu: [StructuredRecommendation]
     ) async -> ChatResponse?
+
+    /// Same as `describeDay`, but calls `onPartial` with the reply text so far
+    /// while the model is still writing it. The returned response is the
+    /// complete one; its message replaces whatever `onPartial` last showed.
+    func describeDayStreaming(
+        prompt: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation],
+        onPartial: @escaping @Sendable (String) -> Void
+    ) async -> ChatResponse?
 }
 
 extension ChatProviding {
+    /// Providers that can't stream answer in one piece.
+    func describeDayStreaming(
+        prompt: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation],
+        onPartial: @escaping @Sendable (String) -> Void
+    ) async -> ChatResponse? {
+        await describeDay(prompt: prompt, history: history, activeSessionID: activeSessionID, userContext: userContext, todaysMenu: todaysMenu)
+    }
+
     func describeDay(
         prompt: String,
         history: [WireChatMessage] = [],
@@ -395,6 +419,41 @@ nonisolated protocol ChatTransport: Sendable {
         todaysMenu: [StructuredRecommendation],
         timeout: TimeInterval
     ) async throws -> ChatResponse
+
+    /// `sendChat`, delivering the reply text to `onPartial` as it is written.
+    func streamChat(
+        prompt: String,
+        subscriberID: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation],
+        timeout: TimeInterval,
+        onPartial: @escaping @Sendable (String) -> Void
+    ) async throws -> ChatResponse
+}
+
+extension ChatTransport {
+    func streamChat(
+        prompt: String,
+        subscriberID: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation],
+        timeout: TimeInterval,
+        onPartial: @escaping @Sendable (String) -> Void
+    ) async throws -> ChatResponse {
+        try await sendChat(
+            prompt: prompt,
+            subscriberID: subscriberID,
+            history: history,
+            activeSessionID: activeSessionID,
+            userContext: userContext,
+            todaysMenu: todaysMenu,
+            timeout: timeout
+        )
+    }
 }
 
 nonisolated struct URLSessionChatTransport: ChatTransport {
@@ -407,6 +466,81 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
         todaysMenu: [StructuredRecommendation],
         timeout: TimeInterval
     ) async throws -> ChatResponse {
+        let request = try makeRequest(
+            prompt: prompt,
+            subscriberID: subscriberID,
+            history: history,
+            activeSessionID: activeSessionID,
+            userContext: userContext,
+            todaysMenu: todaysMenu,
+            timeout: timeout,
+            streaming: false
+        )
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try Self.requireSuccess(response)
+        return try Self.decodeResponse(data)
+    }
+
+    func streamChat(
+        prompt: String,
+        subscriberID: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation],
+        timeout: TimeInterval,
+        onPartial: @escaping @Sendable (String) -> Void
+    ) async throws -> ChatResponse {
+        let request = try makeRequest(
+            prompt: prompt,
+            subscriberID: subscriberID,
+            history: history,
+            activeSessionID: activeSessionID,
+            userContext: userContext,
+            todaysMenu: todaysMenu,
+            timeout: timeout,
+            streaming: true
+        )
+
+        let (bytes, response) = try await URLSession.shared.bytes(for: request)
+        try Self.requireSuccess(response)
+
+        // A Worker that predates streaming answers with one JSON body.
+        let contentType = (response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Type") ?? ""
+        guard contentType.contains("text/event-stream") else {
+            var body = Data()
+            for try await byte in bytes { body.append(byte) }
+            return try Self.decodeResponse(body)
+        }
+
+        var parser = ChatEventParser()
+        var shown = ""
+        for try await line in bytes.lines {
+            guard let event = parser.feed(line: line) else { continue }
+            switch event {
+            case .delta(let text):
+                shown += text
+                onPartial(shown)
+            case .done(let data):
+                return try Self.decodeResponse(data)
+            case .error:
+                throw ChatTransportError.streamFailed
+            }
+        }
+        throw ChatTransportError.streamFailed
+    }
+
+    private func makeRequest(
+        prompt: String,
+        subscriberID: String,
+        history: [WireChatMessage],
+        activeSessionID: String?,
+        userContext: ChatUserContext?,
+        todaysMenu: [StructuredRecommendation],
+        timeout: TimeInterval,
+        streaming: Bool
+    ) throws -> URLRequest {
         guard let chatURL = WorkerConstants.chatURL else {
             throw ChatTransportError.notConfigured
         }
@@ -415,6 +549,9 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
         request.httpMethod = "POST"
         request.timeoutInterval = timeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if streaming {
+            request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        }
 
         let payload = WireChatPayload(
             prompt: prompt,
@@ -425,15 +562,18 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
             todaysMenu: todaysMenu.isEmpty ? nil : todaysMenu
         )
         request.httpBody = try JSONEncoder().encode(payload)
+        return request
+    }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-
+    private static func requireSuccess(_ response: URLResponse) throws {
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             // The status becomes the NSError code, so the fallback log says
             // whether the Worker refused (403), throttled (429) or broke (500).
             throw ChatTransportError.badResponse(status: (response as? HTTPURLResponse)?.statusCode ?? -1)
         }
+    }
 
+    static func decodeResponse(_ data: Data) throws -> ChatResponse {
         let decoded = try JSONDecoder().decode(WireChatResponse.self, from: data)
         let overrides = decoded.extractedCheckIn?.toOverrides() ?? ConversationalOverrides()
         let intent = decoded.intent ?? .generalCheckIn
@@ -533,6 +673,7 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
     private enum ChatTransportError: CustomNSError {
         case notConfigured
         case badResponse(status: Int)
+        case streamFailed
 
         static var errorDomain: String { "ChatTransport" }
 
@@ -540,6 +681,7 @@ nonisolated struct URLSessionChatTransport: ChatTransport {
             switch self {
             case .notConfigured: -1
             case .badResponse(let status): status
+            case .streamFailed: -2
             }
         }
     }
@@ -581,6 +723,24 @@ actor ChatService: ChatProviding {
         userContext: ChatUserContext? = nil,
         todaysMenu: [StructuredRecommendation] = []
     ) async -> ChatResponse? {
+        await describeDayStreaming(
+            prompt: prompt,
+            history: history,
+            activeSessionID: activeSessionID,
+            userContext: userContext,
+            todaysMenu: todaysMenu,
+            onPartial: { _ in }
+        )
+    }
+
+    func describeDayStreaming(
+        prompt: String,
+        history: [WireChatMessage] = [],
+        activeSessionID: String? = nil,
+        userContext: ChatUserContext? = nil,
+        todaysMenu: [StructuredRecommendation] = [],
+        onPartial: @escaping @Sendable (String) -> Void
+    ) async -> ChatResponse? {
         let sanitized = redactor.sanitize(prompt.trimmingCharacters(in: .whitespacesAndNewlines))
         guard !sanitized.isEmpty else { return nil }
 
@@ -613,14 +773,15 @@ actor ChatService: ChatProviding {
         if usesFreeExchange { freeAIExchange.markUsed() }
 
         do {
-            return try await transport.sendChat(
+            return try await transport.streamChat(
                 prompt: sanitized,
                 subscriberID: subID,
                 history: sanitizedHistory,
                 activeSessionID: activeSessionID,
                 userContext: userContext,
                 todaysMenu: todaysMenu,
-                timeout: timeout
+                timeout: timeout,
+                onPartial: onPartial
             )
         } catch {
             // Fall back to the on-device engine if offline / the edge call fails.
@@ -1172,5 +1333,44 @@ nonisolated struct InMemoryChatService: ChatProviding {
         todaysMenu: [StructuredRecommendation] = []
     ) async -> ChatResponse? {
         response ?? LocalStatefulChatEngine.orchestrate(prompt: prompt, history: history, activeSessionID: activeSessionID, userContext: userContext, todaysMenu: todaysMenu)
+    }
+}
+
+/// Reads the Worker's server-sent-events stream one line at a time. Every frame
+/// is an `event:` line followed by one single-line `data:` line, so a frame is
+/// complete at its `data:` line. (`URLSession.AsyncBytes.lines` drops empty
+/// lines, so the blank line that ends an SSE frame never arrives.)
+nonisolated struct ChatEventParser {
+    enum Event: Equatable {
+        case delta(String)
+        case done(Data)
+        case error
+    }
+
+    private var eventName = ""
+
+    /// Returns an event when `line` completes one.
+    mutating func feed(line: String) -> Event? {
+        if line.hasPrefix("event:") {
+            eventName = line.dropFirst("event:".count).trimmingCharacters(in: .whitespaces)
+            return nil
+        }
+        guard line.hasPrefix("data:") else { return nil }
+
+        let name = eventName
+        eventName = ""
+        let payload = Data(line.dropFirst("data:".count).trimmingCharacters(in: .whitespaces).utf8)
+        switch name {
+        case "delta":
+            struct Delta: Decodable { let text: String }
+            guard let delta = try? JSONDecoder().decode(Delta.self, from: payload) else { return nil }
+            return .delta(delta.text)
+        case "done":
+            return .done(payload)
+        case "error":
+            return .error
+        default:
+            return nil
+        }
     }
 }
