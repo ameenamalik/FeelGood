@@ -46,6 +46,14 @@ final class PurchasesManager {
         return Self.hasActiveProEntitlement(in: customerInfo)
     }
 
+    /// Trial, paid or failing — `nil` for anyone without an active Pro entitlement.
+    var proStatus: ProSubscriptionStatus? {
+        guard isProUnlocked,
+              let entitlement = customerInfo?.entitlements[RevenueCatConstants.proEntitlementID]
+        else { return nil }
+        return ProSubscriptionStatus(entitlement: entitlement)
+    }
+
     static func hasActiveProEntitlement(in customerInfo: CustomerInfo) -> Bool {
         guard customerInfo.entitlements[RevenueCatConstants.proEntitlementID]?.isActive == true else {
             return false

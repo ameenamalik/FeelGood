@@ -90,6 +90,10 @@ final class OnboardingModel {
         get { answers.otherWorkAroundNote }
         set { answers.otherWorkAroundNote = newValue }
     }
+    var otherMovementNote: String {
+        get { answers.otherMovementNote }
+        set { answers.otherMovementNote = newValue }
+    }
 
     var isFirstCard: Bool { card == .guidance }
     var isLastCard: Bool { card == .workArounds }

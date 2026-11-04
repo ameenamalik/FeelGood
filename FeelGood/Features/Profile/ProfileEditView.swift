@@ -59,6 +59,7 @@ struct ProfileEditView: View {
                             sports: $answers.sports,
                             equipment: $answers.equipment,
                             places: $answers.places,
+                            otherNote: $answers.otherMovementNote,
                             showsSymbols: false,
                             usesAura: false,
                             usesPills: true
