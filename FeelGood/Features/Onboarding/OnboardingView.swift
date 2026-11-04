@@ -283,6 +283,12 @@ struct OnboardingView: View {
 
         }
         .frame(maxWidth: .infinity)
+        .onChange(of: model.card, initial: true) { _, card in
+            Analytics.capture("onboarding_step_viewed", properties: [
+                "step": card.rawValue + 1,
+                "step_count": OnboardingModel.Card.allCases.count,
+            ])
+        }
     }
 }
 

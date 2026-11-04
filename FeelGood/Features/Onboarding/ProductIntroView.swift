@@ -77,6 +77,7 @@ struct FirstRunFlow: View {
     let onFinish: (OnboardingModel) -> Void
     @AppStorage(Self.hasSeenIntroKey) private var hasSeenIntro = false
     @State private var settingUpModel: OnboardingModel?
+    @State private var isShowingPostOnboardingPaywall = false
 
     /// Reset the welcome screens for a fresh installation or a debug restart.
     /// Signing out preserves these flags so onboarding is not repeated.
@@ -94,8 +95,20 @@ struct FirstRunFlow: View {
                 }
             } else if let settingUp = settingUpModel {
                 SettingUpMenuView {
+                    // Highest-intent moment: they just told us what they want.
+                    // Skip it for anyone already Pro (restored account).
+                    if PurchasesManager.shared.isProUnlocked {
+                        settingUpModel = nil
+                        onFinish(settingUp)
+                    } else {
+                        isShowingPostOnboardingPaywall = true
+                    }
+                }
+                .fullScreenCover(isPresented: $isShowingPostOnboardingPaywall, onDismiss: {
                     settingUpModel = nil
                     onFinish(settingUp)
+                }) {
+                    FeelGoodPaywallView(context: .onboarding)
                 }
             } else {
                 OnboardingView { onboarding in
@@ -157,6 +170,11 @@ struct ProductIntroView: View {
 
                         carouselFooter
                             .padding(.bottom, typeSize.isAccessibilitySize ? FGSpace.m : FGSpace.xxl)
+                            .onChange(of: page, initial: true) { _, page in
+                                Analytics.capture("product_intro_page_viewed", properties: [
+                                    "page": page.rawValue + 1,
+                                ])
+                            }
                     }
                     .frame(
                         width: max(0, geometry.size.width - FGSpace.page * 2),
