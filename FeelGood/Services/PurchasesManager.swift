@@ -132,6 +132,7 @@ final class PurchasesManager {
             guard revision == identityRevision,
                   requestedAppUserID == Purchases.shared.appUserID else { return }
             customerInfo = info
+            scheduleTrialReminderSync()
         } catch {
             logger.error("Failed to refresh CustomerInfo: \(error.localizedDescription)")
             Analytics.log("CustomerInfo refresh failed", level: .error, attributes: ["error": error.localizedDescription])
@@ -149,6 +150,7 @@ final class PurchasesManager {
             customerInfo = info
             hasLoadedCustomerInfo = true
             isChangingIdentity = false
+            scheduleTrialReminderSync()
         } catch {
             guard revision == identityRevision else { return }
             isChangingIdentity = false
@@ -167,6 +169,7 @@ final class PurchasesManager {
             customerInfo = info
             hasLoadedCustomerInfo = true
             isChangingIdentity = false
+            scheduleTrialReminderSync()
         } catch {
             guard revision == identityRevision else { return }
             isChangingIdentity = false
@@ -204,11 +207,28 @@ final class PurchasesManager {
                 guard !self.isChangingIdentity else { continue }
                 self.customerInfo = info
                 self.hasLoadedCustomerInfo = true
+                self.scheduleTrialReminderSync()
                 let proActive = Self.hasActiveProEntitlement(in: info)
                 self.logger.debug("CustomerInfo updated — pro active: \(proActive)")
                 Analytics.log("CustomerInfo updated", level: .debug, attributes: ["pro_active": proActive])
             }
         }
+    }
+
+    /// Keeps the day-before-the-trial-ends reminder in step with the
+    /// subscription: scheduled while a trial will convert, cancelled once it
+    /// is cancelled, converted or gone. Never prompts for permission.
+    func syncTrialReminder() async {
+        let productID = customerInfo?.entitlements[RevenueCatConstants.proEntitlementID]?.productIdentifier
+        let price = PurchasedPlan.priceLine(
+            productID: productID,
+            packages: [yearlyPackage, monthlyPackage].compactMap { $0 }
+        )
+        await TrialReminderScheduler.shared.sync(status: proStatus, price: price)
+    }
+
+    private func scheduleTrialReminderSync() {
+        Task { await syncTrialReminder() }
     }
 
     func fetchOfferings() async {
@@ -263,6 +283,7 @@ final class PurchasesManager {
         do {
             let info = try await Purchases.shared.restorePurchases()
             customerInfo = info
+            scheduleTrialReminderSync()
             let unlocked = Self.hasActiveProEntitlement(in: info)
             if unlocked {
                 Analytics.capture("subscription_restored")

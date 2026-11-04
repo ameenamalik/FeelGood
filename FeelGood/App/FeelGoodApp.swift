@@ -142,6 +142,8 @@ struct RootView: View {
                 DebugChatConsentHost()
             } else if ProcessInfo.processInfo.arguments.contains("-FGForcePaywall") {
                 FeelGoodPaywallView()
+            } else if ProcessInfo.processInfo.arguments.contains("-FGForcePostPurchase") {
+                PostPurchaseFlow { _ in }
             } else if ProcessInfo.processInfo.arguments.contains("-FGForceSettingUpMenu") {
                 SettingUpMenuView(onComplete: {})
             } else {

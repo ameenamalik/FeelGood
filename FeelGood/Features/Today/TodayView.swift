@@ -197,6 +197,7 @@ struct TodayView: View {
         }
         .onAppear {
             isViewVisible = true
+            openFirstMoveIfRequested()
             Analytics.capture(EngagementAnalytics.menuViewedEvent, properties: EngagementAnalytics.menuViewed(itemCount: model.menu.items.count))
             // Calendar availability now shapes the menu quietly. Clear any
             // exact-time reminder saved by the previous scheduling UI.
@@ -235,6 +236,13 @@ struct TodayView: View {
         .onDisappear {
             isViewVisible = false
             calendarRefreshTask?.cancel()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: FirstMove.requested)) { _ in
+            // The paywall is still animating away; presenting now can drop the sheet.
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(450))
+                openFirstMoveIfRequested()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .oneSignalOpenMyMenu)) { _ in
             // Let OneSignal's overlay finish dismissing before presenting the
@@ -457,6 +465,13 @@ struct TodayView: View {
             )
             openSession(item)
         }
+    }
+
+    /// The small move offered right after subscribing. Uses the same path as
+    /// a widget tap, so it opens whether or not the session is on today's menu.
+    private func openFirstMoveIfRequested() {
+        guard let id = FirstMove.takePending() else { return }
+        openRequestedSession(id)
     }
 
     private func openSession(_ item: MenuItem) {

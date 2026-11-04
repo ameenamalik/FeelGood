@@ -122,6 +122,7 @@ struct FeelGoodPaywallView: View {
     @State private var isPurchasing = false
     @State private var trialEligiblePlans: Set<Plan> = []
     @State private var isRestoring = false
+    @State private var isShowingPostPurchase = false
     @State private var restoreResultMessage: String?
     @State private var activeSuperpower: Superpower = .swaps
     @State private var carouselResetToken = 0
@@ -168,6 +169,11 @@ struct FeelGoodPaywallView: View {
             }
         }
         .guaranteedPaywallCloseButton { finish() }
+        .fullScreenCover(isPresented: $isShowingPostPurchase) {
+            PostPurchaseFlow { sessionID in
+                finishPostPurchase(startingSessionID: sessionID)
+            }
+        }
         .sensoryFeedback(.selection, trigger: selectedPlan)
         .sensoryFeedback(.impact(weight: .medium), trigger: activeSuperpower)
         .task {
@@ -1009,8 +1015,19 @@ struct FeelGoodPaywallView: View {
         Task {
             let unlocked = await purchasesManager.purchase(package: selectedPackage)
             isPurchasing = false
-            if unlocked { finish() }
+            if unlocked {
+                // A real purchase gets the welcome flow. Restores skip it:
+                // those people have seen all of this before.
+                await purchasesManager.syncTrialReminder()
+                isShowingPostPurchase = true
+            }
         }
+    }
+
+    private func finishPostPurchase(startingSessionID: String?) {
+        finish()
+        guard let startingSessionID else { return }
+        FirstMove.stash(sessionID: startingSessionID)
     }
 
     private func finish() {
