@@ -5010,7 +5010,14 @@
             "name": "Slow breaths",
             "seconds": 45,
             "cue": "Rest your hands on your belly. Breathe in through your nose and out through your mouth.",
-            "narrationID": "main-standing-strength-12-step-11-breath"
+            "narrationID": "main-standing-strength-12-step-11-breath",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 0,
+              "exhale": 6,
+              "holdOut": 0
+            }
           }
         ]
       }
@@ -6526,7 +6533,14 @@
             "seconds": 60,
             "cue": "Stand tall and breathe slowly.",
             "glossaryID": "deep-breath",
-            "narrationID": "main-morning-energy-twelve-step-12-breath"
+            "narrationID": "main-morning-energy-twelve-step-12-breath",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 0,
+              "exhale": 6,
+              "holdOut": 0
+            }
           }
         ]
       },
@@ -6678,7 +6692,14 @@
             "seconds": 30,
             "cue": "Stand and breathe in through your nose, out slowly.",
             "glossaryID": "deep-breath",
-            "narrationID": "side-morning-floor-five-step-5-breath"
+            "narrationID": "side-morning-floor-five-step-5-breath",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 0,
+              "exhale": 6,
+              "holdOut": 0
+            }
           }
         ]
       },
@@ -6746,7 +6767,14 @@
             "seconds": 30,
             "cue": "Lie back and breathe slowly.",
             "glossaryID": "deep-breath",
-            "narrationID": "side-core-control-five-step-5-breath"
+            "narrationID": "side-core-control-five-step-5-breath",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 0,
+              "exhale": 6,
+              "holdOut": 0
+            }
           }
         ]
       },
@@ -6946,7 +6974,14 @@
             "seconds": 30,
             "cue": "Lie back and breathe.",
             "glossaryID": "deep-breath",
-            "narrationID": "main-core-mat-twenty-step-13-breath"
+            "narrationID": "main-core-mat-twenty-step-13-breath",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 0,
+              "exhale": 6,
+              "holdOut": 0
+            }
           }
         ]
       },
@@ -7401,7 +7436,14 @@
             "seconds": 60,
             "cue": "Lie back and breathe slowly.",
             "glossaryID": "deep-breath",
-            "narrationID": "side-core-control-five-step-5-breath"
+            "narrationID": "side-core-control-five-step-5-breath",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 0,
+              "exhale": 6,
+              "holdOut": 0
+            }
           },
           {
             "name": "Cool-down",
@@ -8312,7 +8354,14 @@
             "seconds": 30,
             "cue": "Sit or lie and breathe slowly.",
             "glossaryID": "deep-breath",
-            "narrationID": "main-pilates-classic-fifteen-step-11-breath"
+            "narrationID": "main-pilates-classic-fifteen-step-11-breath",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 0,
+              "exhale": 6,
+              "holdOut": 0
+            }
           },
           {
             "name": "Reach and roll your shoulders",
@@ -8454,7 +8503,14 @@
             "seconds": 60,
             "cue": "Lie back and breathe slowly.",
             "glossaryID": "deep-breath",
-            "narrationID": "side-core-control-five-step-5-breath"
+            "narrationID": "side-core-control-five-step-5-breath",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 0,
+              "exhale": 6,
+              "holdOut": 0
+            }
           },
           {
             "name": "Cool-down",
@@ -20821,7 +20877,14 @@
             "seconds": 60,
             "cue": "Lie back and breathe slowly.",
             "glossaryID": "deep-breath",
-            "narrationID": "side-core-control-five-step-5-breath"
+            "narrationID": "side-core-control-five-step-5-breath",
+            "visual": {
+              "type": "breathing",
+              "inhale": 4,
+              "holdIn": 0,
+              "exhale": 6,
+              "holdOut": 0
+            }
           },
           {
             "name": "Cool-down",
