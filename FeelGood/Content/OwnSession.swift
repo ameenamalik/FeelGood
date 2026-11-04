@@ -159,11 +159,47 @@ nonisolated extension Session {
         )
     }
 
+    /// A YouTube video somebody pasted in. It plays in the embedded player,
+    /// sits in their menu like their own routines, and is never suggested.
+    static func ownVideo(
+        id: String,
+        title: String,
+        channel: String,
+        videoID: String,
+        activity: Activity,
+        durationMin: Int,
+        course: Course?
+    ) -> Session {
+        let finalDuration = max(1, durationMin)
+        return Session(
+            id: id,
+            title: title,
+            subtitle: "",
+            activity: activity,
+            qualities: activity.typicalQualities,
+            durationMin: finalDuration,
+            intensity: 2,
+            energyFit: Energy.allCases,
+            equipment: [],
+            places: [],
+            bodyFocus: [.full],
+            contraindications: [],
+            intents: intents(for: activity.typicalQualities),
+            course: course ?? Self.course(for: finalDuration),
+            source: .youtube(videoID: videoID, channel: channel)
+        )
+    }
+
     /// Ownership and playability are separate: a custom routine can contain
-    /// timed steps and still remain editable by the person who made it.
+    /// timed steps and still remain editable by the person who made it. The
+    /// catalog holds no video, so a video is somebody's own when it carries
+    /// the id every kept session is given.
     var isOwn: Bool {
-        if case .custom = source { return true }
-        return false
+        switch source {
+        case .custom: true
+        case .youtube: id.hasPrefix("own-")
+        case .authored: false
+        }
     }
 
     var customRoutineParts: [CustomRoutinePart] {

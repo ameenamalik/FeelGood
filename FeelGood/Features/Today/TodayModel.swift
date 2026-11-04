@@ -75,7 +75,7 @@ final class TodayModel {
         calendar: Calendar = .current
     ) {
         let own = log.kept()
-        let engine = PlanEngine(catalog: store.sessions + own)
+        let engine = PlanEngine(catalog: store.sessions + own.filter { !$0.source.isVideo })
         let today = calendar.movementDayStart(for: now)
 
         // Answers already given today are answers, not a question to ask again.
@@ -780,6 +780,36 @@ final class TodayModel {
         return session
     }
 
+    /// Keeps a YouTube video the person pasted in, and optionally puts it on
+    /// today's menu. Kept on this phone only: the cloud copy of a routine is a
+    /// list of parts, which a video does not have.
+    @discardableResult
+    func addVideo(
+        _ info: YouTubeVideoInfo,
+        title: String,
+        activity: Activity,
+        durationMin: Int,
+        course: Course,
+        addToToday: Bool,
+        now: Date = Date()
+    ) -> Session {
+        let session = log.keepVideo(
+            title: title,
+            channel: info.channel,
+            videoID: info.videoID,
+            activity: activity,
+            durationMin: durationMin,
+            course: course,
+            now: now
+        )
+        ownSessions = log.kept()
+        rebuildEngine()
+        if addToToday {
+            setTodayCourseOverride(session: session, for: course, now: now)
+        }
+        return session
+    }
+
     /// Sets a session as the explicit override for a course slot on Today's menu.
     func setTodayCourseOverride(session: Session, for course: Course, now: Date = Date()) {
         todayCustomOverrides[course] = session
@@ -855,7 +885,9 @@ final class TodayModel {
     }
 
     private func rebuildEngine() {
-        engine = PlanEngine(catalog: store.sessions + ownSessions)
+        // A pasted-in video is only ever played when the person puts it on
+        // their menu, so the engine never picks one for them.
+        engine = PlanEngine(catalog: store.sessions + ownSessions.filter { !$0.source.isVideo })
     }
 
     private static func swapCount(

@@ -83,8 +83,10 @@ struct SessionDetailView: View {
                             AddRoutineToTodayButton(session: session, model: model)
 
                             HStack(spacing: FGSpace.m) {
-                                FGQuietButton("Edit", systemImage: "pencil") {
-                                    isEditing = true
+                                if !session.source.isVideo {
+                                    FGQuietButton("Edit", systemImage: "pencil") {
+                                        isEditing = true
+                                    }
                                 }
                                 FGQuietButton("Remove", systemImage: "minus.circle") {
                                     isConfirmingRemoval = true
@@ -366,7 +368,7 @@ struct SessionDetailView: View {
     /// page above it runs.
     private var bottomBar: some View {
         VStack(spacing: FGSpace.s) {
-            if session.isOwn && session.source.steps.isEmpty {
+            if session.isOwn && !session.source.isVideo && session.source.steps.isEmpty {
                 FGPrimaryButton(title: "I did this") {
                     let completionStartedAt = Date()
                     Analytics.capture("workout_completed", properties: workoutProperties)

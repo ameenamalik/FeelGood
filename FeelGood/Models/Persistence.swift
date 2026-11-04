@@ -479,6 +479,10 @@ final class CustomSession {
     var intensity: Int
     var courseRaw: String? = nil
     var createdAt: Date
+    /// Set when this is a YouTube video somebody pasted in rather than a list
+    /// of parts. `nil` is the migration-safe shape for every earlier routine.
+    var videoID: String? = nil
+    var videoChannel: String? = nil
 
     init(
         id: String = "own-\(UUID().uuidString)",
@@ -489,9 +493,13 @@ final class CustomSession {
         durationMin: Int,
         intensity: Int,
         course: Course? = nil,
-        createdAt: Date
+        createdAt: Date,
+        videoID: String? = nil,
+        videoChannel: String? = nil
     ) {
         self.id = id
+        self.videoID = videoID
+        self.videoChannel = videoChannel
         self.title = title
         sessionDescription = description
         partsData = try? JSONEncoder().encode(parts)
@@ -513,7 +521,18 @@ final class CustomSession {
     }
 
     var session: Session {
-        .own(
+        if let videoID {
+            return .ownVideo(
+                id: id,
+                title: title,
+                channel: videoChannel ?? "",
+                videoID: videoID,
+                activity: activity,
+                durationMin: durationMin,
+                course: course
+            )
+        }
+        return .own(
             id: id,
             title: title,
             description: sessionDescription,
