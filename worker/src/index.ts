@@ -77,7 +77,9 @@ export default {
         return new Response("slow down", { status: 429 });
       }
 
-      return handleChat(body, env);
+      // Streaming is opt-in so builds that predate it keep getting one JSON body.
+      const wantsStream = (request.headers.get("Accept") ?? "").includes("text/event-stream");
+      return handleChat(body, env, { stream: wantsStream });
     }
 
     if (url.pathname !== "/copy") {

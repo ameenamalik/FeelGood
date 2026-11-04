@@ -20,6 +20,9 @@ struct ExploreView: View {
     @State private var isShowingHistory: Bool = false
     @State private var inputText: String = ""
     @State private var isProcessing: Bool = false
+    /// The reply as the model writes it. Empty until the first words arrive,
+    /// and cleared when the finished reply joins the thread.
+    @State private var streamingText: String = ""
     @State private var service: any ChatProviding = ChatService()
     @State private var selectedSession: Session?
     @State private var selectedSessionReason: String?
@@ -89,11 +92,16 @@ struct ExploreView: View {
                                 }
 
                                 if isProcessing {
-                                    typingIndicator
-                                        .id("typingIndicator")
-                                        .transition(
-                                            .opacity.combined(with: .scale(scale: 0.9, anchor: .leading))
-                                        )
+                                    if streamingText.isEmpty {
+                                        typingIndicator
+                                            .id("typingIndicator")
+                                            .transition(
+                                                .opacity.combined(with: .scale(scale: 0.9, anchor: .leading))
+                                            )
+                                    } else {
+                                        assistantTextBubble(text: streamingText)
+                                            .id("streamingReply")
+                                    }
                                 }
 
                                 Color.clear
@@ -111,6 +119,9 @@ struct ExploreView: View {
                         }
                         .onChange(of: isProcessing) { _, _ in
                             scrollToBottom(proxy)
+                        }
+                        .onChange(of: streamingText) { _, _ in
+                            scrollToBottom(proxy, animated: false)
                         }
                         .onChange(of: isFieldFocused) { _, _ in
                             scrollToBottom(proxy)
@@ -685,16 +696,22 @@ struct ExploreView: View {
         let otherWorkAroundNote = model.profile.otherWorkAroundNote
         let lookupSession: (String) -> Session? = { id in model.everything.first { $0.id == id } }
         Task {
-            let response = await service.describeDay(
+            let response = await service.describeDayStreaming(
                 prompt: trimmed,
                 history: wireHistory,
                 activeSessionID: currentActiveID,
                 userContext: userContext,
-                todaysMenu: todaysMenu
+                todaysMenu: todaysMenu,
+                onPartial: { text in
+                    Task { @MainActor in
+                        if isProcessing { streamingText = text }
+                    }
+                }
             )
 
             await MainActor.run {
                 isProcessing = false
+                streamingText = ""
                 // The server never sees work-arounds, so the check that keeps a
                 // conflicting session out of chat happens here, on the phone.
                 let response = response.map { reply in
