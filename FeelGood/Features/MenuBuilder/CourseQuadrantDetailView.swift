@@ -237,8 +237,10 @@ struct CourseQuadrantDetailView: View {
                 }
             }
 
-            Button("Edit", systemImage: "pencil") {
-                sessionToEdit = session
+            if !session.source.isVideo {
+                Button("Edit", systemImage: "pencil") {
+                    sessionToEdit = session
+                }
             }
 
             Divider()

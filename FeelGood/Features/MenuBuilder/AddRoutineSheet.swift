@@ -26,6 +26,7 @@ struct AddRoutineSheet: View {
     @State private var intensity: Int = 2
     @State private var addToToday: Bool = false
     @State private var isShowingCatalogPicker: Bool = false
+    @State private var isShowingVideoSheet: Bool = false
     @FocusState private var isTitleFocused: Bool
     @FocusState private var isDescriptionFocused: Bool
     @FocusState private var isPartTitleFocused: Bool
@@ -335,6 +336,11 @@ struct AddRoutineSheet: View {
                                 isShowingCatalogPicker = true
                             }
                             .frame(maxWidth: .infinity)
+
+                            FGQuietButton("Add a YouTube video instead", systemImage: "play.rectangle") {
+                                isShowingVideoSheet = true
+                            }
+                            .frame(maxWidth: .infinity)
                         }
 
                         FGPrimaryButton(title: editingSession == nil ? "Save routine" : "Save changes", isEnabled: isValid) {
@@ -347,6 +353,12 @@ struct AddRoutineSheet: View {
                 .scrollDismissesKeyboard(.interactively)
             }
             .toolbar(.hidden, for: .navigationBar)
+            .sheet(isPresented: $isShowingVideoSheet) {
+                AddVideoSheet(model: model, initialCourse: course) { saved in
+                    onSaved?(saved)
+                    dismiss()
+                }
+            }
             .sheet(isPresented: $isShowingCatalogPicker) {
                 CatalogPickerSheet(model: model, preferredCourse: course) { pickedSession in
                     title = pickedSession.title

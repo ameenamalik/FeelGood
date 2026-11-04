@@ -50,6 +50,9 @@ protocol SessionLogging: AnyObject, Sendable {
     @discardableResult
     func keep(title: String, description: String?, parts: [CustomRoutinePart], activity: Activity, durationMin: Int, intensity: Int, course: Course?, now: Date) -> Session
     func kept() -> [Session]
+    /// A YouTube video somebody pasted in, kept beside their own routines.
+    @discardableResult
+    func keepVideo(title: String, channel: String, videoID: String, activity: Activity, durationMin: Int, course: Course?, now: Date) -> Session
     /// They are somebody's own, which means they get to change their mind.
     @discardableResult
     func update(_ sessionID: String, title: String, description: String?, parts: [CustomRoutinePart], activity: Activity, durationMin: Int, intensity: Int, course: Course) -> Session?
@@ -297,6 +300,23 @@ final class SessionLog: SessionLogging {
         return kept.session
     }
 
+    @discardableResult
+    func keepVideo(title: String, channel: String, videoID: String, activity: Activity, durationMin: Int, course: Course?, now: Date) -> Session {
+        let kept = CustomSession(
+            title: title,
+            activity: activity,
+            durationMin: durationMin,
+            intensity: 2,
+            course: course,
+            createdAt: now,
+            videoID: videoID,
+            videoChannel: channel
+        )
+        context.insert(kept)
+        save()
+        return kept.session
+    }
+
     func kept() -> [Session] {
         fetch(FetchDescriptor<CustomSession>(sortBy: [SortDescriptor(\.createdAt)])).map(\.session)
     }
@@ -502,6 +522,21 @@ final class InMemorySessionLog: SessionLogging {
     func kept() -> [Session] { keptSessions }
 
     @discardableResult
+    func keepVideo(title: String, channel: String, videoID: String, activity: Activity, durationMin: Int, course: Course?, now: Date) -> Session {
+        let session = Session.ownVideo(
+            id: "own-\(keptSessions.count)",
+            title: title,
+            channel: channel,
+            videoID: videoID,
+            activity: activity,
+            durationMin: durationMin,
+            course: course
+        )
+        keptSessions.append(session)
+        return session
+    }
+
+    @discardableResult
     func update(
         _ sessionID: String,
         title: String,
@@ -530,7 +565,11 @@ final class InMemorySessionLog: SessionLogging {
     func rename(_ sessionID: String, to title: String) {
         renamed[sessionID] = title
         keptSessions = keptSessions.map { session in
-            session.id == sessionID
+            if session.id == sessionID, case .youtube(let videoID, let channel) = session.source {
+                return .ownVideo(id: session.id, title: title, channel: channel, videoID: videoID,
+                                 activity: session.activity, durationMin: session.durationMin, course: session.course)
+            }
+            return session.id == sessionID
                 ? .own(id: session.id, title: title,
                        description: session.subtitle.isEmpty ? nil : session.subtitle,
                        parts: session.customRoutineParts,
