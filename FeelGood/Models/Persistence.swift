@@ -40,6 +40,10 @@ final class UserProfile {
     var hiddenSessionIDsRaw: [String] = []
     /// Local hour for the optional daily invitation. `nil` means no reminder.
     var reminderHour: Int?
+    /// What a temporary "something changed" overwrote (JSON), and when to
+    /// ask about going back. Both `nil` when nothing is pending.
+    var adjustmentRevertData: Data?
+    var adjustmentRevertAt: Date?
     var createdAt: Date
     var updatedAt: Date
 
@@ -152,6 +156,47 @@ final class UserProfile {
         current.remove(sessionID)
         hiddenSessionIDsRaw = current.sorted()
         updatedAt = now
+    }
+
+    // MARK: Situation changes
+
+    /// Applies "something changed". A temporary change remembers what it
+    /// overwrote and when to ask about going back; a permanent one takes
+    /// over the fields it touched from any older pending revert.
+    func adjust(_ change: SituationChange, temporary: Bool, now: Date = Date(), calendar: Calendar = .current) {
+        let current = answers
+        let pending = AdjustmentRevert.decode(adjustmentRevertData)
+        if temporary {
+            let revert = AdjustmentRevert(before: current, change: change)
+            adjustmentRevertData = (pending?.merging(revert) ?? revert).encoded()
+            adjustmentRevertAt = calendar.date(byAdding: .day, value: SituationChange.temporaryDays, to: now)
+        } else if let remaining = pending?.dropping(fieldsTouchedBy: change) {
+            adjustmentRevertData = remaining.encoded()
+        } else {
+            keepAdjustment()
+        }
+        apply(change.applied(to: current), now: now)
+    }
+
+    /// True once a temporary change has run its course and the person has
+    /// not yet been asked whether to go back.
+    func isAdjustmentDue(now: Date = Date()) -> Bool {
+        guard adjustmentRevertData != nil, let due = adjustmentRevertAt else { return false }
+        return due <= now
+    }
+
+    /// Puts back what the temporary change overwrote.
+    func revertAdjustment(now: Date = Date()) {
+        if let revert = AdjustmentRevert.decode(adjustmentRevertData) {
+            apply(revert.restoring(into: answers), now: now)
+        }
+        keepAdjustment()
+    }
+
+    /// Makes the change permanent: nothing left to ask about.
+    func keepAdjustment() {
+        adjustmentRevertData = nil
+        adjustmentRevertAt = nil
     }
 
     /// The engine's view of this profile: the answers plus everything they

@@ -44,6 +44,11 @@ struct TodayView: View {
     /// Set by a widget tap. Consumed here and cleared, so the same link does
     /// not reopen the sheet every time this view is rebuilt.
     var requestedSessionID: Binding<String?> = .constant(nil)
+    /// For "something changed". Optional so previews and tests can build
+    /// Today without a stored profile.
+    var profile: UserProfile? = nil
+    var onProfileAdjusted: ((ProfileAnswers) -> Void)? = nil
+    @State private var isShowingSituationSheet = false
     @State private var isCheckingIn = false
     @State private var isShowingPaywall = false
     @State private var paywallContext: PaywallContext = .general
@@ -102,8 +107,24 @@ struct TodayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: FGSpace.l) {
                     header
+                    if let profile, profile.isAdjustmentDue() {
+                        AdjustmentCheckInCard(
+                            onRevert: {
+                                Analytics.capture("situation_change_reverted")
+                                profile.revertAdjustment()
+                                onProfileAdjusted?(profile.answers)
+                            },
+                            onKeep: {
+                                Analytics.capture("situation_change_kept")
+                                profile.keepAdjustment()
+                            }
+                        )
+                    }
                     menuHeading
                     menuItems
+                    if profile != nil {
+                        situationLink
+                    }
                 }
                 .fgReadableWidth()
                 .padding(FGSpace.page)
@@ -119,6 +140,17 @@ struct TodayView: View {
             ) { checkIn in
                 pendingCheckInUpdate = PendingCheckInUpdate(checkIn: checkIn)
                 isCheckingIn = false
+            }
+        }
+        .sheet(isPresented: $isShowingSituationSheet) {
+            SituationChangedSheet { change, temporary in
+                guard let profile else { return }
+                Analytics.capture("situation_change_saved", properties: [
+                    "kind": change.analyticsName,
+                    "temporary": temporary
+                ])
+                profile.adjust(change, temporary: temporary)
+                onProfileAdjusted?(profile.answers)
             }
         }
         .sheet(isPresented: $isShowingPaywall) {
@@ -343,6 +375,19 @@ struct TodayView: View {
             paywallContext = .secondSwap
             isShowingPaywall = true
         }
+    }
+
+    private var situationLink: some View {
+        Button {
+            Analytics.capture("situation_change_opened")
+            isShowingSituationSheet = true
+        } label: {
+            Text("Something changed?")
+                .font(FGFont.caption.weight(.medium))
+                .foregroundStyle(FGColor.inkMuted)
+                .frame(maxWidth: .infinity, minHeight: FGSize.minTouchTarget)
+        }
+        .buttonStyle(.plain)
     }
 
     private var menuItems: some View {
