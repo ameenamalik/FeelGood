@@ -14,8 +14,7 @@ struct AccessChoices: View {
     @Binding var sports: Set<SportPreference>
     @Binding var equipment: Set<Equipment>
     @Binding var places: Set<Place>
-    /// Where the person types what "Other" means. Optional so a caller that
-    /// has nowhere to keep the text still gets a working chip list.
+    /// Optional text for the Other movement or sport choice.
     var otherNote: Binding<String>? = nil
     var showsSymbols = false
     var accent: FGAccent = .ink
@@ -28,8 +27,20 @@ struct AccessChoices: View {
     var usesPills = false
     /// Whether to show the Where section (omitted from onboarding, shown in profile editing).
     var showsWhere = true
+    /// Onboarding splits these decisions; profile editing still shows both.
+    var showsMovement = true
+    var showsEquipment = true
+    var showsSectionTitles = true
 
     @Environment(\.dynamicTypeSize) private var typeSize
+    @State private var expandedSports: Bool?
+
+    /// Pickleball has a direct choice. The broad Sports chip only represents
+    /// the remaining sports, while `.racquet` stays the shared planning type.
+    private var otherSportsSelected: Bool {
+        expandedSports ?? (activities.contains(.racquet)
+            && (sports.isEmpty || sports.contains { $0 != .pickleball }))
+    }
 
     /// A gym is asked about as a *place*, and the kit inside it follows from
     /// that — see `Place.impliedEquipment`. Asking again under Equipment would
@@ -47,70 +58,72 @@ struct AccessChoices: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: FGSpace.l) {
-            group("Movement") {
-                ForEach(Self.movementChoices, id: \.self) { activity in
-                    choice(
-                        title: activity.label,
-                        symbol: activity.onboardingSymbol,
-                        aura: .sage,
-                        isSelected: activities.contains(activity)
-                    ) {
-                        toggleActivity(activity)
-                    }
-                }
-                // Pickleball is what a lot of people mean by "movement", so it
-                // sits beside the other choices instead of inside Sports.
-                choice(
-                    title: SportPreference.pickleball.label,
-                    symbol: SportPreference.pickleball.onboardingSymbol,
-                    aura: .sage,
-                    isSelected: sports.contains(.pickleball)
-                ) {
-                    togglePickleball()
-                }
-            }
-            if activities.contains(.racquet) {
-                group("Which sports? (optional)") {
-                    ForEach(Self.sportChoices, id: \.self) { sport in
+            if showsMovement {
+                group("Movement") {
+                    ForEach(Self.movementChoices, id: \.self) { activity in
                         choice(
-                            title: sport.label,
-                            symbol: sport.onboardingSymbol,
-                            aura: .apricot,
-                            isSelected: sports.contains(sport)
+                            title: activity.label,
+                            symbol: activity.onboardingSymbol,
+                            aura: .sage,
+                            isSelected: activity == .racquet ? otherSportsSelected : activities.contains(activity)
                         ) {
-                            toggle(sport, in: $sports)
+                            toggleActivity(activity)
                         }
                     }
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-            if let otherNote, showsOtherNote {
-                VStack(alignment: .leading, spacing: FGSpace.xs) {
-                    Text("What do you do?")
-                        .font(FGFont.label)
-                        .foregroundStyle(FGColor.ink)
-                    TextField("e.g. Kayaking, roller derby, rock climbing...", text: otherNote)
-                        .font(FGFont.body)
-                        .padding(.horizontal, FGSpace.m)
-                        .padding(.vertical, 12)
-                        .background(FGColor.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(FGColor.line, lineWidth: 1)
-                        )
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-            group("Equipment") {
-                ForEach(Self.equipmentChoices, id: \.self) { item in
                     choice(
-                        title: item.label ?? "No equipment",
-                        symbol: item.onboardingSymbol,
-                        aura: .lilac,
-                        isSelected: equipment.contains(item)
+                        title: SportPreference.pickleball.label,
+                        symbol: SportPreference.pickleball.onboardingSymbol,
+                        aura: .sage,
+                        isSelected: sports.contains(.pickleball)
                     ) {
-                        toggleEquipment(item)
+                        togglePickleball()
+                    }
+                }
+                if otherSportsSelected {
+                    group("Which sports? (optional)") {
+                        ForEach(SportPreference.allCases.filter { $0 != .pickleball }, id: \.self) { sport in
+                            choice(
+                                title: sport.label,
+                                symbol: sport.onboardingSymbol,
+                                aura: .apricot,
+                                isSelected: sports.contains(sport)
+                            ) {
+                                toggle(sport, in: $sports)
+                            }
+                        }
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+                if let otherNote, showsOtherNote {
+                    VStack(alignment: .leading, spacing: FGSpace.xs) {
+                        Text("What do you do?")
+                            .font(FGFont.label)
+                            .foregroundStyle(FGColor.ink)
+                        TextField("e.g. Kayaking, roller derby, rock climbing...", text: otherNote)
+                            .font(FGFont.body)
+                            .padding(.horizontal, FGSpace.m)
+                            .padding(.vertical, 12)
+                            .background(FGColor.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .strokeBorder(FGColor.line, lineWidth: 1)
+                            )
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
+            if showsEquipment {
+                group("Equipment") {
+                    ForEach(Self.equipmentChoices, id: \.self) { item in
+                        choice(
+                            title: item.label ?? "No equipment",
+                            symbol: item.onboardingSymbol,
+                            aura: .lilac,
+                            isSelected: equipment.contains(item)
+                        ) {
+                            toggleEquipment(item)
+                        }
                     }
                 }
             }
@@ -129,10 +142,13 @@ struct AccessChoices: View {
                 }
             }
         }
-        // Text typed for an "Other" that is no longer ticked should not linger.
         .onChange(of: showsOtherNote) { _, shows in
             if !shows { otherNote?.wrappedValue = "" }
         }
+    }
+
+    private var showsOtherNote: Bool {
+        activities.contains(.other) || sports.contains(.other)
     }
 
     /// One aura per *group*, so a picked tile also says which group it is in.
@@ -171,9 +187,11 @@ struct AccessChoices: View {
 
     private func group<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: FGSpace.s) {
-            Text(title)
-                .font(FGFont.body.weight(.medium))
-                .foregroundStyle(FGColor.ink)
+            if showsSectionTitles || title != "Movement" && title != "Equipment" {
+                Text(title)
+                    .font(FGFont.body.weight(.medium))
+                    .foregroundStyle(FGColor.ink)
+            }
             // Symbol groups are the tile grid; the rest are plain chips that
             // wrap on their own width rather than on a tile's.
             if usesPills {
@@ -206,36 +224,39 @@ struct AccessChoices: View {
 
     private func toggleActivity(_ activity: Activity) {
         withAnimation(FGMotion.gentle) {
-            if activities.contains(activity) {
+            if activity == .racquet {
+                let selecting = !otherSportsSelected
+                expandedSports = selecting
+                if selecting {
+                    activities.insert(.racquet)
+                } else {
+                    sports = sports.intersection([.pickleball])
+                    if sports.isEmpty { activities.remove(.racquet) }
+                }
+            } else if activities.contains(activity) {
                 activities.remove(activity)
-                if activity == .racquet { sports.removeAll() }
             } else {
                 activities.insert(activity)
             }
         }
     }
 
-    /// Pickleball is stored the way it always was, as a sport under the racquet
-    /// activity, so the engine and saved profiles need no migration.
     private func togglePickleball() {
         withAnimation(FGMotion.gentle) {
+            // Preserve the independent Sports choice before changing its
+            // shared underlying planning activity.
+            expandedSports = otherSportsSelected
             if sports.contains(.pickleball) {
                 sports.remove(.pickleball)
-                if sports.isEmpty { activities.remove(.racquet) }
+                if !otherSportsSelected && sports.isEmpty {
+                    activities.remove(.racquet)
+                }
             } else {
                 sports.insert(.pickleball)
                 activities.insert(.racquet)
             }
         }
     }
-
-    /// Pickleball has its own chip, so it is not repeated under Which sports.
-    private static let sportChoices = SportPreference.allCases.filter { $0 != .pickleball }
-
-    private var showsOtherNote: Bool {
-        activities.contains(.other) || sports.contains(.other)
-    }
-
 
     /// "No equipment" is an answer, not equipment that can coexist with a
     /// mat or weights. Choosing either side clears the contradictory side.

@@ -2,7 +2,7 @@
 //  ProductIntroView.swift
 //  FeelGood
 //
-//  Two quiet promises before onboarding: what FeelGood is and what it asks.
+//  One welcome screen before onboarding: what FeelGood asks and why.
 //  `FirstRunFlow` below sequences intro → the onboarding quiz → the person's
 //  first menu. The optional account prompt comes only after the first completed
 //  session, when there is real progress worth saving; see PRD §7.0/§7.1.
@@ -94,9 +94,10 @@ struct FirstRunFlow: View {
                     hasSeenIntro = true
                 }
             } else if let settingUp = settingUpModel {
-                SettingUpMenuView {
-                    // Highest-intent moment: they just told us what they want.
-                    // Skip it for anyone already Pro (restored account).
+                SettingUpMenuView(answers: settingUp.answers, onEdit: {
+                    Analytics.capture("onboarding_summary_edited", properties: ["flow_version": 2])
+                    settingUpModel = nil
+                }) {
                     if PurchasesManager.shared.isProUnlocked {
                         settingUpModel = nil
                         onFinish(settingUp)
@@ -120,253 +121,108 @@ struct FirstRunFlow: View {
 }
 
 struct ProductIntroView: View {
-    private enum Page: Int, CaseIterable {
-        case promise
-        case checkIn
-
-        var buttonTitle: String {
-            switch self {
-            case .promise: "Next"
-            case .checkIn: "Start"
-            }
-        }
-    }
-
     let onFinish: () -> Void
 
-    @State private var page = Page.promise
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         ZStack {
             FGColor.bg.ignoresSafeArea()
-            FGBrandWash(reach: 0.82).ignoresSafeArea()
 
             GeometryReader { geometry in
                 ScrollView {
-                    VStack(spacing: 0) {
-                        topNavigation
+                    WelcomeScreenLayout(availableHeight: geometry.size.height) {
+                        VStack(spacing: FGSpace.m) {
+                            welcomeArtwork
 
-                        Spacer(minLength: typeSize.isAccessibilitySize ? FGSpace.m : FGSpace.l)
+                            VStack(spacing: FGSpace.s) {
+                                Text("FeelGood")
+                                    .font(FGFont.display)
+                                    .foregroundStyle(FGColor.ink)
+                                    .accessibilityAddTraits(.isHeader)
 
-                        pageContent
-                            .id(page)
-                            .transition(pageTransition)
-                            .contentShape(Rectangle())
-                            .simultaneousGesture(
-                                DragGesture(minimumDistance: 30)
-                                    .onEnded { value in
-                                        guard abs(value.translation.width) > abs(value.translation.height) * 1.5 else { return }
-                                        if value.translation.width < -50, page == .promise {
-                                            advance()
-                                        } else if value.translation.width > 50 {
-                                            goBack()
-                                        }
-                                    }
-                            )
-
-                        Spacer(minLength: FGSpace.l)
-
-                        carouselFooter
-                            .padding(.bottom, typeSize.isAccessibilitySize ? FGSpace.m : FGSpace.xxl)
-                            .onChange(of: page, initial: true) { _, page in
-                                Analytics.capture("product_intro_page_viewed", properties: [
-                                    "page": page.rawValue + 1,
-                                ])
+                                Text("A menu for the day you’re having.")
+                                    .font(FGFont.body)
+                                    .foregroundStyle(FGColor.inkMuted)
                             }
+                            .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .multilineTextAlignment(.center)
+
+                        VStack(spacing: FGSpace.m) {
+                            Text("Before we start, tell us a little about yourself.\nWe’ll suggest movement that fits you.")
+                                .font(FGFont.reason)
+                                .foregroundStyle(FGColor.inkMuted)
+                                .multilineTextAlignment(.center)
+                                .lineSpacing(3)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.bottom, FGSpace.s)
+
+                            FGPrimaryButton(title: "Let’s begin", action: onFinish)
+
+                            Text("\(OnboardingModel.Card.allCases.count) quick steps · Change answers anytime")
+                                .font(FGFont.caption)
+                                .foregroundStyle(FGColor.inkMuted)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
-                    .frame(
-                        width: max(0, geometry.size.width - FGSpace.page * 2),
-                        alignment: .center
-                    )
-                    .frame(
-                        minHeight: max(0, geometry.size.height - 1),
-                        alignment: .center
-                    )
+                    .frame(maxWidth: 360)
+                    .frame(maxWidth: .infinity)
                     .padding(.horizontal, FGSpace.page)
-                    .padding(.top, FGSpace.xs)
-                    .padding(.bottom, FGSpace.l)
                 }
                 .scrollBounceBehavior(.basedOnSize)
             }
+            .fgReadableWidth()
+        }
+        .onAppear {
+            Analytics.capture("product_intro_page_viewed", properties: [
+                "page": 1,
+                "page_count": 1,
+                "flow_version": 2,
+            ])
         }
     }
 
-    private var topNavigation: some View {
-        HStack {
-            if page == .promise {
-                Color.clear
-                    .frame(width: 52, height: FGSize.minTouchTarget)
-            } else {
-                Button(action: goBack) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(FGColor.inkOnAccent)
-                        .frame(width: FGSize.minTouchTarget, height: FGSize.minTouchTarget)
-                        .background(Circle().fill(FGAura.lilac.core))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Back")
-                .frame(width: 52, alignment: .leading)
-            }
-
-            Spacer()
-
-            topProgress
-                .frame(width: 112)
-
-            Spacer()
-
-            if page == .checkIn {
-                Color.clear
-                    .frame(width: 52, height: FGSize.minTouchTarget)
-            } else {
-                Button("Skip", action: onFinish)
-                    .font(FGFont.reason.weight(.semibold))
-                    .foregroundStyle(FGColor.ink)
-                    .frame(minWidth: 52, minHeight: FGSize.minTouchTarget)
-                    .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private var topProgress: some View {
-        HStack(spacing: FGSpace.s) {
-            ForEach(Page.allCases, id: \.self) { item in
-                Capsule()
-                    .fill(item.rawValue <= page.rawValue ? FGColor.ink : FGColor.line)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 4)
-            }
-        }
-        .accessibilityElement()
-        .accessibilityLabel("Introduction \(page.rawValue + 1) of \(Page.allCases.count)")
-    }
-
-    @ViewBuilder
-    private var pageContent: some View {
-        switch page {
-        case .promise:
-            promisePage
-        case .checkIn:
-            checkInPage
-        }
-    }
-
-    private var promisePage: some View {
-        VStack(spacing: FGSpace.m) {
-            promiseHero
-
-            introCopy(
-                title: "FeelGood",
-                detail: "A menu for the day you’re having."
-            )
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var checkInPage: some View {
-        VStack(spacing: FGSpace.l) {
-            checkInHero
-
-            introCopy(
-                title: "Tell us what today looks like.",
-                detail: "Your energy, your time, your space. That’s enough."
-            )
-
-            WrapRow(spacing: FGSpace.s, lineSpacing: FGSpace.s, isCentered: true) {
-                signalChip("Low energy", aura: .butter)
-                signalChip("10 min", aura: .apricot)
-                signalChip("Home", aura: .sage)
-            }
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private func introCopy(title: String, detail: String) -> some View {
-        VStack(spacing: FGSpace.s) {
-            Text(title)
-                .font(FGFont.display)
-                .tracking(-0.7)
-                .foregroundStyle(FGColor.ink)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.isHeader)
-
-            Text(detail)
-                .font(FGFont.body)
-                .foregroundStyle(FGColor.inkMuted)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: 330)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var promiseHero: some View {
-        appIconMark
-            .frame(
-                maxWidth: .infinity,
-                minHeight: typeSize.isAccessibilitySize ? 104 : 112
-            )
-            .accessibilityHidden(true)
-    }
-
-    private var checkInHero: some View {
+    /// One compact composition: the logo leads, with familiar characters around it.
+    /// Scale the entire group together so the artwork never overlaps the copy.
+    private var welcomeArtwork: some View {
         GeometryReader { geometry in
-            // Scale the artwork and its offsets together within the available
-            // width, leaving breathing room at both sides on smaller phones.
-            let scale = max(0, min(1, (geometry.size.width - 16) / 296, geometry.size.height / 220))
+            let scale = min(1, geometry.size.width / 300, geometry.size.height / 220)
+
             ZStack {
-                IntroFruitBackdrop()
-                    .fill(
-                        LinearGradient(
-                            colors: [FGAura.butter.core, FGAura.apricot.mid, FGAura.sage.core],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 296 * scale, height: 220 * scale)
+                appIconMark
+                    .modifier(WelcomeFloat(rise: 4, tilt: 0.8, duration: 3.2))
 
-                Image("IntentStrengthPlum")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 84 * scale, height: 84 * scale)
-                    .offset(x: -106 * scale, y: -62 * scale)
-
-                Image("IntentCalmBlueberryMascot")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 80 * scale, height: 80 * scale)
-                    .offset(x: 108 * scale, y: -66 * scale)
-
-                Image("IntentShowingUpBanana")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 114 * scale, height: 114 * scale)
-                    .offset(x: -82 * scale, y: 46 * scale)
-
-                Image("IntentEnergyClementine")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 118 * scale, height: 118 * scale)
-                    .offset(x: 18 * scale, y: -34 * scale)
-
-                Image("IntentMobilityPear")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 108 * scale, height: 108 * scale)
-                    .offset(x: 86 * scale, y: 56 * scale)
+                mascot("IntentEnergyClementine", size: 60)
+                    .modifier(WelcomeFloat(rise: 5, tilt: -2, duration: 2.6))
+                    .offset(y: -84)
+                mascot("IntentStrengthPlum", size: 66)
+                    .modifier(WelcomeFloat(rise: -6, tilt: 2, duration: 3.0))
+                    .offset(x: -108, y: -42)
+                mascot("IntentCalmBlueberryMascot", size: 66)
+                    .modifier(WelcomeFloat(rise: 5, tilt: 1.5, duration: 3.5))
+                    .offset(x: 108, y: -42)
+                mascot("IntentShowingUpBanana", size: 80)
+                    .modifier(WelcomeFloat(rise: 6, tilt: -2, duration: 3.3))
+                    .offset(x: -86, y: 65)
+                mascot("IntentMobilityPear", size: 78)
+                    .modifier(WelcomeFloat(rise: -5, tilt: 2, duration: 2.8))
+                    .offset(x: 86, y: 65)
             }
+            .frame(width: 300, height: 220)
+            .scaleEffect(scale)
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
-        .frame(height: heroHeight)
+        .frame(height: typeSize.isAccessibilitySize ? 160 : 220)
         .accessibilityHidden(true)
     }
 
-    private var heroHeight: CGFloat {
-        typeSize.isAccessibilitySize ? 228 : 250
+    private func mascot(_ name: String, size: CGFloat) -> some View {
+        Image(name)
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
     }
 
     @ViewBuilder
@@ -406,85 +262,70 @@ struct ProductIntroView: View {
         return files.reversed().lazy.compactMap(UIImage.init(named:)).first
     }
 
-    private func signalChip(_ title: String, aura: FGAura) -> some View {
-        Text(title)
-            .font(FGFont.label)
-            .foregroundStyle(FGColor.inkOnAccent)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .padding(.horizontal, 12)
-            .frame(minHeight: 36)
-        .background(
-            Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [aura.core, aura.mid, aura.edge],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+}
+
+/// Keep the brand slightly above center and the setup copy attached to the button.
+/// On short screens or at larger text sizes, keep minimum gaps and allow scrolling.
+private struct WelcomeScreenLayout: Layout {
+    let availableHeight: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 360
+        let itemProposal = ProposedViewSize(width: width, height: nil)
+        let brand = subviews[0].sizeThatFits(itemProposal)
+        let actions = subviews[1].sizeThatFits(itemProposal)
+        let minimumHeight = brand.height + actions.height + FGSpace.xl + FGSpace.l * 2
+        return CGSize(width: width, height: max(availableHeight, minimumHeight))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let itemProposal = ProposedViewSize(width: bounds.width, height: nil)
+        let brand = subviews[0].sizeThatFits(itemProposal)
+        let actions = subviews[1].sizeThatFits(itemProposal)
+        let actionsTop = bounds.maxY - FGSpace.l - actions.height
+        let brandCenter = max(
+            bounds.minY + FGSpace.l + brand.height / 2,
+            min(bounds.minY + bounds.height * 0.44, actionsTop - FGSpace.xl - brand.height / 2)
+        )
+
+        subviews[0].place(
+            at: CGPoint(x: bounds.midX, y: brandCenter),
+            anchor: .center,
+            proposal: ProposedViewSize(width: bounds.width, height: brand.height)
+        )
+        subviews[1].place(
+            at: CGPoint(x: bounds.midX, y: bounds.maxY - FGSpace.l),
+            anchor: .bottom,
+            proposal: ProposedViewSize(width: bounds.width, height: actions.height)
         )
     }
+}
 
-    private var carouselFooter: some View {
-        FGPrimaryButton(title: page.buttonTitle, action: advance)
-            .frame(maxWidth: 280)
-    }
+/// A slow bob and slight sway, confined to decorative welcome artwork.
+/// PhaseAnimator owns the loop and cancels it when the view leaves the screen.
+private struct WelcomeFloat: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
 
-    private var pageTransition: AnyTransition {
-        reduceMotion
-            ? .opacity
-            : .opacity.combined(with: .offset(x: 22))
-    }
+    let rise: CGFloat
+    let tilt: Double
+    let duration: Double
 
-    private func advance() {
-        guard let next = Page(rawValue: page.rawValue + 1) else {
-            onFinish()
-            return
+    func body(content: Content) -> some View {
+        if reduceMotion || scenePhase != .active {
+            content
+        } else {
+            content.phaseAnimator([-1.0, 1.0]) { view, phase in
+                view
+                    .offset(y: rise * phase)
+                    .rotationEffect(.degrees(tilt * phase))
+            } animation: { _ in
+                .easeInOut(duration: duration)
+            }
         }
-        withAnimation(FGMotion.settle) { page = next }
-    }
-
-    private func goBack() {
-        guard let previous = Page(rawValue: page.rawValue - 1) else { return }
-        withAnimation(FGMotion.settle) { page = previous }
     }
 }
 
 #Preview("Product intro") {
     ProductIntroView {}
-}
-
-nonisolated private struct IntroFruitBackdrop: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX + rect.width * 0.06, y: rect.minY + rect.height * 0.44))
-        path.addCurve(
-            to: CGPoint(x: rect.minX + rect.width * 0.33, y: rect.minY + rect.height * 0.07),
-            control1: CGPoint(x: rect.minX + rect.width * 0.07, y: rect.minY + rect.height * 0.20),
-            control2: CGPoint(x: rect.minX + rect.width * 0.17, y: rect.minY + rect.height * 0.05)
-        )
-        path.addCurve(
-            to: CGPoint(x: rect.minX + rect.width * 0.88, y: rect.minY + rect.height * 0.25),
-            control1: CGPoint(x: rect.minX + rect.width * 0.53, y: rect.minY - rect.height * 0.02),
-            control2: CGPoint(x: rect.minX + rect.width * 0.79, y: rect.minY + rect.height * 0.05)
-        )
-        path.addCurve(
-            to: CGPoint(x: rect.minX + rect.width * 0.88, y: rect.minY + rect.height * 0.78),
-            control1: CGPoint(x: rect.maxX + rect.width * 0.02, y: rect.minY + rect.height * 0.43),
-            control2: CGPoint(x: rect.maxX - rect.width * 0.01, y: rect.minY + rect.height * 0.68)
-        )
-        path.addCurve(
-            to: CGPoint(x: rect.minX + rect.width * 0.27, y: rect.minY + rect.height * 0.94),
-            control1: CGPoint(x: rect.minX + rect.width * 0.69, y: rect.maxY + rect.height * 0.03),
-            control2: CGPoint(x: rect.minX + rect.width * 0.43, y: rect.maxY + rect.height * 0.01)
-        )
-        path.addCurve(
-            to: CGPoint(x: rect.minX + rect.width * 0.06, y: rect.minY + rect.height * 0.44),
-            control1: CGPoint(x: rect.minX + rect.width * 0.10, y: rect.minY + rect.height * 0.88),
-            control2: CGPoint(x: rect.minX - rect.width * 0.02, y: rect.minY + rect.height * 0.65)
-        )
-        path.closeSubpath()
-        return path
-    }
 }

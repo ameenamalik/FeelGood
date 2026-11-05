@@ -115,6 +115,7 @@ struct RootView: View {
     @State private var pendingExistingAccount: AuthUser?
     @State private var accountReloadID = UUID()
     @State private var accountSyncError: String?
+    @State private var onboardingSaveError = false
     @State private var isSyncingAccount = false
     @State private var profileRecoveryError: String?
     @State private var profileRecoveryAttempt = 0
@@ -236,6 +237,11 @@ struct RootView: View {
         } message: {
             Text(accountSyncError ?? "Your progress is still safe on this device.")
         }
+        .alert("Couldn’t save your setup", isPresented: $onboardingSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Please try again to finish setting up.")
+        }
         .onOpenURL { url in
             _ = GIDSignIn.sharedInstance.handle(url)
         }
@@ -345,9 +351,16 @@ struct RootView: View {
         } else {
             context.insert(onboarding.makeRecord(now: now))
         }
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            onboardingSaveError = true
+            return
+        }
 
         InstallationFirstRun.markCompleted()
+        onboarding.clearDraft()
+        Analytics.capture("onboarding_completed", properties: ["flow_version": 2])
         requiresInstallationOnboarding = false
 
         guard let user = authService.currentUser, let content else { return }

@@ -9,7 +9,7 @@
 
 import Foundation
 
-nonisolated struct ProfileAnswers: Hashable, Sendable {
+nonisolated struct ProfileAnswers: Hashable, Codable, Sendable {
     var guidancePreference: GuidancePreference = .knowsWhatTheyEnjoy
     var activities: Set<Activity> = []
     /// Optional detail when the broad Sports activity is selected.
@@ -80,5 +80,34 @@ nonisolated struct ProfileAnswers: Hashable, Sendable {
             intents: intents,
             hiddenSessionIDs: hiddenSessionIDs
         )
+    }
+}
+
+// Missing fields in an older local draft keep their original defaults. Keep this
+// initializer in an extension so profile editing retains the memberwise init.
+nonisolated extension ProfileAnswers {
+    private enum CodingKeys: String, CodingKey {
+        case guidancePreference, activities, sports, equipment, places, cadence, moments
+        case realisticMinutes, bestTimeOfDay, intents, workArounds, otherWorkAroundNote
+        case otherMovementNote, hiddenSessionIDs
+    }
+
+    init(from decoder: Decoder) throws {
+        self.init()
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        guidancePreference = try values.decodeIfPresent(GuidancePreference.self, forKey: .guidancePreference) ?? guidancePreference
+        activities = try values.decodeIfPresent(Set<Activity>.self, forKey: .activities) ?? activities
+        sports = try values.decodeIfPresent(Set<SportPreference>.self, forKey: .sports) ?? sports
+        equipment = try values.decodeIfPresent(Set<Equipment>.self, forKey: .equipment) ?? equipment
+        places = try values.decodeIfPresent(Set<Place>.self, forKey: .places) ?? places
+        cadence = try values.decodeIfPresent(Cadence.self, forKey: .cadence) ?? cadence
+        moments = try values.decodeIfPresent(MovementMoments.self, forKey: .moments) ?? moments
+        realisticMinutes = try values.decodeIfPresent(Int.self, forKey: .realisticMinutes) ?? realisticMinutes
+        bestTimeOfDay = try values.decodeIfPresent(TimeOfDay.self, forKey: .bestTimeOfDay) ?? bestTimeOfDay
+        intents = try values.decodeIfPresent(Set<Intent>.self, forKey: .intents) ?? intents
+        workArounds = try values.decodeIfPresent(Set<WorkAround>.self, forKey: .workArounds) ?? workArounds
+        otherWorkAroundNote = try values.decodeIfPresent(String.self, forKey: .otherWorkAroundNote) ?? otherWorkAroundNote
+        otherMovementNote = try values.decodeIfPresent(String.self, forKey: .otherMovementNote) ?? otherMovementNote
+        hiddenSessionIDs = try values.decodeIfPresent(Set<String>.self, forKey: .hiddenSessionIDs) ?? hiddenSessionIDs
     }
 }

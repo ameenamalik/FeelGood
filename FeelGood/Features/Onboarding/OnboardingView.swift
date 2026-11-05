@@ -10,10 +10,15 @@ import SwiftUI
 import PostHog
 
 struct OnboardingView: View {
-    @State private var model = OnboardingModel()
+    @State private var model: OnboardingModel
     @Environment(\.dynamicTypeSize) private var typeSize
     /// Handed the finished profile; persistence and routing happen upstream.
     let onFinish: (OnboardingModel) -> Void
+
+    init(draftURL: URL? = OnboardingModel.defaultDraftURL, onFinish: @escaping (OnboardingModel) -> Void) {
+        _model = State(initialValue: OnboardingModel(draftURL: draftURL))
+        self.onFinish = onFinish
+    }
 
     var body: some View {
         ZStack {
@@ -25,7 +30,7 @@ struct OnboardingView: View {
             FGBrandWash(reach: 0.5)
                 .ignoresSafeArea()
 
-            GeometryReader { geometry in
+            GeometryReader { _ in
                 ScrollViewReader { scrollProxy in
                     ScrollView {
                         VStack(alignment: .leading, spacing: FGSpace.l) {
@@ -33,6 +38,10 @@ struct OnboardingView: View {
                                 .id("onboarding-top")
 
                             VStack(alignment: .leading, spacing: FGSpace.s) {
+                                Text("Getting to know you · \(model.card.rawValue + 1) of \(OnboardingModel.Card.allCases.count)")
+                                    .font(FGFont.caption)
+                                    .foregroundStyle(FGColor.inkMuted)
+
                                 Text(model.card.title)
                                     .font(onboardingTitleFont)
                                     .foregroundStyle(FGColor.ink)
@@ -51,10 +60,7 @@ struct OnboardingView: View {
                             answers
                                 .postHogMask()
                         }
-                        .frame(
-                            minHeight: max(0, geometry.size.height - (FGSpace.page * 2)),
-                            alignment: .top
-                        )
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(FGSpace.page)
                         .fgAnimation(FGMotion.gentle, value: model.card)
                     }
@@ -67,20 +73,34 @@ struct OnboardingView: View {
                             .padding(.horizontal, FGSpace.page)
                             .padding(.top, FGSpace.s)
                             .padding(.bottom, FGSpace.s)
+                            .background(FGColor.bg)
                     }
                     .onChange(of: model.card) { _, _ in
                         scrollProxy.scrollTo("onboarding-top", anchor: .top)
+                        captureStepViewed()
                     }
                 }
             }
             .fgReadableWidth()
         }
+        .onAppear { captureStepViewed() }
+    }
+
+    // Only step metadata is recorded; answers and free text stay out of events.
+    private func captureStepViewed() {
+        Analytics.capture("onboarding_step_viewed", properties: [
+            "step": model.card.rawValue + 1,
+            "step_name": String(describing: model.card),
+            "step_count": OnboardingModel.Card.allCases.count,
+            "step_number": model.card.rawValue + 1,
+            "flow_version": 2,
+        ])
     }
 
     // MARK: Progress
 
     private var onboardingTitleFont: Font {
-        .system(.largeTitle, design: .rounded).weight(.semibold)
+        .system(.largeTitle, design: .rounded).weight(.medium)
     }
 
     private var progressBar: some View {
@@ -118,7 +138,7 @@ struct OnboardingView: View {
                 }
             }
 
-        case .access:
+        case .movement, .equipment:
             AccessChoices(
                 activities: $model.activities,
                 sports: $model.sports,
@@ -128,8 +148,12 @@ struct OnboardingView: View {
                 showsSymbols: false,
                 usesAura: false,
                 usesPills: true,
-                showsWhere: false
+                showsWhere: false,
+                showsMovement: model.card == .movement,
+                showsEquipment: model.card == .equipment,
+                showsSectionTitles: false
             )
+            .id(model.card)
 
         case .intent:
             FlowRow(
@@ -207,10 +231,10 @@ struct OnboardingView: View {
             title: intent.label,
             detail: intentDetail(intent),
             artworkName: intent.artworkName,
-            artworkSize: intent == .joy ? 104 : 92,
+            artworkSize: 68,
             artworkAlignment: .top,
             contentPlacement: .bottomLeading,
-            preferredHeight: 156,
+            preferredHeight: 144,
             showsAuraAtRest: false,
             aura: intent.aura,
             isSelected: model.intents.contains(intent)
@@ -250,6 +274,24 @@ struct OnboardingView: View {
 
     private var footer: some View {
         VStack(spacing: FGSpace.s) {
+            if let response = model.selectionHint ?? model.acknowledgement {
+                HStack(spacing: 12) {
+                    Image("IntentEnergyClementine")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 40, height: 40)
+                        .accessibilityHidden(true)
+
+                    Text(response)
+                        .font(FGFont.reason)
+                        .foregroundStyle(FGColor.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .combine)
+                .postHogMask()
+            }
+
             HStack(spacing: FGSpace.s) {
                 if !model.isFirstCard {
                     Button {
@@ -270,11 +312,17 @@ struct OnboardingView: View {
                 }
 
                 FGPrimaryButton(
-                    title: model.isLastCard ? "Show me today" : "Next",
+                    title: model.isLastCard ? "Build my first menu" : "Continue",
                     isEnabled: model.canAdvance
                 ) {
+                    Analytics.capture("onboarding_step_completed", properties: [
+                        "step": model.card.rawValue + 1,
+                        "step_name": String(describing: model.card),
+                        "step_count": OnboardingModel.Card.allCases.count,
+                        "step_number": model.card.rawValue + 1,
+                        "flow_version": 2,
+                    ])
                     if model.isLastCard {
-                        Analytics.capture("onboarding_completed")
                         onFinish(model)
                     } else {
                         model.advance()
@@ -284,17 +332,11 @@ struct OnboardingView: View {
 
         }
         .frame(maxWidth: .infinity)
-        .onChange(of: model.card, initial: true) { _, card in
-            Analytics.capture("onboarding_step_viewed", properties: [
-                "step": card.rawValue + 1,
-                "step_count": OnboardingModel.Card.allCases.count,
-            ])
-        }
     }
 }
 
 #Preview {
-    OnboardingView { _ in }
+    OnboardingView(draftURL: nil) { _ in }
 }
 
 private struct GuidancePreferenceCard: View {
@@ -326,7 +368,7 @@ private struct GuidancePreferenceCard: View {
             HStack(spacing: FGSpace.m) {
                 VStack(alignment: .leading, spacing: 5) {
                     Text(preference.label)
-                        .font(.system(.title3, design: .rounded).weight(.bold))
+                        .font(.system(.title3, design: .rounded).weight(.medium))
                         .foregroundStyle(FGColor.inkOnAccent)
                         .multilineTextAlignment(.leading)
 
@@ -367,7 +409,7 @@ private struct GuidancePreferenceCard: View {
                 RoundedRectangle(cornerRadius: 26, style: .continuous)
                     .strokeBorder(
                         isSelected ? selectedBorder : FGColor.inkOnAccent.opacity(0.24),
-                        lineWidth: isSelected ? 5 : 1.5
+                        lineWidth: isSelected ? 2 : 1
                     )
             }
         }

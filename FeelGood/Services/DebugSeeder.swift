@@ -61,6 +61,7 @@ struct DebugSeeder {
         case .freshStart:
             wipe(includingProfile: true)
             FirstRunFlow.resetWelcomeFlow()
+            OnboardingModel.removeSavedDraft(at: OnboardingModel.defaultDraftURL)
 
         case .returningAfterGap:
             wipe(includingProfile: false)

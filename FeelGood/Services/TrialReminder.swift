@@ -70,7 +70,7 @@ final class TrialReminderScheduler {
 
     /// True when iOS would let a reminder through, or has never been asked.
     func authorizationIsUndecided() async -> Bool {
-        await center.notificationSettings().authorizationStatus == .notDetermined
+        await authorization().isUndecided
     }
 
     /// Makes the pending reminder match the subscription. Safe to call as
@@ -87,8 +87,8 @@ final class TrialReminderScheduler {
             return
         }
 
-        let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+        let permission = await authorization()
+        guard permission.allowsReminder else {
             return
         }
 
@@ -109,7 +109,23 @@ final class TrialReminderScheduler {
             trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         )
         center.removePendingNotificationRequests(withIdentifiers: [TrialReminderPlan.identifier])
-        try? await center.add(request)
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            center.add(request) { _ in continuation.resume() }
+        }
+    }
+
+    /// Only sendable flags leave the callback; older iOS SDKs do not mark
+    /// UNNotificationSettings as safe to transfer across concurrency contexts.
+    private func authorization() async -> (isUndecided: Bool, allowsReminder: Bool) {
+        await withCheckedContinuation { continuation in
+            center.getNotificationSettings { settings in
+                let status = settings.authorizationStatus
+                continuation.resume(returning: (
+                    isUndecided: status == .notDetermined,
+                    allowsReminder: status == .authorized || status == .provisional
+                ))
+            }
+        }
     }
 
     func cancel() {

@@ -2,7 +2,7 @@
 //  OnboardingModel.swift
 //  FeelGood
 //
-//  Four short cards, framed around what kind of support feels useful and what's available rather than
+//  Five short cards, framed around what kind of support feels useful and what's available rather than
 //  around goals-as-metrics. Still no paywall here — Pro stays out of onboarding
 //  entirely, see PRD §10.1 — and these cards themselves ask nothing about
 //  an account; that optional ask waits until the first completed session. See
@@ -16,30 +16,94 @@ import Observation
 @Observable
 final class OnboardingModel {
 
-    enum Card: Int, CaseIterable {
-        case guidance, access, intent, workArounds
+    enum Card: Int, CaseIterable, Codable {
+        case guidance, movement, equipment, intent, workArounds
 
         var title: String {
             switch self {
-            case .guidance: "Which sounds most like you?"
-            case .access: "What do you have access to?"
-            case .intent: "What are you moving toward?"
-            case .workArounds: "Anything to work around?"
+            case .guidance: "How can we support you?"
+            case .movement: "What do you enjoy?"
+            case .equipment: "What equipment do you have?"
+            case .intent: "What would you like more of?"
+            case .workArounds: "What should we be mindful of?"
             }
         }
 
         var detail: String? {
             switch self {
-            case .guidance: "Tap what sounds right. You can change it later."
-            case .access: nil
-            case .intent: "Pick one or more."
-            case .workArounds: nil
+            case .guidance: "This helps us offer the right amount of guidance. Choose one."
+            case .movement: "We’ll shape your options around these. Choose anything you enjoy or want to try."
+            case .equipment: "We’ll suggest movement you can do with what you have. Choose any, or No equipment."
+            case .intent: nil
+            case .workArounds: "We’ll keep these needs in mind. Choose any that apply, or continue if none do."
             }
         }
 
     }
 
-    private(set) var card: Card = .guidance
+    private(set) var card: Card = .guidance {
+        didSet { saveDraft() }
+    }
+
+    @ObservationIgnored private let draftURL: URL?
+
+    /// Tests and profile previews stay in memory unless they opt into a draft URL.
+    init(draftURL: URL? = nil) {
+        self.draftURL = draftURL
+        if let draftURL,
+           let data = try? Data(contentsOf: draftURL),
+           let draft = try? JSONDecoder().decode(Draft.self, from: data),
+           draft.version == 1 {
+            answers = draft.answers
+            selectedGuidancePreference = draft.selectedGuidancePreference
+            card = draft.card
+        }
+    }
+
+    static var defaultDraftURL: URL {
+        URL.applicationSupportDirectory
+            .appendingPathComponent("FeelGood", isDirectory: true)
+            .appendingPathComponent("onboarding-draft.json")
+    }
+
+    private struct Draft: Codable {
+        var version = 1
+        let card: Card
+        let selectedGuidancePreference: GuidancePreference?
+        let answers: ProfileAnswers
+    }
+
+    private func saveDraft() {
+        guard let draftURL,
+              let data = try? JSONEncoder().encode(Draft(
+                card: card,
+                selectedGuidancePreference: selectedGuidancePreference,
+                answers: answers
+              )) else { return }
+        let directory = draftURL.deletingLastPathComponent()
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            // Drafts contain the same private preferences as the finished
+            // profile. Keep them on this device and protected while locked.
+            try data.write(to: draftURL, options: [.atomic, .completeFileProtection])
+            var protectedURL = draftURL
+            var values = URLResourceValues()
+            values.isExcludedFromBackup = true
+            try protectedURL.setResourceValues(values)
+        } catch {
+            // A failed draft write must never block answering the next question.
+            // Never log the draft or its free-text contents.
+        }
+    }
+
+    func clearDraft() {
+        guard let draftURL else { return }
+        Self.removeSavedDraft(at: draftURL)
+    }
+
+    static func removeSavedDraft(at url: URL) {
+        try? FileManager.default.removeItem(at: url)
+    }
 
     /// `nil` until tapped so the first question never looks pre-answered.
     var selectedGuidancePreference: GuidancePreference? {
@@ -47,12 +111,14 @@ final class OnboardingModel {
             if let selectedGuidancePreference {
                 answers.guidancePreference = selectedGuidancePreference
             }
+            saveDraft()
         }
     }
 
-    /// The answers themselves live in one value so the same six questions can
-    /// be asked again later from the profile screen. See `ProfileAnswers`.
-    var answers = ProfileAnswers()
+    /// Every answer change is saved immediately, including optional notes.
+    var answers = ProfileAnswers() {
+        didSet { saveDraft() }
+    }
 
     var activities: Set<Activity> {
         get { answers.activities }
@@ -98,22 +164,63 @@ final class OnboardingModel {
     var isFirstCard: Bool { card == .guidance }
     var isLastCard: Bool { card == .workArounds }
 
-    /// Slide one has movement and equipment inputs. Each needs an explicit answer.
-    /// Where defaults to home and outdoors, so it is no longer asked here.
-    var accessSectionsAreComplete: Bool {
-        !activities.isEmpty && !equipment.isEmpty
-    }
-
     var canAdvance: Bool {
         switch card {
         case .guidance:
             selectedGuidancePreference != nil
-        case .access:
-            accessSectionsAreComplete
+        case .movement:
+            !activities.isEmpty
+        case .equipment:
+            !equipment.isEmpty
         case .intent:
             !intents.isEmpty
         case .workArounds:
             true
+        }
+    }
+
+    /// Makes disabled navigation explainable, including requirements below the fold.
+    var selectionHint: String? {
+        switch card {
+        case .guidance:
+            selectedGuidancePreference == nil ? "Choose one answer to continue." : nil
+        case .movement:
+            activities.isEmpty ? "Choose at least one movement to continue." : nil
+        case .equipment:
+            equipment.isEmpty ? "Choose equipment or No equipment to continue." : nil
+        case .intent:
+            intents.isEmpty ? "Choose at least one answer to continue." : nil
+        case .workArounds:
+            nil
+        }
+    }
+
+    /// Short replies share the footer's existing instruction space.
+    var acknowledgement: String? {
+        switch card {
+        case .guidance:
+            switch selectedGuidancePreference {
+            case .gettingStarted: "We’ll take it one step at a time."
+            case .knowsWhatTheyEnjoy: "We’ll help you find what fits."
+            case .hasOwnRoutine: "We’ll build around your routine."
+            case nil: nil
+            }
+        case .movement:
+            activities.isEmpty ? nil : "Got it—more of what you enjoy."
+        case .equipment:
+            if equipment.isEmpty {
+                nil
+            } else if equipment == [.none] {
+                "You can start with just yourself."
+            } else {
+                "We’ll work with what you have."
+            }
+        case .intent:
+            intents.isEmpty ? nil : "We’ll keep what matters to you in mind."
+        case .workArounds:
+            workArounds.isEmpty
+                ? "You can update this whenever you need."
+                : "Thanks—we’ll keep these needs in mind."
         }
     }
 
@@ -122,6 +229,7 @@ final class OnboardingModel {
     }
 
     func advance() {
+        guard canAdvance else { return }
         guard let next = Card(rawValue: card.rawValue + 1) else { return }
         card = next
     }
@@ -151,7 +259,7 @@ nonisolated extension GuidancePreference {
         switch self {
         case .gettingStarted: "I’d like clear guidance."
         case .knowsWhatTheyEnjoy: "Help me narrow it down."
-        case .hasOwnRoutine: "Help me move around it."
+        case .hasOwnRoutine: "Suggest movement that complements it."
         }
     }
 
@@ -345,5 +453,39 @@ nonisolated extension WorkAround {
         case .pelvicFloor: "figure.core.training"
         case .other: "ellipsis.circle"
         }
+    }
+}
+
+/// Readable, stable summaries of explicit choices, never inferred equipment or
+/// daily check-in state. Kept separate from the view so the result is testable.
+nonisolated struct OnboardingSummary {
+    struct Row: Identifiable, Equatable {
+        let id: String
+        let title: String
+        let symbol: String
+        let value: String
+    }
+
+    let rows: [Row]
+
+    init(answers: ProfileAnswers) {
+        var movement: [String] = []
+        for activity in Activity.allCases where answers.activities.contains(activity) {
+            if activity == .racquet && !answers.sports.isEmpty {
+                movement += SportPreference.allCases.filter { answers.sports.contains($0) }.map(\.label)
+            } else {
+                movement.append(activity.label)
+            }
+        }
+        let equipment = Equipment.allCases.filter { answers.equipment.contains($0) }
+            .map { $0.label ?? "No equipment" }
+        let intentions = Intent.allCases.filter { answers.intents.contains($0) }.map(\.label)
+        let needs = WorkAround.allCases.filter { answers.workArounds.contains($0) }.map(\.label)
+        rows = [
+            Row(id: "movement", title: "Movement you enjoy", symbol: "figure.walk", value: movement.joined(separator: ", ")),
+            Row(id: "equipment", title: "What you have", symbol: "dumbbell", value: equipment.joined(separator: ", ")),
+            Row(id: "intent", title: "What matters to you", symbol: "heart", value: intentions.joined(separator: ", ")),
+            Row(id: "needs", title: "Needs to keep in mind", symbol: "hand.raised", value: needs.joined(separator: ", ")),
+        ].filter { !$0.value.isEmpty }
     }
 }
