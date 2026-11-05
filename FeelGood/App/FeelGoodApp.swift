@@ -143,6 +143,8 @@ struct RootView: View {
                 DebugChatConsentHost()
             } else if ProcessInfo.processInfo.arguments.contains("-FGForcePaywall") {
                 FeelGoodPaywallView()
+            } else if ProcessInfo.processInfo.arguments.contains("-FGForceSituationSheet") {
+                SituationChangedSheet { _, _ in }
             } else if ProcessInfo.processInfo.arguments.contains("-FGForcePostPurchase") {
                 PostPurchaseFlow { _ in }
             } else if ProcessInfo.processInfo.arguments.contains("-FGForceSettingUpMenu") {
@@ -518,7 +520,18 @@ private struct TodayScreen: View {
     private var tabView: some View {
         TabView(selection: $tab) {
             Tab("Today", systemImage: "sun.max", value: Destination.today) {
-                TodayView(model: model, requestedSessionID: $requestedSessionID)
+                TodayView(
+                    model: model,
+                    requestedSessionID: $requestedSessionID,
+                    profile: profile,
+                    onProfileAdjusted: { answers in
+                        model.update(profile: answers.planProfile)
+                        guard let userID = AuthService.shared.currentUser?.uid else { return }
+                        Task {
+                            try? await AccountDataSyncService.syncProfile(userID: userID, profile: profile)
+                        }
+                    }
+                )
                     .fgReadableWidth()
                     .fgTabBarInset()
                     .toolbarVisibility(.hidden, for: .tabBar)
