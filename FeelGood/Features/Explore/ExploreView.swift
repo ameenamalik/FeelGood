@@ -19,6 +19,10 @@ struct ExploreView: View {
     @State private var activeThreadID: UUID?
     @State private var isShowingHistory: Bool = false
     @State private var inputText: String = ""
+    /// The message that hit the free limit, kept for the Builder paywall's
+    /// `{{ custom.user_message }}` text. Empty means "send nothing" so the
+    /// dashboard default shows instead of a blank bubble.
+    @State private var paywallMessage: String = ""
     @State private var isProcessing: Bool = false
     /// The reply as the model writes it. Empty until the first words arrive,
     /// and cleared when the finished reply joins the thread.
@@ -175,7 +179,10 @@ struct ExploreView: View {
             )
         }
         .sheet(isPresented: $isShowingPaywall) {
-            FeelGoodPaywallView(context: .chatLimit)
+            FeelGoodPaywallView(
+                context: .chatLimit,
+                variables: paywallMessage.isEmpty ? [:] : ["user_message": paywallMessage]
+            )
         }
         .sheet(item: $routineDraft) { draft in
             AddRoutineSheet(model: model, initialCourse: draft.course, draft: draft) { session in
@@ -621,6 +628,7 @@ struct ExploreView: View {
         // they can close the paywall and send it without typing it again.
         if !purchasesManager.isProUnlocked && hasUsedFreeChatExchange {
             inputText = trimmed
+            paywallMessage = String(trimmed.prefix(80))
             isFieldFocused = false
             isShowingPaywall = true
             Analytics.capture("chat_paywall_presented", properties: [

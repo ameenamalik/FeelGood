@@ -52,6 +52,9 @@ struct TodayView: View {
     @State private var isCheckingIn = false
     @State private var isShowingPaywall = false
     @State private var paywallContext: PaywallContext = .general
+    /// Text for a Builder paywall's `{{ custom.<name> }}` values. Empty means
+    /// the dashboard defaults show.
+    @State private var paywallVariables: [String: String] = [:]
     @State private var shouldOfferProAfterDismissal = false
     @AppStorage("hasShownFirstCompletionPaywall") private var hasShownFirstCompletionPaywall = false
     @AppStorage("hasShownFirstCompletionAuthPrompt") private var hasShownFirstCompletionAuthPrompt = false
@@ -154,7 +157,7 @@ struct TodayView: View {
             }
         }
         .sheet(isPresented: $isShowingPaywall) {
-            FeelGoodPaywallView(context: paywallContext)
+            FeelGoodPaywallView(context: paywallContext, variables: paywallVariables)
         }
         .sheet(isPresented: $isShowingMyMenu, onDismiss: clearOneSignalDiscoveryTriggers) {
             MyMenuView(model: model)
@@ -357,6 +360,7 @@ struct TodayView: View {
         } else {
             Analytics.capture(EngagementAnalytics.swapLimitReachedEvent, properties: EngagementAnalytics.swapLimitReached(course: item.course))
             paywallContext = .secondSwap
+            paywallVariables = ["swap_from": item.session.title]
             isShowingPaywall = true
         }
         return false
@@ -373,6 +377,7 @@ struct TodayView: View {
         } else {
             Analytics.capture(EngagementAnalytics.swapLimitReachedEvent, properties: EngagementAnalytics.swapLimitReached(course: item.course))
             paywallContext = .secondSwap
+            paywallVariables = ["swap_from": item.session.title]
             isShowingPaywall = true
         }
     }
@@ -774,6 +779,7 @@ struct TodayView: View {
         guard !model.isProUser, !hasShownFirstCompletionPaywall else { return }
         hasShownFirstCompletionPaywall = true
         paywallContext = .general
+        paywallVariables = [:]
         isShowingPaywall = true
     }
 

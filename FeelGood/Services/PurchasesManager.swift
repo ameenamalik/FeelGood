@@ -98,6 +98,12 @@ final class PurchasesManager {
         return offerings.currentOffering(forPlacement: context.rawValue) ?? offerings.current
     }
 
+    /// The offering configured for this placement, or nil when the placement
+    /// doesn't exist. Unlike `offering(for:)` it never falls back to `current`.
+    func placementOffering(for context: PaywallContext) -> Offering? {
+        offerings?.currentOffering(forPlacement: context.rawValue)
+    }
+
     /// True when the placement resolved to its own offering rather than the default.
     func hasPlacementOffering(for context: PaywallContext) -> Bool {
         offerings?.currentOffering(forPlacement: context.rawValue) != nil

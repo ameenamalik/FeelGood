@@ -137,22 +137,29 @@ struct FeelGoodPaywallView: View {
     @State private var chatStep = 0
     @State private var isCalendarBusy = false
 
+    /// Personalisation for a Builder paywall's `{{ custom.<name> }}` text.
+    /// The Swift paywall ignores it.
+    let variables: [String: String]
+
     init(
         context: PaywallContext = .general,
+        variables: [String: String] = [:],
         onFinished: (() -> Void)? = nil
     ) {
         self.context = context
+        self.variables = variables
         self.onFinished = onFinished
     }
 
     private var yearlyPackage: Package? { purchasesManager.yearlyPackage(for: context) }
     private var monthlyPackage: Package? { purchasesManager.monthlyPackage(for: context) }
 
-    /// The placement's offering, only when the RevenueCat dashboard has a
-    /// Paywall Builder paywall attached to it. Anything else (no offering, no
-    /// paywall published yet) keeps showing the Swift paywall below.
+    /// The placement's own offering, only when that placement exists in the
+    /// RevenueCat dashboard and its offering has a Paywall Builder paywall.
+    /// The default `current` offering never qualifies, so contexts without a
+    /// placement (and any dashboard gap) keep showing the Swift paywall below.
     private var remoteOffering: Offering? {
-        guard let offering = purchasesManager.offering(for: context), offering.hasPaywall else { return nil }
+        guard let offering = purchasesManager.placementOffering(for: context), offering.hasPaywall else { return nil }
         return offering
     }
 
@@ -173,6 +180,7 @@ struct FeelGoodPaywallView: View {
                 RemotePaywallView(
                     offering: remoteOffering,
                     context: context,
+                    variables: variables,
                     onPurchased: {
                         Task {
                             await purchasesManager.syncTrialReminder()

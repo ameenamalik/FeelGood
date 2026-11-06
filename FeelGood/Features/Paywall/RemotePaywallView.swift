@@ -20,11 +20,16 @@ import SwiftUI
 struct RemotePaywallView: View {
     let offering: Offering
     let context: PaywallContext
+    /// Values for `{{ custom.<name> }}` text in the Builder paywall. Each name
+    /// must also be defined in the dashboard, where its default is what shows
+    /// when a value isn't supplied. Stays on device: never sent to analytics.
+    var variables: [String: String] = [:]
     var onPurchased: () -> Void
     var onRestored: (CustomerInfo) -> Void
 
     var body: some View {
         PaywallView(offering: offering, displayCloseButton: false)
+            .customPaywallVariables(variables.mapValues { .string($0) })
             .onPurchaseStarted { _ in
                 Analytics.capture("paywall_purchase_tapped", properties: properties)
             }
