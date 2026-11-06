@@ -85,6 +85,27 @@ final class PurchasesManager {
     var monthlyPackage: Package? { offerings?.current?.monthly }
     var yearlyPackage: Package? { offerings?.current?.annual }
 
+    /// The offering to show for a paywall placement. Placement ids are the
+    /// `PaywallContext` raw values and must match the Placements tab in the
+    /// RevenueCat dashboard. `currentOffering(forPlacement:)` is a synchronous
+    /// lookup on the already-fetched `Offerings`, so this costs no network.
+    ///
+    /// Falls back to the default `current` offering when the placement isn't
+    /// configured (RevenueCat returns nil), so a missing dashboard entry never
+    /// produces a paywall with no plans.
+    func offering(for context: PaywallContext) -> Offering? {
+        guard let offerings else { return nil }
+        return offerings.currentOffering(forPlacement: context.rawValue) ?? offerings.current
+    }
+
+    /// True when the placement resolved to its own offering rather than the default.
+    func hasPlacementOffering(for context: PaywallContext) -> Bool {
+        offerings?.currentOffering(forPlacement: context.rawValue) != nil
+    }
+
+    func monthlyPackage(for context: PaywallContext) -> Package? { offering(for: context)?.monthly }
+    func yearlyPackage(for context: PaywallContext) -> Package? { offering(for: context)?.annual }
+
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.feelgood.app", category: "Purchases")
     private var customerInfoObservationTask: Task<Void, Never>?
 

@@ -145,8 +145,16 @@ struct FeelGoodPaywallView: View {
         self.onFinished = onFinished
     }
 
-    private var yearlyPackage: Package? { purchasesManager.yearlyPackage }
-    private var monthlyPackage: Package? { purchasesManager.monthlyPackage }
+    private var yearlyPackage: Package? { purchasesManager.yearlyPackage(for: context) }
+    private var monthlyPackage: Package? { purchasesManager.monthlyPackage(for: context) }
+
+    /// The placement's offering, only when the RevenueCat dashboard has a
+    /// Paywall Builder paywall attached to it. Anything else (no offering, no
+    /// paywall published yet) keeps showing the Swift paywall below.
+    private var remoteOffering: Offering? {
+        guard let offering = purchasesManager.offering(for: context), offering.hasPaywall else { return nil }
+        return offering
+    }
 
     private var selectedPackage: Package? {
         switch selectedPlan {
@@ -161,7 +169,21 @@ struct FeelGoodPaywallView: View {
             // Vibrant ambient brand aura bloom
             FGBrandWash(reach: 0.85).ignoresSafeArea()
 
-            if purchasesManager.isLoadingOfferings, yearlyPackage == nil, monthlyPackage == nil {
+            if let remoteOffering {
+                RemotePaywallView(
+                    offering: remoteOffering,
+                    context: context,
+                    onPurchased: {
+                        Task {
+                            await purchasesManager.syncTrialReminder()
+                            isShowingPostPurchase = true
+                        }
+                    },
+                    onRestored: { info in
+                        if PurchasesManager.hasActiveProEntitlement(in: info) { finish() }
+                    }
+                )
+            } else if purchasesManager.isLoadingOfferings, yearlyPackage == nil, monthlyPackage == nil {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -197,6 +219,8 @@ struct FeelGoodPaywallView: View {
             Analytics.capture("paywall_impression", properties: [
                 "plan": selectedPlan.analyticsID,
                 "context": context.rawValue,
+                "offering_id": purchasesManager.offering(for: context)?.identifier ?? "none",
+                "placement_matched": purchasesManager.hasPlacementOffering(for: context),
             ])
         }
         .alert(
