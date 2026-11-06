@@ -90,23 +90,33 @@ final class PurchasesManager {
     /// RevenueCat dashboard. `currentOffering(forPlacement:)` is a synchronous
     /// lookup on the already-fetched `Offerings`, so this costs no network.
     ///
-    /// Falls back to the default `current` offering when the placement isn't
-    /// configured (RevenueCat returns nil), so a missing dashboard entry never
-    /// produces a paywall with no plans.
+    /// Falls back to the default `current` offering when nothing resolves, so a
+    /// missing dashboard entry never produces a paywall with no plans.
     func offering(for context: PaywallContext) -> Offering? {
         guard let offerings else { return nil }
         return offerings.currentOffering(forPlacement: context.rawValue) ?? offerings.current
     }
 
-    /// The offering configured for this placement, or nil when the placement
-    /// doesn't exist. Unlike `offering(for:)` it never falls back to `current`.
+    /// The offering that belongs to this placement, or nil when the placement
+    /// isn't configured.
+    ///
+    /// `currentOffering(forPlacement:)` does NOT return nil for an unknown
+    /// placement: it returns the project's fallback offering (normally
+    /// `default`). So a non-nil result alone doesn't mean the placement exists.
+    /// By convention each placement's offering has the same identifier as the
+    /// placement (`chat_limit`, `second_swap`, ...), so only a result with a
+    /// matching identifier counts. Anything else keeps the Swift paywall.
     func placementOffering(for context: PaywallContext) -> Offering? {
-        offerings?.currentOffering(forPlacement: context.rawValue)
+        guard let offering = offerings?.currentOffering(forPlacement: context.rawValue),
+              offering.identifier == context.rawValue
+        else { return nil }
+        return offering
     }
 
-    /// True when the placement resolved to its own offering rather than the default.
+    /// True when the placement resolved to its own offering rather than the
+    /// fallback.
     func hasPlacementOffering(for context: PaywallContext) -> Bool {
-        offerings?.currentOffering(forPlacement: context.rawValue) != nil
+        placementOffering(for: context) != nil
     }
 
     func monthlyPackage(for context: PaywallContext) -> Package? { offering(for: context)?.monthly }
