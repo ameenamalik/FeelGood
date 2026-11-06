@@ -101,14 +101,20 @@ final class PurchasesManager {
     /// isn't configured.
     ///
     /// `currentOffering(forPlacement:)` does NOT return nil for an unknown
-    /// placement: it returns the project's fallback offering (normally
-    /// `default`). So a non-nil result alone doesn't mean the placement exists.
-    /// By convention each placement's offering has the same identifier as the
-    /// placement (`chat_limit`, `second_swap`, ...), so only a result with a
-    /// matching identifier counts. Anything else keeps the Swift paywall.
+    /// placement: it returns the rule's fallback offering (here `default`, the
+    /// same offering as `current`). So a non-nil result alone doesn't mean the
+    /// placement exists. A result that is just the default offering is treated
+    /// as "not configured" and keeps the Swift paywall.
+    ///
+    /// This deliberately does not require the offering id to equal the placement
+    /// id: the dashboard can serve any offering at a placement (a renamed
+    /// offering, or an Experiment variant such as `chat_limit_b`), and that must
+    /// keep working. The one case it can't tell apart is a placement that is
+    /// intentionally pointed at `default`; that shows the Swift paywall.
     func placementOffering(for context: PaywallContext) -> Offering? {
-        guard let offering = offerings?.currentOffering(forPlacement: context.rawValue),
-              offering.identifier == context.rawValue
+        guard let offerings,
+              let offering = offerings.currentOffering(forPlacement: context.rawValue),
+              offering.identifier != offerings.current?.identifier
         else { return nil }
         return offering
     }
